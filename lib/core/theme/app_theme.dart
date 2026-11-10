@@ -1,0 +1,100 @@
+import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
+import '../constants/app_dimens.dart';
+import '../constants/app_typography.dart';
+
+class AppTheme {
+  AppTheme._();
+
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: AppColors.sand,
+      primaryColor: AppColors.navy,
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.navy,
+        onPrimary: Colors.white,
+        secondary: AppColors.gold,
+        onSecondary: AppColors.navy,
+        surface: AppColors.cardBg,
+        onSurface: AppColors.textPrimary,
+        error: AppColors.danger,
+        onError: Colors.white,
+      ),
+      fontFamily: 'Cairo',
+      cardTheme: CardThemeData(
+        color: AppColors.cardBg,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+          side: const BorderSide(color: AppColors.borderDisabled, width: 1),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        hintStyle: AppTypography.bodySecondary(color: AppColors.borderDisabled),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radiusField),
+          borderSide: const BorderSide(color: AppColors.borderDisabled, width: 1.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radiusField),
+          borderSide: const BorderSide(color: AppColors.borderDisabled, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radiusField),
+          borderSide: const BorderSide(color: AppColors.navy, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radiusField),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppDimens.radiusField),
+          borderSide: const BorderSide(color: AppColors.danger, width: 2),
+        ),
+        errorStyle: AppTypography.label(color: AppColors.danger),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.navy,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(AppDimens.minTouchTarget),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.radiusButton),
+          ),
+          textStyle: AppTypography.button(),
+          elevation: 0,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.navy,
+          minimumSize: const Size.fromHeight(AppDimens.minTouchTarget),
+          side: const BorderSide(color: AppColors.navy, width: 1.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppDimens.radiusButton),
+          ),
+          textStyle: AppTypography.button(color: AppColors.navy),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.navy,
+          textStyle: AppTypography.bodySecondary(color: AppColors.navy),
+        ),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.white,
+        selectedItemColor: AppColors.navy,
+        unselectedItemColor: AppColors.textSecondary,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+      ),
+    );
+  }
+}
+

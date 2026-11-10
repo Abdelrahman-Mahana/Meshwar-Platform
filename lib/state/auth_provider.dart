@@ -1,0 +1,252 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import '../data/mock_data.dart';
+import '../data/models/user_model.dart';
+
+enum AuthStatus {
+  unauthenticated,
+  phoneEntered,
+  otpVerified,
+  profileCreated,
+  authenticated,
+}
+
+class AuthProvider extends ChangeNotifier {
+  AuthStatus _status = AuthStatus.authenticated; // Default to authenticated for instant prototype exploration
+  UserModel _user = MockData.currentUser;
+  
+  String _phoneNumber = '01012345678';
+  String? _email;
+  String _authMethod = 'phone'; // 'phone', 'email', 'google'
+  final String _enteredOtp = '';
+  int _resendCountdown = 59;
+  Timer? _resendTimer;
+  int _otpAttemptsLeft = 3;
+  bool _isLocked = false;
+  bool _isLoading = false;
+
+  AuthStatus get status => _status;
+  UserModel get user => _user;
+  String get phoneNumber => _phoneNumber;
+  String? get email => _email;
+  String get authMethod => _authMethod;
+  String get enteredOtp => _enteredOtp;
+  int get resendCountdown => _resendCountdown;
+  int get otpAttemptsLeft => _otpAttemptsLeft;
+  bool get isLocked => _isLocked;
+  bool get isLoading => _isLoading;
+
+  void setPhoneNumber(String phone) {
+    _phoneNumber = phone;
+    _authMethod = 'phone';
+    notifyListeners();
+  }
+
+  void setEmail(String email) {
+    _email = email;
+    _authMethod = 'email';
+    notifyListeners();
+  }
+
+  // Egyptian phone number validator: 11 digits starting with 010, 011, 012, or 015
+  static String? validateEgyptianPhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'أدخل رقم موبايلك';
+    }
+    final regex = RegExp(r'^(010|011|012|015)[0-9]{8}$');
+    if (!regex.hasMatch(value)) {
+      return 'الرقم لازم يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015';
+    }
+    return null;
+  }
+
+  // Universal Email validator
+  static String? validateEmail(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'أدخل بريدك الإلكتروني';
+    }
+    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    if (!emailRegex.hasMatch(value.trim())) {
+      return 'أدخل بريد إلكتروني صحيح (مثال: name@example.com)';
+    }
+    return null;
+  }
+
+  Future<bool> sendOtp(String phone) async {
+    _isLoading = true;
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 700));
+    _phoneNumber = phone;
+    _authMethod = 'phone';
+    _status = AuthStatus.phoneEntered;
+    _isLoading = false;
+    _resendCountdown = 59;
+    _startCountdown();
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> sendEmailOtp(String email) async {
+    _isLoading = true;
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    _email = email.trim();
+    _authMethod = 'email';
+    _status = AuthStatus.phoneEntered;
+    _isLoading = false;
+    _resendCountdown = 59;
+    _startCountdown();
+    notifyListeners();
+    return true;
+  }
+
+  Future<bool> verifyEmailOtp(String code) async {
+    return verifyOtp(code);
+  }
+
+  Future<bool> signInWithGoogle({
+    required String email,
+    required String displayName,
+    String? avatarUrl,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    _email = email.trim();
+    _authMethod = 'google';
+    _user = _user.copyWith(
+      fullName: displayName.trim(),
+      email: email.trim(),
+      avatarUrl: avatarUrl,
+    );
+    _status = AuthStatus.otpVerified;
+    _isLoading = false;
+    notifyListeners();
+    return true;
+  }
+
+  void _startCountdown() {
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCountdown > 0) {
+        _resendCountdown--;
+        notifyListeners();
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  Future<bool> verifyOtp(String code) async {
+    _isLoading = true;
+    notifyListeners();
+
+    await Future.delayed(const Duration(milliseconds: 600));
+    _isLoading = false;
+
+    // Demo code: '482911' or any 6 digits for testing
+    if (code.length == 6) {
+      _status = AuthStatus.otpVerified;
+      notifyListeners();
+      return true;
+    } else {
+      _otpAttemptsLeft--;
+      if (_otpAttemptsLeft <= 0) {
+        _isLocked = true;
+      }
+      notifyListeners();
+      return false;
+    }
+  }
+
+  void saveProfile({
+    required String fullName,
+    required UserGender gender,
+    String? governorate,
+    String? city,
+    String? birthDate,
+    String? email,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
+    String? occupation,
+    String? smokingPreference,
+    String? tripVibe,
+    bool ladiesOnlyPreference = false,
+    String? avatarUrl,
+  }) {
+    _user = UserModel(
+      id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
+      fullName: fullName,
+      phone: _phoneNumber,
+      gender: gender,
+      governorate: governorate,
+      city: city,
+      birthDate: birthDate,
+      email: email,
+      emergencyContactName: emergencyContactName,
+      emergencyContactPhone: emergencyContactPhone,
+      occupation: occupation,
+      smokingPreference: smokingPreference,
+      tripVibe: tripVibe,
+      ladiesOnlyPreference: ladiesOnlyPreference,
+      avatarUrl: avatarUrl,
+      isVerified: false,
+      idVerificationStatus: IdVerificationStatus.unverified,
+      hasActiveAlerts: false,
+      hasUpcomingBooking: false,
+    );
+    _status = AuthStatus.authenticated;
+    notifyListeners();
+  }
+
+  void submitIdVerification({
+    required String nationalId,
+    required String frontPhoto,
+    required String backPhoto,
+    String? selfiePhoto,
+  }) {
+    _user = _user.copyWith(
+      nationalId: nationalId,
+      idFrontImage: frontPhoto,
+      idBackImage: backPhoto,
+      selfieImage: selfiePhoto,
+      idVerificationStatus: IdVerificationStatus.underReview,
+      isVerified: false,
+    );
+    _status = AuthStatus.authenticated;
+    notifyListeners();
+  }
+
+  void approveIdVerification() {
+    _user = _user.copyWith(
+      idVerificationStatus: IdVerificationStatus.verified,
+      isVerified: true,
+    );
+    notifyListeners();
+  }
+
+  void updateProfile({required String fullName}) {
+    _user = _user.copyWith(fullName: fullName);
+    notifyListeners();
+  }
+
+  void updateWalletBalance(double newBalance) {
+    _user = _user.copyWith(walletBalance: newBalance);
+    notifyListeners();
+  }
+
+  void logout() {
+    _status = AuthStatus.unauthenticated;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _resendTimer?.cancel();
+    super.dispose();
+  }
+}
+

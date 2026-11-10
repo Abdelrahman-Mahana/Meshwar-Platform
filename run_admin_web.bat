@@ -1,0 +1,3 @@
+@echo off
+echo Starting MASHWAR Admin Web Application on http://localhost:8081 ...
+flutter run -t lib/admin_main.dart -d web-server --web-port 8081 --web-hostname localhost

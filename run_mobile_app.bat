@@ -1,0 +1,3 @@
+@echo off
+echo Starting MASHWAR Mobile App on http://localhost:8080 ...
+flutter run -d web-server --web-port 8080 --web-hostname localhost

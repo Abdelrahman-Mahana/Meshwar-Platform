@@ -1,0 +1,524 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_dimens.dart';
+import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_chip.dart';
+import '../../state/settings_provider.dart';
+
+class PublishRideScreen extends StatefulWidget {
+  const PublishRideScreen({super.key});
+
+  @override
+  State<PublishRideScreen> createState() => _PublishRideScreenState();
+}
+
+class _PublishRideScreenState extends State<PublishRideScreen> {
+  int _currentStep = 1; // 1 to 4
+  bool _isPublished = false;
+
+  // Step 1: Route & Schedule
+  String _fromCity = 'كفر الشيخ';
+  String _toCity = 'القاهرة';
+  String? _stopover;
+  String _date = 'الجمعة 6 نوفمبر · 7:30 ص';
+  String _flexibility = '± 15 د'; // 'بالظبط', '± 15 د', '± 30 د'
+  String? _step1Error;
+
+  // Step 2: Distance & Pricing
+  final int _distanceKm = 120;
+  final int _suggestedPrice = 120;
+  int _seatsCount = 3;
+  final TextEditingController _priceController = TextEditingController(text: '120');
+  String? _priceError;
+
+  // Step 3: Parcels & Preferences
+  bool _acceptParcels = true;
+  final TextEditingController _smallParcelPrice = TextEditingController(text: '40');
+  final TextEditingController _medParcelPrice = TextEditingController(text: '60');
+  final TextEditingController _largeParcelPrice = TextEditingController(text: '90');
+  bool _instantBooking = false;
+  bool _ladiesOnly = false;
+
+  @override
+  void dispose() {
+    _priceController.dispose();
+    _smallParcelPrice.dispose();
+    _medParcelPrice.dispose();
+    _largeParcelPrice.dispose();
+    super.dispose();
+  }
+
+  void _nextStep(bool isAr) {
+    if (_currentStep == 1) {
+      if (_fromCity == _toCity) {
+        setState(() => _step1Error = isAr ? 'ما قدرناش نحسب المسار. غيّر النقطتين وجرّب تاني' : 'Invalid route. Points must differ');
+        return;
+      }
+      setState(() {
+        _step1Error = null;
+        _currentStep = 2;
+      });
+    } else if (_currentStep == 2) {
+      final price = int.tryParse(_priceController.text) ?? 120;
+      if (price > 150) {
+        setState(() => _priceError = isAr ? 'السعر أعلى من الحد المسموح (150 ج)' : 'Price exceeds allowed ceiling (150 EGP)');
+        return;
+      }
+      if (price < 90) {
+        setState(() => _priceError = isAr ? 'السعر أقل من الحد الأدنى (90 ج)' : 'Price below minimum (90 EGP)');
+        return;
+      }
+      setState(() {
+        _priceError = null;
+        _currentStep = 3;
+      });
+    } else if (_currentStep == 3) {
+      setState(() => _currentStep = 4);
+    } else if (_currentStep == 4) {
+      setState(() => _isPublished = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isAr = context.watch<SettingsProvider>().isArabic;
+
+    if (_isPublished) {
+      // Page 44: تم النشر
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimens.space24),
+            child: Column(
+              children: [
+                const Spacer(flex: 3),
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: const BoxDecoration(
+                    color: AppColors.teal,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.check_rounded, color: Colors.white, size: 42),
+                ),
+                const SizedBox(height: AppDimens.space20),
+                Text(
+                  isAr ? 'اتنشرت رحلتك' : 'Trip Published!',
+                  style: AppTypography.largeTitle(),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isAr
+                      ? 'هنبلغك لما حد يحجز. شاركها عشان تتملي أسرع.'
+                      : 'We will notify you when passengers book. Share to fill seats faster.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodySecondary(),
+                ),
+                const Spacer(flex: 3),
+
+                MashwarButton(
+                  text: isAr ? 'شارك على واتساب' : 'Share on WhatsApp',
+                  icon: const Icon(Icons.share_rounded, color: Colors.white, size: 18),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(isAr ? 'تم تجهيز رابط الرحلة للمشاركة' : 'Trip link prepared for sharing'),
+                        backgroundColor: AppColors.teal,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    isAr ? 'رحلاتي' : 'My Rides',
+                    style: AppTypography.body().copyWith(color: AppColors.navy, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space16),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          onPressed: () {
+            if (_currentStep > 1) {
+              setState(() => _currentStep--);
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
+        ),
+        title: Column(
+          children: [
+            Text(isAr ? 'رحلة جديدة' : 'Post New Ride', style: AppTypography.title()),
+            Text(
+              isAr ? 'الخطوة $_currentStep من 4' : 'Step $_currentStep of 4',
+              style: AppTypography.label(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.space24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: _buildStepContent(isAr),
+                ),
+              ),
+              const SizedBox(height: 16),
+              MashwarButton(
+                text: _currentStep == 4
+                    ? (isAr ? 'انشر الرحلة' : 'Publish Ride')
+                    : (isAr ? 'التالي' : 'Next Step'),
+                onPressed: () => _nextStep(isAr),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepContent(bool isAr) {
+    switch (_currentStep) {
+      case 1:
+        // Page 41: الخطوة 1 من 4
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_step1Error != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.dangerBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(_step1Error!, style: const TextStyle(color: AppColors.danger, fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            _buildSectionCard(
+              title: isAr ? 'خط السير' : 'Route',
+              children: [
+                _buildRouteRow(isAr ? 'من' : 'From', _fromCity, onTap: () {}),
+                const Divider(height: 20),
+                _buildRouteRow(isAr ? 'إلى' : 'To', _toCity, onTap: () {}),
+                const Divider(height: 20),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() => _stopover = _stopover == null ? 'طنطا' : null);
+                  },
+                  icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: AppColors.teal),
+                  label: Text(
+                    _stopover != null
+                        ? (isAr ? 'محطة: $_stopover (إزالة)' : 'Stopover: $_stopover (Remove)')
+                        : (isAr ? '+ أضف محطة في الطريق (اختياري)' : '+ Add Stopover Point (Optional)'),
+                    style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: AppDimens.space20),
+
+            _buildSectionCard(
+              title: isAr ? 'موعد الانطلاق' : 'Departure Schedule',
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.navy),
+                    const SizedBox(width: 10),
+                    Text(_date, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text(isAr ? 'مرونة الوقت' : 'Time Flexibility', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    for (final flex in ['بالظبط', '± 15 د', '± 30 د']) ...[
+                      Expanded(
+                        child: MashwarChip(
+                          label: flex,
+                          isSelected: _flexibility == flex,
+                          onTap: () => setState(() => _flexibility = flex),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ],
+        );
+
+      case 2:
+        // Page 42: الخطوة 2 من 4
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionCard(
+              title: isAr ? 'المسافة والتكلفة التقديرية' : 'Estimated Cost & Distance',
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(isAr ? 'المسافة' : 'Distance', style: AppTypography.bodySecondary()),
+                    Text('$_distanceKm ${isAr ? "كم" : "km"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ],
+                ),
+                const Divider(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(isAr ? 'السعر المقترح' : 'Suggested Price', style: AppTypography.bodySecondary()),
+                    Text('$_suggestedPrice ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.teal)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: AppColors.sand, borderRadius: BorderRadius.circular(8)),
+                  child: Text(
+                    isAr
+                        ? 'تقدر تعدّل السعر من 90 إلى 150 ج. الهدف مشاركة تكلفة البنزين.'
+                        : 'You can adjust price between 90 and 150 EGP to share petrol costs.',
+                    style: AppTypography.label(color: AppColors.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: AppDimens.space20),
+
+            _buildSectionCard(
+              title: isAr ? 'تحديد المقاعد والسعر' : 'Seats & Seat Price',
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(isAr ? 'عدد الكراسي' : 'Seats Count', style: AppTypography.body()),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: _seatsCount > 1 ? () => setState(() => _seatsCount--) : null,
+                          icon: const Icon(Icons.remove_circle_outline, color: AppColors.navy),
+                        ),
+                        Text('$_seatsCount', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        IconButton(
+                          onPressed: _seatsCount < 4 ? () => setState(() => _seatsCount++) : null,
+                          icon: const Icon(Icons.add_circle_outline, color: AppColors.navy),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const Divider(height: 20),
+                Text(isAr ? 'سعر الكرسي (ج)' : 'Price per Seat (EGP)', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    suffixText: isAr ? 'ج نقداً' : 'EGP',
+                    errorText: _priceError,
+                    filled: true,
+                    fillColor: AppColors.sand,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+
+      case 3:
+        // Page 43: الخطوة 3 من 4
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionCard(
+              title: isAr ? 'خدمة نقل الطرود' : 'Parcel Delivery Option',
+              children: [
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  activeTrackColor: AppColors.teal,
+                  value: _acceptParcels,
+                  onChanged: (val) => setState(() => _acceptParcels = val),
+                  title: Text(isAr ? 'أقبل طرود' : 'Accept Parcels'),
+                  subtitle: Text(isAr ? 'صغير ومتوسط وكبير في الشنطة' : 'Small, medium and large in trunk'),
+                ),
+                if (_acceptParcels) ...[
+                  const Divider(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _smallParcelPrice,
+                          decoration: InputDecoration(labelText: isAr ? 'صغير (ج)' : 'Small', filled: true, fillColor: AppColors.sand),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _medParcelPrice,
+                          decoration: InputDecoration(labelText: isAr ? 'متوسط (ج)' : 'Medium', filled: true, fillColor: AppColors.sand),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _largeParcelPrice,
+                          decoration: InputDecoration(labelText: isAr ? 'كبير (ج)' : 'Large', filled: true, fillColor: AppColors.sand),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+
+            const SizedBox(height: AppDimens.space20),
+
+            _buildSectionCard(
+              title: isAr ? 'تفضيلات الحجز' : 'Booking Preferences',
+              children: [
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  activeTrackColor: AppColors.teal,
+                  value: _instantBooking,
+                  onChanged: (val) => setState(() => _instantBooking = val),
+                  title: Text(isAr ? 'حجز تلقائي' : 'Instant Booking'),
+                  subtitle: Text(isAr ? 'من غير موافقتك على كل طلب يدوي' : 'Book without manual review'),
+                ),
+                const Divider(height: 16),
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  activeTrackColor: AppColors.teal,
+                  value: _ladiesOnly,
+                  onChanged: (val) => setState(() => _ladiesOnly = val),
+                  title: Text(isAr ? 'للسيدات فقط' : 'Ladies Only'),
+                  subtitle: Text(isAr ? 'الرحلة دي هتظهر للسيدات فقط' : 'Ride only visible to female riders'),
+                ),
+              ],
+            ),
+          ],
+        );
+
+      case 4:
+      default:
+        // Page 44: الخطوة 4 من 4 (مراجعة الرحلة)
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionCard(
+              title: isAr ? 'مراجعة بيانات الرحلة' : 'Review Trip Details',
+              children: [
+                _buildReviewRow(isAr ? 'المسار' : 'Route', '$_fromCity ← $_toCity'),
+                const Divider(height: 16),
+                _buildReviewRow(isAr ? 'الموعد' : 'Date & Time', '$_date ($_flexibility)'),
+                const Divider(height: 16),
+                _buildReviewRow(isAr ? 'الكراسي' : 'Seats', '$_seatsCount × ${_priceController.text} ${isAr ? "ج" : "EGP"}'),
+                const Divider(height: 16),
+                _buildReviewRow(
+                  isAr ? 'الطرود' : 'Parcels',
+                  _acceptParcels ? (isAr ? 'تقبل، من ${_smallParcelPrice.text} ج' : 'Accepted, from ${_smallParcelPrice.text} EGP') : (isAr ? 'لا تقبل' : 'None'),
+                ),
+                const Divider(height: 16),
+                _buildReviewRow(isAr ? 'الحجز' : 'Booking', _instantBooking ? (isAr ? 'فوري' : 'Instant') : (isAr ? 'بموافقتك' : 'Manual Approval')),
+              ],
+            ),
+
+            const SizedBox(height: AppDimens.space16),
+
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.sand,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.borderDisabled),
+              ),
+              child: Text(
+                isAr
+                    ? 'الدفع نقداً من الركاب عند الركوب. التعديل متاح قبل أول حجز.'
+                    : 'Cash on pickup directly to driver. Edit available prior to first booking.',
+                style: AppTypography.label(color: AppColors.navy),
+              ),
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _buildSectionCard({required String title, required List<Widget> children}) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: AppColors.borderDisabled),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: AppTypography.title().copyWith(fontSize: 16)),
+          const SizedBox(height: AppDimens.space16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRouteRow(String label, String city, {VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: AppTypography.bodySecondary()),
+          Text(city, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.navy)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: AppTypography.bodySecondary()),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.navy)),
+      ],
+    );
+  }
+}
