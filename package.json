@@ -1,0 +1,16 @@
+{
+  "name": "mashwar-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MASHWAR - Egyptian Carpooling & Parcel Crowd-Shipping Platform",
+  "scripts": {
+    "start": "serve web -l 3000",
+    "build": "echo 'Flutter project build ready'"
+  },
+  "dependencies": {
+    "serve": "^14.2.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
