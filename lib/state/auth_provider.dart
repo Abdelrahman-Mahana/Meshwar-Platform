@@ -228,13 +228,153 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateProfile({required String fullName}) {
-    _user = _user.copyWith(fullName: fullName);
+  void updateProfile({
+    String? fullName,
+    UserGender? gender,
+    String? email,
+    String? governorate,
+    String? city,
+    String? occupation,
+    String? smokingPreference,
+    String? tripVibe,
+    bool? ladiesOnlyPreference,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
+  }) {
+    _user = _user.copyWith(
+      fullName: fullName ?? _user.fullName,
+      gender: gender ?? _user.gender,
+      email: email ?? _user.email,
+      governorate: governorate ?? _user.governorate,
+      city: city ?? _user.city,
+      occupation: occupation ?? _user.occupation,
+      smokingPreference: smokingPreference ?? _user.smokingPreference,
+      tripVibe: tripVibe ?? _user.tripVibe,
+      ladiesOnlyPreference: ladiesOnlyPreference ?? _user.ladiesOnlyPreference,
+      emergencyContactName: emergencyContactName ?? _user.emergencyContactName,
+      emergencyContactPhone: emergencyContactPhone ?? _user.emergencyContactPhone,
+    );
     notifyListeners();
   }
 
   void updateWalletBalance(double newBalance) {
     _user = _user.copyWith(walletBalance: newBalance);
+    notifyListeners();
+  }
+
+  // Wallet Transactions & Payment Methods State
+  String _selectedPaymentMethod = 'cash';
+  String get selectedPaymentMethod => _selectedPaymentMethod;
+
+  void setSelectedPaymentMethod(String method) {
+    _selectedPaymentMethod = method;
+    notifyListeners();
+  }
+
+  final List<Map<String, dynamic>> _walletTransactions = [
+    {
+      'titleAr': 'شحن رصيد - فودافون كاش',
+      'titleEn': 'Top-up - Vodafone Cash',
+      'date': 'أمس، 4:30 م',
+      'amount': '+200 ج.م',
+      'isPositive': true,
+    },
+    {
+      'titleAr': 'رحلة كفر الشيخ ← القاهرة',
+      'titleEn': 'Ride Kafr El-Sheikh -> Cairo',
+      'date': '2 نوفمبر، 7:30 ص',
+      'amount': '-65 ج.م',
+      'isPositive': false,
+    },
+    {
+      'titleAr': 'تعويض ضمان طرد #4810',
+      'titleEn': 'Parcel Insurance Refund #4810',
+      'date': '28 أكتوبر',
+      'amount': '+300 ج.م',
+      'isPositive': true,
+    },
+    {
+      'titleAr': 'إرسال طرد طنطا ← الإسكندرية',
+      'titleEn': 'Parcel Tanta -> Alexandria',
+      'date': '22 أكتوبر',
+      'amount': '-45 ج.م',
+      'isPositive': false,
+    },
+  ];
+
+  List<Map<String, dynamic>> get walletTransactions => List.unmodifiable(_walletTransactions);
+
+  void depositWalletFunds({
+    required double amount,
+    required String methodAr,
+    required String methodEn,
+  }) {
+    _user = _user.copyWith(walletBalance: _user.walletBalance + amount);
+    _walletTransactions.insert(0, {
+      'titleAr': 'شحن رصيد - $methodAr',
+      'titleEn': 'Top-up - $methodEn',
+      'date': 'الآن',
+      'amount': '+${amount.toStringAsFixed(0)} ج.م',
+      'isPositive': true,
+    });
+    notifyListeners();
+  }
+
+  bool withdrawWalletFunds({
+    required double amount,
+    required String destinationAr,
+    required String destinationEn,
+  }) {
+    if (amount <= 0 || amount > _user.walletBalance) {
+      return false;
+    }
+    _user = _user.copyWith(walletBalance: _user.walletBalance - amount);
+    _walletTransactions.insert(0, {
+      'titleAr': 'سحب رصيد إلى $destinationAr',
+      'titleEn': 'Withdrawal to $destinationEn',
+      'date': 'الآن',
+      'amount': '-${amount.toStringAsFixed(0)} ج.م',
+      'isPositive': false,
+    });
+    notifyListeners();
+    return true;
+  }
+
+  // Driver Vehicle State
+  String _driverCarModel = 'هيونداي إلنترا 2022';
+  String _driverCarColor = 'أبيض لؤلؤي';
+  String _driverPlateLetters = 'س ق ر';
+  String _driverPlateNumbers = '1942';
+  int _driverSeatsCount = 3;
+  bool _driverHasAC = true;
+  bool _driverLargeTrunk = true;
+
+  String get driverCarModel => _driverCarModel;
+  String get driverCarColor => _driverCarColor;
+  String get driverPlateLetters => _driverPlateLetters;
+  String get driverPlateNumbers => _driverPlateNumbers;
+  int get driverSeatsCount => _driverSeatsCount;
+  bool get driverHasAC => _driverHasAC;
+  bool get driverLargeTrunk => _driverLargeTrunk;
+  String get driverFormattedCar =>
+      '$_driverCarModel، $_driverCarColor ($_driverPlateLetters $_driverPlateNumbers)';
+
+  void updateDriverVehicle({
+    String? model,
+    String? color,
+    String? plateLetters,
+    String? plateNumbers,
+    int? seatsCount,
+    bool? hasAC,
+    bool? largeTrunk,
+  }) {
+    if (model != null) _driverCarModel = model;
+    if (color != null) _driverCarColor = color;
+    if (plateLetters != null) _driverPlateLetters = plateLetters;
+    if (plateNumbers != null) _driverPlateNumbers = plateNumbers;
+    if (seatsCount != null) _driverSeatsCount = seatsCount;
+    if (hasAC != null) _driverHasAC = hasAC;
+    if (largeTrunk != null) _driverLargeTrunk = largeTrunk;
     notifyListeners();
   }
 
@@ -249,4 +389,5 @@ class AuthProvider extends ChangeNotifier {
     super.dispose();
   }
 }
+
 

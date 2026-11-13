@@ -18,6 +18,9 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
+  late TextEditingController _govController;
+  late TextEditingController _cityController;
+  late TextEditingController _occupationController;
   String? _nameError;
   bool _isSaving = false;
 
@@ -27,12 +30,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthProvider>().user;
     _nameController = TextEditingController(text: user.fullName);
     _phoneController = TextEditingController(text: user.phone);
+    _govController = TextEditingController(text: user.governorate ?? 'كفر الشيخ');
+    _cityController = TextEditingController(text: user.city ?? 'كفر الشيخ');
+    _occupationController = TextEditingController(text: user.occupation ?? 'مهندس برمجيات');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _govController.dispose();
+    _cityController.dispose();
+    _occupationController.dispose();
     super.dispose();
   }
 
@@ -50,10 +59,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _isSaving = true;
     });
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(const Duration(milliseconds: 400));
 
     if (mounted) {
-      context.read<AuthProvider>().updateProfile(fullName: name);
+      context.read<AuthProvider>().updateProfile(
+            fullName: name,
+            governorate: _govController.text.trim(),
+            city: _cityController.text.trim(),
+            occupation: _occupationController.text.trim(),
+          );
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -83,7 +97,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: Text(isAr ? 'تعديل الملف الشخصي' : 'Edit Profile', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimens.space24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -132,8 +146,64 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 isAr ? 'تغيير الرقم محتاج كود تأكيد جديد.' : 'Changing mobile number requires SMS OTP verification.',
                 style: AppTypography.label(color: AppColors.textSecondary),
               ),
+              const SizedBox(height: AppDimens.space16),
 
-              const Spacer(),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(isAr ? 'المحافظة' : 'Governorate', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _govController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFF3F3F4),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(isAr ? 'المدينة / المركز' : 'City', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _cityController,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFF3F3F4),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppDimens.space16),
+
+              Text(isAr ? 'المهنة / التخصص' : 'Occupation', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _occupationController,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFFF3F3F4),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                ),
+              ),
+
+              const SizedBox(height: AppDimens.space32),
               MashwarButton(
                 text: _isSaving ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ' : 'Save Changes'),
                 isLoading: _isSaving,
@@ -218,7 +288,16 @@ class HelpSupportScreen extends StatelessWidget {
               MashwarButton(
                 text: isAr ? 'محادثة مباشرة عبر واتساب' : 'Chat via WhatsApp Support',
                 icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr ? 'جاري فتح دعم مشوار عبر واتساب (+201000019999)...' : 'Opening MASHWAR WhatsApp Support...',
+                      ),
+                      backgroundColor: AppColors.teal,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(
@@ -229,7 +308,16 @@ class HelpSupportScreen extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr ? 'جاري الاتصال بالخط الساخن لخدمة عملاء مشوار 19884...' : 'Calling MASHWAR Hotline 19884...',
+                      ),
+                      backgroundColor: AppColors.navy,
+                    ),
+                  );
+                },
                 label: Text(isAr ? 'الاتصال بالخط الساخن' : 'Call Support Hotline', style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: AppDimens.space16),

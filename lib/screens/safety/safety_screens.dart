@@ -135,7 +135,14 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.phone_rounded, color: AppColors.teal),
-                          onPressed: () {},
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(isAr ? 'جاري الاتصال بالسائق محمد سعيد (01012345678)...' : 'Calling Driver Mohamed Saeed...'),
+                                backgroundColor: AppColors.teal,
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -162,6 +169,18 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                 onPressed: () => showModalBottomSheet(
                   context: context,
                   builder: (_) => const ShareTripSheet(),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => showModalBottomSheet(
+                  context: context,
+                  builder: (_) => const OffRouteAlertSheet(),
+                ),
+                icon: const Icon(Icons.alt_route_rounded, size: 18, color: AppColors.coral),
+                label: Text(
+                  isAr ? 'معاينة تنبيه الخروج عن المسار' : 'Preview Off-Route Alert',
+                  style: AppTypography.label(color: AppColors.coral).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: AppDimens.space16),
@@ -303,13 +322,29 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.coral, foregroundColor: Colors.white),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(isAr ? 'جاري الاتصال بشرطة النجدة 122...' : 'Calling Police Emergency 122...'),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
+              },
               child: Text(isAr ? 'اتصل بـ الشرطة · 122' : 'Call Police · 122'),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.coral, foregroundColor: Colors.white),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(isAr ? 'جاري الاتصال بالإسعاف 123...' : 'Calling Ambulance 123...'),
+                    backgroundColor: AppColors.danger,
+                  ),
+                );
+              },
               child: Text(isAr ? 'اتصل بـ الإسعاف · 123' : 'Call Ambulance · 123'),
             ),
             const SizedBox(height: 12),
@@ -340,7 +375,15 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isAr ? 'جاري الاتصال بشرطة النجدة 122...' : 'Calling Police Emergency 122...'),
+                  backgroundColor: AppColors.danger,
+                ),
+              );
+            },
             child: Text(isAr ? 'اتصل بـ الشرطة · 122' : 'Call Police · 122', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 10),
@@ -350,7 +393,15 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(isAr ? 'جاري الاتصال بالإسعاف 123...' : 'Calling Ambulance 123...'),
+                  backgroundColor: AppColors.danger,
+                ),
+              );
+            },
             child: Text(isAr ? 'اتصل بـ الإسعاف · 123' : 'Call Ambulance · 123', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 10),

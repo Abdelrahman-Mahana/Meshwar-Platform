@@ -10,6 +10,7 @@ import '../../data/models/user_model.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 import '../account/account_extra_screens.dart';
+import '../account/legal_and_backend_screens.dart';
 import '../auth/id_verification_screen.dart';
 import '../auth/welcome_screen.dart';
 import '../safety/safety_screens.dart';
@@ -243,6 +244,19 @@ class SettingsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.cloud_done_outlined, color: AppColors.teal),
+            tooltip: isAr ? 'جاهزية الباك إند API' : 'Backend API Readiness',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const BackendReadinessScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -541,14 +555,9 @@ class SettingsScreen extends StatelessWidget {
                     size: 20,
                   ),
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isAr
-                              ? 'سياسة مشوار تخضع للقوانين المصرية وحماية البيانات الشخصية رقم 151 لسنة 2020'
-                              : 'MASHWAR complies with Egyptian Data Protection Law #151 of 2020',
-                        ),
-                        backgroundColor: AppColors.navy,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const LegalComplianceScreen(initialTabIndex: 0),
                       ),
                     );
                   },
@@ -562,7 +571,13 @@ class SettingsScreen extends StatelessWidget {
                   title: isAr ? 'الترخيص والامتثال لوزارة النقل' : 'MoT Egypt Compliance & License',
                   subtitle: isAr ? 'سجل تجاري رقم 849201 · ترخيص نقل تشاركي ذكي' : 'Commercial Reg. #849201 · MoT Licensed',
                   trailing: const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 18),
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const LegalComplianceScreen(initialTabIndex: 2),
+                      ),
+                    );
+                  },
                 ),
                 _buildIndentedDivider(),
 

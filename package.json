@@ -4,8 +4,10 @@
   "private": true,
   "description": "MASHWAR - Egyptian Carpooling & Parcel Crowd-Shipping Platform",
   "scripts": {
-    "start": "serve web -l 3000",
-    "build": "echo 'Flutter project build ready'"
+    "dev": "serve build/web -l 3000",
+    "start": "serve build/web -l 3000",
+    "build": "flutter build web --release && rm -f pubspec.lock",
+    "lint": "flutter analyze --no-fatal-infos --no-fatal-warnings && rm -f pubspec.lock"
   },
   "dependencies": {
     "serve": "^14.2.4"

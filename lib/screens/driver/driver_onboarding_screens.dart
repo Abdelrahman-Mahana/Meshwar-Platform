@@ -349,10 +349,17 @@ class _DriverVerificationStepsScreenState extends State<DriverVerificationStepsS
                     ),
                     const Divider(height: 1),
                     _buildStepTile(
-                      isAr ? 'صور السيارة' : 'Car Photos',
+                      isAr ? 'صور ومواصفات السيارة' : 'Car Photos & Specs',
                       isDone: _completedSteps >= 4,
                       isAr: isAr,
-                      onTap: _triggerCapture,
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const DriverCarDetailsScreen()),
+                        );
+                        if (mounted && _completedSteps < 4) {
+                          setState(() => _completedSteps = 4);
+                        }
+                      },
                     ),
                     const Divider(height: 1),
                     _buildStepTile(
@@ -454,6 +461,7 @@ class _DriverCarDetailsScreenState extends State<DriverCarDetailsScreen> {
     );
     Navigator.of(context).pop();
   }
+
 
   @override
   Widget build(BuildContext context) {

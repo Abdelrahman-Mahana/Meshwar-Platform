@@ -87,5 +87,52 @@ class BoardAdModel {
       myOfferPrice: myOfferPrice ?? this.myOfferPrice,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type.name,
+      'authorName': authorName,
+      'isVerified': isVerified,
+      'tripCount': tripCount,
+      'postedAgo': postedAgo,
+      'fromCity': fromCity,
+      'toCity': toCity,
+      'timeText': timeText,
+      'description': description,
+      'priceOrBudget': priceOrBudget,
+      'notes': notes,
+      'isLadiesOnly': isLadiesOnly,
+      'status': status.name,
+      'myOfferPrice': myOfferPrice,
+    };
+  }
+
+  factory BoardAdModel.fromJson(Map<String, dynamic> json) {
+    return BoardAdModel(
+      id: (json['id'] ?? '').toString(),
+      type: BoardAdType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => BoardAdType.rideRequest,
+      ),
+      authorName: (json['authorName'] ?? '').toString(),
+      isVerified: json['isVerified'] as bool? ?? true,
+      tripCount: (json['tripCount'] as num?)?.toInt() ?? 1,
+      postedAgo: (json['postedAgo'] ?? 'الآن').toString(),
+      fromCity: (json['fromCity'] ?? '').toString(),
+      toCity: (json['toCity'] ?? '').toString(),
+      timeText: (json['timeText'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      priceOrBudget: (json['priceOrBudget'] as num?)?.toInt() ?? 50,
+      notes: json['notes'] as String?,
+      isLadiesOnly: json['isLadiesOnly'] as bool? ?? false,
+      status: BoardAdStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => BoardAdStatus.active,
+      ),
+      myOfferPrice: (json['myOfferPrice'] as num?)?.toInt(),
+    );
+  }
 }
+
 

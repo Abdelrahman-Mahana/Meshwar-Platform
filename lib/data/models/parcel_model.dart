@@ -84,5 +84,46 @@ class ParcelModel {
       status: status ?? this.status,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'driverName': driverName,
+      'route': route,
+      'description': description,
+      'size': size.name,
+      'weightKg': weightKg,
+      'estimatedValue': estimatedValue,
+      'receiverName': receiverName,
+      'receiverPhone': receiverPhone,
+      'fee': fee,
+      'pickupOtp': pickupOtp,
+      'status': status.name,
+    };
+  }
+
+  factory ParcelModel.fromJson(Map<String, dynamic> json) {
+    return ParcelModel(
+      id: (json['id'] ?? '').toString(),
+      driverName: (json['driverName'] ?? '').toString(),
+      route: (json['route'] ?? '').toString(),
+      description: (json['description'] ?? '').toString(),
+      size: ParcelSize.values.firstWhere(
+        (e) => e.name == json['size'],
+        orElse: () => ParcelSize.medium,
+      ),
+      weightKg: (json['weightKg'] as num?)?.toDouble() ?? 1.0,
+      estimatedValue: (json['estimatedValue'] as num?)?.toInt() ?? 100,
+      receiverName: (json['receiverName'] ?? '').toString(),
+      receiverPhone: (json['receiverPhone'] ?? '').toString(),
+      fee: (json['fee'] as num?)?.toInt() ?? 40,
+      pickupOtp: (json['pickupOtp'] ?? '0000').toString(),
+      status: ParcelStatusStep.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => ParcelStatusStep.requested,
+      ),
+    );
+  }
 }
+
 

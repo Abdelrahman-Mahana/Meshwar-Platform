@@ -137,4 +137,77 @@ class UserModel {
       completedParcels: completedParcels ?? this.completedParcels,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'fullName': fullName,
+      'phone': phone,
+      'gender': gender.name,
+      'avatarUrl': avatarUrl,
+      'isVerified': isVerified,
+      'hasActiveAlerts': hasActiveAlerts,
+      'hasUpcomingBooking': hasUpcomingBooking,
+      'governorate': governorate,
+      'city': city,
+      'birthDate': birthDate,
+      'email': email,
+      'emergencyContactName': emergencyContactName,
+      'emergencyContactPhone': emergencyContactPhone,
+      'occupation': occupation,
+      'smokingPreference': smokingPreference,
+      'tripVibe': tripVibe,
+      'ladiesOnlyPreference': ladiesOnlyPreference,
+      'idVerificationStatus': idVerificationStatus.name,
+      'nationalId': nationalId,
+      'idFrontImage': idFrontImage,
+      'idBackImage': idBackImage,
+      'selfieImage': selfieImage,
+      'idRejectionReason': idRejectionReason,
+      'walletBalance': walletBalance,
+      'rating': rating,
+      'completedRides': completedRides,
+      'completedParcels': completedParcels,
+    };
+  }
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: (json['id'] ?? '').toString(),
+      fullName: (json['fullName'] ?? '').toString(),
+      phone: (json['phone'] ?? '').toString(),
+      gender: UserGender.values.firstWhere(
+        (e) => e.name == json['gender'],
+        orElse: () => UserGender.male,
+      ),
+      avatarUrl: json['avatarUrl'] as String?,
+      isVerified: json['isVerified'] as bool? ?? false,
+      hasActiveAlerts: json['hasActiveAlerts'] as bool? ?? false,
+      hasUpcomingBooking: json['hasUpcomingBooking'] as bool? ?? false,
+      governorate: json['governorate'] as String?,
+      city: json['city'] as String?,
+      birthDate: json['birthDate'] as String?,
+      email: json['email'] as String?,
+      emergencyContactName: json['emergencyContactName'] as String?,
+      emergencyContactPhone: json['emergencyContactPhone'] as String?,
+      occupation: json['occupation'] as String?,
+      smokingPreference: json['smokingPreference'] as String?,
+      tripVibe: json['tripVibe'] as String?,
+      ladiesOnlyPreference: json['ladiesOnlyPreference'] as bool? ?? false,
+      idVerificationStatus: IdVerificationStatus.values.firstWhere(
+        (e) => e.name == json['idVerificationStatus'],
+        orElse: () => IdVerificationStatus.unverified,
+      ),
+      nationalId: json['nationalId'] as String?,
+      idFrontImage: json['idFrontImage'] as String?,
+      idBackImage: json['idBackImage'] as String?,
+      selfieImage: json['selfieImage'] as String?,
+      idRejectionReason: json['idRejectionReason'] as String?,
+      walletBalance: (json['walletBalance'] as num?)?.toDouble() ?? 0.0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
+      completedRides: (json['completedRides'] as num?)?.toInt() ?? 0,
+      completedParcels: (json['completedParcels'] as num?)?.toInt() ?? 0,
+    );
+  }
 }
+

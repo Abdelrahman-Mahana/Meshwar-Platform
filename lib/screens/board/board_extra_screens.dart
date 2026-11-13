@@ -5,7 +5,10 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
+import '../../data/models/board_ad_model.dart';
+import '../../state/board_provider.dart';
 import '../../state/settings_provider.dart';
+import 'post_ad_screen.dart';
 
 // Page 63: إعلاناتي في اللوحة (My Board Ads Screen)
 class MyBoardAdsScreen extends StatefulWidget {
@@ -21,6 +24,9 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
+    final boardProvider = context.watch<BoardProvider>();
+    final activeAds = boardProvider.myAds.where((a) => a.status != BoardAdStatus.completed && a.status != BoardAdStatus.expired).toList();
+    final completedAds = boardProvider.myAds.where((a) => a.status == BoardAdStatus.completed || a.status == BoardAdStatus.expired).toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -33,6 +39,17 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(isAr ? 'إعلاناتي' : 'My Ads', style: AppTypography.title()),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.teal),
+            tooltip: isAr ? 'نشر إعلان جديد' : 'Post New Ad',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PostAdScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -59,7 +76,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            isAr ? 'نشطة' : 'Active',
+                            isAr ? 'نشطة (${activeAds.length})' : 'Active (${activeAds.length})',
                             style: TextStyle(
                               color: _isActiveTab ? Colors.white : AppColors.navy,
                               fontWeight: FontWeight.bold,
@@ -79,7 +96,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            isAr ? 'منتهية' : 'Expired',
+                            isAr ? 'منتهية (${completedAds.length})' : 'Completed (${completedAds.length})',
                             style: TextStyle(
                               color: !_isActiveTab ? Colors.white : AppColors.navy,
                               fontWeight: FontWeight.bold,
@@ -96,37 +113,60 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
 
               Expanded(
                 child: _isActiveTab
-                    ? ListView(
-                        children: [
-                          _buildAdCard(
-                            typeLabel: isAr ? 'طلب مشوار' : 'Ride Request',
-                            route: isAr ? 'طنطا ← القاهرة' : 'Tanta → Cairo',
-                            details: isAr ? 'الجمعة بعد الظهر · كرسي واحد' : 'Friday afternoon · 1 seat',
-                            offersCount: 3,
-                            isAr: isAr,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const BoardAdOffersScreen()),
+                    ? (activeAds.isEmpty
+                        ? Center(
+                            child: Text(
+                              isAr ? 'لا توجد إعلانات نشطة حالياً' : 'No active ads right now',
+                              style: AppTypography.bodySecondary(),
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: activeAds.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final ad = activeAds[index];
+                              final typeLabel = ad.type == BoardAdType.parcelRequest
+                                  ? (isAr ? 'طلب طرد' : 'Parcel Request')
+                                  : (ad.type == BoardAdType.rideOffer
+                                      ? (isAr ? 'عرض رحلة' : 'Ride Offer')
+                                      : (isAr ? 'طلب مشوار' : 'Ride Request'));
+                              return _buildAdCard(
+                                typeLabel: typeLabel,
+                                route: '${ad.fromCity} ← ${ad.toCity}',
+                                details: '${ad.timeText} · ${ad.description}',
+                                offersCount: index == 0 ? 3 : 1,
+                                isAr: isAr,
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(builder: (_) => const BoardAdOffersScreen()),
+                                  );
+                                },
+                                onDelete: () => boardProvider.deleteMyAd(ad.id),
                               );
                             },
-                          ),
-                          const SizedBox(height: 12),
-                          _buildAdCard(
-                            typeLabel: isAr ? 'طلب طرد' : 'Parcel Request',
-                            route: isAr ? 'الإسكندرية ← القاهرة' : 'Alexandria → Cairo',
-                            details: isAr ? 'أوراق · قبل الأحد' : 'Documents · Before Sunday',
-                            offersCount: 0,
-                            isAr: isAr,
-                            onTap: () {},
-                          ),
-                        ],
-                      )
-                    : Center(
-                        child: Text(
-                          isAr ? 'مفيش إعلانات منتهية' : 'No expired ads',
-                          style: AppTypography.bodySecondary(),
-                        ),
-                      ),
+                          ))
+                    : (completedAds.isEmpty
+                        ? Center(
+                            child: Text(
+                              isAr ? 'مفيش إعلانات منتهية' : 'No expired ads',
+                              style: AppTypography.bodySecondary(),
+                            ),
+                          )
+                        : ListView.separated(
+                            itemCount: completedAds.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (context, index) {
+                              final ad = completedAds[index];
+                              return _buildAdCard(
+                                typeLabel: isAr ? 'مكتمل' : 'Completed',
+                                route: '${ad.fromCity} ← ${ad.toCity}',
+                                details: '${ad.timeText} · ${ad.description}',
+                                offersCount: 0,
+                                isAr: isAr,
+                                onDelete: () => boardProvider.deleteMyAd(ad.id),
+                              );
+                            },
+                          )),
               ),
             ],
           ),
@@ -142,6 +182,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
     required int offersCount,
     required bool isAr,
     VoidCallback? onTap,
+    VoidCallback? onDelete,
   }) {
     return InkWell(
       onTap: onTap,
@@ -160,7 +201,18 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(typeLabel, style: AppTypography.label(color: AppColors.textSecondary)),
-                MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'نشط' : 'Active'),
+                Row(
+                  children: [
+                    MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'نشط' : 'Active'),
+                    if (onDelete != null) ...[
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: onDelete,
+                        child: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.coral),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 6),
@@ -170,8 +222,8 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
             const SizedBox(height: 10),
             Text(
               offersCount > 0
-                  ? (isAr ? '$offersCount عروض جديدة' : '$offersCount new offers available')
-                  : (isAr ? 'بدون عروض لسه' : 'Waiting for driver offers'),
+                  ? (isAr ? '$offersCount عروض جديدة (اضغط للعرض)' : '$offersCount new offers available')
+                  : (isAr ? 'مكتمل' : 'Completed'),
               style: TextStyle(
                 color: offersCount > 0 ? AppColors.teal : AppColors.textSecondary,
                 fontWeight: FontWeight.bold,
@@ -279,7 +331,14 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                 MashwarButton(
                   text: isAr ? 'اتصل بمحمد' : 'Call Mohamed',
                   icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 18),
-                  onPressed: () {},
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(isAr ? 'جاري الاتصال بمحمد سعيد على 0100 123 4567...' : 'Calling Mohamed at 0100 123 4567...'),
+                        backgroundColor: AppColors.teal,
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 10),
                 TextButton(
@@ -292,6 +351,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
         ),
       );
     }
+
 
     return Scaffold(
       backgroundColor: Colors.white,

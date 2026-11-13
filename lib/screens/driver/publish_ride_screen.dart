@@ -5,7 +5,11 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
+import '../../state/auth_provider.dart';
+import '../../state/rides_provider.dart';
 import '../../state/settings_provider.dart';
+import '../home/city_search_modal.dart';
+import '../home/date_time_picker_sheet.dart';
 
 class PublishRideScreen extends StatefulWidget {
   const PublishRideScreen({super.key});
@@ -50,6 +54,49 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
     super.dispose();
   }
 
+  Future<void> _selectCity({required bool isFrom}) async {
+    final isAr = context.read<SettingsProvider>().isArabic;
+    final selected = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => CitySearchModal(
+          title: isFrom
+              ? (isAr ? 'نقطة الانطلاق' : 'Departure City')
+              : (isAr ? 'نقطة الوصول' : 'Destination City'),
+        ),
+      ),
+    );
+    if (selected != null && mounted) {
+      setState(() {
+        if (isFrom) {
+          _fromCity = selected;
+        } else {
+          _toCity = selected;
+        }
+        _step1Error = null;
+      });
+    }
+  }
+
+  Future<void> _selectDateTime() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => DateTimePickerSheet(
+        selectedDay: 'الجمعة 6',
+        selectedTime: 'صباحاً 5-12',
+        onApply: (day, time) {
+          if (mounted) {
+            setState(() {
+              _date = '$day · $time';
+            });
+          }
+        },
+      ),
+    );
+  }
+
   void _nextStep(bool isAr) {
     if (_currentStep == 1) {
       if (_fromCity == _toCity) {
@@ -77,6 +124,31 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
     } else if (_currentStep == 3) {
       setState(() => _currentStep = 4);
     } else if (_currentStep == 4) {
+      final auth = context.read<AuthProvider>();
+      final rides = context.read<RidesProvider>();
+      final price = int.tryParse(_priceController.text) ?? 120;
+      final pPrice = int.tryParse(_smallParcelPrice.text) ?? 40;
+      final parts = _date.split('·');
+      final datePart = parts.isNotEmpty ? parts.first.trim() : _date;
+      final timePart = parts.length > 1 ? parts.last.trim() : '7:30 ص';
+
+      rides.publishRide(
+        driverName: auth.user.fullName,
+        driverCar: auth.driverFormattedCar,
+        driverPhone: auth.user.phone,
+        fromCity: _fromCity,
+        toCity: _toCity,
+        pickupPoint: 'مدخل $_fromCity الرئيسي',
+        dropoffPoint: 'محطة $_toCity المركزية',
+        departureTime: timePart,
+        departureDate: datePart,
+        availableSeats: _seatsCount,
+        pricePerSeat: price,
+        acceptsParcels: _acceptParcels,
+        parcelPrice: pPrice,
+        isLadiesOnly: _ladiesOnly,
+        isInstantBooking: _instantBooking,
+      );
       setState(() => _isPublished = true);
     }
   }
@@ -229,9 +301,9 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
             _buildSectionCard(
               title: isAr ? 'خط السير' : 'Route',
               children: [
-                _buildRouteRow(isAr ? 'من' : 'From', _fromCity, onTap: () {}),
+                _buildRouteRow(isAr ? 'من' : 'From', _fromCity, onTap: () => _selectCity(isFrom: true)),
                 const Divider(height: 20),
-                _buildRouteRow(isAr ? 'إلى' : 'To', _toCity, onTap: () {}),
+                _buildRouteRow(isAr ? 'إلى' : 'To', _toCity, onTap: () => _selectCity(isFrom: false)),
                 const Divider(height: 20),
                 TextButton.icon(
                   onPressed: () {
@@ -253,12 +325,22 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
             _buildSectionCard(
               title: isAr ? 'موعد الانطلاق' : 'Departure Schedule',
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.navy),
-                    const SizedBox(width: 10),
-                    Text(_date, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  ],
+                InkWell(
+                  onTap: _selectDateTime,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.navy),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(_date, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                        const Icon(Icons.edit_calendar_rounded, size: 18, color: AppColors.teal),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Text(isAr ? 'مرونة الوقت' : 'Time Flexibility', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
@@ -281,6 +363,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
             ),
           ],
         );
+
 
       case 2:
         // Page 42: الخطوة 2 من 4

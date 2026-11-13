@@ -31,7 +31,11 @@ class ForceUpdateScreen extends StatelessWidget {
               const Spacer(flex: 4),
               MashwarButton(
                 text: 'تحديث الآن',
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('جاري فتح متجر التطبيقات لتحديث مشوار...')),
+                  );
+                },
               ),
               const SizedBox(height: AppDimens.space24),
             ],
@@ -69,7 +73,11 @@ class MaintenanceScreen extends StatelessWidget {
               MashwarButton(
                 text: 'حاول تاني',
                 variant: MashwarButtonVariant.secondary,
-                onPressed: () {},
+                onPressed: () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  }
+                },
               ),
               const SizedBox(height: AppDimens.space24),
             ],
@@ -113,7 +121,11 @@ class OfflineScreen extends StatelessWidget {
               const Spacer(flex: 4),
               MashwarButton(
                 text: 'حاول تاني',
-                onPressed: onRetry ?? () {},
+                onPressed: onRetry ?? () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  }
+                },
               ),
               const SizedBox(height: AppDimens.space24),
             ],
@@ -152,13 +164,21 @@ class GeneralErrorScreen extends StatelessWidget {
               const Spacer(flex: 4),
               MashwarButton(
                 text: 'حاول تاني',
-                onPressed: onRetry ?? () {},
+                onPressed: onRetry ?? () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  }
+                },
               ),
               const SizedBox(height: 12),
               MashwarButton(
                 text: 'تواصل مع الدعم',
                 variant: MashwarButtonVariant.secondary,
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('جاري فتح محادثة الدعم الفني المباشر...')),
+                  );
+                },
               ),
               const SizedBox(height: AppDimens.space24),
             ],

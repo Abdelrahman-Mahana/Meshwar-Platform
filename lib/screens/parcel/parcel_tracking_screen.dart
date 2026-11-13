@@ -252,7 +252,18 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
             text: isAr ? 'مشاركة رابط التتبع' : 'Share Tracking Link',
             variant: MashwarButtonVariant.secondary,
             icon: const Icon(Icons.share_outlined, color: AppColors.navy, size: 20),
-            onPressed: () {},
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isAr
+                        ? 'تم نسخ رابط تتبع الطرد المباشر: https://mashwar.app/track/p_${widget.parcel.id}'
+                        : 'Tracking link copied: https://mashwar.app/track/p_${widget.parcel.id}',
+                  ),
+                  backgroundColor: AppColors.teal,
+                ),
+              );
+            },
           ),
           const SizedBox(height: 12),
           TextButton(

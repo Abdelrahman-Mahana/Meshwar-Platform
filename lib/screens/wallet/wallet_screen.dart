@@ -16,40 +16,106 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
-  final List<Map<String, dynamic>> _transactions = [
-    {
-      'title': 'حجز مقعد: القاهرة ← طنطا',
-      'titleEn': 'Seat Booking: Cairo → Tanta',
-      'date': 'اليوم، 10:30 ص',
-      'dateEn': 'Today, 10:30 AM',
-      'amount': -65.0,
-      'isRide': true,
-    },
-    {
-      'title': 'شحن رصيد عبر إنستاباي InstaPay',
-      'titleEn': 'Deposit via InstaPay IPN',
-      'date': '5 نوفمبر، 4:15 م',
-      'dateEn': 'Nov 5, 4:15 PM',
-      'amount': 200.0,
-      'isRide': false,
-    },
-    {
-      'title': 'توصيل طرد: كفر الشيخ ← الإسكندرية',
-      'titleEn': 'Parcel Delivery: Kafr El-Sheikh → Alex',
-      'date': '3 نوفمبر، 2:00 م',
-      'dateEn': 'Nov 3, 2:00 PM',
-      'amount': 120.0,
-      'isRide': false,
-    },
-    {
-      'title': 'استرداد إلغاء رحلة المنصورة',
-      'titleEn': 'Refund: Mansoura Ride Cancelled',
-      'date': '1 نوفمبر، 9:00 ص',
-      'dateEn': 'Nov 1, 9:00 AM',
-      'amount': 75.0,
-      'isRide': true,
-    },
-  ];
+  void _showWithdrawSheet(BuildContext context) {
+    final settings = context.read<SettingsProvider>();
+    final auth = context.read<AuthProvider>();
+    final isAr = settings.isArabic;
+    final TextEditingController amountController = TextEditingController(text: '100');
+    final TextEditingController targetController = TextEditingController(text: auth.user.phone);
+    String selectedChannel = 'InstaPay (IPN)';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimens.radiusCard)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: AppDimens.space24,
+                right: AppDimens.space24,
+                top: AppDimens.space24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + AppDimens.space24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAr ? 'سحب رصيد إلى حسابك' : 'Withdraw Wallet Balance',
+                    style: AppTypography.title(),
+                  ),
+                  const SizedBox(height: AppDimens.space8),
+                  Text(
+                    isAr
+                        ? 'الرصيد المتاح للسحب: ${auth.user.walletBalance.toStringAsFixed(0)} ج.م'
+                        : 'Available: ${auth.user.walletBalance.toStringAsFixed(0)} EGP',
+                    style: AppTypography.bodySecondary(),
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                  Wrap(
+                    spacing: 8,
+                    children: ['InstaPay (IPN)', 'Vodafone Cash'].map((channel) {
+                      final isSel = selectedChannel == channel;
+                      return ChoiceChip(
+                        label: Text(channel),
+                        selected: isSel,
+                        selectedColor: AppColors.tealSurface,
+                        onSelected: (_) => setSheetState(() => selectedChannel = channel),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: AppDimens.space12),
+                  TextField(
+                    controller: amountController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: isAr ? 'المبلغ (ج.م)' : 'Amount (EGP)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space12),
+                  TextField(
+                    controller: targetController,
+                    decoration: InputDecoration(
+                      labelText: isAr ? 'رقم المحفظة أو عنوان InstaPay' : 'Wallet Number or IPA',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space20),
+                  MashwarButton(
+                    text: isAr ? 'تأكيد طلب السحب الفوري' : 'Confirm Withdrawal',
+                    onPressed: () {
+                      final amount = double.tryParse(amountController.text.trim()) ?? 0;
+                      final ok = auth.withdrawWalletFunds(
+                        amount: amount,
+                        destinationAr: '$selectedChannel (${targetController.text.trim()})',
+                        destinationEn: '$selectedChannel (${targetController.text.trim()})',
+                      );
+                      Navigator.of(ctx).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            ok
+                                ? (isAr ? 'تم تحويل $amount ج.م بنجاح عبر $selectedChannel' : 'Withdrawn $amount EGP')
+                                : (isAr ? 'الرصيد غير كافٍ لإتمام عملية السحب' : 'Insufficient wallet balance'),
+                          ),
+                          backgroundColor: ok ? AppColors.teal : AppColors.danger,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
 
   void _showAddFundsSheet(BuildContext context) {
     final settings = context.read<SettingsProvider>();
@@ -147,8 +213,11 @@ class _WalletScreenState extends State<WalletScreen> {
                       text: isAr ? 'تأكيد الشحن بمبلغ $selectedAmount ج.م' : 'Confirm Deposit of $selectedAmount EGP',
                       onPressed: () {
                         final auth = context.read<AuthProvider>();
-                        final newBalance = auth.user.walletBalance + selectedAmount;
-                        auth.updateWalletBalance(newBalance);
+                        auth.depositWalletFunds(
+                          amount: selectedAmount.toDouble(),
+                          methodAr: 'إنستاباي InstaPay',
+                          methodEn: 'InstaPay IPN',
+                        );
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -295,13 +364,7 @@ class _WalletScreenState extends State<WalletScreen> {
                               isAr ? 'سحب رصيد' : 'Withdraw',
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(isAr ? 'يمكنك سحب أرباحك إلى حسابك البنكي أو محفظتك خلال 24 ساعة' : 'Payout will be sent within 24 hours'),
-                                ),
-                              );
-                            },
+                            onPressed: () => _showWithdrawSheet(context),
                           ),
                         ),
                       ],
@@ -332,7 +395,8 @@ class _WalletScreenState extends State<WalletScreen> {
                       iconColor: const Color(0xFF6A1B9A),
                       title: isAr ? 'إنستاباي InstaPay (IPN)' : 'InstaPay (IPN)',
                       subtitle: isAr ? 'تحويل بنكي فوري بدون مصاريف إضافية' : 'Instant free bank transfer',
-                      isDefault: true,
+                      isDefault: auth.selectedPaymentMethod == 'instapay',
+                      onTap: () => auth.setSelectedPaymentMethod('instapay'),
                     ),
                     const Divider(height: 1, color: AppColors.borderDisabled),
                     _buildPaymentTile(
@@ -340,7 +404,8 @@ class _WalletScreenState extends State<WalletScreen> {
                       iconColor: const Color(0xFFE53935),
                       title: isAr ? 'فودافون كاش والمحافظ الذكية' : 'Vodafone Cash & Mobile Wallets',
                       subtitle: isAr ? 'فودافون، أورنج، اتصالات، وي باي' : 'Vodafone, Orange, Etisalat, WE Pay',
-                      isDefault: false,
+                      isDefault: auth.selectedPaymentMethod == 'vodafone_cash',
+                      onTap: () => auth.setSelectedPaymentMethod('vodafone_cash'),
                     ),
                     const Divider(height: 1, color: AppColors.borderDisabled),
                     _buildPaymentTile(
@@ -348,7 +413,8 @@ class _WalletScreenState extends State<WalletScreen> {
                       iconColor: AppColors.teal,
                       title: isAr ? 'بطاقات ميزة والفيزا والماستركارد' : 'Meeza & Bank Cards',
                       subtitle: isAr ? 'دفع آمن بالبطاقات الائتمانية والخصم المباشر' : 'Debit/Credit & Meeza cards',
-                      isDefault: false,
+                      isDefault: auth.selectedPaymentMethod == 'meeza_card',
+                      onTap: () => auth.setSelectedPaymentMethod('meeza_card'),
                     ),
                     const Divider(height: 1, color: AppColors.borderDisabled),
                     _buildPaymentTile(
@@ -356,7 +422,8 @@ class _WalletScreenState extends State<WalletScreen> {
                       iconColor: AppColors.gold,
                       title: isAr ? 'الدفع كاش نقداً' : 'Cash upon meeting',
                       subtitle: isAr ? 'دفع قيمة المقعد أو شحن الطرد باليد للسائق' : 'Pay in cash directly to the driver',
-                      isDefault: false,
+                      isDefault: auth.selectedPaymentMethod == 'cash',
+                      onTap: () => auth.setSelectedPaymentMethod('cash'),
                     ),
                   ],
                 ),
@@ -380,10 +447,10 @@ class _WalletScreenState extends State<WalletScreen> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _transactions.length,
+                  itemCount: auth.walletTransactions.length,
                   separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderDisabled),
                   itemBuilder: (context, index) {
-                    final tx = _transactions[index];
+                    final tx = auth.walletTransactions[index];
                     final isPositive = (tx['amount'] as double) > 0;
                     return ListTile(
                       leading: Container(
@@ -433,8 +500,10 @@ class _WalletScreenState extends State<WalletScreen> {
     required String title,
     required String subtitle,
     required bool isDefault,
+    VoidCallback? onTap,
   }) {
     return ListTile(
+      onTap: onTap,
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(

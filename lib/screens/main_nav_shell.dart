@@ -31,6 +31,8 @@ import 'driver/driver_rides_management_screens.dart';
 import 'driver/driver_onboarding_screens.dart';
 import 'safety/safety_screens.dart';
 import 'account/account_extra_screens.dart';
+import 'account/legal_and_backend_screens.dart';
+import 'admin/admin_shell.dart';
 import 'board/board_extra_screens.dart';
 
 class MainNavShell extends StatefulWidget {
@@ -205,6 +207,27 @@ class _MainNavShellState extends State<MainNavShell> {
     return ListView(
       padding: const EdgeInsets.all(AppDimens.space16),
       children: [
+        // Dynamically booked rides from RidesProvider
+        ...rides.bookedRides.map(
+          (bookedRide) => Padding(
+            padding: const EdgeInsets.only(bottom: AppDimens.space12),
+            child: _buildTripCard(
+              context: context,
+              route: context.trRoute('${bookedRide.fromCity} ← ${bookedRide.toCity}'),
+              dateText: '${context.trDate(bookedRide.departureDate)}، ${bookedRide.departureTime}',
+              driverName: bookedRide.driverName,
+              badgeText: isAr ? 'حجز جديد' : 'New Booking',
+              badgeType: BadgeType.confirmed,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ActiveTripScreen(ride: bookedRide),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
         // Card 1: مؤكد
         _buildTripCard(
           context: context,
@@ -455,42 +478,52 @@ class _MainNavShellState extends State<MainNavShell> {
     return ListView(
       padding: const EdgeInsets.all(AppDimens.space16),
       children: [
-        // Parcel Card 1: في الطريق
-        _buildParcelCard(
-          context: context,
-          route: context.trRoute('كفر الشيخ ← القاهرة'),
-          descText: isAr ? 'أوراق رسمية · مع السائق محمد سعيد' : 'Documents · With driver Mohamed Said',
-          badgeText: isAr ? 'في الطريق' : 'In Transit',
-          badgeType: BadgeType.confirmed,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ParcelTrackingScreen(
-                  parcel: parcels.currentTrackingParcel,
-                ),
-              ),
-            );
-          },
-          actionButton: OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.teal,
-              side: const BorderSide(color: AppColors.teal),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-            label: Text(isAr ? 'محادثة الناقل' : 'Chat Carrier'),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ChatScreen(
-                    driverName: 'محمد سعيد',
-                    driverCar: isAr ? 'توصيل طرد كفر الشيخ ← القاهرة' : 'Parcel: Kafr El-Sheikh → Cairo',
-                    tripRoute: isAr ? 'كود الاستلام: 4821' : 'Pickup OTP: 4821',
+        ...parcels.parcels.map(
+          (parcelItem) => Padding(
+            padding: const EdgeInsets.only(bottom: AppDimens.space12),
+            child: _buildParcelCard(
+              context: context,
+              route: context.trRoute(parcelItem.route.split(' · ').first),
+              descText: isAr
+                  ? '${parcelItem.description} · مع السائق ${parcelItem.driverName}'
+                  : '${parcelItem.description} · With driver ${parcelItem.driverName}',
+              badgeText: isAr ? 'في الطريق' : 'In Transit',
+              badgeType: BadgeType.confirmed,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ParcelTrackingScreen(
+                      parcel: parcelItem,
+                    ),
                   ),
+                );
+              },
+              actionButton: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.teal,
+                  side: const BorderSide(color: AppColors.teal),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-              );
-            },
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                label: Text(isAr ? 'محادثة الناقل' : 'Chat Carrier'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatScreen(
+                        driverName: parcelItem.driverName,
+                        driverCar: isAr
+                            ? 'توصيل طرد ${parcelItem.route}'
+                            : 'Parcel: ${parcelItem.route}',
+                        tripRoute: isAr
+                            ? 'كود الاستلام: ${parcelItem.pickupOtp}'
+                            : 'Pickup OTP: ${parcelItem.pickupOtp}',
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ],
@@ -953,11 +986,11 @@ class _MainNavShellState extends State<MainNavShell> {
 
               const SizedBox(height: AppDimens.space16),
 
-              // Group 4: الدعم والمساعدة (Support & FAQs)
+              // Group 4: الدعم والشروط وجاهزية الباك إند (Support, Legal & Backend Readiness)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  isAr ? 'الدعم والمساعدة' : 'Support & Help',
+                  isAr ? 'الدعم والشروط والباك إند' : 'Support, Legal & Backend API',
                   style: AppTypography.title().copyWith(fontSize: 14, color: AppColors.textSecondary),
                 ),
               ),
@@ -975,6 +1008,37 @@ class _MainNavShellState extends State<MainNavShell> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.borderDisabled),
+                    _buildMenuItem(
+                      icon: Icons.gavel_outlined,
+                      title: isAr ? 'الشروط القانونية وامتثال وزارة النقل' : 'Legal Terms & MoT Compliance',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const LegalComplianceScreen()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.borderDisabled),
+                    _buildMenuItem(
+                      icon: Icons.cloud_done_outlined,
+                      title: isAr ? 'جاهزية الباك إند وواجهات API' : 'Backend API & JSON Contracts',
+                      trailingText: 'REST v1',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const BackendReadinessScreen()),
+                        );
+                      },
+                    ),
+                    const Divider(height: 1, color: AppColors.borderDisabled),
+                    _buildMenuItem(
+                      icon: Icons.admin_panel_settings_outlined,
+                      title: isAr ? 'لوحة تحكم الإدارة (Admin Portal)' : 'Admin Control Panel',
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AdminShell()),
                         );
                       },
                     ),

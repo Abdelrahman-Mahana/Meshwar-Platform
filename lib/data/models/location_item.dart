@@ -10,5 +10,24 @@ class LocationItem {
     required this.typeLabel,
     this.isRecent = false,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'region': region,
+      'typeLabel': typeLabel,
+      'isRecent': isRecent,
+    };
+  }
+
+  factory LocationItem.fromJson(Map<String, dynamic> json) {
+    return LocationItem(
+      name: (json['name'] ?? '').toString(),
+      region: (json['region'] ?? '').toString(),
+      typeLabel: (json['typeLabel'] ?? 'مدينة').toString(),
+      isRecent: json['isRecent'] as bool? ?? false,
+    );
+  }
 }
+
 

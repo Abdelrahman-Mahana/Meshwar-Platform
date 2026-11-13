@@ -36,5 +36,30 @@ class RouteAlertModel {
       isExpired: isExpired ?? this.isExpired,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'fromCity': fromCity,
+      'toCity': toCity,
+      'dateRange': dateRange,
+      'category': category,
+      'isActive': isActive,
+      'isExpired': isExpired,
+    };
+  }
+
+  factory RouteAlertModel.fromJson(Map<String, dynamic> json) {
+    return RouteAlertModel(
+      id: (json['id'] ?? '').toString(),
+      fromCity: (json['fromCity'] ?? '').toString(),
+      toCity: (json['toCity'] ?? '').toString(),
+      dateRange: (json['dateRange'] ?? '').toString(),
+      category: (json['category'] ?? 'ركاب').toString(),
+      isActive: json['isActive'] as bool? ?? true,
+      isExpired: json['isExpired'] as bool? ?? false,
+    );
+  }
 }
+
 

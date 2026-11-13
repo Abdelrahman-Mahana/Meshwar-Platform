@@ -36,5 +36,19 @@ class ParcelsProvider extends ChangeNotifier {
     _parcels.insert(0, newParcel);
     notifyListeners();
   }
+
+  void updateParcelStatus(String id, ParcelStatusStep newStatus) {
+    final index = _parcels.indexWhere((p) => p.id == id);
+    if (index != -1) {
+      _parcels[index] = _parcels[index].copyWith(status: newStatus);
+      notifyListeners();
+    }
+  }
+
+  void cancelParcel(String id) {
+    _parcels.removeWhere((p) => p.id == id);
+    notifyListeners();
+  }
 }
+
 

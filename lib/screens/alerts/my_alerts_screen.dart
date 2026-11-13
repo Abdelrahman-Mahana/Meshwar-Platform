@@ -4,11 +4,157 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_chip.dart';
 import '../../core/localization/app_strings.dart';
 import '../../state/alerts_provider.dart';
 
 class MyAlertsScreen extends StatelessWidget {
   const MyAlertsScreen({super.key});
+
+  void _showAddAlertSheet(BuildContext context, bool isAr) {
+    String fromCity = 'كفر الشيخ';
+    String toCity = 'القاهرة';
+    String dateRange = 'الأحد القادم · صباحاً';
+    String category = 'ركاب';
+
+    final cities = ['كفر الشيخ', 'القاهرة', 'طنطا', 'الإسكندرية', 'المنصورة', 'دمنهور'];
+    final dates = ['غداً · صباحاً', 'الجمعة القادمة', 'الأحد القادم · صباحاً', 'طوال الأسبوع'];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: AppDimens.space24,
+              right: AppDimens.space24,
+              top: AppDimens.space24,
+              bottom: MediaQuery.of(context).viewInsets.bottom + AppDimens.space24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  isAr ? 'إضافة تنبيه لمسار جديد' : 'Create Route Alert',
+                  style: AppTypography.title(),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isAr
+                      ? 'سنرسل لك إشعاراً فورياً بمجرد نشر رحلة تطابق مسارك'
+                      : 'We will notify you immediately when a matching trip is posted',
+                  style: AppTypography.bodySecondary(),
+                ),
+                const SizedBox(height: 16),
+
+                Text(isAr ? 'من مدينة' : 'From City', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: cities.map((c) {
+                    return MashwarChip(
+                      label: context.trCity(c),
+                      isSelected: fromCity == c,
+                      onTap: () => setSheetState(() => fromCity = c),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+
+                Text(isAr ? 'إلى مدينة' : 'To City', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: cities.map((c) {
+                    return MashwarChip(
+                      label: context.trCity(c),
+                      isSelected: toCity == c,
+                      onTap: () => setSheetState(() => toCity = c),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+
+                Text(isAr ? 'الموعد المفضل' : 'Preferred Time', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: dates.map((d) {
+                    return MashwarChip(
+                      label: d,
+                      isSelected: dateRange == d,
+                      onTap: () => setSheetState(() => dateRange = d),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
+
+                Text(isAr ? 'نوع التنبيه' : 'Alert Type', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: MashwarChip(
+                        label: isAr ? 'مقاعد ركاب' : 'Passenger Seats',
+                        isSelected: category == 'ركاب',
+                        onTap: () => setSheetState(() => category = 'ركاب'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: MashwarChip(
+                        label: isAr ? 'توصيل طرد' : 'Parcel Delivery',
+                        isSelected: category == 'طرد',
+                        onTap: () => setSheetState(() => category = 'طرد'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                MashwarButton(
+                  text: isAr ? 'حفظ وتفعيل التنبيه' : 'Save & Activate Alert',
+                  onPressed: () {
+                    if (fromCity == toCity) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(isAr ? 'يرجى اختيار مدينتين مختلفتين' : 'Please select two different cities'),
+                          backgroundColor: AppColors.coral,
+                        ),
+                      );
+                      return;
+                    }
+                    context.read<AlertsProvider>().addAlert(
+                          fromCity: fromCity,
+                          toCity: toCity,
+                          dateRange: dateRange,
+                          category: category,
+                        );
+                    Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(isAr ? 'تم تفعيل تنبيه المسار بنجاح' : 'Route alert created and activated'),
+                        backgroundColor: AppColors.teal,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +259,7 @@ class MyAlertsScreen extends StatelessWidget {
                     ),
                     MashwarButton(
                       text: isAr ? '+ إضافة تنبيه لمسار جديد' : '+ Add New Route Alert',
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => _showAddAlertSheet(context, isAr),
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -141,8 +287,8 @@ class MyAlertsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             MashwarButton(
-              text: isAr ? 'ابحث عن رحلة' : 'Search for a ride',
-              onPressed: () => Navigator.of(context).pop(),
+              text: isAr ? '+ إضافة تنبيه لمسار جديد' : '+ Add New Route Alert',
+              onPressed: () => _showAddAlertSheet(context, isAr),
             ),
           ],
         ),
@@ -150,3 +296,4 @@ class MyAlertsScreen extends StatelessWidget {
     );
   }
 }
+

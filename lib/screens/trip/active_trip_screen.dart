@@ -11,6 +11,7 @@ import '../../state/rides_provider.dart';
 import '../booking/cancellation_sheet.dart';
 import '../chat/chat_screen.dart';
 import '../ride_details/widgets/ride_route_map_view.dart';
+import '../safety/safety_screens.dart';
 import 'rate_trip_screen.dart';
 
 enum TripTrackingPhase {
@@ -164,7 +165,13 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 text: isAr ? 'مشاركة الرحلة' : 'Share Ride',
                 variant: MashwarButtonVariant.secondary,
                 icon: const Icon(Icons.share_outlined, color: AppColors.navy, size: 20),
-                onPressed: () {},
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const ShareTripSheet(),
+                  );
+                },
               ),
               const SizedBox(height: 8),
               Center(
@@ -252,7 +259,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 16),
 
               // Emergency SOS Button (Page 29)
               Container(
@@ -274,7 +281,13 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const EmergencySosSheet(),
+                        );
+                      },
                       child: Text(isAr ? 'SOS طوارئ' : 'SOS', style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
                     ),
                   ],
@@ -288,7 +301,11 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                     child: MashwarButton(
                       text: isAr ? 'اتصل بالسائق' : 'Call Driver',
                       icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 20),
-                      onPressed: () {},
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(isAr ? 'الاتصال بـ ${widget.ride.driverPhone}' : 'Calling ${widget.ride.driverPhone}')),
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -393,8 +410,10 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(isAr ? 'تم فتح نافذة تقديم بلاغ' : 'Dispute report modal opened')),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ReportIssueScreen(),
+                    ),
                   );
                 },
                 child: Text(isAr ? 'أبلّغ عن مشكلة' : 'Report an issue', style: AppTypography.bodySecondary(color: AppColors.danger)),

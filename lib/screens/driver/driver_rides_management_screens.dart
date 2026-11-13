@@ -5,7 +5,10 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
+import '../../state/rides_provider.dart';
 import '../../state/settings_provider.dart';
+import '../board/board_extra_screens.dart';
+import '../safety/safety_screens.dart';
 import 'publish_ride_screen.dart';
 
 // Page 45: رحلاتي كسائق (Driver Rides Dashboard)
@@ -22,6 +25,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
+    final publishedRides = context.watch<RidesProvider>().myPublishedRides;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -99,19 +103,29 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                 child: _isUpcoming
                     ? ListView(
                         children: [
-                          _buildTripCard(
-                            route: isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo',
-                            date: isAr ? 'الجمعة 6 نوفمبر، 7:30 ص' : 'Fri Nov 6, 7:30 AM',
-                            stats: isAr ? '2 حجوزات · 1 طلب جديد' : '2 bookings · 1 new request',
-                            badge: isAr ? 'منشورة' : 'Active',
-                            badgeType: BadgeType.verified,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const DriverRequestsScreen()),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
+                          for (final ride in publishedRides) ...[
+                            _buildTripCard(
+                              route: '${ride.fromCity} ← ${ride.toCity}',
+                              date: '${ride.departureDate}، ${ride.departureTime}',
+                              stats: isAr
+                                  ? '${ride.remainingSeats} مقاعد متاحة · ${ride.pricePerSeat} ج/مقعد'
+                                  : '${ride.remainingSeats} seats left · ${ride.pricePerSeat} EGP/seat',
+                              badge: isAr ? 'منشورة' : 'Active',
+                              badgeType: BadgeType.verified,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const DriverRequestsScreen()),
+                                );
+                              },
+                              onReschedule: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(builder: (_) => const RescheduleRideScreen()),
+                                );
+                              },
+                              isAr: isAr,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                           _buildTripCard(
                             route: isAr ? 'طنطا ← الإسكندرية' : 'Tanta → Alexandria',
                             date: isAr ? 'السبت 7 نوفمبر، 9:00 ص' : 'Sat Nov 7, 9:00 AM',
@@ -123,6 +137,12 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                                 MaterialPageRoute(builder: (_) => const DriverRequestsScreen()),
                               );
                             },
+                            onReschedule: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (_) => const RescheduleRideScreen()),
+                              );
+                            },
+                            isAr: isAr,
                           ),
                         ],
                       )
@@ -134,6 +154,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                             stats: isAr ? '3 ركاب · طردين' : '3 passengers · 2 parcels',
                             badge: isAr ? 'مكتملة' : 'Completed',
                             badgeType: BadgeType.verified,
+                            isAr: isAr,
                           ),
                           const SizedBox(height: 12),
                           _buildTripCard(
@@ -142,6 +163,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                             stats: isAr ? 'أُلغيت' : 'Cancelled',
                             badge: isAr ? 'ملغاة' : 'Cancelled',
                             badgeType: BadgeType.rejected,
+                            isAr: isAr,
                           ),
                         ],
                       ),
@@ -170,7 +192,9 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
     required String stats,
     required String badge,
     required BadgeType badgeType,
+    required bool isAr,
     VoidCallback? onTap,
+    VoidCallback? onReschedule,
   }) {
     return InkWell(
       onTap: onTap,
@@ -195,7 +219,21 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
             const SizedBox(height: 6),
             Text(date, style: AppTypography.bodySecondary()),
             const SizedBox(height: 6),
-            Text(stats, style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 13)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(stats, style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 13)),
+                if (onReschedule != null)
+                  TextButton.icon(
+                    onPressed: onReschedule,
+                    icon: const Icon(Icons.schedule_rounded, size: 15, color: AppColors.navy),
+                    label: Text(
+                      isAr ? 'تعديل الموعد' : 'Reschedule',
+                      style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
@@ -247,6 +285,18 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
     },
   ];
 
+  void _declineRequest(String id, String passengerName, bool isAr) {
+    setState(() {
+      _rideRequests.removeWhere((r) => r['id'] == id);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isAr ? 'تم رفض طلب $passengerName' : 'Declined request from $passengerName'),
+        backgroundColor: AppColors.coral,
+      ),
+    );
+  }
+
   void _showPassengerDetails(BuildContext context, Map<String, dynamic> item) {
     final isAr = context.read<SettingsProvider>().isArabic;
     showModalBottomSheet(
@@ -284,7 +334,10 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
                   child: MashwarButton(
                     text: isAr ? 'رفض' : 'Decline',
                     variant: MashwarButtonVariant.danger,
-                    onPressed: () => Navigator.of(ctx).pop(),
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      _declineRequest(item['id'] as String, item['passenger'] as String, isAr);
+                    },
                   ),
                 ),
               ],
@@ -339,7 +392,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
                         foregroundColor: _tab == 0 ? Colors.white : AppColors.navy,
                       ),
                       onPressed: () => setState(() => _tab = 0),
-                      child: Text(isAr ? 'حجوزات (2)' : 'Bookings (2)'),
+                      child: Text(isAr ? 'حجوزات (${_rideRequests.length})' : 'Bookings (${_rideRequests.length})'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -350,7 +403,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
                         foregroundColor: _tab == 1 ? Colors.white : AppColors.navy,
                       ),
                       onPressed: () => setState(() => _tab = 1),
-                      child: Text(isAr ? 'طرود (1)' : 'Parcels (1)'),
+                      child: Text(isAr ? 'طرود (${_parcelRequests.length})' : 'Parcels (${_parcelRequests.length})'),
                     ),
                   ),
                 ],
@@ -359,60 +412,67 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
 
               Expanded(
                 child: _tab == 0
-                    ? ListView(
-                        children: _rideRequests.map((r) {
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                              border: Border.all(color: AppColors.borderDisabled),
+                    ? (_rideRequests.isEmpty
+                        ? Center(
+                            child: Text(
+                              isAr ? 'لا توجد طلبات حجز معلقة حالياً' : 'No pending booking requests',
+                              style: AppTypography.bodySecondary(),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(r['passenger'] as String, style: AppTypography.title().copyWith(fontSize: 16)),
-                                    MashwarBadge(type: BadgeType.newBadge, customLabel: isAr ? 'جديد' : 'New'),
-                                  ],
+                          )
+                        : ListView(
+                            children: _rideRequests.map((r) {
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                                  border: Border.all(color: AppColors.borderDisabled),
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  '${r['route']} · ${r['seats']} ${isAr ? "كرسي" : "seat"} · ${isAr ? "باقي" : "expires in"} ${r['timeLeft']}',
-                                  style: AppTypography.bodySecondary(),
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${r['price']} ${isAr ? "ج" : "EGP"}',
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal),
-                                    ),
                                     Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
-                                        OutlinedButton(
-                                          onPressed: () {},
-                                          child: Text(isAr ? 'رفض' : 'Decline'),
+                                        Text(r['passenger'] as String, style: AppTypography.title().copyWith(fontSize: 16)),
+                                        MashwarBadge(type: BadgeType.newBadge, customLabel: isAr ? 'جديد' : 'New'),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${r['route']} · ${r['seats']} ${isAr ? "كرسي" : "seat"} · ${isAr ? "باقي" : "expires in"} ${r['timeLeft']}',
+                                      style: AppTypography.bodySecondary(),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          '${r['price']} ${isAr ? "ج" : "EGP"}',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal),
                                         ),
-                                        const SizedBox(width: 8),
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
-                                          onPressed: () => _showPassengerDetails(context, r),
-                                          child: Text(isAr ? 'قبول' : 'Accept'),
+                                        Row(
+                                          children: [
+                                            OutlinedButton(
+                                              onPressed: () => _declineRequest(r['id'] as String, r['passenger'] as String, isAr),
+                                              child: Text(isAr ? 'رفض' : 'Decline'),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
+                                              onPressed: () => _showPassengerDetails(context, r),
+                                              child: Text(isAr ? 'قبول' : 'Accept'),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      )
+                              );
+                            }).toList(),
+                          ))
                     : ListView(
                         children: _parcelRequests.map((p) {
                           return Container(
@@ -420,6 +480,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                              border: Border.all(color: AppColors.borderDisabled),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -514,6 +575,15 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
     );
   }
 
+  void _callPassenger(BuildContext context, String name, bool isAr) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isAr ? 'جاري الاتصال بالراكب $name...' : 'Calling passenger $name...'),
+        backgroundColor: AppColors.teal,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
@@ -543,7 +613,7 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
                 title: 'ياسمين',
                 subtitle: isAr ? 'محطة طنطا' : 'Tanta Station',
                 icon: Icons.person_rounded,
-                onCall: () {},
+                onCall: () => _callPassenger(context, 'ياسمين', isAr),
                 onNoShow: () => _reportNoShow(context, 'ياسمين'),
                 isAr: isAr,
               ),
@@ -552,7 +622,7 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
                 title: 'كريم',
                 subtitle: isAr ? 'مدخل كفر الشيخ' : 'Kafr El-Sheikh Entrance',
                 icon: Icons.person_rounded,
-                onCall: () {},
+                onCall: () => _callPassenger(context, 'كريم', isAr),
                 onNoShow: () => _reportNoShow(context, 'كريم'),
                 isAr: isAr,
               ),
@@ -831,7 +901,14 @@ class _DriverInTransitScreenState extends State<DriverInTransitScreen> {
                   side: const BorderSide(color: AppColors.coral),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (_) => const EmergencySosSheet(),
+                  );
+                },
                 child: Text(isAr ? 'طوارئ SOS' : 'Emergency SOS', style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: AppDimens.space16),
@@ -842,3 +919,4 @@ class _DriverInTransitScreenState extends State<DriverInTransitScreen> {
     );
   }
 }
+
