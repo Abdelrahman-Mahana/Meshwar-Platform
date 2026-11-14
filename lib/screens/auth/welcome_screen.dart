@@ -384,39 +384,19 @@ class WelcomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Row: Geographic Context + Language Switch
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.explore_outlined, size: 16, color: AppColors.teal),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          isAr ? 'مصر · 27 محافظة' : 'Egypt · 27 Governorates',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _buildLanguageButton(settings, isAr),
-              ],
+            // Top Row: Language Switch
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: _buildLanguageButton(settings, isAr),
             ),
 
             const SizedBox(height: AppDimens.space24),
 
-            // Center Hero Brand Identity & 3 Architectural Value Columns
+            // Center Hero Brand Identity
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const BrandLogo(fontSize: 44),
+                const BrandLogo(fontSize: 46),
                 const SizedBox(height: AppDimens.space12),
                 Text(
                   isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
@@ -425,31 +405,6 @@ class WelcomeScreen extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                   ),
-                ),
-                const SizedBox(height: AppDimens.space24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildCompactValueColumn(
-                        icon: Icons.directions_car_outlined,
-                        label: isAr ? 'سفر بين المحافظات' : 'Intercity Rides',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildCompactValueColumn(
-                        icon: Icons.verified_user_outlined,
-                        label: isAr ? 'هوية موثقة' : 'Verified ID',
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildCompactValueColumn(
-                        icon: Icons.inventory_2_outlined,
-                        label: isAr ? 'شحن طرود آمن' : 'OTP Parcels',
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -474,30 +429,6 @@ class WelcomeScreen extends StatelessWidget {
         style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.bold),
       ),
       onPressed: () => settings.toggleLanguage(),
-    );
-  }
-
-  Widget _buildCompactValueColumn({required IconData icon, required String label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.teal, size: 20),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700, fontSize: 11),
-          ),
-        ],
-      ),
     );
   }
 
