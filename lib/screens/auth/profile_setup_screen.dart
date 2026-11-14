@@ -524,19 +524,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                         ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                isAr
-                                    ? 'بالمتابعة، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بمشوار.'
-                                    : 'By continuing, you agree to MASHWAR Terms of Service & Privacy Policy.',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Color(0xFF8E8E93),
-                                  height: 1.35,
-                                  fontFamily: 'Cairo',
-                                ),
-                              ),
                             ],
                           ),
                         ),

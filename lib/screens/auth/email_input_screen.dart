@@ -255,11 +255,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
 
                             // Helper / Error
                             _buildHelperOrError(hasError: hasError, isAr: isAr),
-                            const SizedBox(height: 12),
-
-                            // Demo Chip
-                            _buildDemoChip(isAr),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
 
                             // Submit Button
                             MashwarButton(
@@ -308,8 +304,6 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     bool hasError,
     BoxConstraints constraints,
   ) {
-    final isCompact = constraints.maxHeight <= 680;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.space24,
@@ -363,16 +357,6 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
 
                 // Helper text / Error text
                 _buildHelperOrError(hasError: hasError, isAr: isAr),
-                const SizedBox(height: 12),
-
-                // Demo Chip
-                _buildDemoChip(isAr),
-
-                if (!isCompact) ...[
-                  const SizedBox(height: 18),
-                  // Benefits Reassurance Card (Fills middle naturally with useful value)
-                  _buildBenefitsCard(isAr),
-                ],
               ],
             ),
 
@@ -406,18 +390,6 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                         decoration: TextDecoration.underline,
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Legal Disclaimer
-                Center(
-                  child: Text(
-                    isAr
-                        ? 'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية لمشوار'
-                        : 'By continuing, you agree to MASHWAR Terms & Privacy Policy',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
                   ),
                 ),
               ],
@@ -543,110 +515,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
         ],
       );
     }
-    return Row(
-      children: [
-        const Icon(Icons.verified_outlined, color: Color(0xFF64748B), size: 14),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            isAr
-                ? 'ندعم الإيميلات الشخصية والجامعية (@cu.edu.eg، @asu.edu.eg، إلخ)'
-                : 'Supports personal and student emails (@cu.edu.eg, etc.)',
-            style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 11),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDemoChip(bool isAr) {
-    return Align(
-      alignment: AlignmentDirectional.centerStart,
-      child: ActionChip(
-        backgroundColor: const Color(0xFFF1F5F9),
-        side: const BorderSide(color: Color(0xFFCBD5E1), width: 0.8),
-        avatar: const Icon(Icons.bolt_rounded, size: 14, color: AppColors.teal),
-        label: Text(
-          isAr ? 'تجربة سريعة: student@mashwar.eg' : 'Quick Demo: student@mashwar.eg',
-          style: AppTypography.label(color: AppColors.navy).copyWith(
-            fontWeight: FontWeight.w700,
-            fontSize: 11,
-          ),
-        ),
-        onPressed: () {
-          setState(() {
-            _emailController.text = 'student@mashwar.eg';
-            _errorText = null;
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildBenefitsCard(bool isAr) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.mark_email_read_outlined, color: AppColors.teal, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                isAr ? 'مزايا التسجيل بالبريد الإلكتروني' : 'Email Sign-in Benefits',
-                style: AppTypography.body(color: AppColors.navy).copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildBenefitPoint(
-            isAr
-                ? 'استلام فوري لإيصالات وفواتير الحجوزات والشحن.'
-                : 'Instant digital trip & parcel delivery receipts.',
-          ),
-          const SizedBox(height: 4),
-          _buildBenefitPoint(
-            isAr
-                ? 'توثيق الإيميل الجامعي لمجتمع سفر طلابي موثوق.'
-                : 'University email badge for trusted student travel.',
-          ),
-          const SizedBox(height: 4),
-          _buildBenefitPoint(
-            isAr
-                ? 'استرجاع فوري وسهل لحسابك ومحفظتك في أي وقت.'
-                : 'Fast account & wallet recovery whenever needed.',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBenefitPoint(String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 5),
-          child: Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 12),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTypography.label(color: const Color(0xFF475569)).copyWith(fontSize: 11),
-          ),
-        ),
-      ],
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildWideTrustCard({

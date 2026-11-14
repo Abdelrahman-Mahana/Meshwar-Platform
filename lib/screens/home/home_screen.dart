@@ -67,8 +67,6 @@ class HomeScreen extends StatelessWidget {
                                   _buildSearchCard(context, rides, isAr),
                                   const SizedBox(height: AppDimens.space24),
                                   _buildPopularRoutesSection(context, rides, isAr),
-                                  const SizedBox(height: AppDimens.space24),
-                                  _buildTrustGuaranteesStrip(isAr),
                                 ],
                               ),
                             ),
@@ -120,7 +118,6 @@ class HomeScreen extends StatelessWidget {
                               _buildMyAlertsSection(context, alerts, isAr),
                               const SizedBox(height: AppDimens.space20),
                             ],
-                            _buildTrustGuaranteesStrip(isAr),
                           ],
                         ),
 
@@ -599,71 +596,6 @@ class HomeScreen extends StatelessWidget {
           );
         }),
       ],
-    );
-  }
-
-  Widget _buildTrustGuaranteesStrip(bool isAr) {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildGuaranteeTile(
-            icon: Icons.verified_user_outlined,
-            title: isAr ? 'هوية موثقة' : 'ID Verified',
-            subtitle: isAr ? 'بالرقم القومي' : 'National ID',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildGuaranteeTile(
-            icon: Icons.payments_outlined,
-            title: isAr ? 'دفع مرن' : 'Flexible Pay',
-            subtitle: isAr ? 'كاش أو إنستاباي' : 'Cash or IPN',
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _buildGuaranteeTile(
-            icon: Icons.share_location_rounded,
-            title: isAr ? 'تتبع مباشر' : 'Live Share',
-            subtitle: isAr ? 'مشاركة المسار' : 'Trip Safety',
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGuaranteeTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 20, color: AppColors.teal),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w800, fontSize: 12),
-          ),
-          Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 10),
-          ),
-        ],
-      ),
     );
   }
 

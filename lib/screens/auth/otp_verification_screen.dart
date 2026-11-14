@@ -350,8 +350,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     bool isEmailMode,
     BoxConstraints constraints,
   ) {
-    final isCompact = constraints.maxHeight <= 680;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.space24,
@@ -412,12 +410,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
                 // Resend Section
                 _buildResendSection(auth, isEmailMode, isAr),
-
-                if (!isCompact) ...[
-                  const SizedBox(height: 18),
-                  // Security Reassurance Card (Fills middle naturally with useful value)
-                  _buildSecurityAdvisoryCard(isAr),
-                ],
               ],
             ),
 
@@ -579,72 +571,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 style: AppTypography.body(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-    );
-  }
-
-  Widget _buildSecurityAdvisoryCard(bool isAr) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.shield_outlined, color: AppColors.teal, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                isAr ? 'إرشادات أمان الحساب والسرية' : 'Security & Privacy Guidelines',
-                style: AppTypography.body(color: AppColors.navy).copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildAdvisoryPoint(
-            isAr
-                ? 'رمز التحقق صالح للاستخدام لمرة واحدة فقط لمدة 10 دقائق.'
-                : 'Passcode is valid for a single use for 10 minutes.',
-          ),
-          const SizedBox(height: 4),
-          _buildAdvisoryPoint(
-            isAr
-                ? 'لا تشارك هذا الرمز مطلقاً مع أي شخص حتى موظفي خدمة عملاء مشوار.'
-                : 'Never share this passcode with anyone, even MASHWAR support.',
-          ),
-          const SizedBox(height: 4),
-          _buildAdvisoryPoint(
-            isAr
-                ? 'إذا تأخر وصول الكود، تأكد من تغطية شبكة هاتفك أو راجع البريد غير الهام.'
-                : 'If delayed, verify network signal or check your junk/spam folder.',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdvisoryPoint(String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 5),
-          child: Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 12),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTypography.label(color: const Color(0xFF475569)).copyWith(fontSize: 11),
-          ),
-        ),
-      ],
     );
   }
 
