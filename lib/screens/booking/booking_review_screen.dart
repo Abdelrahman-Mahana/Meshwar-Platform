@@ -215,11 +215,15 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: AppTypography.label(color: AppColors.textSecondary)),
-        Text(
-          value,
-          style: isBold
-              ? AppTypography.body().copyWith(fontWeight: FontWeight.w700)
-              : AppTypography.body(),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: isBold
+                ? AppTypography.body().copyWith(fontWeight: FontWeight.w700)
+                : AppTypography.body(),
+          ),
         ),
       ],
     );

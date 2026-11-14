@@ -258,14 +258,14 @@ class _AdminShellState extends State<AdminShell> {
                 final icon = _menuIcons[index];
                 final canAccess = admin.canAccessMenu(index);
 
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFF1E3A58) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   child: Material(
-                    color: Colors.transparent,
+                    color: isSelected ? const Color(0xFF1E3A58) : Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    clipBehavior: Clip.antiAlias,
                     child: ListTile(
                       dense: true,
                       leading: Icon(

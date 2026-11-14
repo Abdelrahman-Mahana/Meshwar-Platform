@@ -28,89 +28,103 @@ class DriverOnboardingScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              // Icon Header
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    color: AppColors.goldSurface,
-                    shape: BoxShape.circle,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(vertical: AppDimens.space16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Icon Header
+                          Center(
+                            child: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: const BoxDecoration(
+                                color: AppColors.goldSurface,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.directions_car_filled_rounded, color: AppColors.navy, size: 40),
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.space20),
+
+                          // Title & Subtitle (Page 37)
+                          Text(
+                            isAr ? 'اكسب من كراسيك الفاضية' : 'Earn from your empty seats',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.largeTitle(),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            isAr
+                                ? 'انشر رحلاتك بين المحافظات وخد ركاب وطرود في طريقك.'
+                                : 'Publish intercity trips and take riders and parcels along your way.',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodySecondary(),
+                          ),
+                          const SizedBox(height: AppDimens.space24),
+
+                          // 3 Steps Card (Page 37)
+                          Container(
+                            padding: const EdgeInsets.all(AppDimens.space20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                              border: Border.all(color: AppColors.borderDisabled),
+                            ),
+                            child: Column(
+                              children: [
+                                _buildStepRow('1', isAr ? 'وثّق هويتك ورخصتك' : 'Verify ID & Driver License'),
+                                const Divider(height: 24, color: AppColors.sand),
+                                _buildStepRow('2', isAr ? 'انشر رحلتك وحدد سعرك' : 'Post trip & set price'),
+                                const Divider(height: 24, color: AppColors.sand),
+                                _buildStepRow('3', isAr ? 'استقبل الحجوزات والطرود' : 'Accept bookings & parcels'),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+                          Text(
+                            isAr ? 'المراجعة بتاخد لحد 24 ساعة.' : 'Verification review takes up to 24 hours.',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.label(color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: const Icon(Icons.directions_car_filled_rounded, color: AppColors.navy, size: 40),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space20),
 
-              // Title & Subtitle (Page 37)
-              Text(
-                isAr ? 'اكسب من كراسيك الفاضية' : 'Earn from your empty seats',
-                textAlign: TextAlign.center,
-                style: AppTypography.largeTitle(),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                isAr
-                    ? 'انشر رحلاتك بين المحافظات وخد ركاب وطرود في طريقك.'
-                    : 'Publish intercity trips and take riders and parcels along your way.',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
-              ),
-              const SizedBox(height: AppDimens.space32),
+                  const SizedBox(height: AppDimens.space12),
 
-              // 3 Steps Card (Page 37)
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Column(
-                  children: [
-                    _buildStepRow('1', isAr ? 'وثّق هويتك ورخصتك' : 'Verify ID & Driver License'),
-                    const Divider(height: 24, color: AppColors.sand),
-                    _buildStepRow('2', isAr ? 'انشر رحلتك وحدد سعرك' : 'Post trip & set price'),
-                    const Divider(height: 24, color: AppColors.sand),
-                    _buildStepRow('3', isAr ? 'استقبل الحجوزات والطرود' : 'Accept bookings & parcels'),
-                  ],
-                ),
+                  // CTA Buttons (Page 37)
+                  MashwarButton(
+                    text: isAr ? 'ابدأ التوثيق' : 'Start Verification',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const DriverVerificationStepsScreen()),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      isAr ? 'مش دلوقتي' : 'Not now',
+                      style: AppTypography.bodySecondary(color: AppColors.navy),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space12),
+                ],
               ),
-
-              const SizedBox(height: 12),
-              Text(
-                isAr ? 'المراجعة بتاخد لحد 24 ساعة.' : 'Verification review takes up to 24 hours.',
-                textAlign: TextAlign.center,
-                style: AppTypography.label(color: AppColors.textSecondary),
-              ),
-
-              const Spacer(flex: 2),
-
-              // CTA Buttons (Page 37)
-              MashwarButton(
-                text: isAr ? 'ابدأ التوثيق' : 'Start Verification',
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const DriverVerificationStepsScreen()),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  isAr ? 'مش دلوقتي' : 'Not now',
-                  style: AppTypography.bodySecondary(color: AppColors.navy),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space16),
-            ],
+            ),
           ),
         ),
       ),
@@ -197,17 +211,23 @@ class _DriverVerificationStepsScreenState extends State<DriverVerificationStepsS
               ),
               const Spacer(),
               // Camera target frame (Page 38)
-              Container(
-                width: 320,
-                height: 200,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.gold, width: 2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    isAr ? 'صوّر وجه الرخصة داخل الإطار' : 'Fit document inside frame',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 320),
+                  child: Container(
+                    width: double.infinity,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.gold, width: 2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        isAr ? 'صوّر وجه الرخصة داخل الإطار' : 'Fit document inside frame',
+                        style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -294,104 +314,121 @@ class _DriverVerificationStepsScreenState extends State<DriverVerificationStepsS
         title: Text(isAr ? 'توثيق السائق' : 'Driver Verification', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Progress subtitle (Page 38)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    isAr ? '$_completedSteps من 5 خطوات' : '$_completedSteps of 5 steps completed',
-                    style: AppTypography.title().copyWith(fontSize: 16),
-                  ),
-                  if (_isReady)
-                    MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'جاهز للإرسال' : 'Ready')
-                  else
-                    MashwarBadge(type: BadgeType.pending, customLabel: isAr ? 'مطلوب إكمال' : 'In Progress'),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                isAr ? 'هنراجع بياناتك خلال 24 ساعة بعد الإرسال' : 'We review your documents within 24 hours',
-                style: AppTypography.label(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: AppDimens.space20),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Progress subtitle (Page 38)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  isAr ? '$_completedSteps من 5 خطوات' : '$_completedSteps of 5 steps completed',
+                                  style: AppTypography.title().copyWith(fontSize: 16),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              if (_isReady)
+                                MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'جاهز للإرسال' : 'Ready')
+                              else
+                                MashwarBadge(type: BadgeType.pending, customLabel: isAr ? 'مطلوب إكمال' : 'In Progress'),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            isAr ? 'هنراجع بياناتك خلال 24 ساعة بعد الإرسال' : 'We review your documents within 24 hours',
+                            style: AppTypography.label(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: AppDimens.space20),
 
-              // Steps List (Page 38)
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Column(
-                  children: [
-                    _buildStepTile(
-                      isAr ? 'بطاقة الرقم القومي' : 'Egyptian National ID',
-                      isDone: true,
-                      isAr: isAr,
+                          // Steps List (Page 38)
+                          Material(
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                              side: const BorderSide(color: AppColors.borderDisabled),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Column(
+                              children: [
+                                _buildStepTile(
+                                  isAr ? 'بطاقة الرقم القومي' : 'Egyptian National ID',
+                                  isDone: true,
+                                  isAr: isAr,
+                                ),
+                                const Divider(height: 1),
+                                _buildStepTile(
+                                  isAr ? 'رخصة القيادة' : 'Driving License',
+                                  isDone: true,
+                                  isAr: isAr,
+                                ),
+                                const Divider(height: 1),
+                                _buildStepTile(
+                                  isAr ? 'رخصة السيارة' : 'Car License',
+                                  isDone: _completedSteps >= 3,
+                                  isAr: isAr,
+                                  onTap: _triggerCapture,
+                                ),
+                                const Divider(height: 1),
+                                _buildStepTile(
+                                  isAr ? 'صور ومواصفات السيارة' : 'Car Photos & Specs',
+                                  isDone: _completedSteps >= 4,
+                                  isAr: isAr,
+                                  onTap: () async {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(builder: (_) => const DriverCarDetailsScreen()),
+                                    );
+                                    if (mounted && _completedSteps < 4) {
+                                      setState(() => _completedSteps = 4);
+                                    }
+                                  },
+                                ),
+                                const Divider(height: 1),
+                                _buildStepTile(
+                                  isAr ? 'سيلفي للتحقق' : 'Verification Selfie',
+                                  isDone: _completedSteps >= 5,
+                                  isAr: isAr,
+                                  onTap: _triggerCapture,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const Divider(height: 1),
-                    _buildStepTile(
-                      isAr ? 'رخصة القيادة' : 'Driving License',
-                      isDone: true,
-                      isAr: isAr,
-                    ),
-                    const Divider(height: 1),
-                    _buildStepTile(
-                      isAr ? 'رخصة السيارة' : 'Car License',
-                      isDone: _completedSteps >= 3,
-                      isAr: isAr,
-                      onTap: _triggerCapture,
-                    ),
-                    const Divider(height: 1),
-                    _buildStepTile(
-                      isAr ? 'صور ومواصفات السيارة' : 'Car Photos & Specs',
-                      isDone: _completedSteps >= 4,
-                      isAr: isAr,
-                      onTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const DriverCarDetailsScreen()),
+                  ),
+
+                  const SizedBox(height: AppDimens.space16),
+
+                  // Primary Action (Page 38)
+                  if (_isReady) ...[
+                    MashwarButton(
+                      text: isAr ? 'إرسال للمراجعة' : 'Submit for Review',
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(builder: (_) => const DriverStatusScreen(statusType: DriverStatusType.underReview)),
                         );
-                        if (mounted && _completedSteps < 4) {
-                          setState(() => _completedSteps = 4);
-                        }
                       },
                     ),
-                    const Divider(height: 1),
-                    _buildStepTile(
-                      isAr ? 'سيلفي للتحقق' : 'Verification Selfie',
-                      isDone: _completedSteps >= 5,
-                      isAr: isAr,
-                      onTap: _triggerCapture,
+                  ] else ...[
+                    MashwarButton(
+                      text: isAr ? 'كمّل: رخصة السيارة' : 'Continue: Car License',
+                      onPressed: _triggerCapture,
                     ),
                   ],
-                ),
+                ],
               ),
-
-              const Spacer(),
-
-              // Primary Action (Page 38)
-              if (_isReady) ...[
-                MashwarButton(
-                  text: isAr ? 'إرسال للمراجعة' : 'Submit for Review',
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const DriverStatusScreen(statusType: DriverStatusType.underReview)),
-                    );
-                  },
-                ),
-              ] else ...[
-                MashwarButton(
-                  text: isAr ? 'كمّل: رخصة السيارة' : 'Continue: Car License',
-                  onPressed: _triggerCapture,
-                ),
-              ],
-              const SizedBox(height: AppDimens.space16),
-            ],
+            ),
           ),
         ),
       ),

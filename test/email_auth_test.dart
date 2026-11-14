@@ -104,7 +104,6 @@ void main() {
 
       expect(find.text('أدخل بريدك الإلكتروني'), findsOneWidget);
       expect(find.text('البريد الإلكتروني'), findsOneWidget);
-      expect(find.text('تجربة سريعة: student@mashwar.eg'), findsOneWidget);
       expect(find.text('المتابعة برقم الموبايل بدلاً من ذلك'), findsOneWidget);
       expect(find.widgetWithText(MashwarButton, 'إرسال الكود'), findsOneWidget);
     });
@@ -171,9 +170,8 @@ void main() {
       // Subtitle mentions the email
       expect(find.textContaining('user@mashwar.eg'), findsOneWidget);
 
-      // Fill demo code
-      final demoChip = find.text('تجربة سريعة: تعبئة الكود 482911');
-      await tester.tap(demoChip);
+      // Enter 6-digit OTP code
+      await tester.enterText(find.byType(TextField), '482911');
       await tester.pumpAndSettle();
 
       // Navigated to ProfileSetupScreen

@@ -64,13 +64,6 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     }
   }
 
-  void _fillDemoEmail(String demo) {
-    setState(() {
-      _emailController.text = demo;
-      _errorText = null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -89,218 +82,237 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppDimens.space16),
-
-              // Title
-              Text(
-                isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
-                style: AppTypography.largeTitle(),
-              ),
-              const SizedBox(height: AppDimens.space8),
-
-              // Subtitle
-              Text(
-                isAr
-                    ? 'هنبعتلك كود تأكيد لتسجيل الدخول أو إنشاء حساب'
-                    : 'We will send you a verification code to log in or create an account',
-                style: AppTypography.bodySecondary(),
-              ),
-              const SizedBox(height: AppDimens.space24),
-
-              // Label
-              Text(
-                isAr ? 'البريد الإلكتروني' : 'Email Address',
-                style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: AppDimens.space8),
-
-              // Uber / inDrive Styled Email Input Card
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 160),
-                height: 56,
-                decoration: BoxDecoration(
-                  color: _isFocused ? Colors.white : const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: hasError
-                        ? AppColors.danger
-                        : (_isFocused ? AppColors.navy : const Color(0xFFE5E5EA)),
-                    width: hasError ? 1.4 : (_isFocused ? 1.8 : 0.8),
-                  ),
-                  boxShadow: _isFocused && !hasError
-                      ? [
-                          BoxShadow(
-                            color: AppColors.navy.withValues(alpha: 0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : null,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 760;
+            return Container(
+              color: isWide ? AppColors.sand : Colors.white,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.space24,
+                  vertical: AppDimens.space16,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.mail_outline_rounded,
-                      color: AppColors.navy,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
+                  ),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 500),
+                      child: Container(
+                        padding: isWide
+                            ? const EdgeInsets.all(AppDimens.space24)
+                            : EdgeInsets.zero,
+                        decoration: isWide
+                            ? BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.04),
+                                    blurRadius: 16,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ],
+                              )
+                            : null,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                            const SizedBox(height: AppDimens.space8),
 
-                    // Email input textfield
-                    Expanded(
-                      child: Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: TextField(
-                          controller: _emailController,
-                          focusNode: _focusNode,
-                          keyboardType: TextInputType.emailAddress,
-                          autocorrect: false,
-                          style: AppTypography.body(color: AppColors.navy).copyWith(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          decoration: const InputDecoration(
-                            hintText: 'name@example.com',
-                            hintStyle: TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
+                            // Title
+                            Text(
+                              isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
+                              style: AppTypography.largeTitle(),
                             ),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            errorBorder: InputBorder.none,
-                            disabledBorder: InputBorder.none,
-                            focusedErrorBorder: InputBorder.none,
-                            filled: false,
-                            contentPadding: EdgeInsets.zero,
-                            isDense: true,
-                          ),
-                          onChanged: (_) {
-                            if (_errorText != null) {
-                              setState(() => _errorText = null);
-                            }
-                          },
+                            const SizedBox(height: AppDimens.space8),
+
+                            // Subtitle
+                            Text(
+                              isAr
+                                  ? 'هنبعتلك كود تأكيد لتسجيل الدخول أو إنشاء حساب'
+                                  : 'We will send you a verification code to log in or create an account',
+                              style: AppTypography.bodySecondary(),
+                            ),
+                            const SizedBox(height: AppDimens.space24),
+
+                            // Label
+                            Text(
+                              isAr ? 'البريد الإلكتروني' : 'Email Address',
+                              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: AppDimens.space8),
+
+                            // Uber / inDrive Styled Email Input Card
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: _isFocused ? Colors.white : const Color(0xFFF8F9FA),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: hasError
+                                      ? AppColors.danger
+                                      : (_isFocused ? AppColors.navy : const Color(0xFFE5E5EA)),
+                                  width: hasError ? 1.4 : (_isFocused ? 1.8 : 0.8),
+                                ),
+                                boxShadow: _isFocused && !hasError
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.navy.withValues(alpha: 0.08),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ]
+                                    : null,
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 14),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.mail_outline_rounded,
+                                    color: AppColors.navy,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+
+                                  // Email input textfield
+                                  Expanded(
+                                    child: Directionality(
+                                      textDirection: TextDirection.ltr,
+                                      child: TextField(
+                                        controller: _emailController,
+                                        focusNode: _focusNode,
+                                        keyboardType: TextInputType.emailAddress,
+                                        autocorrect: false,
+                                        style: AppTypography.body(color: AppColors.navy).copyWith(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          hintText: 'name@example.com',
+                                          hintStyle: TextStyle(
+                                            color: Color(0xFF94A3B8),
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          errorBorder: InputBorder.none,
+                                          disabledBorder: InputBorder.none,
+                                          focusedErrorBorder: InputBorder.none,
+                                          filled: false,
+                                          contentPadding: EdgeInsets.zero,
+                                          isDense: true,
+                                        ),
+                                        onChanged: (_) {
+                                          if (_errorText != null) {
+                                            setState(() => _errorText = null);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Clear button
+                                  if (_emailController.text.isNotEmpty)
+                                    IconButton(
+                                      icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 20),
+                                      onPressed: () {
+                                        setState(() {
+                                          _emailController.clear();
+                                          _errorText = null;
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: AppDimens.space12),
+
+                            // Helper / Error Text
+                            if (hasError)
+                              Row(
+                                children: [
+                                  const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 14),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      _errorText!,
+                                      style: AppTypography.label(color: AppColors.danger).copyWith(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else
+                              Row(
+                                children: [
+                                  const Icon(Icons.info_outline_rounded, color: Color(0xFF64748B), size: 14),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      isAr
+                                          ? 'هنبعت كود مكون من 6 أرقام لتأكيد حسابك'
+                                          : 'We will send a 6-digit code to verify your account',
+                                      style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
                         ),
-                      ),
-                    ),
 
-                    // Clear button
-                    if (_emailController.text.isNotEmpty)
-                      IconButton(
-                        icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 20),
-                        onPressed: () {
-                          setState(() {
-                            _emailController.clear();
-                            _errorText = null;
-                          });
-                        },
-                      ),
-                  ],
-                ),
-              ),
+                        const SizedBox(height: AppDimens.space24),
 
-              const SizedBox(height: 8),
+                        Column(
+                          children: [
+                            // Switch to Phone Option
+                            Center(
+                              child: TextButton.icon(
+                                icon: const Icon(Icons.phone_iphone_rounded, size: 18, color: AppColors.navy),
+                                onPressed: () {
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
+                                  );
+                                },
+                                label: Text(
+                                  isAr ? 'المتابعة برقم الموبايل بدلاً من ذلك' : 'Continue with mobile number instead',
+                                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: AppDimens.space12),
 
-              // Helper / Error Text
-              if (hasError)
-                Row(
-                  children: [
-                    const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 14),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        _errorText!,
-                        style: AppTypography.label(color: AppColors.danger).copyWith(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    const Icon(Icons.info_outline_rounded, color: Color(0xFF64748B), size: 14),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        isAr
-                            ? 'هنبعت كود مكون من 6 أرقام لتأكيد حسابك'
-                            : 'We will send a 6-digit code to verify your account',
-                        style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-
-              const SizedBox(height: AppDimens.space16),
-
-              // Quick Prototype Demo Chip
-              InkWell(
-                onTap: () => _fillDemoEmail('student@mashwar.eg'),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F3F4),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.flash_on_rounded, size: 15, color: AppColors.teal),
-                      const SizedBox(width: 6),
-                      Text(
-                        isAr ? 'تجربة سريعة: student@mashwar.eg' : 'Quick Demo: student@mashwar.eg',
-                        style: AppTypography.label(color: AppColors.navy).copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                            // Submit CTA
+                            MashwarButton(
+                              text: isAr ? 'إرسال الكود' : 'Send Code',
+                              isLoading: auth.isLoading,
+                              onPressed: () => _handleSubmit(isAr),
+                            ),
+                            const SizedBox(height: AppDimens.space8),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const Spacer(),
-
-              // Switch to Phone Option
-              Center(
-                child: TextButton.icon(
-                  icon: const Icon(Icons.phone_iphone_rounded, size: 18, color: AppColors.navy),
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
-                    );
-                  },
-                  label: Text(
-                    isAr ? 'المتابعة برقم الموبايل بدلاً من ذلك' : 'Continue with mobile number instead',
-                    style: AppTypography.body(color: AppColors.navy).copyWith(
-                      fontWeight: FontWeight.w700,
-                      decoration: TextDecoration.underline,
+                      ],
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: AppDimens.space12),
-
-              // Submit CTA
-              MashwarButton(
-                text: isAr ? 'إرسال الكود' : 'Send Code',
-                isLoading: auth.isLoading,
-                onPressed: () => _handleSubmit(isAr),
-              ),
-
-              const SizedBox(height: AppDimens.space24),
-            ],
+            ),
           ),
-        ),
+        );
+      },
+    ),
       ),
     );
   }

@@ -3,30 +3,46 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../state/board_provider.dart';
 import '../../state/settings_provider.dart';
+import '../chat/chat_screen.dart';
+import 'make_offer_sheet.dart';
 import 'post_ad_screen.dart';
 
-// Page 63: إعلاناتي في اللوحة (My Board Ads Screen)
+// Page 63: إعلاناتي وعروضي في اللوحة (My Board Ads & Offers Screen)
 class MyBoardAdsScreen extends StatefulWidget {
-  const MyBoardAdsScreen({super.key});
+  const MyBoardAdsScreen({super.key, this.initialTab = 0});
+
+  final int initialTab; // 0: نشطة, 1: عروضي المقدمة, 2: منتهية
 
   @override
   State<MyBoardAdsScreen> createState() => _MyBoardAdsScreenState();
 }
 
 class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
-  bool _isActiveTab = true;
+  late int _selectedTab;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedTab = widget.initialTab;
+  }
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final boardProvider = context.watch<BoardProvider>();
-    final activeAds = boardProvider.myAds.where((a) => a.status != BoardAdStatus.completed && a.status != BoardAdStatus.expired).toList();
-    final completedAds = boardProvider.myAds.where((a) => a.status == BoardAdStatus.completed || a.status == BoardAdStatus.expired).toList();
+    final activeAds = boardProvider.myAds
+        .where((a) => a.status != BoardAdStatus.completed && a.status != BoardAdStatus.expired)
+        .toList();
+    final sentOffers = boardProvider.mySentOffers;
+    final completedAds = boardProvider.myAds
+        .where((a) => a.status == BoardAdStatus.completed || a.status == BoardAdStatus.expired)
+        .toList();
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -38,7 +54,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(isAr ? 'إعلاناتي' : 'My Ads', style: AppTypography.title()),
+        title: Text(isAr ? 'إعلاناتي وعروضي' : 'My Ads & Offers', style: AppTypography.title()),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.teal),
@@ -56,53 +72,32 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
           padding: const EdgeInsets.all(AppDimens.space16),
           child: Column(
             children: [
-              // Segmented switch (Page 63)
+              // 3-Way Segmented Switch: نشطة | عروضي | منتهية
               Container(
+                padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.borderDisabled),
+                  color: const Color(0xFFF3F3F4),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
                 ),
                 child: Row(
                   children: [
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _isActiveTab = true),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: _isActiveTab ? AppColors.navy : Colors.transparent,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            isAr ? 'نشطة (${activeAds.length})' : 'Active (${activeAds.length})',
-                            style: TextStyle(
-                              color: _isActiveTab ? Colors.white : AppColors.navy,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                      child: _buildTabButton(
+                        index: 0,
+                        label: isAr ? 'نشطة (${activeAds.length})' : 'Active (${activeAds.length})',
                       ),
                     ),
                     Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => _isActiveTab = false),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: !_isActiveTab ? AppColors.navy : Colors.transparent,
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            isAr ? 'منتهية (${completedAds.length})' : 'Completed (${completedAds.length})',
-                            style: TextStyle(
-                              color: !_isActiveTab ? Colors.white : AppColors.navy,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                      child: _buildTabButton(
+                        index: 1,
+                        label: isAr ? 'عروضي (${sentOffers.length})' : 'My Offers (${sentOffers.length})',
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildTabButton(
+                        index: 2,
+                        label: isAr ? 'منتهية (${completedAds.length})' : 'Done (${completedAds.length})',
                       ),
                     ),
                   ],
@@ -112,61 +107,11 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
               const SizedBox(height: 16),
 
               Expanded(
-                child: _isActiveTab
-                    ? (activeAds.isEmpty
-                        ? Center(
-                            child: Text(
-                              isAr ? 'لا توجد إعلانات نشطة حالياً' : 'No active ads right now',
-                              style: AppTypography.bodySecondary(),
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: activeAds.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final ad = activeAds[index];
-                              final typeLabel = ad.type == BoardAdType.parcelRequest
-                                  ? (isAr ? 'طلب طرد' : 'Parcel Request')
-                                  : (ad.type == BoardAdType.rideOffer
-                                      ? (isAr ? 'عرض رحلة' : 'Ride Offer')
-                                      : (isAr ? 'طلب مشوار' : 'Ride Request'));
-                              return _buildAdCard(
-                                typeLabel: typeLabel,
-                                route: '${ad.fromCity} ← ${ad.toCity}',
-                                details: '${ad.timeText} · ${ad.description}',
-                                offersCount: index == 0 ? 3 : 1,
-                                isAr: isAr,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (_) => const BoardAdOffersScreen()),
-                                  );
-                                },
-                                onDelete: () => boardProvider.deleteMyAd(ad.id),
-                              );
-                            },
-                          ))
-                    : (completedAds.isEmpty
-                        ? Center(
-                            child: Text(
-                              isAr ? 'مفيش إعلانات منتهية' : 'No expired ads',
-                              style: AppTypography.bodySecondary(),
-                            ),
-                          )
-                        : ListView.separated(
-                            itemCount: completedAds.length,
-                            separatorBuilder: (_, __) => const SizedBox(height: 12),
-                            itemBuilder: (context, index) {
-                              final ad = completedAds[index];
-                              return _buildAdCard(
-                                typeLabel: isAr ? 'مكتمل' : 'Completed',
-                                route: '${ad.fromCity} ← ${ad.toCity}',
-                                details: '${ad.timeText} · ${ad.description}',
-                                offersCount: 0,
-                                isAr: isAr,
-                                onDelete: () => boardProvider.deleteMyAd(ad.id),
-                              );
-                            },
-                          )),
+                child: _selectedTab == 0
+                    ? _buildActiveAdsList(context, activeAds, boardProvider, isAr)
+                    : _selectedTab == 1
+                        ? _buildSentOffersList(context, sentOffers, boardProvider, isAr)
+                        : _buildCompletedAdsList(context, completedAds, boardProvider, isAr),
               ),
             ],
           ),
@@ -175,10 +120,233 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
     );
   }
 
+  Widget _buildTabButton({required int index, required String label}) {
+    final isSelected = _selectedTab == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTab = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.navy : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        alignment: Alignment.center,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: TextStyle(
+              color: isSelected ? Colors.white : AppColors.navy,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveAdsList(
+    BuildContext context,
+    List<BoardAdModel> activeAds,
+    BoardProvider boardProvider,
+    bool isAr,
+  ) {
+    if (activeAds.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.campaign_outlined, size: 48, color: AppColors.textSecondary),
+            const SizedBox(height: 12),
+            Text(
+              isAr ? 'لا توجد إعلانات نشطة حالياً' : 'No active ads right now',
+              style: AppTypography.bodySecondary(),
+            ),
+            const SizedBox(height: 16),
+            MashwarButton(
+              width: 180,
+              text: isAr ? 'انشر إعلان جديد' : 'Post New Ad',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PostAdScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      itemCount: activeAds.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final ad = activeAds[index];
+        final typeLabel = ad.type == BoardAdType.parcelRequest
+            ? (isAr ? 'طلب طرد' : 'Parcel Request')
+            : (ad.type == BoardAdType.rideOffer
+                ? (isAr ? 'عرض رحلة' : 'Ride Offer')
+                : (isAr ? 'طلب مشوار' : 'Ride Request'));
+        return _buildAdCard(
+          typeLabel: typeLabel,
+          route: context.trRoute('${ad.fromCity} ← ${ad.toCity}'),
+          details: '${ad.timeText} · ${ad.description}',
+          priceText: '${ad.priceOrBudget} ${isAr ? "ج" : "EGP"}',
+          offersCount: index == 0 ? 3 : 2,
+          isAr: isAr,
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => BoardAdOffersScreen(ad: ad)),
+            );
+          },
+          onDelete: () => boardProvider.deleteMyAd(ad.id),
+        );
+      },
+    );
+  }
+
+  Widget _buildSentOffersList(
+    BuildContext context,
+    List<BoardAdModel> sentOffers,
+    BoardProvider boardProvider,
+    bool isAr,
+  ) {
+    if (sentOffers.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.local_offer_outlined, size: 48, color: AppColors.textSecondary),
+            const SizedBox(height: 12),
+            Text(
+              isAr ? 'لم تقدّم أي عروض بعد على إعلانات اللوحة' : 'You have not sent any offers yet',
+              style: AppTypography.bodySecondary(),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      itemCount: sentOffers.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final ad = sentOffers[index];
+        return InkWell(
+          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => MakeOfferSheet(ad: ad),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(AppDimens.space16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+              border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${isAr ? "صاحب الإعلان:" : "Author:"} ${ad.authorName}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(color: AppColors.textSecondary),
+                      ),
+                    ),
+                    MashwarBadge(
+                      type: BadgeType.confirmed,
+                      customLabel: isAr ? 'بانتظار الرد' : 'Offer Sent',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  context.trRoute('${ad.fromCity} ← ${ad.toCity}'),
+                  style: AppTypography.title().copyWith(fontSize: 16),
+                ),
+                const SizedBox(height: 4),
+                Text('${ad.timeText} · ${ad.description}', style: AppTypography.bodySecondary()),
+                const Divider(height: 20, color: Color(0xFFE5E5EA)),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isAr
+                          ? 'عرضك المقدم: ${ad.myOfferPrice ?? ad.priceOrBudget} ج'
+                          : 'Your Offer: ${ad.myOfferPrice ?? ad.priceOrBudget} EGP',
+                      style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w800, fontSize: 14),
+                    ),
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      onPressed: () => boardProvider.withdrawOffer(ad.id),
+                      icon: const Icon(Icons.undo_rounded, size: 16),
+                      label: Text(isAr ? 'سحب العرض' : 'Withdraw'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCompletedAdsList(
+    BuildContext context,
+    List<BoardAdModel> completedAds,
+    BoardProvider boardProvider,
+    bool isAr,
+  ) {
+    if (completedAds.isEmpty) {
+      return Center(
+        child: Text(
+          isAr ? 'مفيش إعلانات منتهية' : 'No completed ads',
+          style: AppTypography.bodySecondary(),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      itemCount: completedAds.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final ad = completedAds[index];
+        return _buildAdCard(
+          typeLabel: isAr ? 'مكتمل' : 'Completed',
+          route: context.trRoute('${ad.fromCity} ← ${ad.toCity}'),
+          details: '${ad.timeText} · ${ad.description}',
+          priceText: '${ad.priceOrBudget} ${isAr ? "ج" : "EGP"}',
+          offersCount: 0,
+          isAr: isAr,
+          onDelete: () => boardProvider.deleteMyAd(ad.id),
+        );
+      },
+    );
+  }
+
   Widget _buildAdCard({
     required String typeLabel,
     required String route,
     required String details,
+    required String priceText,
     required int offersCount,
     required bool isAr,
     VoidCallback? onTap,
@@ -203,7 +371,10 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
                 Text(typeLabel, style: AppTypography.label(color: AppColors.textSecondary)),
                 Row(
                   children: [
-                    MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'نشط' : 'Active'),
+                    MashwarBadge(
+                      type: offersCount > 0 ? BadgeType.verified : BadgeType.confirmed,
+                      customLabel: offersCount > 0 ? (isAr ? 'نشط' : 'Active') : (isAr ? 'مكتمل' : 'Completed'),
+                    ),
                     if (onDelete != null) ...[
                       const SizedBox(width: 8),
                       InkWell(
@@ -216,19 +387,39 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
               ],
             ),
             const SizedBox(height: 6),
-            Text(route, style: AppTypography.title().copyWith(fontSize: 16)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(route, style: AppTypography.title().copyWith(fontSize: 16)),
+                ),
+                Text(
+                  priceText,
+                  style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 15),
+                ),
+              ],
+            ),
             const SizedBox(height: 4),
             Text(details, style: AppTypography.bodySecondary()),
             const SizedBox(height: 10),
-            Text(
-              offersCount > 0
-                  ? (isAr ? '$offersCount عروض جديدة (اضغط للعرض)' : '$offersCount new offers available')
-                  : (isAr ? 'مكتمل' : 'Completed'),
-              style: TextStyle(
-                color: offersCount > 0 ? AppColors.teal : AppColors.textSecondary,
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    offersCount > 0
+                        ? (isAr ? '$offersCount عروض جديدة (اضغط للمراجعة والاختيار)' : '$offersCount new offers (Tap to review)')
+                        : (isAr ? 'تم الاتفاق وإغلاق الإعلان' : 'Agreed & closed'),
+                    style: TextStyle(
+                      color: offersCount > 0 ? AppColors.teal : AppColors.textSecondary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                if (offersCount > 0)
+                  const Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: AppColors.teal),
+              ],
             ),
           ],
         ),
@@ -239,7 +430,9 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
 
 // Page 64: العروض على طلبك (Offers on your Ad)
 class BoardAdOffersScreen extends StatefulWidget {
-  const BoardAdOffersScreen({super.key});
+  const BoardAdOffersScreen({super.key, this.ad});
+
+  final BoardAdModel? ad;
 
   @override
   State<BoardAdOffersScreen> createState() => _BoardAdOffersScreenState();
@@ -247,8 +440,10 @@ class BoardAdOffersScreen extends StatefulWidget {
 
 class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
   bool _accepted = false;
+  String _selectedDriverName = 'محمد سعيد';
+  String _selectedDriverPhone = '0100 123 4567';
 
-  void _confirmSelection(BuildContext context, String driverName, int price, String time) {
+  void _confirmSelection(BuildContext context, String driverName, String driverPhone, int price, String time) {
     final isAr = context.read<SettingsProvider>().isArabic;
     showModalBottomSheet(
       context: context,
@@ -264,7 +459,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(isAr ? 'السعر' : 'Price', style: AppTypography.bodySecondary()),
+                Text(isAr ? 'السعر المتفق عليه' : 'Agreed Price', style: AppTypography.bodySecondary()),
                 Text('$price ${isAr ? "ج نقداً" : "EGP Cash"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
@@ -281,7 +476,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(color: AppColors.sand, borderRadius: BorderRadius.circular(8)),
               child: Text(
-                isAr ? 'باقي العروض هتتلغي، ورقم $driverName هيظهر لك.' : 'Other offers will cancel, and $driverName\'s phone will be shared.',
+                isAr ? 'باقي العروض هتتلغي، ورقم $driverName هيظهر لك للتواصل المباشر.' : 'Other offers will cancel, and $driverName\'s phone will be shared.',
                 style: const TextStyle(fontSize: 12),
               ),
             ),
@@ -289,8 +484,15 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
             MashwarButton(
               text: isAr ? 'تأكيد الاختيار' : 'Confirm Selection',
               onPressed: () {
+                if (widget.ad != null) {
+                  context.read<BoardProvider>().markAdCompleted(widget.ad!.id);
+                }
                 Navigator.of(ctx).pop();
-                setState(() => _accepted = true);
+                setState(() {
+                  _selectedDriverName = driverName;
+                  _selectedDriverPhone = driverPhone;
+                  _accepted = true;
+                });
               },
             ),
             const SizedBox(height: 8),
@@ -307,9 +509,13 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
+    final routeText = widget.ad != null
+        ? context.trRoute('${widget.ad!.fromCity} ← ${widget.ad!.toCity}')
+        : (isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo');
+    final budgetPrice = widget.ad?.priceOrBudget ?? 80;
 
     if (_accepted) {
-      // Page 64: تم الاختيار (اتفقت مع محمد)
+      // Page 64: تم الاختيار
       return Scaffold(
         backgroundColor: Colors.white,
         body: Center(
@@ -320,22 +526,49 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
               children: [
                 const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 64),
                 const SizedBox(height: 16),
-                Text(isAr ? 'اتفقت مع محمد' : 'Agreed with Mohamed', style: AppTypography.largeTitle()),
+                Text(
+                  isAr ? 'اتفقت مع $_selectedDriverName' : 'Agreed with $_selectedDriverName',
+                  style: AppTypography.largeTitle(),
+                  textAlign: TextAlign.center,
+                ),
                 const SizedBox(height: 6),
                 Text(
-                  isAr ? 'رقمه: 0100 123 4567. هتلاقي التفاصيل في رحلاتي.' : 'Phone: 0100 123 4567. Details saved in My Trips.',
+                  isAr
+                      ? 'رقمه: $_selectedDriverPhone · المسار: $routeText'
+                      : 'Phone: $_selectedDriverPhone · Route: $routeText',
                   textAlign: TextAlign.center,
                   style: AppTypography.bodySecondary(),
                 ),
                 const SizedBox(height: 24),
                 MashwarButton(
-                  text: isAr ? 'اتصل بمحمد' : 'Call Mohamed',
+                  text: isAr ? 'اتصل بـ $_selectedDriverName' : 'Call $_selectedDriverName',
                   icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 18),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(isAr ? 'جاري الاتصال بمحمد سعيد على 0100 123 4567...' : 'Calling Mohamed at 0100 123 4567...'),
+                        content: Text(
+                          isAr
+                              ? 'جاري الاتصال بـ $_selectedDriverName على $_selectedDriverPhone...'
+                              : 'Calling $_selectedDriverName at $_selectedDriverPhone...',
+                        ),
                         backgroundColor: AppColors.teal,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 10),
+                MashwarButton(
+                  text: isAr ? 'محادثة مباشرة' : 'Open Chat',
+                  variant: MashwarButtonVariant.secondary,
+                  icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.navy, size: 18),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ChatScreen(
+                          driverName: _selectedDriverName,
+                          driverCar: isAr ? 'اتفاق عبر اللوحة' : 'Board Agreement',
+                          tripRoute: routeText,
+                        ),
                       ),
                     );
                   },
@@ -343,7 +576,10 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                 const SizedBox(height: 10),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text(isAr ? 'رحلاتي' : 'My Trips', style: const TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    isAr ? 'العودة للإعلانات' : 'Back to Ads',
+                    style: const TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
@@ -351,7 +587,6 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
         ),
       );
     }
-
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -372,12 +607,38 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(isAr ? 'طنطا ← القاهرة · ميزانيتك 80 ج' : 'Tanta → Cairo · Budget 80 EGP', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(routeText, style: AppTypography.title().copyWith(fontSize: 16)),
+                          if (widget.ad != null) ...[
+                            const SizedBox(height: 2),
+                            Text(widget.ad!.timeText, style: AppTypography.label(color: AppColors.textSecondary)),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.tealSurface,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        isAr ? 'ميزانيتك $budgetPrice ج' : 'Budget $budgetPrice EGP',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.teal, fontSize: 12),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -387,29 +648,56 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                 child: ListView(
                   children: [
                     _buildOfferCard(
+                      context: context,
                       driverName: 'محمد سعيد',
-                      stats: isAr ? 'موثق · 14 رحلة' : 'Verified · 14 rides',
-                      price: 70,
+                      driverPhone: '0100 123 4567',
+                      stats: isAr ? 'موثق · 14 رحلة · ★ 4.9' : 'Verified · 14 rides · ★ 4.9',
+                      price: (budgetPrice - 5).clamp(20, 9999),
                       time: isAr ? 'الجمعة 1:15 م' : 'Fri 1:15 PM',
-                      onSelect: () => _confirmSelection(context, 'محمد', 70, 'الجمعة 1:15 م'),
+                      routeText: routeText,
+                      onSelect: () => _confirmSelection(
+                        context,
+                        'محمد سعيد',
+                        '0100 123 4567',
+                        (budgetPrice - 5).clamp(20, 9999),
+                        isAr ? 'الجمعة 1:15 م' : 'Fri 1:15 PM',
+                      ),
                       isAr: isAr,
                     ),
                     const SizedBox(height: 10),
                     _buildOfferCard(
+                      context: context,
                       driverName: 'أحمد علي',
-                      stats: isAr ? 'موثق · 6 رحلات' : 'Verified · 6 rides',
-                      price: 80,
+                      driverPhone: '0112 345 6789',
+                      stats: isAr ? 'موثق · 6 رحلات · ★ 4.8' : 'Verified · 6 rides · ★ 4.8',
+                      price: budgetPrice,
                       time: isAr ? 'الجمعة 2:00 م' : 'Fri 2:00 PM',
-                      onSelect: () => _confirmSelection(context, 'أحمد', 80, 'الجمعة 2:00 م'),
+                      routeText: routeText,
+                      onSelect: () => _confirmSelection(
+                        context,
+                        'أحمد علي',
+                        '0112 345 6789',
+                        budgetPrice,
+                        isAr ? 'الجمعة 2:00 م' : 'Fri 2:00 PM',
+                      ),
                       isAr: isAr,
                     ),
                     const SizedBox(height: 10),
                     _buildOfferCard(
+                      context: context,
                       driverName: 'منى حسن',
-                      stats: isAr ? 'موثقة · 3 رحلات' : 'Verified · 3 rides',
-                      price: 75,
+                      driverPhone: '0123 456 7890',
+                      stats: isAr ? 'موثقة · 9 رحلات · ★ 4.9' : 'Verified · 9 rides · ★ 4.9',
+                      price: budgetPrice + 5,
                       time: isAr ? 'الجمعة 12:30 م' : 'Fri 12:30 PM',
-                      onSelect: () => _confirmSelection(context, 'منى', 75, 'الجمعة 12:30 م'),
+                      routeText: routeText,
+                      onSelect: () => _confirmSelection(
+                        context,
+                        'منى حسن',
+                        '0123 456 7890',
+                        budgetPrice + 5,
+                        isAr ? 'الجمعة 12:30 م' : 'Fri 12:30 PM',
+                      ),
                       isAr: isAr,
                     ),
                   ],
@@ -423,10 +711,13 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
   }
 
   Widget _buildOfferCard({
+    required BuildContext context,
     required String driverName,
+    required String driverPhone,
     required String stats,
     required int price,
     required String time,
+    required String routeText,
     required VoidCallback onSelect,
     required bool isAr,
   }) {
@@ -448,21 +739,61 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(driverName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        driverName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.verified_rounded, size: 15, color: AppColors.teal),
+                  ],
+                ),
                 Text(stats, style: AppTypography.bodySecondary()),
                 Text(time, style: const TextStyle(fontSize: 12, color: AppColors.navy)),
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text('$price ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.teal)),
               const SizedBox(height: 6),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
-                onPressed: onSelect,
-                child: Text(isAr ? 'اختيار' : 'Select'),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppColors.navy),
+                    tooltip: isAr ? 'محادثة' : 'Chat',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(
+                            driverName: driverName,
+                            driverCar: stats,
+                            tripRoute: routeText,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.navy,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      elevation: 0,
+                    ),
+                    onPressed: onSelect,
+                    child: Text(isAr ? 'اختيار' : 'Select'),
+                  ),
+                ],
               ),
             ],
           ),

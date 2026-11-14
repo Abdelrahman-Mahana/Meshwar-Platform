@@ -59,10 +59,9 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          // Developer simulation helper to switch between phases
           TextButton(
             onPressed: () => setState(() => _phase = TripTrackingPhase.inTransit),
-            child: Text(isAr ? 'بدء الرحلة (تجربة)' : 'Start Trip (Demo)', style: AppTypography.label(color: AppColors.teal)),
+            child: Text(isAr ? 'بدء الرحلة' : 'Start Trip', style: AppTypography.label(color: AppColors.teal)),
           ),
         ],
       ),
@@ -215,7 +214,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
         actions: [
           TextButton(
             onPressed: () => setState(() => _phase = TripTrackingPhase.completed),
-            child: Text(isAr ? 'إنهاء الرحلة (تجربة)' : 'End Ride (Demo)', style: AppTypography.label(color: AppColors.teal)),
+            child: Text(isAr ? 'إنهاء الرحلة' : 'End Ride', style: AppTypography.label(color: AppColors.teal)),
           ),
         ],
       ),
@@ -431,13 +430,18 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: AppTypography.label(color: AppColors.textSecondary)),
-        Text(
-          value,
-          style: isBold
-              ? AppTypography.body().copyWith(fontWeight: FontWeight.w700)
-              : AppTypography.body(),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: isBold
+                ? AppTypography.body().copyWith(fontWeight: FontWeight.w700)
+                : AppTypography.body(),
+          ),
         ),
       ],
     );
   }
 }
+

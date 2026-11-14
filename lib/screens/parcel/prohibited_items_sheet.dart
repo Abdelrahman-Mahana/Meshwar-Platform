@@ -35,13 +35,13 @@ class ProhibitedItemsSheet extends StatelessWidget {
     final isAr = context.isArabic;
     final items = isAr ? prohibitedItemsAr : prohibitedItemsEn;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimens.radiusBottomSheet)),
-      ),
-      padding: const EdgeInsets.all(AppDimens.space24),
-      child: Column(
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.radiusBottomSheet)),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.space24),
+        child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -65,12 +65,13 @@ class ProhibitedItemsSheet extends StatelessWidget {
           const SizedBox(height: AppDimens.space16),
 
           // Items container
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
+          Material(
+            color: const Color(0xFFF8F9FA),
+            shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+              side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
             ),
+            clipBehavior: Clip.antiAlias,
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -92,6 +93,7 @@ class ProhibitedItemsSheet extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
+      ),
       ),
     );
   }

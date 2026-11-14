@@ -56,6 +56,13 @@ class RidesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void swapLocations() {
+    final temp = _fromCity;
+    _fromCity = _toCity;
+    _toCity = temp;
+    notifyListeners();
+  }
+
   void setDate(String newDate) {
     _date = newDate;
     notifyListeners();

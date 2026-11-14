@@ -244,396 +244,420 @@ class SettingsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.cloud_done_outlined, color: AppColors.teal),
-            tooltip: isAr ? 'جاهزية الباك إند API' : 'Backend API Readiness',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const BackendReadinessScreen(),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // User Profile Header Card
-              _buildUserProfileCard(context, user, isAr),
-              const SizedBox(height: AppDimens.space20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 840;
 
-              // Group 1: الحساب والتوثيق والأمان (Account & Security)
-              _buildSectionHeader(isAr ? 'الحساب والتوثيق' : 'Account & Verification'),
-              _buildCardGroup([
-                // National ID verification tile
-                _buildSettingsTile(
-                  icon: Icons.badge_outlined,
-                  iconColor: AppColors.navy,
-                  title: isAr ? 'توثيق بطاقة الرقم القومي' : 'Egyptian National ID Verification',
-                  subtitle: user.nationalId != null
-                      ? (isAr ? 'الرقم القومي: ${user.nationalId}' : 'ID: ${user.nationalId}')
-                      : (isAr ? 'إلزامي للأمان ومطابقة بيانات الهوية' : 'Mandatory for safety compliance'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (user.idVerificationStatus == IdVerificationStatus.verified)
-                        MashwarBadge(
-                          type: BadgeType.verified,
-                          customLabel: isAr ? 'موثق' : 'Verified',
-                        )
-                      else if (user.idVerificationStatus == IdVerificationStatus.underReview)
-                        MashwarBadge(
-                          type: BadgeType.pending,
-                          customLabel: isAr ? 'قيد المراجعة' : 'Under Review',
-                        )
-                      else
-                        MashwarBadge(
-                          type: BadgeType.rejected,
-                          customLabel: isAr ? 'غير موثق' : 'Unverified',
+            final accountGroup = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(isAr ? 'الحساب والتوثيق' : 'Account & Verification'),
+                _buildCardGroup([
+                  _buildSettingsTile(
+                    icon: Icons.badge_outlined,
+                    iconColor: AppColors.navy,
+                    title: isAr ? 'توثيق بطاقة الرقم القومي' : 'Egyptian National ID Verification',
+                    subtitle: user.nationalId != null
+                        ? (isAr ? 'الرقم القومي: ${user.nationalId}' : 'ID: ${user.nationalId}')
+                        : (isAr ? 'إلزامي للأمان ومطابقة بيانات الهوية' : 'Mandatory for safety compliance'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (user.idVerificationStatus == IdVerificationStatus.verified)
+                          MashwarBadge(
+                            type: BadgeType.verified,
+                            customLabel: isAr ? 'موثق' : 'Verified',
+                          )
+                        else if (user.idVerificationStatus == IdVerificationStatus.underReview)
+                          MashwarBadge(
+                            type: BadgeType.pending,
+                            customLabel: isAr ? 'قيد المراجعة' : 'Under Review',
+                          )
+                        else
+                          MashwarBadge(
+                            type: BadgeType.rejected,
+                            customLabel: isAr ? 'غير موثق' : 'Unverified',
+                          ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                          color: AppColors.textSecondary,
+                          size: 20,
                         ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const IdVerificationScreen(isOnboarding: false),
-                      ),
-                    );
-                  },
-                ),
-                _buildIndentedDivider(),
-
-                // Driver & Vehicle Registration
-                _buildSettingsTile(
-                  icon: Icons.directions_car_filled_outlined,
-                  iconColor: AppColors.navy,
-                  title: isAr ? 'بيانات سيارتي ورخص القيادة' : 'My Vehicle & Driver Licenses',
-                  subtitle: isAr ? 'سجل مركبتك لنشر الرحلات وتقديم عروض التوصيل' : 'Register your car to offer rides',
-                  trailing: Icon(
-                    isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const VehicleRegistrationScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildIndentedDivider(),
-
-                // Wallet & Payment Methods
-                _buildSettingsTile(
-                  icon: Icons.account_balance_wallet_outlined,
-                  iconColor: AppColors.teal,
-                  title: isAr ? 'محفظة مشوار وطرق الدفع' : 'Wallet & Payment Methods',
-                  subtitle: isAr ? 'إنستاباي، فودافون كاش، الدفع نقداً' : 'InstaPay, Vodafone Cash, Cash',
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFBBF7D0), width: 0.8),
+                      ],
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const IdVerificationScreen(isOnboarding: false),
                         ),
-                        child: Text(
-                          '${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ج.م' : 'EGP'}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF15803D),
+                      );
+                    },
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
+                    icon: Icons.directions_car_filled_outlined,
+                    iconColor: AppColors.navy,
+                    title: isAr ? 'بيانات سيارتي ورخص القيادة' : 'My Vehicle & Driver Licenses',
+                    subtitle: isAr ? 'سجل مركبتك لنشر الرحلات وتقديم عروض التوصيل' : 'Register your car to offer rides',
+                    trailing: Icon(
+                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const VehicleRegistrationScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
+                    icon: Icons.account_balance_wallet_outlined,
+                    iconColor: AppColors.teal,
+                    title: isAr ? 'محفظة مشوار وطرق الدفع' : 'Wallet & Payment Methods',
+                    subtitle: isAr ? 'إنستاباي، فودافون كاش، الدفع نقداً' : 'InstaPay, Vodafone Cash, Cash',
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFBBF7D0), width: 0.8),
+                          ),
+                          child: Text(
+                            '${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ج.م' : 'EGP'}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF15803D),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const WalletScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
+                    icon: Icons.emergency_outlined,
+                    iconColor: AppColors.coral,
+                    title: isAr ? 'جهات الاتصال في حالات الطوارئ' : 'Emergency Contacts (SOS)',
+                    subtitle: user.emergencyContactName != null
+                        ? '${user.emergencyContactName} (${user.emergencyContactPhone})'
+                        : (isAr ? 'حدد جهات اتصال لمشاركة المسار معهم فورياً' : 'Set contacts for instant tracking share'),
+                    trailing: Icon(
+                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const EmergencyContactsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ]),
+              ],
+            );
+
+            final preferencesGroup = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(isAr ? 'التفضيلات وتجربة السفر' : 'Preferences & Trip Comfort'),
+                _buildCardGroup([
+                  _buildSettingsTile(
+                    icon: Icons.language_rounded,
+                    iconColor: AppColors.navy,
+                    title: isAr ? 'لغة التطبيق' : 'App Language',
+                    subtitle: isAr ? 'العربية (جمهورية مصر العربية)' : 'English (United States)',
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F3F4),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                          ),
+                          child: Text(
+                            isAr ? 'العربية' : 'English',
+                            style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                    onTap: () => _showLanguageDialog(context, settings),
+                  ),
+                ]),
+              ],
+            );
+
+            final notificationsGroup = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(isAr ? 'إشعارات التطبيق الذكية' : 'Smart Notifications'),
+                _buildCardGroup([
+                  SwitchListTile.adaptive(
+                    activeTrackColor: AppColors.teal,
+                    value: settings.ridesNotifications,
+                    onChanged: settings.setRidesNotifications,
+                    secondary: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F3F4),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.notifications_active_outlined, color: AppColors.navy, size: 20),
+                    ),
+                    title: Text(
+                      isAr ? 'تنبيهات الرحلات' : 'Ride Alerts',
+                      style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      isAr ? 'إشعارات مواعيد الرحلات وتأكيد الحجز وتذكير السفر' : 'Departure reminders & booking confirmations',
+                      style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
+                    ),
+                  ),
+                  _buildIndentedDivider(),
+                  SwitchListTile.adaptive(
+                    activeTrackColor: AppColors.teal,
+                    value: settings.parcelsNotifications,
+                    onChanged: settings.setParcelsNotifications,
+                    secondary: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F3F4),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.inventory_2_outlined, color: AppColors.navy, size: 20),
+                    ),
+                    title: Text(
+                      isAr ? 'تحديثات الشحن والطرود' : 'Parcel Shipping Updates',
+                      style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      isAr ? 'إشعارات كود الاستلام ولحظات حركة الطرد حتى التسليم' : 'Pickup OTP & parcel transit milestones',
+                      style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
+                    ),
+                  ),
+                  _buildIndentedDivider(),
+                  SwitchListTile.adaptive(
+                    activeTrackColor: AppColors.teal,
+                    value: settings.boardNotifications,
+                    onChanged: settings.setBoardNotifications,
+                    secondary: Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F3F4),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.radar_rounded, color: AppColors.teal, size: 20),
+                    ),
+                    title: Text(
+                      isAr ? 'عروض اللوحة المجتمعية القريبة' : 'Community Board Near Me',
+                      style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                    ),
+                    subtitle: Text(
+                      isAr ? 'تنبيه فوري عند نشر طلب مشوار أو طرد في نطاق 50 كم' : 'Alerts when a request is posted within 50 km',
+                      style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
+                    ),
+                  ),
+                ]),
+              ],
+            );
+
+            final supportLegalGroup = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionHeader(isAr ? 'الدعم والشروط القانونية' : 'Support & Legal'),
+                _buildCardGroup([
+                  _buildSettingsTile(
+                    icon: Icons.support_agent_rounded,
+                    iconColor: AppColors.navy,
+                    title: isAr ? 'مركز المساعدة والدعم المباشر 24/7' : 'Help & Support 24/7',
+                    subtitle: isAr ? 'فريق خدمة عملاء مشوار متواجد على مدار الساعة' : 'Customer support available around the clock',
+                    trailing: Icon(
+                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const HelpSupportScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
+                    icon: Icons.description_outlined,
+                    iconColor: AppColors.navy,
+                    title: isAr ? 'شروط الخدمة وسياسة الخصوصية' : 'Terms of Service & Privacy',
+                    subtitle: isAr ? 'القواعد وحقوق الركاب والسائقين وحماية البيانات' : 'Rights, terms & data protection policies',
+                    trailing: Icon(
+                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const LegalComplianceScreen(initialTabIndex: 0),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
+                    icon: Icons.verified_outlined,
+                    iconColor: AppColors.teal,
+                    title: isAr ? 'الترخيص والامتثال لوزارة النقل' : 'MoT Egypt Compliance & License',
+                    subtitle: isAr ? 'سجل تجاري رقم 849201 · ترخيص نقل تشاركي ذكي' : 'Commercial Reg. #849201 · MoT Licensed',
+                    trailing: const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 18),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const LegalComplianceScreen(initialTabIndex: 2),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
+                    icon: Icons.delete_outline_rounded,
+                    iconColor: AppColors.danger,
+                    title: isAr ? 'حذف الحساب نهائياً' : 'Delete Account Permanently',
+                    subtitle: isAr ? 'إلغاء تنشيط الحساب ومسح البيانات الخاصة بك' : 'Deactivate account & erase personal data',
+                    trailing: Icon(
+                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                      color: AppColors.danger,
+                      size: 20,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const DeleteAccountScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ]),
+              ],
+            );
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: isWide ? 1160 : 680),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: AppDimens.space16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildUserProfileCard(context, user, isAr),
+                      const SizedBox(height: AppDimens.space20),
+                      if (isWide)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  accountGroup,
+                                  const SizedBox(height: AppDimens.space20),
+                                  preferencesGroup,
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppDimens.space24),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  notificationsGroup,
+                                  const SizedBox(height: AppDimens.space20),
+                                  supportLegalGroup,
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      else ...[
+                        accountGroup,
+                        const SizedBox(height: AppDimens.space20),
+                        preferencesGroup,
+                        const SizedBox(height: AppDimens.space20),
+                        notificationsGroup,
+                        const SizedBox(height: AppDimens.space20),
+                        supportLegalGroup,
+                      ],
+                      const SizedBox(height: AppDimens.space24),
+                      Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              'مشوار MASHWAR v1.2.0 (Build 42)',
+                              style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              isAr ? 'جمهورية مصر العربية · جميع الحقوق محفوظة' : 'Arab Republic of Egypt · All Rights Reserved',
+                              style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.space16),
+                      Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: isWide ? 420 : double.infinity),
+                          child: MashwarButton(
+                            text: isAr ? 'تسجيل الخروج' : 'Log Out',
+                            variant: MashwarButtonVariant.danger,
+                            icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 18),
+                            onPressed: () => _showLogoutDialog(context, auth, settings),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
+                      const SizedBox(height: AppDimens.space32),
                     ],
                   ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const WalletScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildIndentedDivider(),
-
-                // Emergency Contacts
-                _buildSettingsTile(
-                  icon: Icons.emergency_outlined,
-                  iconColor: AppColors.coral,
-                  title: isAr ? 'جهات الاتصال في حالات الطوارئ' : 'Emergency Contacts (SOS)',
-                  subtitle: user.emergencyContactName != null
-                      ? '${user.emergencyContactName} (${user.emergencyContactPhone})'
-                      : (isAr ? 'حدد جهات اتصال لمشاركة المسار معهم فورياً' : 'Set contacts for instant tracking share'),
-                  trailing: Icon(
-                    isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const EmergencyContactsScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ]),
-
-              const SizedBox(height: AppDimens.space20),
-
-              // Group 2: التفضيلات وتجربة السفر (Preferences & Trip Comfort)
-              _buildSectionHeader(isAr ? 'التفضيلات وتجربة السفر' : 'Preferences & Trip Comfort'),
-              _buildCardGroup([
-                // App Language
-                _buildSettingsTile(
-                  icon: Icons.language_rounded,
-                  iconColor: AppColors.navy,
-                  title: isAr ? 'لغة التطبيق' : 'App Language',
-                  subtitle: isAr ? 'العربية (جمهورية مصر العربية)' : 'English (United States)',
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F3F4),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                        ),
-                        child: Text(
-                          isAr ? 'العربية' : 'English',
-                          style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                        color: AppColors.textSecondary,
-                        size: 20,
-                      ),
-                    ],
-                  ),
-                  onTap: () => _showLanguageDialog(context, settings),
-                ),
-              ]),
-
-              const SizedBox(height: AppDimens.space20),
-
-              // Group 3: إشعارات التطبيق (Notifications)
-              _buildSectionHeader(isAr ? 'إشعارات التطبيق الذكية' : 'Smart Notifications'),
-              _buildCardGroup([
-                SwitchListTile.adaptive(
-                  activeTrackColor: AppColors.teal,
-                  value: settings.ridesNotifications,
-                  onChanged: settings.setRidesNotifications,
-                  secondary: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F3F4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.notifications_active_outlined, color: AppColors.navy, size: 20),
-                  ),
-                  title: Text(
-                    isAr ? 'تنبيهات الرحلات' : 'Ride Alerts',
-                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  subtitle: Text(
-                    isAr ? 'إشعارات مواعيد الرحلات وتأكيد الحجز وتذكير السفر' : 'Departure reminders & booking confirmations',
-                    style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
-                  ),
-                ),
-                _buildIndentedDivider(),
-
-                SwitchListTile.adaptive(
-                  activeTrackColor: AppColors.teal,
-                  value: settings.parcelsNotifications,
-                  onChanged: settings.setParcelsNotifications,
-                  secondary: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F3F4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.inventory_2_outlined, color: AppColors.navy, size: 20),
-                  ),
-                  title: Text(
-                    isAr ? 'تحديثات الشحن والطرود' : 'Parcel Shipping Updates',
-                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  subtitle: Text(
-                    isAr ? 'إشعارات كود الاستلام ولحظات حركة الطرد حتى التسليم' : 'Pickup OTP & parcel transit milestones',
-                    style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
-                  ),
-                ),
-                _buildIndentedDivider(),
-
-                SwitchListTile.adaptive(
-                  activeTrackColor: AppColors.teal,
-                  value: settings.boardNotifications,
-                  onChanged: settings.setBoardNotifications,
-                  secondary: Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F3F4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.radar_rounded, color: AppColors.teal, size: 20),
-                  ),
-                  title: Text(
-                    isAr ? 'عروض اللوحة المجتمعية القريبة' : 'Community Board Near Me',
-                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
-                  ),
-                  subtitle: Text(
-                    isAr ? 'تنبيه فوري عند نشر طلب مشوار أو طرد في نطاق 50 كم' : 'Alerts when a request is posted within 50 km',
-                    style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
-                  ),
-                ),
-              ]),
-
-              const SizedBox(height: AppDimens.space20),
-
-              // Group 4: الدعم والشروط القانونية (Support & Legal)
-              _buildSectionHeader(isAr ? 'الدعم والشروط القانونية' : 'Support & Legal'),
-              _buildCardGroup([
-                // Help and 24/7 Support
-                _buildSettingsTile(
-                  icon: Icons.support_agent_rounded,
-                  iconColor: AppColors.navy,
-                  title: isAr ? 'مركز المساعدة والدعم المباشر 24/7' : 'Help & Support 24/7',
-                  subtitle: isAr ? 'فريق خدمة عملاء مشوار متواجد على مدار الساعة' : 'Customer support available around the clock',
-                  trailing: Icon(
-                    isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const HelpSupportScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildIndentedDivider(),
-
-                // Terms of Service & Privacy
-                _buildSettingsTile(
-                  icon: Icons.description_outlined,
-                  iconColor: AppColors.navy,
-                  title: isAr ? 'شروط الخدمة وسياسة الخصوصية' : 'Terms of Service & Privacy',
-                  subtitle: isAr ? 'القواعد وحقوق الركاب والسائقين وحماية البيانات' : 'Rights, terms & data protection policies',
-                  trailing: Icon(
-                    isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                    color: AppColors.textSecondary,
-                    size: 20,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const LegalComplianceScreen(initialTabIndex: 0),
-                      ),
-                    );
-                  },
-                ),
-                _buildIndentedDivider(),
-
-                // Ministry of Transport Compliance
-                _buildSettingsTile(
-                  icon: Icons.verified_outlined,
-                  iconColor: AppColors.teal,
-                  title: isAr ? 'الترخيص والامتثال لوزارة النقل' : 'MoT Egypt Compliance & License',
-                  subtitle: isAr ? 'سجل تجاري رقم 849201 · ترخيص نقل تشاركي ذكي' : 'Commercial Reg. #849201 · MoT Licensed',
-                  trailing: const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 18),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const LegalComplianceScreen(initialTabIndex: 2),
-                      ),
-                    );
-                  },
-                ),
-                _buildIndentedDivider(),
-
-                // Delete Account
-                _buildSettingsTile(
-                  icon: Icons.delete_outline_rounded,
-                  iconColor: AppColors.danger,
-                  title: isAr ? 'حذف الحساب نهائياً' : 'Delete Account Permanently',
-                  subtitle: isAr ? 'إلغاء تنشيط الحساب ومسح البيانات الخاصة بك' : 'Deactivate account & erase personal data',
-                  trailing: Icon(
-                    isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                    color: AppColors.danger,
-                    size: 20,
-                  ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const DeleteAccountScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ]),
-
-              const SizedBox(height: AppDimens.space24),
-
-              // App Version & Legal Info
-              Center(
-                child: Column(
-                  children: [
-                    Text(
-                      'مشوار MASHWAR v1.2.0 (Build 42)',
-                      style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isAr ? 'جمهورية مصر العربية · جميع الحقوق محفوظة' : 'Arab Republic of Egypt · All Rights Reserved',
-                      style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 10),
-                    ),
-                  ],
                 ),
               ),
-
-              const SizedBox(height: AppDimens.space16),
-
-              // Minimalist Danger Sign Out Button
-              MashwarButton(
-                text: isAr ? 'تسجيل الخروج' : 'Log Out',
-                variant: MashwarButtonVariant.danger,
-                icon: const Icon(Icons.logout_rounded, color: Colors.white, size: 18),
-                onPressed: () => _showLogoutDialog(context, auth, settings),
-              ),
-
-              const SizedBox(height: AppDimens.space32),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

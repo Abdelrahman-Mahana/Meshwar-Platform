@@ -22,6 +22,131 @@ class DriverRidesScreen extends StatefulWidget {
 class _DriverRidesScreenState extends State<DriverRidesScreen> {
   bool _isUpcoming = true;
 
+  void _showDriverEarningsAnalyticsSheet(BuildContext context, bool isAr, int publishedCount) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimens.radiusCard)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.space24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      isAr ? 'تقرير أرباح وإحصائيات السائق' : 'Driver Earnings & Trip Analytics',
+                      style: AppTypography.title(),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(AppDimens.space16),
+                decoration: BoxDecoration(
+                  color: AppColors.tealSurface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAr ? 'إجمالي أرباح الشهر الحالي' : 'Current Month Total Earnings',
+                      style: AppTypography.label(color: AppColors.teal),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isAr ? '4,850 ج.م' : '4,850 EGP',
+                      style: AppTypography.largeTitle(color: AppColors.navy).copyWith(fontSize: 28),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isAr
+                          ? 'وفرّت نحو 78% من تكاليف الوقود والصيانة عبر مشاركة المقاعد والطرود.'
+                          : 'Saved ~78% of fuel & maintenance costs via shared seats and parcels.',
+                      style: AppTypography.bodySecondary(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMetricBox(
+                      isAr ? 'الرحلات المكتملة' : 'Completed Trips',
+                      '14',
+                      Icons.directions_car_filled_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildMetricBox(
+                      isAr ? 'الطرود المسلمة' : 'Parcels Delivered',
+                      '9',
+                      Icons.inventory_2_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildMetricBox(
+                      isAr ? 'تقييم السائق' : 'Driver Rating',
+                      '4.9 ★',
+                      Icons.star_rounded,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              MashwarButton(
+                text: isAr ? 'حسناً' : 'Done',
+                onPressed: () => Navigator.of(ctx).pop(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetricBox(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: AppColors.teal),
+          const SizedBox(height: 6),
+          Text(value, style: AppTypography.title().copyWith(fontSize: 16)),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 10),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
@@ -38,12 +163,56 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(isAr ? 'رحلاتي كسائق' : 'My Driver Trips', style: AppTypography.title()),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart_rounded, color: AppColors.teal),
+            tooltip: isAr ? 'أرباحي وإحصائياتي' : 'Earnings & Analytics',
+            onPressed: () => _showDriverEarningsAnalyticsSheet(context, isAr, publishedRides.length),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppDimens.space16),
           child: Column(
             children: [
+              // Driver Earnings Summary Banner
+              InkWell(
+                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                onTap: () => _showDriverEarningsAnalyticsSheet(context, isAr, publishedRides.length),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                    border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.insights_rounded, color: AppColors.teal, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isAr ? 'أرباحك هذا الشهر: 4,850 ج.م' : 'Monthly Earnings: 4,850 EGP',
+                              style: AppTypography.body().copyWith(fontWeight: FontWeight.w800, color: AppColors.navy),
+                            ),
+                            Text(
+                              isAr ? 'اضغط لعرض تفاصيل الأرباح وتوفير الوقود' : 'Tap to view earnings & fuel savings breakdown',
+                              style: AppTypography.label(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_left_rounded, color: AppColors.teal),
+                    ],
+                  ),
+                ),
+              ),
+
               // Segmented switch (Page 45)
               Container(
                 decoration: BoxDecoration(
@@ -212,7 +381,15 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(route, style: AppTypography.title().copyWith(fontSize: 16)),
+                Expanded(
+                  child: Text(
+                    route,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.title().copyWith(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 MashwarBadge(type: badgeType, customLabel: badge),
               ],
             ),
@@ -222,7 +399,14 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(stats, style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 13)),
+                Expanded(
+                  child: Text(
+                    stats,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                ),
                 if (onReschedule != null)
                   TextButton.icon(
                     onPressed: onReschedule,

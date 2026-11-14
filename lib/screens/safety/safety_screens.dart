@@ -250,7 +250,12 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
             leading: CircleAvatar(backgroundColor: AppColors.gold, child: const Text('ن')),
             title: Text(isAr ? 'نادية (أختي)' : 'Nadia (Sister)', style: const TextStyle(fontWeight: FontWeight.bold)),
             trailing: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.navy,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              ),
               onPressed: () => setState(() => _sentToNadia = true),
               child: Text(isAr ? 'إرسال' : 'Send'),
             ),
@@ -259,7 +264,12 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
             leading: CircleAvatar(backgroundColor: AppColors.gold, child: const Text('أ')),
             title: Text(isAr ? 'أحمد (أبويا)' : 'Ahmed (Father)', style: const TextStyle(fontWeight: FontWeight.bold)),
             trailing: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.navy,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              ),
               onPressed: () => setState(() => _sentToNadia = true),
               child: Text(isAr ? 'إرسال' : 'Send'),
             ),
@@ -580,15 +590,18 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                 child: ListView(
                   children: [
                     for (final cat in categories) ...[
-                      ListTile(
+                      Material(
+                        color: _selectedCategory == cat ? AppColors.navy.withValues(alpha: 0.05) : Colors.transparent,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        tileColor: _selectedCategory == cat ? AppColors.navy.withValues(alpha: 0.05) : null,
-                        leading: Icon(
-                          _selectedCategory == cat ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-                          color: _selectedCategory == cat ? AppColors.navy : AppColors.textSecondary,
+                        clipBehavior: Clip.antiAlias,
+                        child: ListTile(
+                          leading: Icon(
+                            _selectedCategory == cat ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
+                            color: _selectedCategory == cat ? AppColors.navy : AppColors.textSecondary,
+                          ),
+                          title: Text(cat, style: TextStyle(fontWeight: _selectedCategory == cat ? FontWeight.w800 : FontWeight.w600)),
+                          onTap: () => setState(() => _selectedCategory = cat),
                         ),
-                        title: Text(cat, style: TextStyle(fontWeight: _selectedCategory == cat ? FontWeight.w800 : FontWeight.w600)),
-                        onTap: () => setState(() => _selectedCategory = cat),
                       ),
                       const Divider(height: 1),
                     ],

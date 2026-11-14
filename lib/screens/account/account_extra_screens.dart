@@ -3,9 +3,403 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../data/models/user_model.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
+import '../auth/id_verification_screen.dart';
+import '../board/board_extra_screens.dart';
+import '../settings/settings_screen.dart';
+import '../wallet/wallet_screen.dart';
+
+// الملف الشخصي للمستخدم (User Profile Screen)
+class UserProfileScreen extends StatelessWidget {
+  const UserProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isAr = context.watch<SettingsProvider>().isArabic;
+    final user = context.watch<AuthProvider>().user;
+    final isIdVerified = user.idVerificationStatus == IdVerificationStatus.verified;
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(isAr ? 'الملف الشخصي' : 'My Profile', style: AppTypography.title()),
+        actions: [
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+              );
+            },
+            icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.teal),
+            label: Text(
+              isAr ? 'تعديل' : 'Edit',
+              style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 840;
+
+            final heroCard = Container(
+              padding: const EdgeInsets.all(AppDimens.space20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 76,
+                    height: 76,
+                    decoration: const BoxDecoration(
+                      color: AppColors.gold,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
+                        style: AppTypography.largeTitle(color: AppColors.navy).copyWith(fontSize: 32),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          user.fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.title().copyWith(fontSize: 20),
+                        ),
+                      ),
+                      if (isIdVerified) ...[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.verified_rounded, color: AppColors.teal, size: 20),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(user.phone, style: AppTypography.bodySecondary()),
+                  if (user.email != null && user.email!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(user.email!, style: AppTypography.label(color: AppColors.textSecondary)),
+                  ],
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      MashwarBadge(
+                        type: isIdVerified ? BadgeType.verified : BadgeType.pending,
+                        customLabel: isIdVerified
+                            ? (isAr ? 'موثق بالرقم القومي' : 'National ID Verified')
+                            : (isAr ? 'غير موثق' : 'Unverified'),
+                      ),
+                      if (user.governorate != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F3F4),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            user.city != null ? '${user.governorate} · ${user.city}' : user.governorate!,
+                            style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      if (user.occupation != null)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.tealSurface,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            user.occupation!,
+                            style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Divider(height: 1, color: Color(0xFFE5E5EA)),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Expanded(
+                        child: _buildStatItem('${user.completedRides}', isAr ? 'رحلة مكتملة' : 'Rides'),
+                      ),
+                      Container(width: 1, height: 28, color: const Color(0xFFE5E5EA)),
+                      Expanded(
+                        child: _buildStatItem('${user.completedParcels}', isAr ? 'طرد مُوصل' : 'Parcels'),
+                      ),
+                      Container(width: 1, height: 28, color: const Color(0xFFE5E5EA)),
+                      Expanded(
+                        child: _buildStatItem('${user.rating} ★', isAr ? 'التقييم' : 'Rating'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+
+            final preferencesAndAccount = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  isAr ? 'تفضيلات السفر والبيانات' : 'Travel Preferences & Info',
+                  style: AppTypography.title().copyWith(fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildInfoRow(
+                        Icons.smoke_free_rounded,
+                        isAr ? 'التدخين' : 'Smoking Preference',
+                        user.smokingPreference ?? (isAr ? 'غير مدخن' : 'Non-smoker'),
+                      ),
+                      const Divider(height: 20, color: Color(0xFFF1F1F4)),
+                      _buildInfoRow(
+                        Icons.airline_seat_recline_normal_rounded,
+                        isAr ? 'طبيعة الرحلة' : 'Trip Vibe',
+                        user.tripVibe ?? (isAr ? 'هادئ ومريح' : 'Calm & Comfortable'),
+                      ),
+                      if (user.emergencyContactName != null) ...[
+                        const Divider(height: 20, color: Color(0xFFF1F1F4)),
+                        _buildInfoRow(
+                          Icons.emergency_outlined,
+                          isAr ? 'جهة اتصال الطوارئ' : 'Emergency Contact',
+                          '${user.emergencyContactName} (${user.emergencyContactPhone ?? ""})',
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space20),
+                Text(
+                  isAr ? 'إدارة الحساب' : 'Account Management',
+                  style: AppTypography.title().copyWith(fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                Material(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      _buildActionTile(
+                        icon: Icons.person_outline_rounded,
+                        title: isAr ? 'تعديل البيانات الشخصية' : 'Edit Personal Info',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F1F4)),
+                      _buildActionTile(
+                        icon: Icons.badge_outlined,
+                        title: isAr ? 'توثيق بطاقة الرقم القومي' : 'National ID Verification',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const IdVerificationScreen(isOnboarding: false)),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F1F4)),
+                      _buildActionTile(
+                        icon: Icons.campaign_outlined,
+                        title: isAr ? 'إعلاناتي وعروضي في اللوحة' : 'My Board Ads & Offers',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const MyBoardAdsScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F1F4)),
+                      _buildActionTile(
+                        icon: Icons.account_balance_wallet_outlined,
+                        title: isAr ? 'محفظة مشوار' : 'Wallet',
+                        trailingText: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const WalletScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: Color(0xFFF1F1F4)),
+                      _buildActionTile(
+                        icon: Icons.settings_outlined,
+                        title: isAr ? 'الإعدادات' : 'Settings',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: isWide ? 1160 : 680),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.space20,
+                    vertical: AppDimens.space16,
+                  ),
+                  child: isWide
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(flex: 5, child: heroCard),
+                            const SizedBox(width: AppDimens.space24),
+                            Expanded(flex: 6, child: preferencesAndAccount),
+                          ],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            heroCard,
+                            const SizedBox(height: AppDimens.space20),
+                            preferencesAndAccount,
+                            const SizedBox(height: AppDimens.space24),
+                          ],
+                        ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String value, String label) {
+    return Column(
+      children: [
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 16),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTypography.label(color: AppColors.textSecondary),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: AppColors.teal),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySecondary(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
+            style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionTile({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    String? trailingText,
+  }) {
+    return ListTile(
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: const BoxDecoration(
+          color: Color(0xFFF3F3F4),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, size: 18, color: AppColors.navy),
+      ),
+      title: Text(title, style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (trailingText != null) ...[
+            Text(trailingText, style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(width: 6),
+          ],
+          const Icon(Icons.arrow_back_ios_new_rounded, size: 13, color: Color(0xFF8E8E93)),
+        ],
+      ),
+      onTap: onTap,
+    );
+  }
+}
 
 // Page 58: تعديل الملف الشخصي (Edit Profile)
 class EditProfileScreen extends StatefulWidget {

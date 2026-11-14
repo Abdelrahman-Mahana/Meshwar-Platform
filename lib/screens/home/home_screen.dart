@@ -14,6 +14,8 @@ import '../search/search_results_screen.dart';
 import '../booking/booking_confirmation_screen.dart';
 import '../alerts/my_alerts_screen.dart';
 import '../driver/driver_onboarding_screens.dart';
+import '../wallet/wallet_screen.dart';
+import '../account/account_extra_screens.dart';
 import 'city_search_modal.dart';
 import 'date_time_picker_sheet.dart';
 
@@ -30,363 +32,637 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: AppDimens.space12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 840;
+            final horizontalPad = isWide ? AppDimens.space32 : AppDimens.space20;
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPad,
+                vertical: AppDimens.space16,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: isWide ? 1200 : 720),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Top User Greeting, Wallet Shortcut, Notifications & Avatar
+                      _buildTopHeader(context, auth, isAr),
+                      const SizedBox(height: AppDimens.space20),
+
+                      if (isWide)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Primary Search & Route Discovery Column
+                            Expanded(
+                              flex: 7,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _buildModeSwitcher(context, rides, isAr),
+                                  const SizedBox(height: AppDimens.space16),
+                                  _buildSearchCard(context, rides, isAr),
+                                  const SizedBox(height: AppDimens.space24),
+                                  _buildPopularRoutesSection(context, rides, isAr),
+                                  const SizedBox(height: AppDimens.space24),
+                                  _buildTrustGuaranteesStrip(isAr),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppDimens.space24),
+                            // Secondary Activity, Upcoming Ride, Driver Promo & Alerts Column
+                            Expanded(
+                              flex: 5,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (auth.user.hasActiveAlerts) ...[
+                                    _buildAlertMatchBanner(context, isAr),
+                                    const SizedBox(height: AppDimens.space16),
+                                  ],
+                                  if (rides.activeBooking != null) ...[
+                                    _buildUpcomingBookingCard(context, rides, isAr),
+                                    const SizedBox(height: AppDimens.space16),
+                                  ],
+                                  _buildDriverPromoCard(context, isAr),
+                                  const SizedBox(height: AppDimens.space20),
+                                  if (alerts.alerts.isNotEmpty)
+                                    _buildMyAlertsSection(context, alerts, isAr),
+                                ],
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildModeSwitcher(context, rides, isAr),
+                            const SizedBox(height: AppDimens.space16),
+                            if (auth.user.hasActiveAlerts) ...[
+                              _buildAlertMatchBanner(context, isAr),
+                              const SizedBox(height: AppDimens.space16),
+                            ],
+                            if (rides.activeBooking != null) ...[
+                              _buildUpcomingBookingCard(context, rides, isAr),
+                              const SizedBox(height: AppDimens.space16),
+                            ],
+                            _buildSearchCard(context, rides, isAr),
+                            const SizedBox(height: AppDimens.space24),
+                            _buildPopularRoutesSection(context, rides, isAr),
+                            const SizedBox(height: AppDimens.space24),
+                            _buildDriverPromoCard(context, isAr),
+                            const SizedBox(height: AppDimens.space24),
+                            if (alerts.alerts.isNotEmpty) ...[
+                              _buildMyAlertsSection(context, alerts, isAr),
+                              const SizedBox(height: AppDimens.space20),
+                            ],
+                            _buildTrustGuaranteesStrip(isAr),
+                          ],
+                        ),
+
+                      const SizedBox(height: AppDimens.space24),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopHeader(BuildContext context, AuthProvider auth, bool isAr) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top User Greeting & Avatar
+              Text(
+                isAr ? 'أهلاً' : 'Hello',
+                style: AppTypography.bodySecondary(),
+              ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isAr ? 'أهلاً' : 'Hello',
-                        style: AppTypography.bodySecondary(),
-                      ),
-                      // Real user full name from database - preserved as requested
-                      Text(
-                        auth.user.fullName.split(' ').first,
-                        style: AppTypography.title(),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: const BoxDecoration(
-                      color: AppColors.gold,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        auth.user.fullName.isNotEmpty ? auth.user.fullName[0] : 'ع',
-                        style: AppTypography.title(color: AppColors.navy),
-                      ),
+                  Flexible(
+                    child: Text(
+                      auth.user.fullName.split(' ').first,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.title(),
                     ),
                   ),
+                  const SizedBox(width: 6),
+                  if (auth.user.isVerified)
+                    const Icon(Icons.verified_rounded, size: 18, color: AppColors.teal),
                 ],
               ),
-              const SizedBox(height: AppDimens.space16),
-
-              // Mode Switcher: كراسي vs طرود (Uber/inDrive segmented style)
-              Align(
-                alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F3F4),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildModePill(
-                        context,
-                        title: isAr ? 'كراسي' : 'Seats',
-                        isSelected: rides.rideMode == RideMode.seats,
-                        onTap: () => rides.setRideMode(RideMode.seats),
-                      ),
-                      _buildModePill(
-                        context,
-                        title: isAr ? 'طرود' : 'Parcels',
-                        isSelected: rides.rideMode == RideMode.parcels,
-                        onTap: () => rides.setRideMode(RideMode.parcels),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space16),
-
-              // Active Alert Match Banner (Page 15)
-              if (auth.user.hasActiveAlerts) ...[
-                AlertBanner(
-                  message: isAr
-                      ? 'لقينا رحلة مطابقة لتنبيهك: كفر الشيخ ← القاهرة\n7:30 ص'
-                      : 'Found a matching ride for your alert: Kafr El-Sheikh → Cairo\n7:30 AM',
-                  type: AlertBannerType.info,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(height: AppDimens.space16),
-              ],
-
-              // Upcoming Booking Card (Page 15)
-              if (rides.activeBooking != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(AppDimens.space16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                    border: Border.all(color: AppColors.borderDisabled),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(isAr ? 'رحلتك القادمة' : 'Your Upcoming Ride', style: AppTypography.label()),
-                          const MashwarBadge(type: BadgeType.confirmed),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        context.trRoute('${rides.activeBooking!.fromCity} ← ${rides.activeBooking!.toCity}'),
-                        style: AppTypography.title(),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${context.trDate(rides.activeBooking!.departureDate)}، ${rides.activeBooking!.departureTime} · ${rides.activeBooking!.driverName}',
-                        style: AppTypography.bodySecondary(),
-                      ),
-                      const SizedBox(height: 12),
-                      MashwarButton(
-                        text: isAr ? 'عرض الحجز' : 'View Booking',
-                        variant: MashwarButtonVariant.secondary,
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => BookingConfirmationScreen(ride: rides.activeBooking!),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppDimens.space16),
-              ],
-
-              // Main Search Card (Page 9)
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // From
-                    _buildRouteField(
-                      label: isAr ? 'من' : 'From',
-                      value: context.trCity(rides.fromCity),
-                      onTap: () async {
-                        final selected = await Navigator.of(context).push<String>(
-                          MaterialPageRoute(
-                            builder: (_) => CitySearchModal(
-                              title: isAr ? 'نقطة الانطلاق' : 'Departure Point',
-                              initialValue: rides.fromCity,
-                            ),
-                          ),
-                        );
-                        if (selected != null) {
-                          rides.setRoute(from: selected);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.space12),
-
-                    // To
-                    _buildRouteField(
-                      label: isAr ? 'إلى' : 'To',
-                      value: context.trCity(rides.toCity),
-                      onTap: () async {
-                        final selected = await Navigator.of(context).push<String>(
-                          MaterialPageRoute(
-                            builder: (_) => CitySearchModal(
-                              title: isAr ? 'الوجهة' : 'Destination',
-                              initialValue: rides.toCity,
-                            ),
-                          ),
-                        );
-                        if (selected != null) {
-                          rides.setRoute(to: selected);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: AppDimens.space12),
-
-                    // Date & Seats Row
-                    Row(
-                      children: [
-                        // Date Picker (flex 3)
-                        Expanded(
-                          flex: 3,
-                          child: _buildRouteField(
-                            label: isAr ? 'التاريخ' : 'Date',
-                            value: context.trDate(rides.date),
-                            onTap: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (_) => DateTimePickerSheet(
-                                  selectedDay: rides.date,
-                                  selectedTime: rides.timeSlot,
-                                  onApply: (day, time) {
-                                    rides.setDate(day);
-                                    rides.setTimeSlot(time);
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: AppDimens.space12),
-                        // Seats Counter (flex 1)
-                        Expanded(
-                          flex: 1,
-                          child: _buildRouteField(
-                            label: rides.rideMode == RideMode.seats ? (isAr ? 'الكراسي' : 'Seats') : (isAr ? 'الطرود' : 'Parcels'),
-                            value: '${rides.seatsCount}',
-                            onTap: () {
-                              _showSeatsPicker(context, rides);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppDimens.space24),
-
-                    // Search Button
-                    MashwarButton(
-                      text: rides.rideMode == RideMode.seats ? (isAr ? 'ابحث عن رحلة' : 'Search for a ride') : (isAr ? 'ابحث عن مسافر لطردك' : 'Find traveler for parcel'),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppDimens.space24),
-
-              // Popular Routes (محاور شائعة)
-              Text(isAr ? 'محاور شائعة' : 'Popular Routes', style: AppTypography.title().copyWith(fontSize: 18)),
-              const SizedBox(height: AppDimens.space12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildPopularChip(context, rides, isAr ? 'القاهرة ← الإسكندرية' : 'Cairo → Alexandria', 'القاهرة', 'الإسكندرية'),
-                  _buildPopularChip(context, rides, isAr ? 'القاهرة ← طنطا' : 'Cairo → Tanta', 'القاهرة', 'طنطا'),
-                  _buildPopularChip(context, rides, isAr ? 'الإسكندرية ← المنصورة' : 'Alexandria → Mansoura', 'الإسكندرية', 'المنصورة'),
-                ],
-              ),
-              const SizedBox(height: AppDimens.space24),
-
-              // Driver Promotion Banner (Page 15)
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(isAr ? 'عندك عربية؟' : 'Have a car?', style: AppTypography.title().copyWith(fontSize: 16)),
-                          const SizedBox(height: 4),
-                          Text(
-                            isAr ? 'انشر رحلتك واكسب من الكراسي الفاضية' : 'Publish your ride and earn from empty seats',
-                            style: AppTypography.bodySecondary(),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    MashwarButton(
-                      width: 80,
-                      height: 40,
-                      text: isAr ? 'ابدأ' : 'Start',
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const DriverOnboardingScreen()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppDimens.space24),
-
-              // Active Route Alerts Preview (Page 15 & 20)
-              if (alerts.alerts.isNotEmpty) ...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(isAr ? 'تنبيهاتي' : 'My Alerts', style: AppTypography.title().copyWith(fontSize: 18)),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const MyAlertsScreen()),
-                        );
-                      },
-                      child: Text(isAr ? 'عرض الكل' : 'View All', style: AppTypography.bodySecondary(color: AppColors.navy)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ...alerts.alerts.take(2).map((alert) {
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                      border: Border.all(color: AppColors.borderDisabled),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              context.trRoute('${alert.fromCity} ← ${alert.toCity}'),
-                              style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            Text(
-                              '${context.trDate(alert.dateRange)} · ${context.tr(alert.category)}',
-                              style: AppTypography.label(color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                        Switch(
-                          value: alert.isActive,
-                          activeThumbColor: AppColors.teal,
-                          onChanged: (_) => alerts.toggleAlert(alert.id),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-              const SizedBox(height: AppDimens.space32),
             ],
           ),
         ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Quick Wallet Pill
+            InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WalletScreen()),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.tealSurface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.account_balance_wallet_outlined, size: 15, color: AppColors.teal),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${auth.user.walletBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
+                      style: AppTypography.label(color: AppColors.teal).copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Notifications Shortcut
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.notifications_none_rounded, color: AppColors.navy),
+              tooltip: isAr ? 'الإشعارات' : 'Notifications',
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
+                );
+              },
+            ),
+            const SizedBox(width: 4),
+            // User Profile Avatar Circle -> Opens UserProfileScreen on tap
+            InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const UserProfileScreen()),
+                );
+              },
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: const BoxDecoration(
+                  color: AppColors.gold,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    auth.user.fullName.isNotEmpty ? auth.user.fullName[0] : 'ع',
+                    style: AppTypography.title(color: AppColors.navy),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModeSwitcher(BuildContext context, RidesProvider rides, bool isAr) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F3F4),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildModePill(
+              context,
+              title: isAr ? 'كراسي' : 'Seats',
+              isSelected: rides.rideMode == RideMode.seats,
+              onTap: () => rides.setRideMode(RideMode.seats),
+            ),
+          ),
+          Expanded(
+            child: _buildModePill(
+              context,
+              title: isAr ? 'طرود' : 'Parcels',
+              isSelected: rides.rideMode == RideMode.parcels,
+              onTap: () => rides.setRideMode(RideMode.parcels),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAlertMatchBanner(BuildContext context, bool isAr) {
+    return AlertBanner(
+      message: isAr
+          ? 'لقينا رحلة مطابقة لتنبيهك: كفر الشيخ ← القاهرة\n7:30 ص'
+          : 'Found a matching ride for your alert: Kafr El-Sheikh → Cairo\n7:30 AM',
+      type: AlertBannerType.info,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
+        );
+      },
+    );
+  }
+
+  Widget _buildUpcomingBookingCard(BuildContext context, RidesProvider rides, bool isAr) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: AppColors.borderDisabled),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(isAr ? 'رحلتك القادمة' : 'Your Upcoming Ride', style: AppTypography.label()),
+              ),
+              const MashwarBadge(type: BadgeType.confirmed),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            context.trRoute('${rides.activeBooking!.fromCity} ← ${rides.activeBooking!.toCity}'),
+            style: AppTypography.title(),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${context.trDate(rides.activeBooking!.departureDate)}، ${rides.activeBooking!.departureTime} · ${rides.activeBooking!.driverName}',
+            style: AppTypography.bodySecondary(),
+          ),
+          const SizedBox(height: 14),
+          MashwarButton(
+            text: isAr ? 'عرض الحجز' : 'View Booking',
+            variant: MashwarButtonVariant.secondary,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => BookingConfirmationScreen(ride: rides.activeBooking!),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchCard(BuildContext context, RidesProvider rides, bool isAr) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
+            alignment: isAr ? Alignment.centerLeft : Alignment.centerRight,
+            children: [
+              Column(
+                children: [
+                  _buildRouteField(
+                    label: isAr ? 'من' : 'From',
+                    value: context.trCity(rides.fromCity),
+                    onTap: () async {
+                      final selected = await Navigator.of(context).push<String>(
+                        MaterialPageRoute(
+                          builder: (_) => CitySearchModal(
+                            title: isAr ? 'نقطة الانطلاق' : 'Departure Point',
+                            initialValue: rides.fromCity,
+                          ),
+                        ),
+                      );
+                      if (selected != null) {
+                        rides.setRoute(from: selected);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: AppDimens.space12),
+                  _buildRouteField(
+                    label: isAr ? 'إلى' : 'To',
+                    value: context.trCity(rides.toCity),
+                    onTap: () async {
+                      final selected = await Navigator.of(context).push<String>(
+                        MaterialPageRoute(
+                          builder: (_) => CitySearchModal(
+                            title: isAr ? 'الوجهة' : 'Destination',
+                            initialValue: rides.toCity,
+                          ),
+                        ),
+                      );
+                      if (selected != null) {
+                        rides.setRoute(to: selected);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 44),
+                child: Material(
+                  color: Colors.white,
+                  shape: const CircleBorder(
+                    side: BorderSide(color: Color(0xFFE5E5EA), width: 1),
+                  ),
+                  elevation: 2,
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: () => rides.swapLocations(),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.swap_vert_rounded,
+                        size: 20,
+                        color: AppColors.teal,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimens.space12),
+          Row(
+            children: [
+              Expanded(
+                flex: 5,
+                child: _buildRouteField(
+                  label: isAr ? 'التاريخ' : 'Date',
+                  value: context.trDate(rides.date),
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => DateTimePickerSheet(
+                        selectedDay: rides.date,
+                        selectedTime: rides.timeSlot,
+                        onApply: (day, time) {
+                          rides.setDate(day);
+                          rides.setTimeSlot(time);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: AppDimens.space12),
+              Expanded(
+                flex: 3,
+                child: _buildRouteField(
+                  label: rides.rideMode == RideMode.seats ? (isAr ? 'الكراسي' : 'Seats') : (isAr ? 'الطرود' : 'Parcels'),
+                  value: '${rides.seatsCount}',
+                  onTap: () => _showSeatsPicker(context, rides),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppDimens.space20),
+          MashwarButton(
+            text: rides.rideMode == RideMode.seats
+                ? (isAr ? 'ابحث عن رحلة' : 'Search for a ride')
+                : (isAr ? 'ابحث عن مسافر لطردك' : 'Find traveler for parcel'),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPopularRoutesSection(BuildContext context, RidesProvider rides, bool isAr) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(isAr ? 'محاور شائعة' : 'Popular Routes', style: AppTypography.title().copyWith(fontSize: 18)),
+        const SizedBox(height: AppDimens.space12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _buildPopularChip(context, rides, isAr ? 'القاهرة ← الإسكندرية' : 'Cairo → Alexandria', 'القاهرة', 'الإسكندرية'),
+            _buildPopularChip(context, rides, isAr ? 'القاهرة ← طنطا' : 'Cairo → Tanta', 'القاهرة', 'طنطا'),
+            _buildPopularChip(context, rides, isAr ? 'الإسكندرية ← المنصورة' : 'Alexandria → Mansoura', 'الإسكندرية', 'المنصورة'),
+            _buildPopularChip(context, rides, isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo', 'كفر الشيخ', 'القاهرة'),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDriverPromoCard(BuildContext context, bool isAr) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.goldSurface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(Icons.directions_car_filled_rounded, color: AppColors.navy, size: 22),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(isAr ? 'عندك عربية؟' : 'Have a car?', style: AppTypography.title().copyWith(fontSize: 16)),
+                const SizedBox(height: 2),
+                Text(
+                  isAr ? 'انشر رحلتك واكسب من الكراسي الفاضية' : 'Publish your ride and earn from empty seats',
+                  style: AppTypography.bodySecondary(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          MashwarButton(
+            width: 88,
+            height: 40,
+            text: isAr ? 'ابدأ' : 'Start',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DriverOnboardingScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMyAlertsSection(BuildContext context, AlertsProvider alerts, bool isAr) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(isAr ? 'تنبيهاتي' : 'My Alerts', style: AppTypography.title().copyWith(fontSize: 18)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MyAlertsScreen()),
+                );
+              },
+              child: Text(isAr ? 'عرض الكل' : 'View All', style: AppTypography.bodySecondary(color: AppColors.navy)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...alerts.alerts.take(2).map((alert) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+              border: Border.all(color: AppColors.borderDisabled),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.trRoute('${alert.fromCity} ← ${alert.toCity}'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        '${context.trDate(alert.dateRange)} · ${context.tr(alert.category)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: alert.isActive,
+                  activeThumbColor: AppColors.teal,
+                  onChanged: (_) => alerts.toggleAlert(alert.id),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildTrustGuaranteesStrip(bool isAr) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildGuaranteeTile(
+            icon: Icons.verified_user_outlined,
+            title: isAr ? 'هوية موثقة' : 'ID Verified',
+            subtitle: isAr ? 'بالرقم القومي' : 'National ID',
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildGuaranteeTile(
+            icon: Icons.payments_outlined,
+            title: isAr ? 'دفع مرن' : 'Flexible Pay',
+            subtitle: isAr ? 'كاش أو إنستاباي' : 'Cash or IPN',
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildGuaranteeTile(
+            icon: Icons.share_location_rounded,
+            title: isAr ? 'تتبع مباشر' : 'Live Share',
+            subtitle: isAr ? 'مشاركة المسار' : 'Trip Safety',
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGuaranteeTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: AppColors.teal),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w800, fontSize: 12),
+          ),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 10),
+          ),
+        ],
       ),
     );
   }
@@ -401,16 +677,20 @@ class HomeScreen extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.navy : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimens.radiusChip),
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: Text(
-          title,
-          style: AppTypography.bodySecondary(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-          ).copyWith(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
+        child: Center(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.bodySecondary(
+              color: isSelected ? Colors.white : AppColors.textPrimary,
+            ).copyWith(fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500),
+          ),
         ),
       ),
     );
@@ -425,7 +705,7 @@ class HomeScreen extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: const Color(0xFFF3F3F4),
           borderRadius: BorderRadius.circular(10),
@@ -434,15 +714,28 @@ class HomeScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93), fontFamily: 'Cairo')),
-                const SizedBox(height: 2),
-                Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy, fontFamily: 'Cairo')),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93), fontFamily: 'Cairo'),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy, fontFamily: 'Cairo'),
+                  ),
+                ],
+              ),
             ),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.navy),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.navy, size: 20),
           ],
         ),
       ),

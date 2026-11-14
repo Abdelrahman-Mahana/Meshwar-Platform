@@ -88,16 +88,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
-  void _fillDemoCode(bool isAr) {
-    const demo = '482911';
-    _otpController.value = const TextEditingValue(
-      text: demo,
-      selection: TextSelection.collapsed(offset: demo.length),
-    );
-    setState(() => _errorMessage = null);
-    _verify(isAr);
-  }
-
   void _verify(bool isAr) async {
     final code = _otpController.text.trim();
     if (code.length < 6) {
@@ -155,18 +145,49 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: AppDimens.space16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 760;
+            return Container(
+              color: isWide ? AppColors.sand : Colors.white,
+              width: double.infinity,
+              height: double.infinity,
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.space24,
+                    vertical: AppDimens.space16,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 500),
+                    child: Container(
+                      padding: isWide
+                          ? const EdgeInsets.all(AppDimens.space24)
+                          : EdgeInsets.zero,
+                      decoration: isWide
+                          ? BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.04),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            )
+                          : null,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                  const SizedBox(height: AppDimens.space8),
 
-              // Title
-              Text(
-                isAr ? 'أدخل الكود' : 'Enter Code',
-                style: AppTypography.largeTitle(),
-              ),
+                  // Title
+                  Text(
+                    isAr ? 'أدخل الكود' : 'Enter Code',
+                    style: AppTypography.largeTitle(),
+                  ),
               const SizedBox(height: AppDimens.space8),
 
               // Subtitle with LTR-safe masked phone or email & edit link
@@ -314,38 +335,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       ),
               ),
 
-              const SizedBox(height: AppDimens.space16),
-
-              // Quick Prototype Demo Chip
-              Center(
-                child: InkWell(
-                  onTap: () => _fillDemoCode(isAr),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F3F4),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.flash_on_rounded, size: 15, color: AppColors.teal),
-                        const SizedBox(width: 6),
-                        Text(
-                          isAr ? 'تجربة سريعة: تعبئة الكود 482911' : 'Quick Demo: Fill 482911',
-                          style: AppTypography.label(color: AppColors.navy).copyWith(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
               const SizedBox(height: AppDimens.space32),
 
               // Confirm CTA
@@ -356,8 +345,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
 
               const SizedBox(height: AppDimens.space24),
-            ],
-          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

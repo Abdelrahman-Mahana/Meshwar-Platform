@@ -13,6 +13,7 @@ enum BadgeType {
   newBadge,    // جديد
   suspended,   // موقوف
   confirmed,   // مؤكد
+  ladiesOnly,  // سيدات فقط
 }
 
 class MashwarBadge extends StatelessWidget {
@@ -73,6 +74,12 @@ class MashwarBadge extends StatelessWidget {
         defaultLabelAr = 'مؤكد';
         defaultLabelEn = 'Confirmed';
         break;
+      case BadgeType.ladiesOnly:
+        textColor = const Color(0xFFBE185D);
+        bgColor = const Color(0xFFFCE7F3);
+        defaultLabelAr = 'سيدات فقط';
+        defaultLabelEn = 'Ladies Only';
+        break;
     }
 
     final rawLabel = customLabel ?? (isAr ? defaultLabelAr : defaultLabelEn);
@@ -87,6 +94,8 @@ class MashwarBadge extends StatelessWidget {
       ),
       child: Text(
         displayLabel,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: AppTypography.label(color: textColor).copyWith(
           fontWeight: FontWeight.w700,
           fontSize: 11,
@@ -95,3 +104,4 @@ class MashwarBadge extends StatelessWidget {
     );
   }
 }
+

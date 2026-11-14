@@ -11,11 +11,9 @@ import 'email_input_screen.dart';
 import 'phone_input_screen.dart';
 import 'profile_setup_screen.dart';
 
-/// Top-tier, minimalist Welcome & Entry screen (Uber / inDrive standard).
-/// Gives the user a clear, immediate choice between:
-/// 1. Continue with Mobile Number (Primary Navy CTA)
-/// 2. Continue with Google (One-tap account chooser)
-/// 3. Continue with Email (Clean alternative input)
+/// Market-ready responsive Welcome & Entry screen (Uber / inDrive standard).
+/// - Wide / Desktop (>= 840px): 2-column split canvas (Navy brand showcase + clean Auth panel)
+/// - Mobile (< 840px): Full-height balanced vertical distribution across the entire viewport
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
@@ -25,123 +23,118 @@ class WelcomeScreen extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (sheetContext) {
-        return Material(
-          color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: AppDimens.space20),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                // Top drag handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE5E5EA),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppDimens.space16),
-
-                // Header with Google brand
-                Row(
-                  children: [
-                    const GoogleLogo(size: 24),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Material(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: AppDimens.space20),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Container(
+                          width: 40,
+                          height: 4,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE5E5EA),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.space16),
+                      Row(
                         children: [
-                          Text(
-                            isAr ? 'تسجيل الدخول باستخدام Google' : 'Sign in with Google',
-                            style: AppTypography.title(color: AppColors.navy).copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 17,
+                          const GoogleLogo(size: 24),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isAr ? 'تسجيل الدخول باستخدام Google' : 'Sign in with Google',
+                                  style: AppTypography.title(color: AppColors.navy).copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                                Text(
+                                  isAr ? 'اختر حساباً للمتابعة إلى تطبيق مشوار' : 'Choose an account for MASHWAR',
+                                  style: AppTypography.label(color: AppColors.textSecondary),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            isAr ? 'اختر حساباً للمتابعة إلى تطبيق مشوار' : 'Choose an account for MASHWAR',
-                            style: AppTypography.label(color: AppColors.textSecondary),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 20),
+                            onPressed: () => Navigator.of(sheetContext).pop(),
                           ),
                         ],
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary, size: 20),
-                      onPressed: () => Navigator.of(sheetContext).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppDimens.space16),
-                const Divider(height: 1, color: Color(0xFFE5E5EA)),
-                const SizedBox(height: AppDimens.space8),
-
-                // Account 1: Ahmed Mostafa
-                _buildGoogleAccountTile(
-                  sheetContext: sheetContext,
-                  context: context,
-                  displayName: isAr ? 'أحمد مصطفى' : 'Ahmed Mostafa',
-                  email: 'ahmed.mostafa@gmail.com',
-                  initial: isAr ? 'أ' : 'A',
-                  color: const Color(0xFF4285F4),
-                ),
-
-                // Account 2: Abdelrahman Ahmed (Demo user)
-                _buildGoogleAccountTile(
-                  sheetContext: sheetContext,
-                  context: context,
-                  displayName: isAr ? 'عبدالرحمن أحمد' : 'Abdelrahman Ahmed',
-                  email: 'abdelrahman@mashwar.eg',
-                  initial: isAr ? 'ع' : 'A',
-                  color: const Color(0xFF0F9D58),
-                ),
-
-                // Add another account
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  leading: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F3F4),
-                      borderRadius: BorderRadius.circular(21),
-                    ),
-                    child: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.navy, size: 20),
+                      const SizedBox(height: AppDimens.space16),
+                      const Divider(height: 1, color: Color(0xFFE5E5EA)),
+                      const SizedBox(height: AppDimens.space8),
+                      _buildGoogleAccountTile(
+                        sheetContext: sheetContext,
+                        context: context,
+                        displayName: isAr ? 'أحمد مصطفى' : 'Ahmed Mostafa',
+                        email: 'ahmed.mostafa@gmail.com',
+                        initial: isAr ? 'أ' : 'A',
+                        color: const Color(0xFF4285F4),
+                      ),
+                      _buildGoogleAccountTile(
+                        sheetContext: sheetContext,
+                        context: context,
+                        displayName: isAr ? 'عبدالرحمن أحمد' : 'Abdelrahman Ahmed',
+                        email: 'abdelrahman@mashwar.eg',
+                        initial: isAr ? 'ع' : 'A',
+                        color: const Color(0xFF0F9D58),
+                      ),
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        leading: Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F3F4),
+                            borderRadius: BorderRadius.circular(21),
+                          ),
+                          child: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.navy, size: 20),
+                        ),
+                        title: Text(
+                          isAr ? 'استخدام حساب آخر' : 'Use another account',
+                          style: AppTypography.body(color: AppColors.navy).copyWith(fontWeight: FontWeight.w600),
+                        ),
+                        onTap: () {
+                          Navigator.of(sheetContext).pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const EmailInputScreen()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppDimens.space12),
+                      Text(
+                        isAr
+                            ? 'بالمتابعة، ستشارك Google اسمك وعنوان بريدك الإلكتروني مع تطبيق مشوار.'
+                            : 'By continuing, Google will share your name and email address with MASHWAR.',
+                        style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
+                      ),
+                      const SizedBox(height: AppDimens.space8),
+                    ],
                   ),
-                  title: Text(
-                    isAr ? 'استخدام حساب آخر' : 'Use another account',
-                    style: AppTypography.body(color: AppColors.navy).copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  onTap: () {
-                    Navigator.of(sheetContext).pop();
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const EmailInputScreen()),
-                    );
-                  },
                 ),
-
-                const SizedBox(height: AppDimens.space12),
-                Text(
-                  isAr
-                    ? 'بالمتابعة، ستشارك Google اسمك وعنوان بريدك الإلكتروني مع تطبيق مشوار.'
-                    : 'By continuing, Google will share your name and email address with MASHWAR.',
-                  style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
-                ),
-                const SizedBox(height: AppDimens.space8),
-              ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildGoogleAccountTile({
     required BuildContext sheetContext,
@@ -203,179 +196,519 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              // Language switch pill at top corner
-              Align(
-                alignment: isAr ? Alignment.topLeft : Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: ActionChip(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-                    avatar: const Icon(Icons.language_rounded, size: 16, color: AppColors.navy),
-                    label: Text(
-                      isAr ? 'English' : 'العربية',
-                      style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () => settings.toggleLanguage(),
-                  ),
-                ),
-              ),
-
-              const Spacer(flex: 3),
-
-              // Brand Identity
-              const BrandLogo(fontSize: 46),
-              const SizedBox(height: AppDimens.space12),
-              Text(
-                isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
-                textAlign: TextAlign.center,
-                style: AppTypography.body(color: AppColors.textSecondary).copyWith(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
-              ),
-
-              const Spacer(flex: 4),
-
-              // Choice 1: Primary Mobile Number CTA
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.phone_iphone_rounded, size: 20, color: Colors.white),
-                  label: Text(
-                    isAr ? 'المتابعة برقم الموبايل' : 'Continue with Mobile Number',
-                    style: AppTypography.button(color: Colors.white).copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 15,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
-                    );
-                  },
-                ),
-              ),
-
-              const SizedBox(height: AppDimens.space16),
-
-              // Elegant OR Divider
-              Row(
-                children: [
-                  const Expanded(child: Divider(color: Color(0xFFE5E5EA), height: 1)),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Text(
-                      isAr ? 'أو' : 'OR',
-                      style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  const Expanded(child: Divider(color: Color(0xFFE5E5EA), height: 1)),
-                ],
-              ),
-
-              const SizedBox(height: AppDimens.space16),
-
-              // Choice 2: Continue with Google (Clean Uber style)
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () => _showGoogleSignInSheet(context, isAr),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const GoogleLogo(size: 20),
-                      const SizedBox(width: 10),
-                      Text(
-                        isAr ? 'المتابعة باستخدام Google' : 'Continue with Google',
-                        style: AppTypography.body(color: AppColors.navy).copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppDimens.space12),
-
-              // Choice 3: Continue with Email (Soft surface)
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF8F9FA),
-                    side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const EmailInputScreen()),
-                    );
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.mail_outline_rounded, size: 20, color: AppColors.navy),
-                      const SizedBox(width: 10),
-                      Text(
-                        isAr ? 'المتابعة بالبريد الإلكتروني' : 'Continue with Email',
-                        style: AppTypography.body(color: AppColors.navy).copyWith(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: AppDimens.space20),
-
-              // Footnote Terms
-              Text(
-                isAr
-                    ? 'بالمتابعة أنت توافق على شروط الاستخدام وسياسة الخصوصية'
-                    : 'By continuing, you agree to Terms of Service & Privacy Policy',
-                textAlign: TextAlign.center,
-                style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
-              ),
-
-              const SizedBox(height: AppDimens.space16),
-            ],
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 840;
+            if (isWide) {
+              return _buildWideSplitLayout(context, settings, isAr, constraints);
+            }
+            return _buildMobileLayout(context, settings, isAr, constraints);
+          },
         ),
       ),
+    );
+  }
+
+  Widget _buildWideSplitLayout(
+    BuildContext context,
+    SettingsProvider settings,
+    bool isAr,
+    BoxConstraints constraints,
+  ) {
+    return Row(
+      children: [
+        // Left/Start Brand Showcase Panel
+        Expanded(
+          flex: 6,
+          child: Container(
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.navy, Color(0xFF14385A)],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 80).clamp(0.0, double.infinity),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Brand Logo & Headline
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const BrandLogo(fontSize: 48, isLight: true),
+                        const SizedBox(height: 16),
+                        Text(
+                          isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
+                          style: AppTypography.title(color: Colors.white.withValues(alpha: 0.92)).copyWith(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isAr
+                              ? 'منصة السفر التشاركي ونقل الطرود بين المحافظات المصرية بأمان وشفافية.'
+                              : 'Egypt’s intercity carpooling & peer-to-peer parcel network with verified members.',
+                          style: AppTypography.body(color: Colors.white70).copyWith(fontSize: 15),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Architectural Service Highlights (not cluttered pills)
+                    Column(
+                      children: [
+                        _buildWideFeatureCard(
+                          icon: Icons.route_rounded,
+                          title: isAr ? 'تغطية شاملة لـ 27 محافظة' : 'All 27 Governorates Covered',
+                          subtitle: isAr
+                              ? 'تشارك المقاعد الفارغة يومياً بين القاهرة والدلتا والصعيد والساحل.'
+                              : 'Share intercity seats daily between Cairo, Delta, Upper Egypt & Coast.',
+                        ),
+                        const SizedBox(height: 14),
+                        _buildWideFeatureCard(
+                          icon: Icons.verified_user_outlined,
+                          title: isAr ? 'مجتمع موثق ومراقب لحظياً' : 'Verified Community & Live Tracking',
+                          subtitle: isAr
+                              ? 'مراجعة بطاقة الرقم القومي وتقييمات حقيقية ومشاركة مسار الرحلة.'
+                              : 'National ID checks, authentic ratings, and real-time trip sharing.',
+                        ),
+                        const SizedBox(height: 14),
+                        _buildWideFeatureCard(
+                          icon: Icons.inventory_2_outlined,
+                          title: isAr ? 'شحن طرود ذكي بكود استلام' : 'OTP-Protected Parcel Delivery',
+                          subtitle: isAr
+                              ? 'سلّم طردك مع مسافر متجه لنفس مدينتك ولا يتم التسليم إلا بكود OTP.'
+                              : 'Send parcels with travelers heading your way, verified with pickup OTP.',
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Bottom Coverage Metric Strip
+                    Row(
+                      children: [
+                        _buildShowcaseMetric(isAr ? '27' : '27', isAr ? 'محافظة مصرية' : 'Governorates'),
+                        const SizedBox(width: 32),
+                        _buildShowcaseMetric('4.9 ★', isAr ? 'تقييم المسافرين' : 'Rider Rating'),
+                        const SizedBox(width: 32),
+                        _buildShowcaseMetric('24/7', isAr ? 'دعم ومتابعة' : 'Live Support'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Right/End Authentication Form Area
+        Expanded(
+          flex: 5,
+          child: Container(
+            height: double.infinity,
+            color: Colors.white,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 56).clamp(0.0, double.infinity),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: _buildLanguageButton(settings, isAr),
+                    ),
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 400),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              isAr ? 'ابدأ رحلتك الآن' : 'Get started',
+                              style: AppTypography.largeTitle().copyWith(fontSize: 28),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              isAr
+                                  ? 'اختر وسيلة الدخول المناسبة للمتابعة إلى حسابك في مشوار'
+                                  : 'Choose how you would like to sign in or create your MASHWAR account',
+                              style: AppTypography.bodySecondary(),
+                            ),
+                            const SizedBox(height: 28),
+                            _buildAuthActions(context, isAr),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout(
+    BuildContext context,
+    SettingsProvider settings,
+    bool isAr,
+    BoxConstraints constraints,
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.space24,
+        vertical: AppDimens.space16,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top Row: Geographic Context + Language Switch
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.explore_outlined, size: 16, color: AppColors.teal),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          isAr ? 'مصر · 27 محافظة' : 'Egypt · 27 Governorates',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildLanguageButton(settings, isAr),
+              ],
+            ),
+
+            const SizedBox(height: AppDimens.space24),
+
+            // Center Hero Brand Identity & 3 Architectural Value Columns
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const BrandLogo(fontSize: 44),
+                const SizedBox(height: AppDimens.space12),
+                Text(
+                  isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.body(color: AppColors.textSecondary).copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildCompactValueColumn(
+                        icon: Icons.directions_car_outlined,
+                        label: isAr ? 'سفر بين المحافظات' : 'Intercity Rides',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildCompactValueColumn(
+                        icon: Icons.verified_user_outlined,
+                        label: isAr ? 'هوية موثقة' : 'Verified ID',
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildCompactValueColumn(
+                        icon: Icons.inventory_2_outlined,
+                        label: isAr ? 'شحن طرود آمن' : 'OTP Parcels',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: AppDimens.space24),
+
+            // Bottom Authentication Choices
+            _buildAuthActions(context, isAr),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageButton(SettingsProvider settings, bool isAr) {
+    return ActionChip(
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+      avatar: const Icon(Icons.language_rounded, size: 16, color: AppColors.navy),
+      label: Text(
+        isAr ? 'English' : 'العربية',
+        style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.bold),
+      ),
+      onPressed: () => settings.toggleLanguage(),
+    );
+  }
+
+  Widget _buildCompactValueColumn({required IconData icon, required String label}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.teal, size: 20),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWideFeatureCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.gold, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.body(color: Colors.white).copyWith(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: AppTypography.label(color: Colors.white70).copyWith(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShowcaseMetric(String value, String label) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: AppTypography.title(color: AppColors.gold).copyWith(fontSize: 22, fontWeight: FontWeight.w800),
+        ),
+        Text(
+          label,
+          style: AppTypography.label(color: Colors.white70),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAuthActions(BuildContext context, bool isAr) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Choice 1: Primary Mobile Number CTA
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.phone_iphone_rounded, size: 20, color: Colors.white),
+            label: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                isAr ? 'المتابعة برقم الموبايل' : 'Continue with Mobile Number',
+                style: AppTypography.button(color: Colors.white).copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.navy,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: AppDimens.space16),
+
+        // OR Divider
+        Row(
+          children: [
+            const Expanded(child: Divider(color: Color(0xFFE5E5EA), height: 1)),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                isAr ? 'أو' : 'OR',
+                style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            const Expanded(child: Divider(color: Color(0xFFE5E5EA), height: 1)),
+          ],
+        ),
+
+        const SizedBox(height: AppDimens.space16),
+
+        // Choice 2: Continue with Google
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () => _showGoogleSignInSheet(context, isAr),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const GoogleLogo(size: 20),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      isAr ? 'المتابعة باستخدام Google' : 'Continue with Google',
+                      style: AppTypography.body(color: AppColors.navy).copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: AppDimens.space12),
+
+        // Choice 3: Continue with Email
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFFF8F9FA),
+              side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const EmailInputScreen()),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.mail_outline_rounded, size: 20, color: AppColors.navy),
+                const SizedBox(width: 10),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      isAr ? 'المتابعة بالبريد الإلكتروني' : 'Continue with Email',
+                      style: AppTypography.body(color: AppColors.navy).copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(height: AppDimens.space20),
+
+        // Footnote Terms
+        Text(
+          isAr
+              ? 'بالمتابعة أنت توافق على شروط الاستخدام وسياسة الخصوصية'
+              : 'By continuing, you agree to Terms of Service & Privacy Policy',
+          textAlign: TextAlign.center,
+          style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
+        ),
+      ],
     );
   }
 }
@@ -401,8 +734,7 @@ class _GoogleLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
-    final double h = size.height;
-    final center = Offset(w / 2, h / 2);
+    final center = Offset(w / 2, size.height / 2);
     final radius = w / 2;
     final strokeWidth = w * 0.22;
 
@@ -413,7 +745,7 @@ class _GoogleLogoPainter extends CustomPainter {
 
     final rect = Rect.fromCircle(center: center, radius: radius - strokeWidth / 2);
 
-    // Blue arc (right-side opening)
+    // Blue arc
     paint.color = const Color(0xFF4285F4);
     canvas.drawArc(rect, -0.65, 1.4, false, paint);
 
@@ -431,15 +763,15 @@ class _GoogleLogoPainter extends CustomPainter {
       barPaint,
     );
 
-    // Green arc (bottom right to bottom left)
+    // Green arc
     paint.color = const Color(0xFF34A853);
     canvas.drawArc(rect, 0.75, 1.5, false, paint);
 
-    // Yellow arc (bottom left to top left)
+    // Yellow arc
     paint.color = const Color(0xFFFBBC05);
     canvas.drawArc(rect, 2.25, 1.45, false, paint);
 
-    // Red arc (top left to top right)
+    // Red arc
     paint.color = const Color(0xFFEA4335);
     canvas.drawArc(rect, 3.7, 1.5, false, paint);
   }

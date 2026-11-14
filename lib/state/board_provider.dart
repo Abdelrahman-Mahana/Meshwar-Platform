@@ -5,6 +5,7 @@ import '../data/models/board_ad_model.dart';
 class BoardProvider extends ChangeNotifier {
   BoardAdType _selectedType = BoardAdType.all;
   int _radiusKm = 50;
+  String _searchQuery = '';
   final List<BoardAdModel> _ads = List.from(MockData.initialBoardAds);
   final List<BoardAdModel> _myAds = [
     const BoardAdModel(
@@ -39,11 +40,26 @@ class BoardProvider extends ChangeNotifier {
 
   BoardAdType get selectedType => _selectedType;
   int get radiusKm => _radiusKm;
+  String get searchQuery => _searchQuery;
   List<BoardAdModel> get myAds => List.unmodifiable(_myAds);
+  List<BoardAdModel> get mySentOffers =>
+      List.unmodifiable(_ads.where((ad) => ad.status == BoardAdStatus.offerSent));
 
   List<BoardAdModel> get filteredAds {
-    if (_selectedType == BoardAdType.all) return _ads;
-    return _ads.where((ad) => ad.type == _selectedType).toList();
+    Iterable<BoardAdModel> result = _ads;
+    if (_selectedType != BoardAdType.all) {
+      result = result.where((ad) => ad.type == _selectedType);
+    }
+    final q = _searchQuery.trim().toLowerCase();
+    if (q.isNotEmpty) {
+      result = result.where((ad) =>
+          ad.fromCity.toLowerCase().contains(q) ||
+          ad.toCity.toLowerCase().contains(q) ||
+          ad.authorName.toLowerCase().contains(q) ||
+          ad.description.toLowerCase().contains(q) ||
+          ad.timeText.toLowerCase().contains(q));
+    }
+    return result.toList();
   }
 
   void setSelectedType(BoardAdType type) {
@@ -53,6 +69,11 @@ class BoardProvider extends ChangeNotifier {
 
   void setRadiusKm(int radius) {
     _radiusKm = radius;
+    notifyListeners();
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
     notifyListeners();
   }
 
@@ -67,7 +88,7 @@ class BoardProvider extends ChangeNotifier {
     bool isLadiesOnly = false,
   }) {
     final newAd = BoardAdModel(
-      id: 'ad_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'my_ad_${DateTime.now().millisecondsSinceEpoch}',
       type: type,
       authorName: 'عبدالرحمن أحمد',
       isVerified: true,
@@ -90,12 +111,14 @@ class BoardProvider extends ChangeNotifier {
   void submitOffer({
     required String adId,
     required int offerPrice,
+    String? note,
   }) {
     final index = _ads.indexWhere((a) => a.id == adId);
     if (index != -1) {
       _ads[index] = _ads[index].copyWith(
         status: BoardAdStatus.offerSent,
         myOfferPrice: offerPrice,
+        notes: note ?? _ads[index].notes,
       );
       notifyListeners();
     }

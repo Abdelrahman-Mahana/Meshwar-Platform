@@ -405,12 +405,65 @@ class AppStrings {
   }
 }
 
+/// Formal Flutter Localizations class & delegate for Arabic ('ar') and English ('en').
+/// Works seamlessly alongside SettingsProvider and MLocalize context helpers.
+class AppLocalizations {
+  final Locale locale;
+
+  const AppLocalizations(this.locale);
+
+  bool get isArabic => locale.languageCode == 'ar';
+
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  static const List<Locale> supportedLocales = [
+    Locale('ar', 'EG'),
+    Locale('ar'),
+    Locale('en', 'US'),
+    Locale('en'),
+  ];
+
+  String translate(String text) => AppStrings.translate(text, isArabic: isArabic);
+  String translateCity(String city) => AppStrings.translateCity(city, isArabic: isArabic);
+  String translateRoute(String route) => AppStrings.translateRoute(route, isArabic: isArabic);
+  String translateDate(String dateStr) => AppStrings.translateDate(dateStr, isArabic: isArabic);
+  String translateStatus(String status) => AppStrings.translateStatus(status, isArabic: isArabic);
+}
+
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  bool isSupported(Locale locale) =>
+      ['ar', 'en'].contains(locale.languageCode);
+
+  @override
+  Future<AppLocalizations> load(Locale locale) async =>
+      AppLocalizations(locale);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
 /// Convenient BuildContext extension for reactive localization anywhere
 extension MLocalize on BuildContext {
-  bool get isArabic => watch<SettingsProvider>().isArabic;
+  bool get isArabic {
+    try {
+      return watch<SettingsProvider>().isArabic;
+    } catch (_) {
+      return AppLocalizations.of(this)?.isArabic ?? true;
+    }
+  }
+
   String tr(String text) => AppStrings.translate(text, isArabic: isArabic);
   String trCity(String city) => AppStrings.translateCity(city, isArabic: isArabic);
   String trRoute(String route) => AppStrings.translateRoute(route, isArabic: isArabic);
   String trStatus(String status) => AppStrings.translateStatus(status, isArabic: isArabic);
   String trDate(String date) => AppStrings.translateDate(date, isArabic: isArabic);
 }
+

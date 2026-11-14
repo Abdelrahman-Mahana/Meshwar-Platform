@@ -11,6 +11,7 @@ import '../../data/api/api_endpoints.dart';
 import '../../data/api/mashwar_api_client.dart';
 import '../../data/mock_data.dart';
 import '../../state/auth_provider.dart';
+import '../../state/settings_provider.dart';
 
 /// 1. Legal, Privacy & Ministry of Transport Compliance Screen
 class LegalComplianceScreen extends StatelessWidget {
@@ -19,8 +20,10 @@ class LegalComplianceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.watch<SettingsProvider?>()?.isArabic ?? true;
+
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: DefaultTabController(
         length: 3,
         initialIndex: initialTabIndex.clamp(0, 2),
@@ -28,7 +31,7 @@ class LegalComplianceScreen extends StatelessWidget {
           backgroundColor: Colors.white,
           appBar: AppBar(
             title: Text(
-              'الشروط القانونية والترخيص',
+              isAr ? 'الشروط القانونية والترخيص' : 'Legal Terms & MoT License',
               style: AppTypography.title(),
             ),
             backgroundColor: Colors.white,
@@ -46,18 +49,18 @@ class LegalComplianceScreen extends StatelessWidget {
               unselectedLabelColor: AppColors.textSecondary,
               indicatorColor: AppColors.teal,
               labelStyle: AppTypography.bodySecondary().copyWith(fontWeight: FontWeight.bold),
-              tabs: const [
-                Tab(text: 'شروط الخدمة'),
-                Tab(text: 'حماية البيانات'),
-                Tab(text: 'امتثال وزارة النقل'),
+              tabs: [
+                Tab(text: isAr ? 'شروط الخدمة' : 'Terms of Service'),
+                Tab(text: isAr ? 'حماية البيانات' : 'Data Privacy'),
+                Tab(text: isAr ? 'امتثال وزارة النقل' : 'MoT Compliance'),
               ],
             ),
           ),
           body: TabBarView(
             children: [
-              _buildTermsTab(),
-              _buildPrivacyTab(),
-              _buildMoTComplianceTab(),
+              _buildTermsTab(isAr),
+              _buildPrivacyTab(isAr),
+              _buildMoTComplianceTab(isAr),
             ],
           ),
         ),
@@ -65,55 +68,74 @@ class LegalComplianceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTermsTab() {
+  Widget _buildTermsTab(bool isAr) {
     return ListView(
       padding: const EdgeInsets.all(AppDimens.space16),
       children: [
         _buildInfoCard(
           icon: Icons.gavel_outlined,
-          title: 'اتفاقية الاستخدام لمنصة مشوار (MASHWAR)',
-          subtitle: 'آخر تحديث: يونيو 2026 - ساري في جمهورية مصر العربية',
-          points: const [
-            'منصة مشوار هي منصة تقنية لتنظيم تشارك الركوب (Carpooling) وتوصيل الطرود الخفيفة بين المسافرين على نفس المسار بين المحافظات.',
-            'يلتزم جميع السائقين والركاب بتقديم بيانات هوية صحيحة ومطابقة للرقم القومي المصري الساري.',
-            'يُحظر تماماً استخدام التطبيق في نقل المواد المحظورة قانوناً أو تجاوز عدد المقاعد المحدد في رخصة تسيير المركبة.',
-            'تخضع سياسة الإلغاء واسترداد المبالغ في المحفظة لضوابط الوقت المعلن قبل انطلاق الرحلة (مجاني قبل 24 ساعة من الانطلاق).',
-          ],
+          title: isAr ? 'اتفاقية الاستخدام لمنصة مشوار (MASHWAR)' : 'MASHWAR Platform Terms of Use',
+          subtitle: isAr ? 'آخر تحديث: يونيو 2026 - ساري في جمهورية مصر العربية' : 'Last Updated: June 2026 - Valid in Egypt',
+          points: isAr
+              ? const [
+                  'منصة مشوار هي منصة تقنية لتنظيم تشارك الركوب (Carpooling) وتوصيل الطرود الخفيفة بين المسافرين على نفس المسار بين المحافظات.',
+                  'يلتزم جميع السائقين والركاب بتقديم بيانات هوية صحيحة ومطابقة للرقم القومي المصري الساري.',
+                  'يُحظر تماماً استخدام التطبيق في نقل المواد المحظورة قانوناً أو تجاوز عدد المقاعد المحدد في رخصة تسيير المركبة.',
+                  'تخضع سياسة الإلغاء واسترداد المبالغ في المحفظة لضوابط الوقت المعلن قبل انطلاق الرحلة (مجاني قبل 24 ساعة من الانطلاق).',
+                ]
+              : const [
+                  'MASHWAR is a technology platform connecting intercity travelers for shared rides (Carpooling) and light parcel delivery along the same corridor.',
+                  'All drivers and passengers must provide valid Egyptian National ID details.',
+                  'Transporting prohibited items or exceeding the licensed seat capacity is strictly forbidden.',
+                  'Cancellations and wallet refunds follow the published schedule (free up to 24 hours before departure).',
+                ],
         ),
         const SizedBox(height: AppDimens.space16),
         _buildInfoCard(
           icon: Icons.account_balance_wallet_outlined,
-          title: 'الرسوم والمدفوعات الرقمية',
-          subtitle: 'تكامل المحفظة مع InstaPay وVodafone Cash وFawry',
-          points: const [
-            'رسوم الخدمة والمنصة محددة بشفافية كاملة قبل تأكيد الحجز (10% شاملة ضريبة القيمة المضافة).',
-            'تُحفظ مبالغ الحجز الإلكتروني في حساب ضامن (Escrow) ولا يتم تحويلها للسائق إلا بعد تأكيد إتمام الرحلة أو تسليم الطرد برمز OTP.',
-          ],
+          title: isAr ? 'الرسوم والمدفوعات الرقمية' : 'Fees & Digital Payments',
+          subtitle: isAr ? 'تكامل المحفظة مع InstaPay وVodafone Cash وFawry' : 'Integrated with InstaPay, Vodafone Cash & Fawry',
+          points: isAr
+              ? const [
+                  'رسوم الخدمة والمنصة محددة بشفافية كاملة قبل تأكيد الحجز (10% شاملة ضريبة القيمة المضافة).',
+                  'تُحفظ مبالغ الحجز الإلكتروني في حساب ضامن (Escrow) ولا يتم تحويلها للسائق إلا بعد تأكيد إتمام الرحلة أو تسليم الطرد برمز OTP.',
+                ]
+              : const [
+                  'Platform service fees are transparently displayed prior to booking confirmation (10% VAT inclusive).',
+                  'Digital payments are held in escrow and released to the driver only after trip completion or 4-digit OTP parcel handover.',
+                ],
         ),
       ],
     );
   }
 
-  Widget _buildPrivacyTab() {
+  Widget _buildPrivacyTab(bool isAr) {
     return ListView(
       padding: const EdgeInsets.all(AppDimens.space16),
       children: [
         _buildInfoCard(
           icon: Icons.privacy_tip_outlined,
-          title: 'قانون حماية البيانات الشخصية رقم 151 لسنة 2020',
-          subtitle: 'التزام كامل بمعايير التشفير والخصوصية في مصر',
-          points: const [
-            'تُشفر صور البطاقات الشخصية ورخص القيادة بتقنية AES-256 وتُستخدم حصرياً للتحقق من الهوية والأمان (KYC).',
-            'لا تتم مشاركة رقم الهاتف الكامل بين الأطراف إلا بعد تأكيد الحجز الفعلي للرحلة أو الطرد.',
-            'بيانات الموقع الجغرافي الحي (Live GPS) تُفعل فقط أثناء الرحلة النشطة أو عند استخدام زر استغاثة الطوارئ SOS.',
-            'يحق للمستخدم طلب تصدير بياناته أو حذف حسابه نهائياً من الخوادم بشرط عدم وجود رحلات أو التزامات مالية معلقة.',
-          ],
+          title: isAr ? 'قانون حماية البيانات الشخصية رقم 151 لسنة 2020' : 'Egyptian Data Protection Law No. 151 of 2020',
+          subtitle: isAr ? 'التزام كامل بمعايير التشفير والخصوصية في مصر' : 'Full compliance with encryption & KYC privacy standards',
+          points: isAr
+              ? const [
+                  'تُشفر صور البطاقات الشخصية ورخص القيادة بتقنية AES-256 وتُستخدم حصرياً للتحقق من الهوية والأمان (KYC).',
+                  'لا تتم مشاركة رقم الهاتف الكامل بين الأطراف إلا بعد تأكيد الحجز الفعلي للرحلة أو الطرد.',
+                  'بيانات الموقع الجغرافي الحي (Live GPS) تُفعل فقط أثناء الرحلة النشطة أو عند استخدام زر استغاثة الطوارئ SOS.',
+                  'يحق للمستخدم طلب تصدير بياناته أو حذف حسابه نهائياً من الخوادم بشرط عدم وجود رحلات أو التزامات مالية معلقة.',
+                ]
+              : const [
+                  'National ID and driver license images are AES-256 encrypted and used exclusively for KYC verification.',
+                  'Phone numbers are masked until a ride or parcel booking is officially confirmed.',
+                  'Live GPS location sharing is active only during an ongoing trip or when Emergency SOS is triggered.',
+                  'Users may export their data or permanently delete their account when no active rides or balances are pending.',
+                ],
         ),
       ],
     );
   }
 
-  Widget _buildMoTComplianceTab() {
+  Widget _buildMoTComplianceTab(bool isAr) {
     return ListView(
       padding: const EdgeInsets.all(AppDimens.space16),
       children: [
@@ -133,12 +155,14 @@ class LegalComplianceScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'متوافق مع ضوابط النقل الذكي التشاركي',
+                      isAr ? 'متوافق مع ضوابط النقل الذكي التشاركي' : 'Compliant with Smart Shared Mobility Regulations',
                       style: AppTypography.title(color: AppColors.teal).copyWith(fontSize: 16),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'مرخص لتنظيم تشارك تكلفة السفر بين المحافظات (Peer-to-Peer Cost Sharing)',
+                      isAr
+                          ? 'مرخص لتنظيم تشارك تكلفة السفر بين المحافظات (Peer-to-Peer Cost Sharing)'
+                          : 'Licensed for intercity peer-to-peer travel cost sharing in Egypt',
                       style: AppTypography.bodySecondary(color: AppColors.textPrimary),
                     ),
                   ],
@@ -150,13 +174,19 @@ class LegalComplianceScreen extends StatelessWidget {
         const SizedBox(height: AppDimens.space16),
         _buildInfoCard(
           icon: Icons.directions_car_filled_outlined,
-          title: 'ضوابط السائقين والمركبات المسجلة',
-          subtitle: 'معايير الفحص والتحقق الدوري',
-          points: const [
-            'التحقق الآلي واليدوي من سريان رخصة القيادة الخاصة ورخصة تسيير المركبة.',
-            'تحديد سقف مساهمة المقعد بما يتناسب مع مسافة الطريق وتكلفة الوقود الفعلية دون تحويل المركبة لسيارة أجرة تجارية.',
-            'دعم خيار "مقصورة سيدات فقط" لتعزيز الأمان والخصوصية على خطوط السفر الطويلة.',
-          ],
+          title: isAr ? 'ضوابط السائقين والمركبات المسجلة' : 'Registered Driver & Vehicle Controls',
+          subtitle: isAr ? 'معايير الفحص والتحقق الدوري' : 'Periodic inspection & verification standards',
+          points: isAr
+              ? const [
+                  'التحقق الآلي واليدوي من سريان رخصة القيادة الخاصة ورخصة تسيير المركبة.',
+                  'تحديد سقف مساهمة المقعد بما يتناسب مع مسافة الطريق وتكلفة الوقود الفعلية دون تحويل المركبة لسيارة أجرة تجارية.',
+                  'دعم خيار "مقصورة سيدات فقط" لتعزيز الأمان والخصوصية على خطوط السفر الطويلة.',
+                ]
+              : const [
+                  'Automated and manual verification of private driver licenses and vehicle registration cards.',
+                  'Seat cost contribution caps aligned with corridor distance and fuel sharing.',
+                  'Dedicated "Ladies Only" cabin option for enhanced safety and comfort on intercity routes.',
+                ],
         ),
       ],
     );
@@ -285,16 +315,17 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.watch<SettingsProvider?>()?.isArabic ?? true;
     final prettyJson = const JsonEncoder.withIndent('  ').convert(_getSampleJson(context));
     final logs = MashwarApiClient.instance.recentLogs;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
           title: Text(
-            'جاهزية الباك إند وواجهات API',
+            isAr ? 'جاهزية الباك إند وواجهات API' : 'Backend API & JSON Contracts',
             style: AppTypography.title(),
           ),
           backgroundColor: Colors.white,

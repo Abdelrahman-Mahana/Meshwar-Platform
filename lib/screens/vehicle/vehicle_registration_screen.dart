@@ -227,14 +227,16 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
               ),
               const SizedBox(height: AppDimens.space12),
 
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
+              Material(
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                  side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
                 ),
-                child: Column(
+                clipBehavior: Clip.antiAlias,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -292,7 +294,8 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                       onChanged: (val) => setState(() => _largeTrunk = val),
                       title: Text(isAr ? 'مساحة شنطة كافية للطرود والحقائب' : 'Large Trunk for Parcels & Luggage', style: AppTypography.body()),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 

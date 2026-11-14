@@ -90,10 +90,13 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -245,7 +248,9 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               ),
               child: _buildBottomButton(context, rides, isAr),
             ),
-          ],
+              ],
+            ),
+          ),
         ),
       ),
     );

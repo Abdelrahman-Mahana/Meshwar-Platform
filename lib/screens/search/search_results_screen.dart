@@ -71,85 +71,146 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Quick Filter Chips Bar (Page 10)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
-              child: Row(
-                children: [
-                  MashwarChip(
-                    label: isAr ? 'الأقرب وقتاً' : 'Earliest',
-                    isSelected: rides.sortBy == SortOption.closestTime,
-                    onTap: () => rides.setSortOption(SortOption.closestTime),
-                  ),
-                  const SizedBox(width: 8),
-                  MashwarChip(
-                    label: isAr ? 'الأرخص' : 'Cheapest',
-                    isSelected: rides.sortBy == SortOption.cheapest,
-                    onTap: () => rides.setSortOption(SortOption.cheapest),
-                  ),
-                  const SizedBox(width: 8),
-                  MashwarChip(
-                    label: isAr ? 'تقبل طرود' : 'Accepts Parcels',
-                    isSelected: rides.filterAcceptsParcels,
-                    onTap: () => rides.toggleFilterAcceptsParcels(),
-                  ),
-                  const SizedBox(width: 8),
-                  MashwarChip(
-                    label: isAr ? 'للسيدات فقط' : 'Ladies Only',
-                    isSelected: rides.filterLadiesOnly,
-                    onTap: () => rides.toggleFilterLadiesOnly(),
-                  ),
-                ],
-              ),
-            ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 760;
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: isWide ? 1200 : 680),
+                child: Column(
+                  children: [
+                    // Quick Filter Chips Bar (Page 10) + Result Count on wide screens
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: 10),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  MashwarChip(
+                                    label: isAr ? 'الأقرب وقتاً' : 'Earliest',
+                                    isSelected: rides.sortBy == SortOption.closestTime,
+                                    onTap: () => rides.setSortOption(SortOption.closestTime),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  MashwarChip(
+                                    label: isAr ? 'الأرخص' : 'Cheapest',
+                                    isSelected: rides.sortBy == SortOption.cheapest,
+                                    onTap: () => rides.setSortOption(SortOption.cheapest),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  MashwarChip(
+                                    label: isAr ? 'تقبل طرود' : 'Accepts Parcels',
+                                    isSelected: rides.filterAcceptsParcels,
+                                    onTap: () => rides.toggleFilterAcceptsParcels(),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  MashwarChip(
+                                    label: isAr ? 'للسيدات فقط' : 'Ladies Only',
+                                    isSelected: rides.filterLadiesOnly,
+                                    onTap: () => rides.toggleFilterLadiesOnly(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (isWide && results.isNotEmpty) ...[
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.sand,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.borderDisabled),
+                              ),
+                              child: Text(
+                                isAr ? '${results.length} رحلة متاحة' : '${results.length} rides found',
+                                style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
 
-            // Offline Banner State (Page 18)
-            if (_isOffline) ...[
-              Padding(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                child: AlertBanner(
-                  message: isAr
-                      ? 'أنت في وضع غير متصل. النتائج المعروضة من آخر تحديث'
-                      : 'You are offline. Results shown are from last update',
-                  type: AlertBannerType.offline,
+                    // Offline Banner State (Page 18)
+                    if (_isOffline) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: AppDimens.space12),
+                        child: AlertBanner(
+                          message: isAr
+                              ? 'أنت في وضع غير متصل. النتائج المعروضة من آخر تحديث'
+                              : 'You are offline. Results shown are from last update',
+                          type: AlertBannerType.offline,
+                        ),
+                      ),
+                    ],
+
+                    // Content Area: Results, Empty, or Error
+                    Expanded(
+                      child: _hasError
+                          ? _buildErrorState(isAr)
+                          : results.isEmpty
+                              ? _buildEmptyState(context, rides, alerts, isAr)
+                              : _buildResultsList(context, results, isAr, isWide: isWide),
+                    ),
+                  ],
                 ),
               ),
-            ],
-
-            // Content Area: Results, Empty, or Error
-            Expanded(
-              child: _hasError
-                  ? _buildErrorState(isAr)
-                  : results.isEmpty
-                      ? _buildEmptyState(context, rides, alerts, isAr)
-                      : _buildResultsList(context, results, isAr),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildResultsList(BuildContext context, List<RideModel> ridesList, bool isAr) {
+  Widget _buildResultsList(BuildContext context, List<RideModel> ridesList, bool isAr, {bool isWide = false}) {
+    if (!isWide) {
+      return ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: AppDimens.space12),
+        itemCount: ridesList.length,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppDimens.space16),
+            child: _buildDriverCard(context, ridesList[index], isAr),
+          );
+        },
+      );
+    }
+
+    final pairCount = (ridesList.length / 2).ceil();
     return ListView.builder(
-      padding: const EdgeInsets.all(AppDimens.space16),
-      itemCount: ridesList.length,
-      itemBuilder: (context, index) {
-        final ride = ridesList[index];
-        return _buildDriverCard(context, ride, isAr);
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: AppDimens.space12),
+      itemCount: pairCount,
+      itemBuilder: (context, rowIndex) {
+        final first = rowIndex * 2;
+        final second = first + 1;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppDimens.space16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildDriverCard(context, ridesList[first], isAr)),
+              const SizedBox(width: AppDimens.space16),
+              Expanded(
+                child: second < ridesList.length
+                    ? _buildDriverCard(context, ridesList[second], isAr)
+                    : const SizedBox.shrink(),
+              ),
+            ],
+          ),
+        );
       },
     );
   }
 
   Widget _buildDriverCard(BuildContext context, RideModel ride, bool isAr) {
     return Container(
-      margin: const EdgeInsets.only(bottom: AppDimens.space12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
         border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
         boxShadow: [
           BoxShadow(
@@ -162,14 +223,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => RideDetailsScreen(ride: ride)),
             );
           },
           child: Padding(
-            padding: const EdgeInsets.all(AppDimens.space16),
+            padding: const EdgeInsets.all(AppDimens.space20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -177,19 +238,26 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          ride.departureTime,
-                          style: AppTypography.title().copyWith(fontSize: 18),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          context.trRoute('${ride.fromCity} ← ${ride.toCity}'),
-                          style: AppTypography.bodySecondary(),
-                        ),
-                      ],
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Text(
+                            ride.departureTime,
+                            style: AppTypography.title().copyWith(fontSize: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              context.trRoute('${ride.fromCity} ← ${ride.toCity}'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodySecondary(),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
@@ -265,9 +333,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                           Row(
                             children: [
                               // Raw driver name from database
-                              Text(
-                                ride.driverName,
-                                style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                              Flexible(
+                                child: Text(
+                                  ride.driverName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                                ),
                               ),
                               const SizedBox(width: 4),
                               if (ride.isVerified)
@@ -280,12 +352,20 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                               const SizedBox(width: 2),
                               Text('${ride.driverRating}', style: AppTypography.label()),
                               const SizedBox(width: 6),
-                              Text('· ${ride.driverCar}', style: AppTypography.label(color: AppColors.textSecondary)),
+                              Flexible(
+                                child: Text(
+                                  '· ${ride.driverCar}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.label(color: AppColors.textSecondary),
+                                ),
+                              ),
                             ],
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
 
                     // Status Badge & Parcel Tag
                     Column(
@@ -331,73 +411,81 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   Widget _buildEmptyState(BuildContext context, RidesProvider rides, AlertsProvider alerts, bool isAr) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimens.space24),
-      child: Column(
-        children: [
-          const SizedBox(height: AppDimens.space32),
-          Container(
-            width: 80,
-            height: 80,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.directions_car_outlined, size: 40, color: AppColors.borderDisabled),
-          ),
-          const SizedBox(height: AppDimens.space16),
-          Text(
-            isAr ? 'مفيش رحلات مطابقة دلوقتي' : 'No matching rides right now',
-            style: AppTypography.title(),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isAr
-                ? 'أنشئ تنبيه وسنبلّغك فور توفر رحلة على مسار\n${rides.fromCity} ← ${rides.toCity}'
-                : 'Create an alert and we will notify you when a ride is available on\n${context.trCity(rides.fromCity)} → ${context.trCity(rides.toCity)}',
-            textAlign: TextAlign.center,
-            style: AppTypography.bodySecondary(),
-          ),
-          const SizedBox(height: AppDimens.space24),
-
-          MashwarButton(
-            text: isAr ? 'نبّهني لما تنزل رحلة' : 'Alert me when rides are added',
-            onPressed: () {
-              alerts.addAlert(
-                fromCity: rides.fromCity,
-                toCity: rides.toCity,
-                dateRange: rides.date,
-                category: rides.rideMode == RideMode.seats ? (isAr ? 'مقاعد' : 'Seats') : (isAr ? 'طرود' : 'Parcels'),
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isAr ? 'تم إنشاء التنبيه بنجاح' : 'Alert created successfully'),
-                  backgroundColor: AppColors.teal,
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Column(
+            children: [
+              const SizedBox(height: AppDimens.space32),
+              Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
                 ),
-              );
-            },
+                child: const Icon(Icons.directions_car_outlined, size: 40, color: AppColors.borderDisabled),
+              ),
+              const SizedBox(height: AppDimens.space16),
+              Text(
+                isAr ? 'مفيش رحلات مطابقة دلوقتي' : 'No matching rides right now',
+                style: AppTypography.title(),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isAr
+                    ? 'أنشئ تنبيه وسنبلّغك فور توفر رحلة على مسار\n${rides.fromCity} ← ${rides.toCity}'
+                    : 'Create an alert and we will notify you when a ride is available on\n${context.trCity(rides.fromCity)} → ${context.trCity(rides.toCity)}',
+                textAlign: TextAlign.center,
+                style: AppTypography.bodySecondary(),
+              ),
+              const SizedBox(height: AppDimens.space24),
+
+              MashwarButton(
+                text: isAr ? 'نبّهني لما تنزل رحلة' : 'Alert me when rides are added',
+                onPressed: () {
+                  alerts.addAlert(
+                    fromCity: rides.fromCity,
+                    toCity: rides.toCity,
+                    dateRange: rides.date,
+                    category: rides.rideMode == RideMode.seats ? (isAr ? 'مقاعد' : 'Seats') : (isAr ? 'طرود' : 'Parcels'),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isAr ? 'تم إنشاء التنبيه بنجاح' : 'Alert created successfully'),
+                      backgroundColor: AppColors.teal,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildErrorState(bool isAr) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.space24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.danger),
-            const SizedBox(height: 16),
-            Text(isAr ? 'حصل خطأ في تحميل النتائج' : 'Error loading search results', style: AppTypography.title()),
-            const SizedBox(height: 8),
-            Text(isAr ? 'يرجى التحقق من اتصال الإنترنت' : 'Please check your internet connection', style: AppTypography.bodySecondary()),
-            const SizedBox(height: 16),
-            MashwarButton(
-              text: isAr ? 'إعادة المحاولة' : 'Retry',
-              onPressed: () => setState(() {}),
-            ),
-          ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Padding(
+          padding: const EdgeInsets.all(AppDimens.space24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.danger),
+              const SizedBox(height: 16),
+              Text(isAr ? 'حصل خطأ في تحميل النتائج' : 'Error loading search results', style: AppTypography.title()),
+              const SizedBox(height: 8),
+              Text(isAr ? 'يرجى التحقق من اتصال الإنترنت' : 'Please check your internet connection', style: AppTypography.bodySecondary()),
+              const SizedBox(height: 16),
+              MashwarButton(
+                text: isAr ? 'إعادة المحاولة' : 'Retry',
+                onPressed: () => setState(() {}),
+              ),
+            ],
+          ),
         ),
       ),
     );

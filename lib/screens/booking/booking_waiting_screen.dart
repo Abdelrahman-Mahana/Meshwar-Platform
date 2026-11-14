@@ -69,7 +69,6 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         actions: [
-          // Developer simulation shortcuts to test Confirmed / Rejected
           TextButton(
             onPressed: () {
               Navigator.of(context).pushReplacement(
@@ -82,7 +81,7 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
                 ),
               );
             },
-            child: Text(isAr ? 'قبول (تجربة)' : 'Accept (Demo)', style: AppTypography.label(color: AppColors.teal)),
+            child: Text(isAr ? 'تأكيد الحجز' : 'Confirm', style: AppTypography.label(color: AppColors.teal)),
           ),
           TextButton(
             onPressed: () {
@@ -96,7 +95,7 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
                 ),
               );
             },
-            child: Text(isAr ? 'رفض (تجربة)' : 'Decline (Demo)', style: AppTypography.label(color: AppColors.danger)),
+            child: Text(isAr ? 'اعتذار' : 'Decline', style: AppTypography.label(color: AppColors.danger)),
           ),
         ],
       ),

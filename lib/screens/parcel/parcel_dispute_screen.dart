@@ -160,7 +160,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
         actions: [
           TextButton(
             onPressed: () => setState(() => _phase = DisputePhase.resolved),
-            child: Text(isAr ? 'حل البلاغ (تجربة)' : 'Resolve (Demo)', style: AppTypography.label(color: AppColors.teal)),
+            child: Text(isAr ? 'تحديث الحالة' : 'Update Status', style: AppTypography.label(color: AppColors.teal)),
           ),
         ],
       ),

@@ -82,15 +82,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Tap "قدّم عرض" button to enter offer mode
-    await tester.tap(find.text('أقدر أوصّلها'));
+    // Tap "قدّم عرض توصيل" button to enter offer mode
+    await tester.tap(find.text('قدّم عرض توصيل'));
     await tester.pumpAndSettle();
 
-    // Verify quick increment chips (+10, +20, +30)
+    // Verify quick increment chips (-10, Listed, +10, +20)
+    expect(find.text('-10 ج'), findsOneWidget);
     expect(find.text('+10 ج'), findsOneWidget);
     expect(find.text('+20 ج'), findsOneWidget);
-    expect(find.text('+30 ج'), findsOneWidget);
-    expect(find.textContaining('نطاق السعر العادل لهذا المسار'), findsOneWidget);
+    expect(find.textContaining('نطاق مشاركة التكلفة العادل لهذا المسار'), findsOneWidget);
 
     // Tap +20 chip and verify input is updated to 90
     await tester.tap(find.text('+20 ج'));

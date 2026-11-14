@@ -87,11 +87,14 @@ class MashwarButton extends StatelessWidget {
             const SizedBox(width: AppDimens.space8),
           ],
           Flexible(
-            child: Text(
-              displayLabel,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.button(color: fgColor),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                displayLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.button(color: fgColor),
+              ),
             ),
           ),
         ],
@@ -108,6 +111,7 @@ class MashwarButton extends StatelessWidget {
           onTap: isDisabled ? null : onPressed,
           borderRadius: BorderRadius.circular(AppDimens.radiusButton),
           child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppDimens.radiusButton),
               border: borderSide != null ? Border.fromBorderSide(borderSide) : null,
@@ -120,3 +124,4 @@ class MashwarButton extends StatelessWidget {
     );
   }
 }
+

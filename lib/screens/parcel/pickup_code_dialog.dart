@@ -37,13 +37,6 @@ class _PickupCodeDialogState extends State<PickupCodeDialog> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          // Developer simulation to test handover completion
-          TextButton(
-            onPressed: () => setState(() => _isHandedOver = true),
-            child: Text(isAr ? 'تسليم (تجربة)' : 'Handover (Demo)', style: AppTypography.label(color: AppColors.teal)),
-          ),
-        ],
       ),
       body: SafeArea(
         child: Padding(

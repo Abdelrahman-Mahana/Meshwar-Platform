@@ -276,28 +276,36 @@ class AuthProvider extends ChangeNotifier {
       'titleAr': 'شحن رصيد - فودافون كاش',
       'titleEn': 'Top-up - Vodafone Cash',
       'date': 'أمس، 4:30 م',
+      'dateEn': 'Yesterday, 4:30 PM',
       'amount': '+200 ج.م',
+      'amountValue': 200.0,
       'isPositive': true,
     },
     {
       'titleAr': 'رحلة كفر الشيخ ← القاهرة',
       'titleEn': 'Ride Kafr El-Sheikh -> Cairo',
       'date': '2 نوفمبر، 7:30 ص',
+      'dateEn': 'Nov 2, 7:30 AM',
       'amount': '-65 ج.م',
+      'amountValue': -65.0,
       'isPositive': false,
     },
     {
       'titleAr': 'تعويض ضمان طرد #4810',
       'titleEn': 'Parcel Insurance Refund #4810',
       'date': '28 أكتوبر',
+      'dateEn': 'Oct 28',
       'amount': '+300 ج.م',
+      'amountValue': 300.0,
       'isPositive': true,
     },
     {
       'titleAr': 'إرسال طرد طنطا ← الإسكندرية',
       'titleEn': 'Parcel Tanta -> Alexandria',
       'date': '22 أكتوبر',
+      'dateEn': 'Oct 22',
       'amount': '-45 ج.م',
+      'amountValue': -45.0,
       'isPositive': false,
     },
   ];
@@ -314,7 +322,9 @@ class AuthProvider extends ChangeNotifier {
       'titleAr': 'شحن رصيد - $methodAr',
       'titleEn': 'Top-up - $methodEn',
       'date': 'الآن',
+      'dateEn': 'Just now',
       'amount': '+${amount.toStringAsFixed(0)} ج.م',
+      'amountValue': amount,
       'isPositive': true,
     });
     notifyListeners();
@@ -333,7 +343,9 @@ class AuthProvider extends ChangeNotifier {
       'titleAr': 'سحب رصيد إلى $destinationAr',
       'titleEn': 'Withdrawal to $destinationEn',
       'date': 'الآن',
+      'dateEn': 'Just now',
       'amount': '-${amount.toStringAsFixed(0)} ج.م',
+      'amountValue': -amount,
       'isPositive': false,
     });
     notifyListeners();

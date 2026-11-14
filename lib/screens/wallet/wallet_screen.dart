@@ -151,25 +151,33 @@ class _WalletScreenState extends State<WalletScreen> {
 
                     // Quick Amounts
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [50, 100, 200, 500].map((amount) {
                         final isSel = selectedAmount == amount;
-                        return GestureDetector(
-                          onTap: () => setSheetState(() => selectedAmount = amount),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isSel ? AppColors.navy : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSel ? AppColors.navy : AppColors.borderDisabled,
-                              ),
-                            ),
-                            child: Text(
-                              '$amount ${isAr ? 'ج.م' : 'EGP'}',
-                              style: TextStyle(
-                                color: isSel ? Colors.white : AppColors.navy,
-                                fontWeight: FontWeight.bold,
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: GestureDetector(
+                              onTap: () => setSheetState(() => selectedAmount = amount),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: isSel ? AppColors.navy : Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSel ? AppColors.navy : AppColors.borderDisabled,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    '$amount ${isAr ? 'ج.م' : 'EGP'}',
+                                    style: TextStyle(
+                                      color: isSel ? Colors.white : AppColors.navy,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -260,58 +268,69 @@ class _WalletScreenState extends State<WalletScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Balance Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppDimens.space20),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppColors.navy, Color(0xFF1B4368)],
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                  ),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.navy.withValues(alpha: 0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 840;
+
+            final balanceCard = Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppDimens.space20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [AppColors.navy, Color(0xFF1B4368)],
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
+                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.navy.withValues(alpha: 0.25),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
                           isAr ? 'الرصيد المتاح' : 'Available Balance',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: AppTypography.bodySecondary(color: Colors.white70),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: const [
-                              Icon(Icons.shield_rounded, color: AppColors.gold, size: 14),
-                              SizedBox(width: 4),
-                              Text('آمن ومشفر', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                            ],
-                          ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.shield_rounded, color: AppColors.gold, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              isAr ? 'آمن ومشفر' : 'Encrypted',
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
@@ -326,169 +345,243 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppDimens.space20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.gold,
-                              foregroundColor: AppColors.navy,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
+                  ),
+                  const SizedBox(height: AppDimens.space20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.gold,
+                            foregroundColor: AppColors.navy,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-                            label: Text(
-                              isAr ? 'شحن رصيد' : 'Deposit',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
+                          label: Text(
+                            isAr ? 'شحن رصيد' : 'Deposit',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () => _showAddFundsSheet(context),
+                        ),
+                      ),
+                      const SizedBox(width: AppDimens.space12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white54),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            onPressed: () => _showAddFundsSheet(context),
+                          ),
+                          icon: const Icon(Icons.arrow_downward_rounded, size: 20),
+                          label: Text(
+                            isAr ? 'سحب رصيد' : 'Withdraw',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () => _showWithdrawSheet(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+
+            final paymentMethodsSection = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isAr ? 'طرق الدفع المدعومة في مصر' : 'Egyptian Payment Methods',
+                  style: AppTypography.title().copyWith(fontSize: 16),
+                ),
+                const SizedBox(height: AppDimens.space12),
+                Material(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                    side: const BorderSide(color: AppColors.borderDisabled),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    children: [
+                      _buildPaymentTile(
+                        icon: Icons.flash_on_rounded,
+                        iconColor: const Color(0xFF6A1B9A),
+                        title: isAr ? 'إنستاباي InstaPay (IPN)' : 'InstaPay (IPN)',
+                        subtitle: isAr ? 'تحويل بنكي فوري بدون مصاريف إضافية' : 'Instant free bank transfer',
+                        isDefault: auth.selectedPaymentMethod == 'instapay',
+                        onTap: () => auth.setSelectedPaymentMethod('instapay'),
+                      ),
+                      const Divider(height: 1, color: AppColors.borderDisabled),
+                      _buildPaymentTile(
+                        icon: Icons.phone_android_rounded,
+                        iconColor: const Color(0xFFE53935),
+                        title: isAr ? 'فودافون كاش والمحافظ الذكية' : 'Vodafone Cash & Mobile Wallets',
+                        subtitle: isAr ? 'فودافون، أورنج، اتصالات، وي باي' : 'Vodafone, Orange, Etisalat, WE Pay',
+                        isDefault: auth.selectedPaymentMethod == 'vodafone_cash',
+                        onTap: () => auth.setSelectedPaymentMethod('vodafone_cash'),
+                      ),
+                      const Divider(height: 1, color: AppColors.borderDisabled),
+                      _buildPaymentTile(
+                        icon: Icons.credit_card_rounded,
+                        iconColor: AppColors.teal,
+                        title: isAr ? 'بطاقات ميزة والفيزا والماستركارد' : 'Meeza & Bank Cards',
+                        subtitle: isAr ? 'دفع آمن بالبطاقات الائتمانية والخصم المباشر' : 'Debit/Credit & Meeza cards',
+                        isDefault: auth.selectedPaymentMethod == 'meeza_card',
+                        onTap: () => auth.setSelectedPaymentMethod('meeza_card'),
+                      ),
+                      const Divider(height: 1, color: AppColors.borderDisabled),
+                      _buildPaymentTile(
+                        icon: Icons.payments_outlined,
+                        iconColor: AppColors.gold,
+                        title: isAr ? 'الدفع كاش نقداً' : 'Cash upon meeting',
+                        subtitle: isAr ? 'دفع قيمة المقعد أو شحن الطرد باليد للسائق' : 'Pay in cash directly to the driver',
+                        isDefault: auth.selectedPaymentMethod == 'cash',
+                        onTap: () => auth.setSelectedPaymentMethod('cash'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+
+            final transactionsSection = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isAr ? 'سجل العمليات الأخير' : 'Recent Transactions',
+                  style: AppTypography.title().copyWith(fontSize: 16),
+                ),
+                const SizedBox(height: AppDimens.space12),
+                Material(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                    side: const BorderSide(color: AppColors.borderDisabled),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: auth.walletTransactions.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderDisabled),
+                    itemBuilder: (context, index) {
+                      final tx = auth.walletTransactions[index];
+                      final rawAmount = tx['amount'];
+                      final isPositive = tx['isPositive'] is bool
+                          ? tx['isPositive'] as bool
+                          : (rawAmount is num
+                              ? rawAmount > 0
+                              : rawAmount.toString().trim().startsWith('+'));
+                      final title = isAr
+                          ? (tx['titleAr'] ?? tx['title'] ?? '').toString()
+                          : (tx['titleEn'] ?? tx['titleAr'] ?? tx['title'] ?? '').toString();
+                      final date = isAr
+                          ? (tx['date'] ?? '').toString()
+                          : (tx['dateEn'] ?? tx['date'] ?? '').toString();
+                      final String amountLabel;
+                      if (tx['amountValue'] is num) {
+                        final val = (tx['amountValue'] as num).abs();
+                        final formatted = val == val.roundToDouble()
+                            ? val.toStringAsFixed(0)
+                            : val.toStringAsFixed(2);
+                        amountLabel = '${isPositive ? '+' : '-'}$formatted ${isAr ? 'ج.م' : 'EGP'}';
+                      } else if (rawAmount is num) {
+                        final val = rawAmount.abs();
+                        final formatted = val == val.roundToDouble()
+                            ? val.toStringAsFixed(0)
+                            : val.toStringAsFixed(2);
+                        amountLabel = '${isPositive ? '+' : '-'}$formatted ${isAr ? 'ج.م' : 'EGP'}';
+                      } else {
+                        final str = rawAmount?.toString() ?? '0';
+                        amountLabel = isAr
+                            ? (str.contains('ج.م') ? str : '$str ج.م')
+                            : str.replaceAll('ج.م', 'EGP');
+                      }
+                      return ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isPositive ? AppColors.tealSurface : AppColors.sand,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            isPositive ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                            color: isPositive ? AppColors.teal : AppColors.navy,
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(width: AppDimens.space12),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white54),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            icon: const Icon(Icons.arrow_downward_rounded, size: 20),
-                            label: Text(
-                              isAr ? 'سحب رصيد' : 'Withdraw',
-                              style: const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            onPressed: () => _showWithdrawSheet(context),
+                        title: Text(
+                          title,
+                          style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                        ),
+                        subtitle: Text(
+                          date,
+                          style: AppTypography.label(),
+                        ),
+                        trailing: Text(
+                          amountLabel,
+                          style: TextStyle(
+                            color: isPositive ? AppColors.teal : AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
-              ),
+              ],
+            );
 
-              const SizedBox(height: AppDimens.space24),
-
-              // Egyptian Payment Methods Section
-              Text(
-                isAr ? 'طرق الدفع المدعومة في مصر' : 'Egyptian Payment Methods',
-                style: AppTypography.title().copyWith(fontSize: 16),
-              ),
-              const SizedBox(height: AppDimens.space12),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Column(
-                  children: [
-                    _buildPaymentTile(
-                      icon: Icons.flash_on_rounded,
-                      iconColor: const Color(0xFF6A1B9A),
-                      title: isAr ? 'إنستاباي InstaPay (IPN)' : 'InstaPay (IPN)',
-                      subtitle: isAr ? 'تحويل بنكي فوري بدون مصاريف إضافية' : 'Instant free bank transfer',
-                      isDefault: auth.selectedPaymentMethod == 'instapay',
-                      onTap: () => auth.setSelectedPaymentMethod('instapay'),
-                    ),
-                    const Divider(height: 1, color: AppColors.borderDisabled),
-                    _buildPaymentTile(
-                      icon: Icons.phone_android_rounded,
-                      iconColor: const Color(0xFFE53935),
-                      title: isAr ? 'فودافون كاش والمحافظ الذكية' : 'Vodafone Cash & Mobile Wallets',
-                      subtitle: isAr ? 'فودافون، أورنج، اتصالات، وي باي' : 'Vodafone, Orange, Etisalat, WE Pay',
-                      isDefault: auth.selectedPaymentMethod == 'vodafone_cash',
-                      onTap: () => auth.setSelectedPaymentMethod('vodafone_cash'),
-                    ),
-                    const Divider(height: 1, color: AppColors.borderDisabled),
-                    _buildPaymentTile(
-                      icon: Icons.credit_card_rounded,
-                      iconColor: AppColors.teal,
-                      title: isAr ? 'بطاقات ميزة والفيزا والماستركارد' : 'Meeza & Bank Cards',
-                      subtitle: isAr ? 'دفع آمن بالبطاقات الائتمانية والخصم المباشر' : 'Debit/Credit & Meeza cards',
-                      isDefault: auth.selectedPaymentMethod == 'meeza_card',
-                      onTap: () => auth.setSelectedPaymentMethod('meeza_card'),
-                    ),
-                    const Divider(height: 1, color: AppColors.borderDisabled),
-                    _buildPaymentTile(
-                      icon: Icons.payments_outlined,
-                      iconColor: AppColors.gold,
-                      title: isAr ? 'الدفع كاش نقداً' : 'Cash upon meeting',
-                      subtitle: isAr ? 'دفع قيمة المقعد أو شحن الطرد باليد للسائق' : 'Pay in cash directly to the driver',
-                      isDefault: auth.selectedPaymentMethod == 'cash',
-                      onTap: () => auth.setSelectedPaymentMethod('cash'),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: AppDimens.space24),
-
-              // Recent Transactions History
-              Text(
-                isAr ? 'سجل العمليات الأخير' : 'Recent Transactions',
-                style: AppTypography.title().copyWith(fontSize: 16),
-              ),
-              const SizedBox(height: AppDimens.space12),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: auth.walletTransactions.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderDisabled),
-                  itemBuilder: (context, index) {
-                    final tx = auth.walletTransactions[index];
-                    final isPositive = (tx['amount'] as double) > 0;
-                    return ListTile(
-                      leading: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isPositive ? AppColors.tealSurface : AppColors.sand,
-                          shape: BoxShape.circle,
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimens.space20),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: isWide ? 1160 : 680),
+                  child: isWide
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  balanceCard,
+                                  const SizedBox(height: AppDimens.space24),
+                                  paymentMethodsSection,
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: AppDimens.space24),
+                            Expanded(
+                              flex: 6,
+                              child: transactionsSection,
+                            ),
+                          ],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            balanceCard,
+                            const SizedBox(height: AppDimens.space24),
+                            paymentMethodsSection,
+                            const SizedBox(height: AppDimens.space24),
+                            transactionsSection,
+                            const SizedBox(height: AppDimens.space24),
+                          ],
                         ),
-                        child: Icon(
-                          isPositive ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                          color: isPositive ? AppColors.teal : AppColors.navy,
-                          size: 20,
-                        ),
-                      ),
-                      title: Text(
-                        isAr ? tx['title'] : tx['titleEn'],
-                        style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
-                      ),
-                      subtitle: Text(
-                        isAr ? tx['date'] : tx['dateEn'],
-                        style: AppTypography.label(),
-                      ),
-                      trailing: Text(
-                        '${isPositive ? '+' : ''}${tx['amount']} ${isAr ? 'ج.م' : 'EGP'}',
-                        style: TextStyle(
-                          color: isPositive ? AppColors.teal : AppColors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    );
-                  },
                 ),
               ),
-
-              const SizedBox(height: AppDimens.space24),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -522,7 +615,10 @@ class _WalletScreenState extends State<WalletScreen> {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.teal),
               ),
-              child: const Text('أساسي', style: TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.bold)),
+              child: Text(
+                context.read<SettingsProvider>().isArabic ? 'أساسي' : 'Default',
+                style: const TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
             )
           : const Icon(Icons.chevron_left_rounded, color: AppColors.borderDisabled),
     );

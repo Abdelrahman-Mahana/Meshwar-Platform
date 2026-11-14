@@ -211,301 +211,342 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-
-                    // Title
-                    Text(
-                      isAr ? 'ما اسمك؟' : "What's your name?",
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.navy,
-                        fontFamily: 'Cairo',
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 760;
+            return Container(
+              color: isWide ? AppColors.sand : Colors.white,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: AppDimens.space24,
+                        vertical: isWide ? AppDimens.space24 : 0,
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      isAr
-                          ? 'أدخل بياناتك كما تظهر في بطاقتك الشخصية لتسهيل رحلاتك وتأكيد هويتك للسائقين.'
-                          : 'Enter your name as it appears on your ID so drivers can recognize you.',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                        height: 1.45,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 640),
+                          child: Container(
+                            padding: isWide
+                                ? const EdgeInsets.all(AppDimens.space24)
+                                : EdgeInsets.zero,
+                            decoration: isWide
+                                ? BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.04),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ],
+                                  )
+                                : null,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 8),
 
-                    const SizedBox(height: 28),
+                                // Title
+                                Text(
+                                  isAr ? 'ما اسمك؟' : "What's your name?",
+                                  style: const TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.navy,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  isAr
+                                      ? 'أدخل بياناتك كما تظهر في بطاقتك الشخصية لتسهيل رحلاتك وتأكيد هويتك للسائقين.'
+                                      : 'Enter your name as it appears on your ID so drivers can recognize you.',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.textSecondary,
+                                    height: 1.45,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
 
-                    // Avatar placeholder (Uber style)
-                    Center(
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF3F3F4),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFE5E5EA), width: 1.5),
+                                const SizedBox(height: 28),
+
+                                // Avatar placeholder (Uber style)
+                                Center(
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        width: 84,
+                                        height: 84,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF3F3F4),
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: const Color(0xFFE5E5EA), width: 1.5),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            initialChar,
+                                            style: const TextStyle(
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.navy,
+                                              fontFamily: 'Cairo',
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: isAr ? 0 : null,
+                                        left: isAr ? null : 0,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.navy,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: 28),
+
+                                // First Name & Last Name (Side by side on wider / clean on mobile)
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: _buildUberInputField(
+                                        label: isAr ? 'الاسم الأول' : 'First name',
+                                        controller: _firstNameController,
+                                        hint: isAr ? 'مثال: أحمد' : 'e.g. Ahmed',
+                                        errorText: _firstNameError,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            if (_firstNameError != null) _firstNameError = null;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: _buildUberInputField(
+                                        label: isAr ? 'اسم العائلة' : 'Last name',
+                                        controller: _lastNameController,
+                                        hint: isAr ? 'مثال: محمود' : 'e.g. Mahmoud',
+                                        errorText: _lastNameError,
+                                        onChanged: (val) {
+                                          setState(() {
+                                            if (_lastNameError != null) _lastNameError = null;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 20),
+
+                                // Email Address
+                                _buildUberInputField(
+                                  label: isAr ? 'البريد الإلكتروني' : 'Email address',
+                                  controller: _emailController,
+                                  hint: 'name@example.com',
+                                  keyboardType: TextInputType.emailAddress,
+                                  errorText: _emailError,
+                                  helperText: isAr
+                                      ? 'لإرسال إيصالات وفواتير المشاوير'
+                                      : 'For sending ride receipts and trip updates',
+                                  onChanged: (val) {
+                                    if (_emailError != null) setState(() => _emailError = null);
+                                  },
+                                ),
+
+                                const SizedBox(height: 20),
+
+                                // Governorate Selector
+                                Text(
+                                  isAr ? 'المحافظة' : 'Governorate',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF3F3F4),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: govList.contains(_selectedGovernorate)
+                                          ? _selectedGovernorate
+                                          : govList.first,
+                                      isExpanded: true,
+                                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.navy),
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.navy,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                      dropdownColor: Colors.white,
+                                      items: govList.map((gov) {
+                                        return DropdownMenuItem(value: gov, child: Text(gov));
+                                      }).toList(),
+                                      onChanged: (val) {
+                                        if (val != null) setState(() => _selectedGovernorate = val);
+                                      },
+                                    ),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 20),
+
+                                // Gender Selector (Pills, clean, NO EMOJIS)
+                                Text(
+                                  isAr ? 'النوع' : 'Gender',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildGenderPill(
+                                        label: isAr ? 'رجل' : 'Male',
+                                        isSelected: _selectedGender == UserGender.male,
+                                        onTap: () => setState(() => _selectedGender = UserGender.male),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: _buildGenderPill(
+                                        label: isAr ? 'سيدة' : 'Female',
+                                        isSelected: _selectedGender == UserGender.female,
+                                        onTap: () => setState(() => _selectedGender = UserGender.female),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: _buildGenderPill(
+                                        label: isAr ? 'أفضّل عدم الذكر' : 'Other',
+                                        isSelected: _selectedGender == UserGender.preferNotToSay,
+                                        onTap: () => setState(() => _selectedGender = UserGender.preferNotToSay),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 24),
+                              ],
                             ),
-                            child: Center(
-                              child: Text(
-                                initialChar,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Bottom CTA Area (Uber style, constrained cleanly on wide viewports)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: SafeArea(
+                      top: false,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 640),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                height: 52,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.navy,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed: _isSaving ? null : () => _handleSave(isAr),
+                                  child: _isSaving
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                        )
+                                      : Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              isAr ? 'متابعة' : 'Continue',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                fontFamily: 'Cairo',
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Icon(
+                                              isAr ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
+                                              size: 18,
+                                              color: Colors.white,
+                                            ),
+                                          ],
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                isAr
+                                    ? 'بالمتابعة، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بمشوار.'
+                                    : 'By continuing, you agree to MASHWAR Terms of Service & Privacy Policy.',
+                                textAlign: TextAlign.center,
                                 style: const TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.navy,
+                                  fontSize: 11,
+                                  color: Color(0xFF8E8E93),
+                                  height: 1.35,
                                   fontFamily: 'Cairo',
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                          Positioned(
-                            bottom: 0,
-                            right: isAr ? 0 : null,
-                            left: isAr ? null : 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: AppColors.navy,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // First Name & Last Name (Side by side on wider / clean on mobile)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: _buildUberInputField(
-                            label: isAr ? 'الاسم الأول' : 'First name',
-                            controller: _firstNameController,
-                            hint: isAr ? 'مثال: أحمد' : 'e.g. Ahmed',
-                            errorText: _firstNameError,
-                            onChanged: (val) {
-                              setState(() {
-                                if (_firstNameError != null) _firstNameError = null;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildUberInputField(
-                            label: isAr ? 'اسم العائلة' : 'Last name',
-                            controller: _lastNameController,
-                            hint: isAr ? 'مثال: محمود' : 'e.g. Mahmoud',
-                            errorText: _lastNameError,
-                            onChanged: (val) {
-                              setState(() {
-                                if (_lastNameError != null) _lastNameError = null;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Email Address
-                    _buildUberInputField(
-                      label: isAr ? 'البريد الإلكتروني' : 'Email address',
-                      controller: _emailController,
-                      hint: 'name@example.com',
-                      keyboardType: TextInputType.emailAddress,
-                      errorText: _emailError,
-                      helperText: isAr
-                          ? 'لإرسال إيصالات وفواتير المشاوير'
-                          : 'For sending ride receipts and trip updates',
-                      onChanged: (val) {
-                        if (_emailError != null) setState(() => _emailError = null);
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Governorate Selector
-                    Text(
-                      isAr ? 'المحافظة' : 'Governorate',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.navy,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F3F4),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: govList.contains(_selectedGovernorate)
-                              ? _selectedGovernorate
-                              : govList.first,
-                          isExpanded: true,
-                          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.navy),
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.navy,
-                            fontFamily: 'Cairo',
-                          ),
-                          dropdownColor: Colors.white,
-                          items: govList.map((gov) {
-                            return DropdownMenuItem(value: gov, child: Text(gov));
-                          }).toList(),
-                          onChanged: (val) {
-                            if (val != null) setState(() => _selectedGovernorate = val);
-                          },
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // Gender Selector (Pills, clean, NO EMOJIS)
-                    Text(
-                      isAr ? 'النوع' : 'Gender',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.navy,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildGenderPill(
-                            label: isAr ? 'رجل' : 'Male',
-                            isSelected: _selectedGender == UserGender.male,
-                            onTap: () => setState(() => _selectedGender = UserGender.male),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildGenderPill(
-                            label: isAr ? 'سيدة' : 'Female',
-                            isSelected: _selectedGender == UserGender.female,
-                            onTap: () => setState(() => _selectedGender = UserGender.female),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildGenderPill(
-                            label: isAr ? 'أفضّل عدم الذكر' : 'Other',
-                            isSelected: _selectedGender == UserGender.preferNotToSay,
-                            onTap: () => setState(() => _selectedGender = UserGender.preferNotToSay),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-
-            // Bottom CTA Area (Uber style)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
                   ),
                 ],
               ),
-              child: SafeArea(
-                top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.navy,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: _isSaving ? null : () => _handleSave(isAr),
-                        child: _isSaving
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    isAr ? 'متابعة' : 'Continue',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'Cairo',
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    isAr ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
-                                    size: 18,
-                                    color: Colors.white,
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      isAr
-                          ? 'بالمتابعة، فإنك توافق على شروط الخدمة وسياسة الخصوصية الخاصة بمشوار.'
-                          : 'By continuing, you agree to MASHWAR Terms of Service & Privacy Policy.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF8E8E93),
-                        height: 1.35,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );

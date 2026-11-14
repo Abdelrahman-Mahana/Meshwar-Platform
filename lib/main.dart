@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'core/localization/app_strings.dart';
 import 'core/theme/app_theme.dart';
 import 'state/settings_provider.dart';
 import 'state/auth_provider.dart';
@@ -39,13 +40,9 @@ class MashwarApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             locale: settings.locale,
-            supportedLocales: const [
-              Locale('ar', 'EG'),
-              Locale('ar'),
-              Locale('en', 'US'),
-              Locale('en'),
-            ],
+            supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: const [
+              AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
@@ -57,3 +54,4 @@ class MashwarApp extends StatelessWidget {
     );
   }
 }
+
