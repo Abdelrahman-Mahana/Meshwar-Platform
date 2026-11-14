@@ -82,7 +82,14 @@ class _AdminDriverVerificationsScreenState extends State<AdminDriverVerification
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: filteredList.isEmpty
                 ? _buildEmptyState(isAr)
@@ -91,7 +98,7 @@ class _AdminDriverVerificationsScreenState extends State<AdminDriverVerification
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(minWidth: 800),
                       child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(AppColors.sand),
+                        headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                         dataRowMinHeight: 64,
                         dataRowMaxHeight: 64,
                         columns: [
@@ -175,12 +182,22 @@ class _AdminDriverVerificationsScreenState extends State<AdminDriverVerification
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.navy : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? AppColors.navy : AppColors.borderDisabled),
+          border: Border.all(color: isSelected ? AppColors.navy : const Color(0xFFE2E8F0)),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.navy.withValues(alpha: 0.18),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,

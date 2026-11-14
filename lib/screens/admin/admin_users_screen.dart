@@ -17,6 +17,8 @@ class AdminUsersScreen extends StatefulWidget {
 class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedRoleFilter = 'الكل';
+  String _selectedStatusFilter = 'الكل';
 
   @override
   void dispose() {
@@ -37,9 +39,33 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     final admin = context.watch<AdminProvider>();
 
     final filteredUsers = admin.users.where((u) {
-      if (_searchQuery.isEmpty) return true;
-      return u.fullName.contains(_searchQuery) || u.rawPhone.contains(_searchQuery);
+      if (_searchQuery.isNotEmpty) {
+        final matchesName = u.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
+        final matchesPhone = u.rawPhone.contains(_searchQuery) || u.maskedPhone.contains(_searchQuery);
+        if (!matchesName && !matchesPhone) return false;
+      }
+      if (_selectedRoleFilter != 'الكل' && _selectedRoleFilter != 'All') {
+        if (isAr) {
+          if (u.role != _selectedRoleFilter) return false;
+        } else {
+          if (_selectedRoleFilter == 'Driver' && u.role != 'سائق') return false;
+          if (_selectedRoleFilter == 'Passenger' && u.role != 'راكب') return false;
+        }
+      }
+      if (_selectedStatusFilter != 'الكل' && _selectedStatusFilter != 'All') {
+        if (isAr) {
+          if (u.status != _selectedStatusFilter) return false;
+        } else {
+          if (_selectedStatusFilter == 'Active' && u.status != 'نشط') return false;
+          if (_selectedStatusFilter == 'Suspended' && u.status != 'موقوف') return false;
+          if (_selectedStatusFilter == 'Banned' && u.status != 'محظور') return false;
+        }
+      }
+      return true;
     }).toList();
+
+    final roleFilters = isAr ? ['الكل', 'سائق', 'راكب'] : ['All', 'Driver', 'Passenger'];
+    final statusFilters = isAr ? ['الكل', 'نشط', 'محظور'] : ['All', 'Active', 'Banned'];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimens.space24),
@@ -52,30 +78,98 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                    decoration: InputDecoration(
-                      hintText: isAr ? 'بحث بالاسم أو الموبايل...' : 'Search by name or phone...',
-                      prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy),
-                      filled: true,
-                      fillColor: AppColors.sand,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
-                        borderSide: const BorderSide(color: AppColors.borderDisabled),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
-                        borderSide: const BorderSide(color: AppColors.borderDisabled),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                        decoration: InputDecoration(
+                          hintText: isAr ? 'بحث بالاسم أو رقم الموبايل...' : 'Search by name or mobile number...',
+                          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  onPressed: () => setState(() {
+                                    _searchController.clear();
+                                    _searchQuery = '';
+                                  }),
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: const Color(0xFFF8FAFC),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                            borderSide: const BorderSide(color: AppColors.navy, width: 1.8),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      isAr ? 'تصفية:' : 'Filters:',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.navy),
+                    ),
+                    for (final r in roleFilters) ...[
+                      ChoiceChip(
+                        label: Text(r),
+                        selected: _selectedRoleFilter == r,
+                        selectedColor: AppColors.navy,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        side: BorderSide(color: _selectedRoleFilter == r ? AppColors.navy : const Color(0xFFE2E8F0)),
+                        labelStyle: TextStyle(
+                          color: _selectedRoleFilter == r ? Colors.white : AppColors.navy,
+                          fontWeight: _selectedRoleFilter == r ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 11,
+                        ),
+                        onSelected: (_) => setState(() => _selectedRoleFilter = r),
+                      ),
+                    ],
+                    const SizedBox(width: 8),
+                    for (final s in statusFilters) ...[
+                      ChoiceChip(
+                        label: Text(s),
+                        selected: _selectedStatusFilter == s,
+                        selectedColor: AppColors.navy,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        side: BorderSide(color: _selectedStatusFilter == s ? AppColors.navy : const Color(0xFFE2E8F0)),
+                        labelStyle: TextStyle(
+                          color: _selectedStatusFilter == s ? Colors.white : AppColors.navy,
+                          fontWeight: _selectedStatusFilter == s ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 11,
+                        ),
+                        onSelected: (_) => setState(() => _selectedStatusFilter = s),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -88,7 +182,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -98,7 +199,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minWidth: 800),
                     child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(AppColors.sand),
+                      headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                       dataRowMinHeight: 64,
                       dataRowMaxHeight: 64,
                       columns: [
@@ -126,10 +227,13 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                 children: [
                                   CircleAvatar(
                                     radius: 16,
-                                    backgroundColor: AppColors.gold,
+                                    backgroundColor: user.role == 'سائق' ? AppColors.gold : const Color(0xFFE2E8F0),
                                     child: Text(
                                       user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
-                                      style: const TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold),
+                                      style: TextStyle(
+                                        color: user.role == 'سائق' ? AppColors.navy : const Color(0xFF475569),
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 10),
@@ -138,18 +242,36 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               ),
                             ),
                             DataCell(Text(user.maskedPhone, style: const TextStyle(letterSpacing: 1.2))),
-                            DataCell(Text(user.role)),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: user.role == 'سائق' ? const Color(0xFFFEF3C7) : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  user.role,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: user.role == 'سائق' ? const Color(0xFFB45309) : AppColors.navy,
+                                  ),
+                                ),
+                              ),
+                            ),
                             DataCell(MashwarBadge(type: bType, customLabel: user.status)),
                             DataCell(Text(user.registeredDate)),
                             DataCell(
-                              OutlinedButton(
+                              OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.navy,
-                                  side: const BorderSide(color: AppColors.navy),
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                 ),
+                                icon: const Icon(Icons.remove_red_eye_outlined, size: 16),
+                                label: Text(isAr ? 'عرض وتعديل' : 'View & Edit', style: const TextStyle(fontSize: 12)),
                                 onPressed: () => _showUserDetail(context, user),
-                                child: Text(isAr ? 'عرض' : 'View', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                               ),
                             ),
                           ],
@@ -163,7 +285,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: const BoxDecoration(
-                    color: AppColors.sand,
+                    color: Color(0xFFF8FAFC),
+                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
                     borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppDimens.radiusCard)),
                   ),
                   child: Row(

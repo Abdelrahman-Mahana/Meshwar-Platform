@@ -47,8 +47,15 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
               decoration: InputDecoration(
                 suffixText: isAr ? setting.unitAr : setting.unitEn,
                 filled: true,
-                fillColor: AppColors.sand,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -109,7 +116,14 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -119,7 +133,7 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(minWidth: 800),
                     child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(AppColors.sand),
+                      headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                       dataRowMinHeight: 64,
                       dataRowMaxHeight: 64,
                       columns: [
@@ -141,9 +155,9 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.sand,
+                                  color: const Color(0xFFF1F5F9),
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: AppColors.borderDisabled),
+                                  border: Border.all(color: const Color(0xFFCBD5E1)),
                                 ),
                                 child: Text(
                                   '${setting.value} ${isAr ? setting.unitAr : setting.unitEn}',

@@ -167,7 +167,14 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -200,7 +207,7 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(minWidth: 800),
                       child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(AppColors.sand),
+                        headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                         dataRowMinHeight: 60,
                         dataRowMaxHeight: 60,
                         columns: [
@@ -219,10 +226,11 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: AppColors.sand,
+                                    color: const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
                                   ),
-                                  child: Text(log.action, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                  child: Text(log.action, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.navy)),
                                 ),
                               ),
                               DataCell(Text(log.target, style: const TextStyle(fontFamily: 'monospace', fontSize: 12))),
@@ -238,7 +246,8 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: const BoxDecoration(
-                    color: AppColors.sand,
+                    color: Color(0xFFF8FAFC),
+                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
                     borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppDimens.radiusCard)),
                   ),
                   child: Row(
@@ -303,7 +312,14 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
         decoration: BoxDecoration(
           color: isSelected ? AppColors.navy : Colors.white,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isSelected ? AppColors.navy : AppColors.borderDisabled),
+          border: Border.all(color: isSelected ? AppColors.navy : const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

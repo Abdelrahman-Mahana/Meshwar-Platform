@@ -28,14 +28,24 @@ class MashwarAdminWebApp extends StatelessWidget {
         builder: (context, settings, _) {
           return MaterialApp(
             title: settings.isArabic
-                ? 'مشوار | لوحة تحكم الإدارة والعمليات'
-                : 'MASHWAR | Admin & Operations Portal',
+                ? 'مشوار · لوحة تحكم العمليات والإدارة المركزية'
+                : 'MASHWAR · Central Operations & Admin Portal',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme.copyWith(
-              scaffoldBackgroundColor: const Color(0xFFF4F6F9),
+              scaffoldBackgroundColor: const Color(0xFFF8FAFC),
               appBarTheme: const AppBarTheme(
                 backgroundColor: AppColors.navy,
                 elevation: 0,
+                centerTitle: false,
+                iconTheme: IconThemeData(color: Colors.white),
+              ),
+              cardTheme: CardThemeData(
+                color: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                ),
               ),
             ),
             locale: settings.locale,

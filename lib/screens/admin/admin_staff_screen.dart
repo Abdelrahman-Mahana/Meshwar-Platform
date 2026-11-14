@@ -38,8 +38,12 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                   decoration: InputDecoration(
                     labelText: isAr ? 'اسم الموظف' : 'Staff Name',
                     filled: true,
-                    fillColor: AppColors.sand,
+                    fillColor: const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -48,8 +52,12 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                   decoration: InputDecoration(
                     labelText: isAr ? 'البريد الإلكتروني' : 'Email Address',
                     filled: true,
-                    fillColor: AppColors.sand,
+                    fillColor: const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -59,8 +67,12 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                   initialValue: selectedRole,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: AppColors.sand,
+                    fillColor: const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
                   ),
                   items: [
                     DropdownMenuItem(
@@ -146,8 +158,12 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                   initialValue: selectedRole,
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: AppColors.sand,
+                    fillColor: const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
                   ),
                   items: [
                     DropdownMenuItem(
@@ -245,7 +261,14 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderDisabled),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
                 child: Text(
                   isAr ? '${admin.staff.length} موظفين' : '${admin.staff.length} Staff',
@@ -262,14 +285,21 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 800),
                 child: DataTable(
-                  headingRowColor: WidgetStateProperty.all(AppColors.sand),
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                   dataRowMinHeight: 64,
                   dataRowMaxHeight: 64,
                   columns: [
@@ -303,8 +333,9 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.sand,
+                              color: const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
                             ),
                             child: Text(
                               isAr ? s.roleTitleAr : s.roleTitleEn,
@@ -342,7 +373,14 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

@@ -207,17 +207,17 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
               // 3 Segmented sub-tabs
               Container(
                 decoration: BoxDecoration(
-                  color: AppColors.sand,
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.borderDisabled),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 padding: const EdgeInsets.all(3),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildSegment(isAr ? 'رحلات' : 'Rides', 0),
-                    _buildSegment(isAr ? 'حجوزات' : 'Bookings', 1),
-                    _buildSegment(isAr ? 'طرود' : 'Parcels', 2),
+                    _buildSegment(isAr ? 'رحلات (${admin.rides.length})' : 'Rides (${admin.rides.length})', 0),
+                    _buildSegment(isAr ? 'حجوزات (${admin.bookings.length})' : 'Bookings (${admin.bookings.length})', 1),
+                    _buildSegment(isAr ? 'طرود (${admin.parcels.length})' : 'Parcels (${admin.parcels.length})', 2),
                   ],
                 ),
               ),
@@ -257,7 +257,14 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -270,14 +277,14 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: const BoxDecoration(
-                    color: AppColors.sand,
+                    color: Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppDimens.radiusCard)),
                   ),
                   child: Center(
                     child: Text(
                       isAr
-                          ? 'تعديل أي حالة يدوياً يتطلب كتابة السبب.'
-                          : 'Manual state modifications require a mandatory documented reason.',
+                          ? 'تعديل أي حالة يدوياً يتطلب كتابة السبب وسيتم تدوينه فوراً في سجل التدقيق الرقابي.'
+                          : 'Manual state modifications require a mandatory documented reason logged to audit trail.',
                       style: AppTypography.label(color: AppColors.textSecondary),
                     ),
                   ),
@@ -302,7 +309,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 800),
         child: DataTable(
-          headingRowColor: WidgetStateProperty.all(AppColors.sand),
+          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
           dataRowMinHeight: 64,
           dataRowMaxHeight: 64,
           columns: [
@@ -357,7 +364,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 800),
         child: DataTable(
-          headingRowColor: WidgetStateProperty.all(AppColors.sand),
+          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
           dataRowMinHeight: 64,
           dataRowMaxHeight: 64,
           columns: [
@@ -408,7 +415,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
       child: ConstrainedBox(
         constraints: const BoxConstraints(minWidth: 800),
         child: DataTable(
-          headingRowColor: WidgetStateProperty.all(AppColors.sand),
+          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
           dataRowMinHeight: 64,
           dataRowMaxHeight: 64,
           columns: [

@@ -85,14 +85,21 @@ class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(minWidth: 800),
                 child: DataTable(
-                  headingRowColor: WidgetStateProperty.all(AppColors.sand),
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                   dataRowMinHeight: 64,
                   dataRowMaxHeight: 64,
                   columns: [

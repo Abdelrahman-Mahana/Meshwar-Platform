@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/brand_logo.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
 import 'admin_dashboard_screen.dart';
@@ -48,20 +49,101 @@ class _AdminShellState extends State<AdminShell> {
   ];
 
   final List<IconData> _menuIcons = [
-    Icons.bar_chart_rounded,
-    Icons.verified_user_outlined,
-    Icons.people_alt_outlined,
-    Icons.directions_car_outlined,
-    Icons.report_problem_outlined,
-    Icons.settings_outlined,
-    Icons.badge_outlined,
-    Icons.receipt_long_outlined,
+    Icons.dashboard_rounded,
+    Icons.verified_user_rounded,
+    Icons.people_alt_rounded,
+    Icons.directions_car_rounded,
+    Icons.report_problem_rounded,
+    Icons.settings_suggest_rounded,
+    Icons.badge_rounded,
+    Icons.receipt_long_rounded,
   ];
 
   @override
   void initState() {
     super.initState();
     _selectedIndex = widget.initialIndex;
+  }
+
+  void _showNotificationsDialog(BuildContext context, AdminProvider admin, bool isAr) {
+    final pendingDrivers = admin.driverRequests.where((r) => r.status == 'قيد المراجعة').length;
+    final openDisputes = admin.disputes.where((d) => d.status == 'مفتوح').length;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.coral.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.notifications_active_rounded, color: AppColors.coral, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              isAr ? 'الإشعارات والعمليات العاجلة' : 'Operations Alerts',
+              style: AppTypography.title().copyWith(fontSize: 16),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: AppColors.gold.withValues(alpha: 0.2),
+                child: const Icon(Icons.verified_user_rounded, color: AppColors.navy, size: 20),
+              ),
+              title: Text(
+                isAr ? '$pendingDrivers طلبات توثيق معلقة' : '$pendingDrivers pending driver verifications',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              subtitle: Text(
+                isAr ? 'بحاجة لمراجعة بطاقة الرقم القومي ورخص القيادة' : 'Requires National ID & License checks',
+                style: const TextStyle(fontSize: 11),
+              ),
+              trailing: const Icon(Icons.chevron_left_rounded),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                setState(() => _selectedIndex = 1);
+              },
+            ),
+            const Divider(height: 16),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: AppColors.coral.withValues(alpha: 0.2),
+                child: const Icon(Icons.warning_amber_rounded, color: AppColors.coral, size: 20),
+              ),
+              title: Text(
+                isAr ? '$openDisputes بلاغات مفتوحة' : '$openDisputes open disputes & reports',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              subtitle: Text(
+                isAr ? 'تتطلب إسناداً لموظف دعم وحلاً عاجلاً' : 'Requires staff assignment & resolution',
+                style: const TextStyle(fontSize: 11),
+              ),
+              trailing: const Icon(Icons.chevron_left_rounded),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                setState(() => _selectedIndex = 4);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(isAr ? 'إغلاق' : 'Close'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _getSelectedView(AdminProvider admin, bool isAr) {
@@ -74,16 +156,24 @@ class _AdminShellState extends State<AdminShell> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderDisabled),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 4)),
             ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lock_outline_rounded, size: 56, color: AppColors.coral),
-              const SizedBox(height: 16),
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.coral.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.lock_person_rounded, size: 36, color: AppColors.coral),
+              ),
+              const SizedBox(height: 20),
               Text(
                 isAr ? 'الصفحة غير متاحة لدورك الحالي' : 'Access Restricted for Current Role',
                 style: AppTypography.title().copyWith(fontSize: 18),
@@ -102,7 +192,8 @@ class _AdminShellState extends State<AdminShell> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.navy,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.dashboard_rounded, size: 18),
                 label: Text(isAr ? 'العودة للوحة الأرقام' : 'Return to Dashboard'),
@@ -200,45 +291,106 @@ class _AdminShellState extends State<AdminShell> {
     final settings = context.watch<SettingsProvider>();
     final admin = context.watch<AdminProvider>();
     final isAr = settings.isArabic;
-    final isDesktop = MediaQuery.of(context).size.width >= 900;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 900;
+
+    final pendingDriversCount = admin.driverRequests.where((r) => r.status == 'قيد المراجعة').length;
+    final openDisputesCount = admin.disputes.where((d) => d.status == 'مفتوح').length;
 
     final sidebar = Container(
-      width: 250,
-      color: AppColors.navy,
+      width: 260,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.navy, Color(0xFF091E33)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header Logo (Pages 69-77)
+          // Header Logo & System Identity (Pages 69-77)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: Color(0xFF1E3A58))),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: AppColors.gold,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Text('م', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w900, fontSize: 16)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isAr ? 'مشوار · الإدارة' : 'MASHWAR · Admin',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.gold,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.gold.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      Text(
-                        isAr ? 'لوحة تحكم النظام' : 'Control Panel',
-                        style: const TextStyle(color: Color(0xFF8FA3B8), fontSize: 11),
+                      child: const Center(
+                        child: Text(
+                          'م',
+                          style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w900, fontSize: 18),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isAr ? 'مشوار · الإدارة' : 'MASHWAR · Admin',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          Text(
+                            isAr ? 'لوحة تحكم النظام' : 'Control Panel',
+                            style: const TextStyle(color: Color(0xFF8FA3B8), fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                // Operational status pill
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF10B981),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          isAr ? 'الخوادم تعمل بنسبة 99.9%' : 'All Systems Operational',
+                          style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 10, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -258,12 +410,27 @@ class _AdminShellState extends State<AdminShell> {
                 final icon = _menuIcons[index];
                 final canAccess = admin.canAccessMenu(index);
 
+                // Badge counts for pending reviews
+                int? badgeCount;
+                Color badgeBg = AppColors.gold;
+                Color badgeText = AppColors.navy;
+
+                if (index == 1 && pendingDriversCount > 0) {
+                  badgeCount = pendingDriversCount;
+                  badgeBg = AppColors.gold;
+                  badgeText = AppColors.navy;
+                } else if (index == 4 && openDisputesCount > 0) {
+                  badgeCount = openDisputesCount;
+                  badgeBg = AppColors.coral;
+                  badgeText = Colors.white;
+                }
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   child: Material(
                     color: isSelected ? const Color(0xFF1E3A58) : Colors.transparent,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: ListTile(
@@ -273,7 +440,7 @@ class _AdminShellState extends State<AdminShell> {
                         color: isSelected
                             ? AppColors.gold
                             : canAccess
-                                ? const Color(0xFF8FA3B8)
+                                ? const Color(0xFF94A3B8)
                                 : const Color(0xFF5A7188),
                         size: 20,
                       ),
@@ -285,13 +452,35 @@ class _AdminShellState extends State<AdminShell> {
                               : canAccess
                                   ? const Color(0xFFCDD6DF)
                                   : const Color(0xFF6C8299),
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                           fontSize: 13,
                         ),
                       ),
-                      trailing: canAccess
-                          ? null
-                          : const Icon(Icons.lock_rounded, size: 14, color: Color(0xFF5A7188)),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (badgeCount != null && badgeCount > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: badgeBg,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$badgeCount',
+                                style: TextStyle(
+                                  color: badgeText,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          if (!canAccess) ...[
+                            const SizedBox(width: 6),
+                            const Icon(Icons.lock_rounded, size: 14, color: Color(0xFF5A7188)),
+                          ],
+                        ],
+                      ),
                       onTap: () {
                         if (!canAccess) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -352,6 +541,11 @@ class _AdminShellState extends State<AdminShell> {
                       );
                     },
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'مشوار v2.4.0 · مصر 🇪🇬',
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10),
+                  ),
                 ],
               ),
             ),
@@ -361,16 +555,37 @@ class _AdminShellState extends State<AdminShell> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: isDesktop
           ? null
           : AppBar(
               backgroundColor: AppColors.navy,
+              elevation: 0,
               iconTheme: const IconThemeData(color: Colors.white),
-              title: Text(
-                isAr ? _menuTitlesAr[_selectedIndex] : _menuTitlesEn[_selectedIndex],
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              title: Row(
+                children: [
+                  const BrandLogo(fontSize: 20, isLight: true),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '· ${isAr ? _menuTitlesAr[_selectedIndex] : _menuTitlesEn[_selectedIndex]}',
+                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
+              actions: [
+                IconButton(
+                  tooltip: isAr ? 'التنبيهات العاجلة' : 'Alerts',
+                  icon: Badge(
+                    label: Text('${pendingDriversCount + openDisputesCount}'),
+                    isLabelVisible: (pendingDriversCount + openDisputesCount) > 0,
+                    child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                  ),
+                  onPressed: () => _showNotificationsDialog(context, admin, isAr),
+                ),
+              ],
             ),
       drawer: isDesktop ? null : Drawer(child: sidebar),
       body: Row(
@@ -381,44 +596,66 @@ class _AdminShellState extends State<AdminShell> {
               children: [
                 // Top Global Bar (Responsive & Adaptive)
                 Container(
-                  height: 60,
+                  height: 64,
                   padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 12),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    border: Border(bottom: BorderSide(color: AppColors.borderDisabled)),
+                    border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
                   ),
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
                         minWidth: isDesktop
-                            ? MediaQuery.of(context).size.width - 250 - 48
-                            : MediaQuery.of(context).size.width - 24,
+                            ? (screenWidth - 260 - 48).clamp(0.0, double.infinity)
+                            : (screenWidth - 24).clamp(0.0, double.infinity),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           if (isDesktop) ...[
-                            Text(
-                              isAr ? _menuTitlesAr[_selectedIndex] : _menuTitlesEn[_selectedIndex],
-                              style: AppTypography.title().copyWith(fontSize: 18),
+                            Row(
+                              children: [
+                                Icon(_menuIcons[_selectedIndex], color: AppColors.navy, size: 22),
+                                const SizedBox(width: 10),
+                                Text(
+                                  isAr ? _menuTitlesAr[_selectedIndex] : _menuTitlesEn[_selectedIndex],
+                                  style: AppTypography.title().copyWith(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.navy,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 24),
                           ],
 
                           // Filter & Role Controls (Always accessible)
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              // Notification Action Button
+                              IconButton(
+                                tooltip: isAr ? 'التنبيهات والعمليات' : 'Notifications',
+                                icon: Badge(
+                                  label: Text('${pendingDriversCount + openDisputesCount}'),
+                                  isLabelVisible: (pendingDriversCount + openDisputesCount) > 0,
+                                  child: const Icon(Icons.notifications_none_rounded, color: AppColors.navy, size: 22),
+                                ),
+                                onPressed: () => _showNotificationsDialog(context, admin, isAr),
+                              ),
+                              const SizedBox(width: 8),
+
                               // Period filter chips (Pages 69-76)
                               Consumer<AdminProvider>(
                                 builder: (context, admin, _) {
                                   final periods = isAr ? ['اليوم', '7 أيام', '30 يوم'] : ['Today', '7 Days', '30 Days'];
                                   return Container(
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF3F3F4),
+                                      color: const Color(0xFFF1F5F9),
                                       borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
                                     ),
                                     padding: const EdgeInsets.all(3),
                                     child: Row(
@@ -427,7 +664,7 @@ class _AdminShellState extends State<AdminShell> {
                                           GestureDetector(
                                             onTap: () => admin.setPeriod(periods[i]),
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                                               decoration: BoxDecoration(
                                                 color: (i == 1 && admin.currentPeriod.contains('7')) ||
                                                         (i == 0 && (admin.currentPeriod == 'اليوم' || admin.currentPeriod == 'Today')) ||
@@ -484,11 +721,11 @@ class _AdminShellState extends State<AdminShell> {
                                   _buildRoleMenuItem(AdminRole.supportAdmin, isAr, admin.activeRole),
                                 ],
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF3F3F4),
+                                    color: const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                                    border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
