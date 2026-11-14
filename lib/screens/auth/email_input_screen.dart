@@ -5,14 +5,16 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
 import 'otp_verification_screen.dart';
 import 'phone_input_screen.dart';
 
 /// Market-leading, minimalist Email input screen (Uber / inDrive standard).
-/// Features email formatting validation, dynamic focus state, quick-demo filling chip,
-/// and seamless switching to Phone input.
+/// Responsive layout:
+/// - Wide / Desktop (>= 840px): 2-column split canvas (Left: Brand & Student/Enterprise benefits, Right: Email entry card)
+/// - Mobile (< 840px): Full-height balanced vertical distribution with Step Progress, Demo chip & Benefits card
 class EmailInputScreen extends StatefulWidget {
   const EmailInputScreen({super.key});
 
@@ -84,54 +86,152 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 760;
-            return Container(
-              color: isWide ? AppColors.sand : Colors.white,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.space24,
-                  vertical: AppDimens.space16,
+            final isWide = constraints.maxWidth >= 840;
+            if (isWide) {
+              return _buildWideSplitLayout(context, auth, isAr, hasError, constraints);
+            }
+            return _buildMobileLayout(context, auth, isAr, hasError, constraints);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWideSplitLayout(
+    BuildContext context,
+    AuthProvider auth,
+    bool isAr,
+    bool hasError,
+    BoxConstraints constraints,
+  ) {
+    return Row(
+      children: [
+        // Left Showcase Panel
+        Expanded(
+          flex: 6,
+          child: Container(
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.navy, Color(0xFF14385A)],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+              ),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 80).clamp(0.0, double.infinity),
                 ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 500),
-                      child: Container(
-                        padding: isWide
-                            ? const EdgeInsets.all(AppDimens.space24)
-                            : EdgeInsets.zero,
-                        decoration: isWide
-                            ? BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.04),
-                                    blurRadius: 16,
-                                    offset: const Offset(0, 6),
-                                  ),
-                                ],
-                              )
-                            : null,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const BrandLogo(fontSize: 44, isLight: true),
+                        const SizedBox(height: 18),
+                        Text(
+                          isAr ? 'سفر تشاركي وتواصل موثوق' : 'Verified & Connected Travel',
+                          style: AppTypography.title(color: Colors.white).copyWith(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isAr
+                              ? 'سجل ببريدك الشخصي أو الجامعي لاستلام إيصالات الرحلات وإثبات هويتك الأكاديمية.'
+                              : 'Sign in with your personal or university email for digital receipts and student badges.',
+                          style: AppTypography.body(color: Colors.white70).copyWith(fontSize: 15),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Security & Value Highlights
+                    Column(
+                      children: [
+                        _buildWideTrustCard(
+                          icon: Icons.receipt_long_outlined,
+                          title: isAr ? 'إيصالات وفواتير فورية' : 'Instant Digital Receipts',
+                          subtitle: isAr
+                              ? 'ملخص تفصيلي لكل رحلة وشحنة طرد يصل بريدك مباشرة بعد الوصول.'
+                              : 'Detailed trip breakdowns sent to your inbox upon ride completion.',
+                        ),
+                        const SizedBox(height: 14),
+                        _buildWideTrustCard(
+                          icon: Icons.school_outlined,
+                          title: isAr ? 'توثيق البريد الجامعي' : 'University Student Community',
+                          subtitle: isAr
+                              ? 'شعار خاص للطلاب والأكاديميين لركوب آمن بين المدن الجامعية.'
+                              : 'Special student badges for safer rides between Egyptian university cities.',
+                        ),
+                        const SizedBox(height: 14),
+                        _buildWideTrustCard(
+                          icon: Icons.lock_reset_rounded,
+                          title: isAr ? 'استرجاع فوري وسلس' : 'Fast Account Recovery',
+                          subtitle: isAr
+                              ? 'تأمين حسابك ومحفظتك وإمكانية الوصول من أي جهاز بكل سهولة.'
+                              : 'Secure your wallet balance and restore access from any device.',
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // Metrics Strip
+                    Row(
+                      children: [
+                        _buildShowcaseMetric('27', isAr ? 'محافظة' : 'Governorates'),
+                        const SizedBox(width: 32),
+                        _buildShowcaseMetric('100%', isAr ? 'إلكتروني' : 'Digital'),
+                        const SizedBox(width: 32),
+                        _buildShowcaseMetric('24/7', isAr ? 'دعم' : 'Support'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+
+        // Right Email Input Form Area
+        Expanded(
+          flex: 5,
+          child: Container(
+            height: double.infinity,
+            color: Colors.white,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: (constraints.maxHeight - 64).clamp(0.0, double.infinity),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 420),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                            const SizedBox(height: AppDimens.space8),
+                            // Step Indicator Badge
+                            _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
+                            const SizedBox(height: 14),
 
                             // Title
                             Text(
                               isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
-                              style: AppTypography.largeTitle(),
+                              style: AppTypography.largeTitle().copyWith(fontSize: 26),
                             ),
-                            const SizedBox(height: AppDimens.space8),
+                            const SizedBox(height: 6),
 
                             // Subtitle
                             Text(
@@ -140,141 +240,36 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                                   : 'We will send you a verification code to log in or create an account',
                               style: AppTypography.bodySecondary(),
                             ),
-                            const SizedBox(height: AppDimens.space24),
+                            const SizedBox(height: 22),
 
-                            // Label
+                            // Input Label
                             Text(
                               isAr ? 'البريد الإلكتروني' : 'Email Address',
                               style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
                             ),
-                            const SizedBox(height: AppDimens.space8),
+                            const SizedBox(height: 8),
 
-                            // Uber / inDrive Styled Email Input Card
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 160),
-                              height: 56,
-                              decoration: BoxDecoration(
-                                color: _isFocused ? Colors.white : const Color(0xFFF8F9FA),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: hasError
-                                      ? AppColors.danger
-                                      : (_isFocused ? AppColors.navy : const Color(0xFFE5E5EA)),
-                                  width: hasError ? 1.4 : (_isFocused ? 1.8 : 0.8),
-                                ),
-                                boxShadow: _isFocused && !hasError
-                                    ? [
-                                        BoxShadow(
-                                          color: AppColors.navy.withValues(alpha: 0.08),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 14),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.mail_outline_rounded,
-                                    color: AppColors.navy,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 12),
+                            // Email input field card
+                            _buildEmailInputField(hasError: hasError, isAr: isAr),
+                            const SizedBox(height: 10),
 
-                                  // Email input textfield
-                                  Expanded(
-                                    child: Directionality(
-                                      textDirection: TextDirection.ltr,
-                                      child: TextField(
-                                        controller: _emailController,
-                                        focusNode: _focusNode,
-                                        keyboardType: TextInputType.emailAddress,
-                                        autocorrect: false,
-                                        style: AppTypography.body(color: AppColors.navy).copyWith(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                        decoration: const InputDecoration(
-                                          hintText: 'name@example.com',
-                                          hintStyle: TextStyle(
-                                            color: Color(0xFF94A3B8),
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                          border: InputBorder.none,
-                                          enabledBorder: InputBorder.none,
-                                          focusedBorder: InputBorder.none,
-                                          errorBorder: InputBorder.none,
-                                          disabledBorder: InputBorder.none,
-                                          focusedErrorBorder: InputBorder.none,
-                                          filled: false,
-                                          contentPadding: EdgeInsets.zero,
-                                          isDense: true,
-                                        ),
-                                        onChanged: (_) {
-                                          if (_errorText != null) {
-                                            setState(() => _errorText = null);
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                  ),
+                            // Helper / Error
+                            _buildHelperOrError(hasError: hasError, isAr: isAr),
+                            const SizedBox(height: 12),
 
-                                  // Clear button
-                                  if (_emailController.text.isNotEmpty)
-                                    IconButton(
-                                      icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 20),
-                                      onPressed: () {
-                                        setState(() {
-                                          _emailController.clear();
-                                          _errorText = null;
-                                        });
-                                      },
-                                    ),
-                                ],
-                              ),
+                            // Demo Chip
+                            _buildDemoChip(isAr),
+                            const SizedBox(height: 28),
+
+                            // Submit Button
+                            MashwarButton(
+                              text: isAr ? 'إرسال الكود' : 'Send Code',
+                              isLoading: auth.isLoading,
+                              onPressed: () => _handleSubmit(isAr),
                             ),
+                            const SizedBox(height: 14),
 
-                            const SizedBox(height: AppDimens.space12),
-
-                            // Helper / Error Text
-                            if (hasError)
-                              Row(
-                                children: [
-                                  const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 14),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      _errorText!,
-                                      style: AppTypography.label(color: AppColors.danger).copyWith(fontSize: 12),
-                                    ),
-                                  ),
-                                ],
-                              )
-                            else
-                              Row(
-                                children: [
-                                  const Icon(Icons.info_outline_rounded, color: Color(0xFF64748B), size: 14),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      isAr
-                                          ? 'هنبعت كود مكون من 6 أرقام لتأكيد حسابك'
-                                          : 'We will send a 6-digit code to verify your account',
-                                      style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 12),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-
-                        const SizedBox(height: AppDimens.space24),
-
-                        Column(
-                          children: [
-                            // Switch to Phone Option
+                            // Switch to phone
                             Center(
                               child: TextButton.icon(
                                 icon: const Icon(Icons.phone_iphone_rounded, size: 18, color: AppColors.navy),
@@ -284,7 +279,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                                   );
                                 },
                                 label: Text(
-                                  isAr ? 'المتابعة برقم الموبايل بدلاً من ذلك' : 'Continue with mobile number instead',
+                                  isAr ? 'المتابعة برقم الموبايل بدلاً من ذلك' : 'Continue with phone instead',
                                   style: AppTypography.body(color: AppColors.navy).copyWith(
                                     fontWeight: FontWeight.w700,
                                     decoration: TextDecoration.underline,
@@ -292,28 +287,408 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: AppDimens.space12),
-
-                            // Submit CTA
-                            MashwarButton(
-                              text: isAr ? 'إرسال الكود' : 'Send Code',
-                              isLoading: auth.isLoading,
-                              onPressed: () => _handleSubmit(isAr),
-                            ),
-                            const SizedBox(height: AppDimens.space8),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
           ),
-        );
-      },
-    ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout(
+    BuildContext context,
+    AuthProvider auth,
+    bool isAr,
+    bool hasError,
+    BoxConstraints constraints,
+  ) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimens.space24,
+        vertical: AppDimens.space16,
       ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Top Step Progress Indicator
+            _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
+            const SizedBox(height: 16),
+
+            // Title & Subtitle
+            Text(
+              isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
+              style: AppTypography.largeTitle().copyWith(fontSize: 26),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              isAr
+                  ? 'هنبعتلك كود تأكيد لتسجيل الدخول أو إنشاء حساب'
+                  : 'We will send you a verification code to log in or create an account',
+              style: AppTypography.bodySecondary(),
+            ),
+            const SizedBox(height: 20),
+
+            // Input Label
+            Text(
+              isAr ? 'البريد الإلكتروني' : 'Email Address',
+              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+
+            // Email Input Card
+            _buildEmailInputField(hasError: hasError, isAr: isAr),
+            const SizedBox(height: 8),
+
+            // Helper text / Error text
+            _buildHelperOrError(hasError: hasError, isAr: isAr),
+            const SizedBox(height: 12),
+
+            // Demo Chip
+            _buildDemoChip(isAr),
+            const SizedBox(height: 18),
+
+            // Benefits Reassurance Card (Fills middle naturally with useful value)
+            _buildBenefitsCard(isAr),
+            const SizedBox(height: 24),
+
+            // Bottom Actions: Submit Button
+            MashwarButton(
+              text: isAr ? 'إرسال الكود' : 'Send Code',
+              isLoading: auth.isLoading,
+              onPressed: () => _handleSubmit(isAr),
+            ),
+            const SizedBox(height: 12),
+
+            // Switch to Phone
+            Center(
+              child: TextButton.icon(
+                icon: const Icon(Icons.phone_iphone_rounded, size: 18, color: AppColors.navy),
+                onPressed: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
+                  );
+                },
+                label: Text(
+                  isAr ? 'المتابعة برقم الموبايل بدلاً من ذلك' : 'Continue with phone instead',
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontWeight: FontWeight.w700,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStepBadge({required bool isAr, required int currentStep, required int totalSteps}) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.navy.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
+            style: AppTypography.label(color: AppColors.navy).copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: currentStep / totalSteps,
+              minHeight: 4,
+              backgroundColor: const Color(0xFFE5E5EA),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.navy),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmailInputField({required bool hasError, required bool isAr}) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      height: 56,
+      decoration: BoxDecoration(
+        color: _isFocused ? Colors.white : const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasError
+              ? AppColors.danger
+              : (_isFocused ? AppColors.navy : const Color(0xFFE5E5EA)),
+          width: hasError ? 1.4 : (_isFocused ? 1.8 : 0.8),
+        ),
+        boxShadow: _isFocused && !hasError
+            ? [
+                BoxShadow(
+                  color: AppColors.navy.withValues(alpha: 0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ]
+            : null,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Row(
+        children: [
+          Icon(
+            Icons.mail_outline_rounded,
+            color: _isFocused ? AppColors.navy : const Color(0xFF94A3B8),
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: TextField(
+                controller: _emailController,
+                focusNode: _focusNode,
+                keyboardType: TextInputType.emailAddress,
+                style: AppTypography.body(color: AppColors.navy).copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: InputDecoration(
+                  hintText: isAr ? 'name@example.com أو البريد الجامعي' : 'name@example.com or university email',
+                  hintStyle: const TextStyle(
+                    color: Color(0xFF94A3B8),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
+                  filled: false,
+                  contentPadding: EdgeInsets.zero,
+                  isDense: true,
+                ),
+                onChanged: (val) {
+                  if (_errorText != null) {
+                    setState(() => _errorText = null);
+                  }
+                },
+              ),
+            ),
+          ),
+          if (_emailController.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 20),
+              onPressed: () {
+                setState(() {
+                  _emailController.clear();
+                  _errorText = null;
+                });
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHelperOrError({required bool hasError, required bool isAr}) {
+    if (hasError) {
+      return Row(
+        children: [
+          const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 14),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              _errorText!,
+              style: AppTypography.label(color: AppColors.danger).copyWith(fontSize: 12),
+            ),
+          ),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        const Icon(Icons.verified_outlined, color: Color(0xFF64748B), size: 14),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            isAr
+                ? 'ندعم الإيميلات الشخصية والجامعية (@cu.edu.eg، @asu.edu.eg، إلخ)'
+                : 'Supports personal and student emails (@cu.edu.eg, etc.)',
+            style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 11),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDemoChip(bool isAr) {
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: ActionChip(
+        backgroundColor: const Color(0xFFF1F5F9),
+        side: const BorderSide(color: Color(0xFFCBD5E1), width: 0.8),
+        avatar: const Icon(Icons.bolt_rounded, size: 14, color: AppColors.teal),
+        label: Text(
+          isAr ? 'تجربة سريعة: student@mashwar.eg' : 'Quick Demo: student@mashwar.eg',
+          style: AppTypography.label(color: AppColors.navy).copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+          ),
+        ),
+        onPressed: () {
+          setState(() {
+            _emailController.text = 'student@mashwar.eg';
+            _errorText = null;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildBenefitsCard(bool isAr) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.mark_email_read_outlined, color: AppColors.teal, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                isAr ? 'مزايا التسجيل بالبريد الإلكتروني' : 'Email Sign-in Benefits',
+                style: AppTypography.body(color: AppColors.navy).copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildBenefitPoint(
+            isAr
+                ? 'استلام فوري لإيصالات وفواتير الحجوزات والشحن.'
+                : 'Instant digital trip & parcel delivery receipts.',
+          ),
+          const SizedBox(height: 4),
+          _buildBenefitPoint(
+            isAr
+                ? 'توثيق الإيميل الجامعي لمجتمع سفر طلابي موثوق.'
+                : 'University email badge for trusted student travel.',
+          ),
+          const SizedBox(height: 4),
+          _buildBenefitPoint(
+            isAr
+                ? 'استرجاع فوري وسهل لحسابك ومحفظتك في أي وقت.'
+                : 'Fast account & wallet recovery whenever needed.',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBenefitPoint(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 5),
+          child: Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 12),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTypography.label(color: const Color(0xFF475569)).copyWith(fontSize: 11),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWideTrustCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.gold.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.gold, size: 22),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.body(color: Colors.white).copyWith(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: AppTypography.label(color: Colors.white70).copyWith(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShowcaseMetric(String value, String label) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: AppTypography.title(color: AppColors.gold).copyWith(fontSize: 22, fontWeight: FontWeight.w800),
+        ),
+        Text(
+          label,
+          style: AppTypography.label(color: Colors.white70),
+        ),
+      ],
     );
   }
 }

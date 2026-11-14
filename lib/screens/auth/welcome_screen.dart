@@ -371,14 +371,16 @@ class WelcomeScreen extends StatelessWidget {
     bool isAr,
     BoxConstraints constraints,
   ) {
+    final isCompact = constraints.maxHeight <= 640;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.space24,
-        vertical: AppDimens.space16,
+        vertical: AppDimens.space12,
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
+          minHeight: (constraints.maxHeight - (AppDimens.space12 * 2)).clamp(0.0, double.infinity),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -390,32 +392,76 @@ class WelcomeScreen extends StatelessWidget {
               child: _buildLanguageButton(settings, isAr),
             ),
 
-            const SizedBox(height: AppDimens.space24),
-
             // Center Hero Brand Identity
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const BrandLogo(fontSize: 46),
-                const SizedBox(height: AppDimens.space12),
+                BrandLogo(fontSize: isCompact ? 38 : 46),
+                const SizedBox(height: 10),
                 Text(
                   isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
                   textAlign: TextAlign.center,
-                  style: AppTypography.body(color: AppColors.textSecondary).copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
+                  style: AppTypography.title(color: AppColors.navy).copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: isCompact ? 16 : 18,
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  isAr
+                      ? 'سفر تشاركي ونقل طرود موثوق بين المحافظات'
+                      : 'Intercity carpooling & peer-to-peer parcel network',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+                ),
+                if (!isCompact) ...[
+                  const SizedBox(height: 18),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8F9FA),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildMobileMetric('27', isAr ? 'محافظة' : 'Governorates'),
+                        Container(width: 1, height: 20, color: const Color(0xFFE5E5EA)),
+                        _buildMobileMetric('4.9 ★', isAr ? 'تقييم' : 'Rating'),
+                        Container(width: 1, height: 20, color: const Color(0xFFE5E5EA)),
+                        _buildMobileMetric('24/7', isAr ? 'دعم' : 'Support'),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
-
-            const SizedBox(height: AppDimens.space24),
 
             // Bottom Authentication Choices
             _buildAuthActions(context, isAr),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMobileMetric(String value, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: AppTypography.body(color: AppColors.navy).copyWith(
+            fontWeight: FontWeight.w800,
+            fontSize: 14,
+          ),
+        ),
+        Text(
+          label,
+          style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 10),
+        ),
+      ],
     );
   }
 

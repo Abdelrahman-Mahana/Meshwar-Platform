@@ -90,14 +90,140 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
         ],
       ),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 860),
-            child: Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 840;
+            if (isWide) {
+              return _buildWideLayout(context, rides, isAr, constraints);
+            }
+            return _buildMobileLayout(context, rides, isAr);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWideLayout(
+    BuildContext context,
+    RidesProvider rides,
+    bool isAr,
+    BoxConstraints constraints,
+  ) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: AppDimens.space20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Left Column: Interactive Map & Waypoint details
+              Expanded(
+                flex: 6,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RideRouteMapView(ride: widget.ride),
+                      const SizedBox(height: AppDimens.space16),
+                      _buildTripDetailsContainer(context, isAr),
+                      const SizedBox(height: AppDimens.space16),
+                      _buildCoPassengersCard(isAr),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppDimens.space24),
+
+              // Right Column: Driver, Amenities, Safety and Booking Card
+              Expanded(
+                flex: 5,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildStatusBanners(isAr),
+                      _buildDriverHeaderCard(isAr),
+                      const SizedBox(height: AppDimens.space16),
+                      _buildSafetyAndShareCard(context, isAr),
+                      const SizedBox(height: AppDimens.space16),
+
+                      // Wide Action Card
+                      Container(
+                        padding: const EdgeInsets.all(AppDimens.space20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                          border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  isAr ? 'سعر المقعد' : 'Seat Price',
+                                  style: AppTypography.title().copyWith(fontSize: 16),
+                                ),
+                                Text(
+                                  '${widget.ride.pricePerSeat} ${isAr ? "ج.م" : "EGP"}',
+                                  style: AppTypography.title(color: AppColors.teal).copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 22,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              isAr
+                                  ? 'المتبقي ${widget.ride.remainingSeats} مقاعد متاحة'
+                                  : '${widget.ride.remainingSeats} seats available',
+                              style: AppTypography.bodySecondary(),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildBottomButton(context, rides, isAr),
+                            const SizedBox(height: 12),
+                            Center(
+                              child: Text(
+                                isAr
+                                    ? 'الدفع نقداً للسائق عند الركوب · إلغاء مجاني حتى ساعتين قبل الموعد'
+                                    : 'Cash upon boarding to driver · Free cancellation up to 2h before',
+                                style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context, RidesProvider rides, bool isAr) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -105,120 +231,18 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                     RideRouteMapView(ride: widget.ride),
                     const SizedBox(height: AppDimens.space16),
 
-                    // Status Banners from Page 24
-                    if (_state == RideDetailsState.full) ...[
-                      AlertBanner(
-                        message: isAr ? 'الرحلة اكتملت. مفيش كراسي فاضية' : 'This ride is full. No available seats',
-                        type: AlertBannerType.warning,
-                      ),
-                      const SizedBox(height: AppDimens.space12),
-                    ] else if (_state == RideDetailsState.cancelled) ...[
-                      AlertBanner(
-                        message: isAr ? 'السائق لغى الرحلة' : 'The driver cancelled this ride',
-                        type: AlertBannerType.danger,
-                      ),
-                      const SizedBox(height: AppDimens.space12),
-                    ] else if (_state == RideDetailsState.ladiesOnly) ...[
-                      AlertBanner(
-                        message: isAr ? 'الرحلة دي للسيدات فقط' : 'This ride is for female passengers only',
-                        type: AlertBannerType.info,
-                      ),
-                      const SizedBox(height: AppDimens.space12),
-                    ],
+                    // Status Banners
+                    _buildStatusBanners(isAr),
 
-                    // Driver Header Card (Preserving Driver DB data)
-                    Container(
-                      padding: const EdgeInsets.all(AppDimens.space16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                        border: Border.all(color: AppColors.borderDisabled),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: const BoxDecoration(
-                              color: AppColors.navy,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                widget.ride.driverName.isNotEmpty ? widget.ride.driverName[0] : 'م',
-                                style: AppTypography.title(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppDimens.space12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.ride.driverName,
-                                  style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
-                                ),
-                                Text(
-                                  widget.ride.driverCar,
-                                  style: AppTypography.bodySecondary(),
-                                ),
-                              ],
-                            ),
-                          ),
-                          MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'سائق موثق' : 'Verified Driver'),
-                        ],
-                      ),
-                    ),
+                    // Driver Header Card
+                    _buildDriverHeaderCard(isAr),
                     const SizedBox(height: AppDimens.space16),
 
                     // Trip Details Container
-                    Container(
-                      padding: const EdgeInsets.all(AppDimens.space16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                        border: Border.all(color: AppColors.borderDisabled),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildDetailRow(
-                            label: isAr ? 'نقطة الصعود' : 'Pickup Spot',
-                            value: widget.ride.pickupPoint,
-                            isBold: true,
-                          ),
-                          const Divider(height: 24, color: AppColors.borderDisabled),
-                          _buildDetailRow(
-                            label: isAr ? 'نقطة النزول' : 'Dropoff Spot',
-                            value: widget.ride.dropoffPoint,
-                            isBold: true,
-                          ),
-                          const Divider(height: 24, color: AppColors.borderDisabled),
-                          _buildDetailRow(
-                            label: isAr ? 'الموعد' : 'Schedule',
-                            value: '${context.trDate(widget.ride.departureDate)} ${widget.ride.departureTime} (± 15 ${isAr ? "د" : "mins"})',
-                          ),
-                          if (widget.ride.acceptsParcels) ...[
-                            const Divider(height: 24, color: AppColors.borderDisabled),
-                            _buildDetailRow(
-                              label: isAr ? 'الطرود' : 'Parcels',
-                              value: isAr ? 'تقبل: صغير ${widget.ride.parcelPrice} ج' : 'Accepts: Small ${widget.ride.parcelPrice} EGP',
-                              actionWidget: TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (_) => SendParcelScreen(ride: widget.ride)),
-                                  );
-                                },
-                                child: Text(isAr ? 'ابعت طرد' : 'Send Parcel', style: AppTypography.label(color: AppColors.teal)),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                    _buildTripDetailsContainer(context, isAr),
                     const SizedBox(height: AppDimens.space16),
 
-                    // Co-passengers Preview (Social Trust & Safety)
+                    // Co-passengers Preview
                     _buildCoPassengersCard(isAr),
                     const SizedBox(height: AppDimens.space16),
 
@@ -248,10 +272,129 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               ),
               child: _buildBottomButton(context, rides, isAr),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBanners(bool isAr) {
+    if (_state == RideDetailsState.full) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppDimens.space12),
+        child: AlertBanner(
+          message: isAr ? 'الرحلة اكتملت. مفيش كراسي فاضية' : 'This ride is full. No available seats',
+          type: AlertBannerType.warning,
+        ),
+      );
+    } else if (_state == RideDetailsState.cancelled) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppDimens.space12),
+        child: AlertBanner(
+          message: isAr ? 'السائق لغى الرحلة' : 'The driver cancelled this ride',
+          type: AlertBannerType.danger,
+        ),
+      );
+    } else if (_state == RideDetailsState.ladiesOnly) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: AppDimens.space12),
+        child: AlertBanner(
+          message: isAr ? 'الرحلة دي للسيدات فقط' : 'This ride is for female passengers only',
+          type: AlertBannerType.info,
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildDriverHeaderCard(bool isAr) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: AppColors.borderDisabled),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              color: AppColors.navy,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                widget.ride.driverName.isNotEmpty ? widget.ride.driverName[0] : 'م',
+                style: AppTypography.title(color: Colors.white),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppDimens.space12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.ride.driverName,
+                  style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  widget.ride.driverCar,
+                  style: AppTypography.bodySecondary(),
+                ),
               ],
             ),
           ),
-        ),
+          MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'سائق موثق' : 'Verified Driver'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTripDetailsContainer(BuildContext context, bool isAr) {
+    return Container(
+      padding: const EdgeInsets.all(AppDimens.space16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: AppColors.borderDisabled),
+      ),
+      child: Column(
+        children: [
+          _buildDetailRow(
+            label: isAr ? 'نقطة الصعود' : 'Pickup Spot',
+            value: widget.ride.pickupPoint,
+            isBold: true,
+          ),
+          const Divider(height: 24, color: AppColors.borderDisabled),
+          _buildDetailRow(
+            label: isAr ? 'نقطة النزول' : 'Dropoff Spot',
+            value: widget.ride.dropoffPoint,
+            isBold: true,
+          ),
+          const Divider(height: 24, color: AppColors.borderDisabled),
+          _buildDetailRow(
+            label: isAr ? 'الموعد' : 'Schedule',
+            value: '${context.trDate(widget.ride.departureDate)} ${widget.ride.departureTime} (± 15 ${isAr ? "د" : "mins"})',
+          ),
+          if (widget.ride.acceptsParcels) ...[
+            const Divider(height: 24, color: AppColors.borderDisabled),
+            _buildDetailRow(
+              label: isAr ? 'الطرود' : 'Parcels',
+              value: isAr ? 'تقبل: صغير ${widget.ride.parcelPrice} ج' : 'Accepts: Small ${widget.ride.parcelPrice} EGP',
+              actionWidget: TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => SendParcelScreen(ride: widget.ride)),
+                  );
+                },
+                child: Text(isAr ? 'ابعت طرد' : 'Send Parcel', style: AppTypography.label(color: AppColors.teal)),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
