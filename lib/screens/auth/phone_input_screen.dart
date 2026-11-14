@@ -9,13 +9,15 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
+import '../../state/settings_provider.dart';
 import 'email_input_screen.dart';
 import 'otp_verification_screen.dart';
 
 /// Market-leading, minimalist Phone Number input screen (Uber / inDrive standard).
-/// Responsive layout:
-/// - Wide / Desktop (>= 840px): 2-column split canvas (Left: Security & Trust showcase, Right: Phone entry card)
-/// - Mobile (< 840px): Full-height balanced vertical distribution with Step Progress, Network tags & Security Guarantee
+/// Fully distributed responsive layout styled after WelcomeScreen:
+/// - Wide / Desktop (>= 840px): 2-column split canvas (Left: Brand & Trust showcase, Right: Phone entry form)
+/// - Mobile (< 840px): Full-height balanced distribution with Brand Header, Step Progress, Operator Chips,
+///   Safety Benefit Cards, Metrics Strip, and Bottom CTA Actions.
 class PhoneInputScreen extends StatefulWidget {
   const PhoneInputScreen({super.key});
 
@@ -81,6 +83,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final settings = context.watch<SettingsProvider>();
     final isAr = context.isArabic;
     final hasError = _errorText != null && _errorText!.isNotEmpty;
 
@@ -94,6 +97,21 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 16),
+            child: ActionChip(
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+              avatar: const Icon(Icons.language_rounded, size: 16, color: AppColors.navy),
+              label: Text(
+                isAr ? 'English' : 'العربية',
+                style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.bold),
+              ),
+              onPressed: () => settings.toggleLanguage(),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -143,7 +161,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const BrandLogo(fontSize: 44, isLight: true),
+                        const BrandLogo(fontSize: 48, isLight: true),
                         const SizedBox(height: 18),
                         Text(
                           isAr ? 'سفر موثق وآمن برقم موبايلك' : 'Verified & Secure Intercity Travel',
@@ -200,7 +218,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                       children: [
                         _buildShowcaseMetric('27', isAr ? 'محافظة' : 'Governorates'),
                         const SizedBox(width: 32),
-                        _buildShowcaseMetric('100%', isAr ? 'توثيق' : 'Verified'),
+                        _buildShowcaseMetric('100%', isAr ? 'موثق' : 'Verified'),
                         const SizedBox(width: 32),
                         _buildShowcaseMetric('24/7', isAr ? 'دعم' : 'Support'),
                       ],
@@ -297,6 +315,18 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 16),
+
+                            // Legal Disclaimer
+                            Center(
+                              child: Text(
+                                isAr
+                                    ? 'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية لمشوار'
+                                    : 'By continuing, you agree to MASHWAR Terms & Privacy Policy',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -318,6 +348,8 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     bool hasError,
     BoxConstraints constraints,
   ) {
+    final isCompact = constraints.maxHeight <= 680;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.space24,
@@ -328,74 +360,142 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
           minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Step Progress Indicator
-            _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top: Brand Identity Header with Step Indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const BrandLogo(fontSize: 28),
+                    _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // Title & Subtitle
+                Text(
+                  isAr ? 'أدخل رقم موبايلك' : 'Enter your mobile number',
+                  style: AppTypography.largeTitle().copyWith(fontSize: 24),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isAr ? 'هنبعتلك كود تأكيد عبر رسالة SMS' : 'We will send you a verification code via SMS',
+                  style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+                ),
+                const SizedBox(height: 16),
+
+                // Input Label
+                Text(
+                  isAr ? 'رقم الهاتف المحمول' : 'Mobile Phone Number',
+                  style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+
+                // Phone Input Card
+                _buildPhoneInputField(hasError: hasError, isAr: isAr),
+                const SizedBox(height: 8),
+
+                // Helper text / Error text
+                _buildHelperOrError(hasError: hasError, isAr: isAr),
+                const SizedBox(height: 12),
+
+                // Egyptian Operator Chips
+                _buildOperatorChips(isAr),
+
+                if (!isCompact) ...[
+                  const SizedBox(height: 16),
+                  // Benefit Feature Cards (Styled just like WelcomeScreen to distribute across viewport)
+                  _buildFeatureMiniCard(
+                    icon: Icons.route_rounded,
+                    title: isAr ? 'سفر تشاركي بين 27 محافظة' : 'Intercity Travel',
+                    subtitle: isAr ? 'وفّر حتى 60% مع مقاعد مريحة وسائقين موثقين.' : 'Save up to 60% with verified drivers.',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildFeatureMiniCard(
+                    icon: Icons.shield_outlined,
+                    title: isAr ? 'حماية تامة للخصوصية' : '100% Privacy Protection',
+                    subtitle: isAr ? 'رقمك محمي ومشفر ولن يظهر إلا بعد تأكيد الحجز.' : 'Your phone is encrypted and private.',
+                  ),
+                  const SizedBox(height: 8),
+                  _buildFeatureMiniCard(
+                    icon: Icons.bolt_rounded,
+                    title: isAr ? 'كود مجاني وسريع عبر SMS' : 'Free Instant Verification',
+                    subtitle: isAr ? 'يصلك برقم سري خلال ثوانٍ لتأمين حسابك ومحفظتك.' : 'Instant OTP to secure your account.',
+                  ),
+                  const SizedBox(height: 14),
+                  // Live Metrics Bar (matching WelcomeScreen)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8F9FA),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildMetricCell('27', isAr ? 'محافظة' : 'Governorates'),
+                        Container(width: 1, height: 20, color: const Color(0xFFE5E5EA)),
+                        _buildMetricCell('100%', isAr ? 'موثق' : 'Verified'),
+                        Container(width: 1, height: 20, color: const Color(0xFFE5E5EA)),
+                        _buildMetricCell('24/7', isAr ? 'دعم' : 'Support'),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+
             const SizedBox(height: 16),
 
-            // Title & Subtitle
-            Text(
-              isAr ? 'أدخل رقم موبايلك' : 'Enter your mobile number',
-              style: AppTypography.largeTitle().copyWith(fontSize: 26),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              isAr ? 'هنبعتلك كود تأكيد عبر رسالة SMS' : 'We will send you a verification code via SMS',
-              style: AppTypography.bodySecondary(),
-            ),
-            const SizedBox(height: 20),
+            // Bottom Actions Group
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Bottom Actions: Submit Button
+                MashwarButton(
+                  text: isAr ? 'إرسال الكود' : 'Send Code',
+                  isLoading: auth.isLoading,
+                  onPressed: () => _handleSubmit(isAr),
+                ),
+                const SizedBox(height: 10),
 
-            // Input Label
-            Text(
-              isAr ? 'رقم الهاتف المحمول' : 'Mobile Phone Number',
-              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-
-            // Phone Input Card
-            _buildPhoneInputField(hasError: hasError, isAr: isAr),
-            const SizedBox(height: 8),
-
-            // Helper text / Error text
-            _buildHelperOrError(hasError: hasError, isAr: isAr),
-            const SizedBox(height: 14),
-
-            // Egyptian Operator Chips
-            _buildOperatorChips(isAr),
-            const SizedBox(height: 20),
-
-            // Trust & Security Reassurance Card (Fills middle naturally with useful value)
-            _buildSecurityReassuranceCard(isAr),
-            const SizedBox(height: 24),
-
-            // Bottom Actions: Submit Button
-            MashwarButton(
-              text: isAr ? 'إرسال الكود' : 'Send Code',
-              isLoading: auth.isLoading,
-              onPressed: () => _handleSubmit(isAr),
-            ),
-            const SizedBox(height: 12),
-
-            // Switch to Email
-            Center(
-              child: TextButton.icon(
-                icon: const Icon(Icons.mail_outline_rounded, size: 18, color: AppColors.navy),
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const EmailInputScreen()),
-                  );
-                },
-                label: Text(
-                  isAr ? 'المتابعة بالبريد الإلكتروني بدلاً من ذلك' : 'Continue with email instead',
-                  style: AppTypography.body(color: AppColors.navy).copyWith(
-                    fontWeight: FontWeight.w700,
-                    decoration: TextDecoration.underline,
+                // Switch to Email
+                Center(
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.mail_outline_rounded, size: 18, color: AppColors.navy),
+                    onPressed: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const EmailInputScreen()),
+                      );
+                    },
+                    label: Text(
+                      isAr ? 'المتابعة بالبريد الإلكتروني بدلاً من ذلك' : 'Continue with email instead',
+                      style: AppTypography.body(color: AppColors.navy).copyWith(
+                        fontWeight: FontWeight.w700,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 6),
+
+                // Legal Disclaimer
+                Center(
+                  child: Text(
+                    isAr
+                        ? 'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية لمشوار'
+                        : 'By continuing, you agree to MASHWAR Terms & Privacy Policy',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -403,35 +503,19 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
   }
 
   Widget _buildStepBadge({required bool isAr, required int currentStep, required int totalSteps}) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.navy.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
-            style: AppTypography.label(color: AppColors.navy).copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 11,
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.navy.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
+        style: AppTypography.label(color: AppColors.navy).copyWith(
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: currentStep / totalSteps,
-              minHeight: 4,
-              backgroundColor: const Color(0xFFE5E5EA),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.navy),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -461,36 +545,17 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          // Egyptian Flag & Country Code Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F3F4),
-              borderRadius: BorderRadius.circular(8),
+          // Clear button if text exists
+          if (_phoneController.text.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 20),
+              onPressed: () {
+                setState(() {
+                  _phoneController.clear();
+                  _errorText = null;
+                });
+              },
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('🇪🇬', style: TextStyle(fontSize: 16)),
-                const SizedBox(width: 6),
-                Text(
-                  '+20',
-                  style: AppTypography.body(color: AppColors.navy).copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Vertical Divider
-          Container(
-            height: 22,
-            width: 1,
-            margin: const EdgeInsets.symmetric(horizontal: 10),
-            color: const Color(0xFFE5E5EA),
-          ),
 
           // Phone input field
           Expanded(
@@ -544,17 +609,36 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
             ),
           ),
 
-          // Clear button
-          if (_phoneController.text.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 20),
-              onPressed: () {
-                setState(() {
-                  _phoneController.clear();
-                  _errorText = null;
-                });
-              },
+          // Vertical Divider
+          Container(
+            height: 22,
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 10),
+            color: const Color(0xFFE5E5EA),
+          ),
+
+          // Egyptian Flag & Country Code Badge (+20 🇪🇬)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F3F4),
+              borderRadius: BorderRadius.circular(8),
             ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '+20',
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text('🇪🇬', style: TextStyle(fontSize: 16)),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -616,67 +700,73 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     );
   }
 
-  Widget _buildSecurityReassuranceCard(bool isAr) {
+  Widget _buildFeatureMiniCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              const Icon(Icons.shield_outlined, color: AppColors.teal, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                isAr ? 'ضمانات الأمان والخصوصية في مشوار' : 'Safety & Privacy Guarantees',
-                style: AppTypography.body(color: AppColors.navy).copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppColors.navy.withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: AppColors.navy, size: 18),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildReassurancePoint(
-            isAr
-                ? 'كود التحقق مجاني ويصلك برسالة SMS فورية خلال ثوانٍ.'
-                : 'Verification code is free and sent instantly via SMS.',
-          ),
-          const SizedBox(height: 4),
-          _buildReassurancePoint(
-            isAr
-                ? 'رقمك محمي ولن يظهر للعامة، ويشارك فقط عند تأكيد الحجز.'
-                : 'Your number is private and never shared publicly.',
-          ),
-          const SizedBox(height: 4),
-          _buildReassurancePoint(
-            isAr
-                ? 'دعم فني مباشر ومتاح 24/7 لمساعدتك في أي وقت.'
-                : '24/7 active customer support ready to assist you.',
+                Text(
+                  subtitle,
+                  style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildReassurancePoint(String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildMetricCell(String value, String label) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 5),
-          child: Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 12),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            style: AppTypography.label(color: const Color(0xFF475569)).copyWith(fontSize: 11),
+        Text(
+          value,
+          style: AppTypography.body(color: AppColors.navy).copyWith(
+            fontWeight: FontWeight.w800,
+            fontSize: 13,
           ),
+        ),
+        Text(
+          label,
+          style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 10),
         ),
       ],
     );

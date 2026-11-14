@@ -308,6 +308,8 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     bool hasError,
     BoxConstraints constraints,
   ) {
+    final isCompact = constraints.maxHeight <= 680;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.space24,
@@ -318,76 +320,108 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
           minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Step Progress Indicator
-            _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top: Brand Identity Header with Step Indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const BrandLogo(fontSize: 28),
+                    _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // Title & Subtitle
+                Text(
+                  isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
+                  style: AppTypography.largeTitle().copyWith(fontSize: 26),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  isAr
+                      ? 'هنبعتلك كود تأكيد لتسجيل الدخول أو إنشاء حساب'
+                      : 'We will send you a verification code to log in or create an account',
+                  style: AppTypography.bodySecondary(),
+                ),
+                const SizedBox(height: 18),
+
+                // Input Label
+                Text(
+                  isAr ? 'البريد الإلكتروني' : 'Email Address',
+                  style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+
+                // Email Input Card
+                _buildEmailInputField(hasError: hasError, isAr: isAr),
+                const SizedBox(height: 8),
+
+                // Helper text / Error text
+                _buildHelperOrError(hasError: hasError, isAr: isAr),
+                const SizedBox(height: 12),
+
+                // Demo Chip
+                _buildDemoChip(isAr),
+
+                if (!isCompact) ...[
+                  const SizedBox(height: 18),
+                  // Benefits Reassurance Card (Fills middle naturally with useful value)
+                  _buildBenefitsCard(isAr),
+                ],
+              ],
+            ),
+
             const SizedBox(height: 16),
 
-            // Title & Subtitle
-            Text(
-              isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
-              style: AppTypography.largeTitle().copyWith(fontSize: 26),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              isAr
-                  ? 'هنبعتلك كود تأكيد لتسجيل الدخول أو إنشاء حساب'
-                  : 'We will send you a verification code to log in or create an account',
-              style: AppTypography.bodySecondary(),
-            ),
-            const SizedBox(height: 20),
+            // Bottom Actions Group
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Bottom Actions: Submit Button
+                MashwarButton(
+                  text: isAr ? 'إرسال الكود' : 'Send Code',
+                  isLoading: auth.isLoading,
+                  onPressed: () => _handleSubmit(isAr),
+                ),
+                const SizedBox(height: 10),
 
-            // Input Label
-            Text(
-              isAr ? 'البريد الإلكتروني' : 'Email Address',
-              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-
-            // Email Input Card
-            _buildEmailInputField(hasError: hasError, isAr: isAr),
-            const SizedBox(height: 8),
-
-            // Helper text / Error text
-            _buildHelperOrError(hasError: hasError, isAr: isAr),
-            const SizedBox(height: 12),
-
-            // Demo Chip
-            _buildDemoChip(isAr),
-            const SizedBox(height: 18),
-
-            // Benefits Reassurance Card (Fills middle naturally with useful value)
-            _buildBenefitsCard(isAr),
-            const SizedBox(height: 24),
-
-            // Bottom Actions: Submit Button
-            MashwarButton(
-              text: isAr ? 'إرسال الكود' : 'Send Code',
-              isLoading: auth.isLoading,
-              onPressed: () => _handleSubmit(isAr),
-            ),
-            const SizedBox(height: 12),
-
-            // Switch to Phone
-            Center(
-              child: TextButton.icon(
-                icon: const Icon(Icons.phone_iphone_rounded, size: 18, color: AppColors.navy),
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
-                  );
-                },
-                label: Text(
-                  isAr ? 'المتابعة برقم الموبايل بدلاً من ذلك' : 'Continue with phone instead',
-                  style: AppTypography.body(color: AppColors.navy).copyWith(
-                    fontWeight: FontWeight.w700,
-                    decoration: TextDecoration.underline,
+                // Switch to Phone
+                Center(
+                  child: TextButton.icon(
+                    icon: const Icon(Icons.phone_iphone_rounded, size: 18, color: AppColors.navy),
+                    onPressed: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
+                      );
+                    },
+                    label: Text(
+                      isAr ? 'المتابعة برقم الموبايل بدلاً من ذلك' : 'Continue with phone instead',
+                      style: AppTypography.body(color: AppColors.navy).copyWith(
+                        fontWeight: FontWeight.w700,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 6),
+
+                // Legal Disclaimer
+                Center(
+                  child: Text(
+                    isAr
+                        ? 'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية لمشوار'
+                        : 'By continuing, you agree to MASHWAR Terms & Privacy Policy',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -395,35 +429,19 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
   }
 
   Widget _buildStepBadge({required bool isAr, required int currentStep, required int totalSteps}) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.navy.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
-            style: AppTypography.label(color: AppColors.navy).copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 11,
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.navy.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
+        style: AppTypography.label(color: AppColors.navy).copyWith(
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: currentStep / totalSteps,
-              minHeight: 4,
-              backgroundColor: const Color(0xFFE5E5EA),
-              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.navy),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 

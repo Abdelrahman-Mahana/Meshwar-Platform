@@ -350,6 +350,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     bool isEmailMode,
     BoxConstraints constraints,
   ) {
+    final isCompact = constraints.maxHeight <= 680;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.space24,
@@ -360,59 +362,79 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Step Progress Indicator
-            _buildStepBadge(isAr: isAr, currentStep: 2, totalSteps: 2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Top: Brand Identity Header with Step Indicator
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const BrandLogo(fontSize: 28),
+                    _buildStepBadge(isAr: isAr, currentStep: 2, totalSteps: 2),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // Title
+                Text(
+                  isAr ? 'أدخل الكود' : 'Enter Code',
+                  style: AppTypography.largeTitle().copyWith(fontSize: 26),
+                ),
+                const SizedBox(height: 6),
+
+                // Subtitle with destination
+                _buildDestinationSubtitle(targetDestination, isAr),
+                const SizedBox(height: 20),
+
+                // Error Banner
+                if (_errorMessage != null) ...[
+                  AlertBanner(message: _errorMessage!, type: AlertBannerType.danger),
+                  const SizedBox(height: 14),
+                ],
+
+                // Locked Warning
+                if (auth.isLocked) ...[
+                  AlertBanner(
+                    message: isAr
+                        ? 'تم إيقاف المحاولات مؤقتاً لتكرار الخطأ. جرّب بعد 15 دقيقة'
+                        : 'Attempts temporarily locked. Try after 15 mins',
+                    type: AlertBannerType.danger,
+                  ),
+                  const SizedBox(height: 14),
+                ],
+
+                // OTP Cells Stack
+                _buildOtpInputStack(isAr),
+                const SizedBox(height: 16),
+
+                // Resend Section
+                _buildResendSection(auth, isEmailMode, isAr),
+
+                if (!isCompact) ...[
+                  const SizedBox(height: 18),
+                  // Security Reassurance Card (Fills middle naturally with useful value)
+                  _buildSecurityAdvisoryCard(isAr),
+                ],
+              ],
+            ),
+
             const SizedBox(height: 16),
 
-            // Title
-            Text(
-              isAr ? 'أدخل الكود' : 'Enter Code',
-              style: AppTypography.largeTitle().copyWith(fontSize: 26),
-            ),
-            const SizedBox(height: 6),
-
-            // Subtitle with destination
-            _buildDestinationSubtitle(targetDestination, isAr),
-            const SizedBox(height: 22),
-
-            // Error Banner
-            if (_errorMessage != null) ...[
-              AlertBanner(message: _errorMessage!, type: AlertBannerType.danger),
-              const SizedBox(height: 14),
-            ],
-
-            // Locked Warning
-            if (auth.isLocked) ...[
-              AlertBanner(
-                message: isAr
-                    ? 'تم إيقاف المحاولات مؤقتاً لتكرار الخطأ. جرّب بعد 15 دقيقة'
-                    : 'Attempts temporarily locked. Try after 15 mins',
-                type: AlertBannerType.danger,
-              ),
-              const SizedBox(height: 14),
-            ],
-
-            // OTP Cells Stack
-            _buildOtpInputStack(isAr),
-            const SizedBox(height: 18),
-
-            // Resend Section
-            _buildResendSection(auth, isEmailMode, isAr),
-            const SizedBox(height: 20),
-
-            // Security Reassurance Card (Fills middle naturally with useful value)
-            _buildSecurityAdvisoryCard(isAr),
-            const SizedBox(height: 24),
-
             // Confirm CTA
-            MashwarButton(
-              text: isAr ? 'تأكيد' : 'Confirm',
-              isLoading: auth.isLoading,
-              onPressed: () => _verify(isAr),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                MashwarButton(
+                  text: isAr ? 'تأكيد' : 'Confirm',
+                  isLoading: auth.isLoading,
+                  onPressed: () => _verify(isAr),
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -420,35 +442,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   Widget _buildStepBadge({required bool isAr, required int currentStep, required int totalSteps}) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.teal.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
-            style: AppTypography.label(color: AppColors.teal).copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: 11,
-            ),
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.teal.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
+        style: AppTypography.label(color: AppColors.teal).copyWith(
+          fontWeight: FontWeight.w800,
+          fontSize: 11,
         ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: const LinearProgressIndicator(
-              value: 1.0,
-              minHeight: 4,
-              backgroundColor: Color(0xFFE5E5EA),
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.teal),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
