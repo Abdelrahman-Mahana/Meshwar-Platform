@@ -166,61 +166,17 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                         Text(
                           isAr ? 'سفر موثق وآمن برقم موبايلك' : 'Verified & Secure Intercity Travel',
                           style: AppTypography.title(color: Colors.white).copyWith(
-                            fontSize: 22,
+                            fontSize: 24,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text(
                           isAr
-                              ? 'رقم هاتفك هو مفتاح أمانك لحجز المقاعد، تأكيد شحن الطرود، ومشاركة تفاصيل الرحلة.'
-                              : 'Your phone number secures your ride bookings, parcel OTP delivery, and live trip tracking.',
-                          style: AppTypography.body(color: Colors.white70).copyWith(fontSize: 15),
+                              ? 'رقم هاتفك هو وسيلة التحقق الأساسية لحجز المقاعد ومتابعة الرحلات بأعلى درجات الأمان والخصوصية.'
+                              : 'Your phone number is the primary verification key for secure intercity rides and privacy.',
+                          style: AppTypography.body(color: Colors.white70).copyWith(fontSize: 15, height: 1.6),
                         ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Security Highlights
-                    Column(
-                      children: [
-                        _buildWideTrustCard(
-                          icon: Icons.cell_tower_rounded,
-                          title: isAr ? 'دعم كامل لشبكات مصر' : 'All Egyptian Networks Supported',
-                          subtitle: isAr
-                              ? 'فودافون، أورنج، اتصالات، وي. رسائل فورية خلال ثوانٍ معدودة.'
-                              : 'Vodafone, Orange, Etisalat, WE. Instant SMS delivery.',
-                        ),
-                        const SizedBox(height: 14),
-                        _buildWideTrustCard(
-                          icon: Icons.shield_outlined,
-                          title: isAr ? 'حماية تامة لخصوصيتك' : '100% Privacy Protected',
-                          subtitle: isAr
-                              ? 'لن نشارك رقمك للعامة، ويظهر فقط للطرف الآخر عند تأكيد الحجز.'
-                              : 'Your number is never public. Shared only after confirmed bookings.',
-                        ),
-                        const SizedBox(height: 14),
-                        _buildWideTrustCard(
-                          icon: Icons.support_agent_rounded,
-                          title: isAr ? 'دعم فني ومتابعة 24/7' : '24/7 Dedicated Support',
-                          subtitle: isAr
-                              ? 'فريق خدمة عملاء مشوار متواجد على مدار الساعة لخدمتك.'
-                              : 'Our dedicated customer operations team is always active.',
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // Metrics Strip
-                    Row(
-                      children: [
-                        _buildShowcaseMetric('27', isAr ? 'محافظة' : 'Governorates'),
-                        const SizedBox(width: 32),
-                        _buildShowcaseMetric('100%', isAr ? 'موثق' : 'Verified'),
-                        const SizedBox(width: 32),
-                        _buildShowcaseMetric('24/7', isAr ? 'دعم' : 'Support'),
                       ],
                     ),
                   ],
@@ -283,11 +239,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
 
                             // Helper / Error
                             _buildHelperOrError(hasError: hasError, isAr: isAr),
-                            const SizedBox(height: 16),
-
-                            // Operator chips
-                            _buildOperatorChips(isAr),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
 
                             // Submit Button
                             MashwarButton(
@@ -295,7 +247,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                               isLoading: auth.isLoading,
                               onPressed: () => _handleSubmit(isAr),
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 16),
 
                             // Switch to email
                             Center(
@@ -313,18 +265,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Legal Disclaimer
-                            Center(
-                              child: Text(
-                                isAr
-                                    ? 'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية لمشوار'
-                                    : 'By continuing, you agree to MASHWAR Terms & Privacy Policy',
-                                textAlign: TextAlign.center,
-                                style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
                               ),
                             ),
                           ],
@@ -348,8 +288,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     bool hasError,
     BoxConstraints constraints,
   ) {
-    final isCompact = constraints.maxHeight <= 680;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimens.space24,
@@ -401,56 +339,10 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
 
                 // Helper text / Error text
                 _buildHelperOrError(hasError: hasError, isAr: isAr),
-                const SizedBox(height: 12),
-
-                // Egyptian Operator Chips
-                _buildOperatorChips(isAr),
-
-                if (!isCompact) ...[
-                  const SizedBox(height: 16),
-                  // Benefit Feature Cards (Styled just like WelcomeScreen to distribute across viewport)
-                  _buildFeatureMiniCard(
-                    icon: Icons.route_rounded,
-                    title: isAr ? 'سفر تشاركي بين 27 محافظة' : 'Intercity Travel',
-                    subtitle: isAr ? 'وفّر حتى 60% مع مقاعد مريحة وسائقين موثقين.' : 'Save up to 60% with verified drivers.',
-                  ),
-                  const SizedBox(height: 8),
-                  _buildFeatureMiniCard(
-                    icon: Icons.shield_outlined,
-                    title: isAr ? 'حماية تامة للخصوصية' : '100% Privacy Protection',
-                    subtitle: isAr ? 'رقمك محمي ومشفر ولن يظهر إلا بعد تأكيد الحجز.' : 'Your phone is encrypted and private.',
-                  ),
-                  const SizedBox(height: 8),
-                  _buildFeatureMiniCard(
-                    icon: Icons.bolt_rounded,
-                    title: isAr ? 'كود مجاني وسريع عبر SMS' : 'Free Instant Verification',
-                    subtitle: isAr ? 'يصلك برقم سري خلال ثوانٍ لتأمين حسابك ومحفظتك.' : 'Instant OTP to secure your account.',
-                  ),
-                  const SizedBox(height: 14),
-                  // Live Metrics Bar (matching WelcomeScreen)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FA),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildMetricCell('27', isAr ? 'محافظة' : 'Governorates'),
-                        Container(width: 1, height: 20, color: const Color(0xFFE5E5EA)),
-                        _buildMetricCell('100%', isAr ? 'موثق' : 'Verified'),
-                        Container(width: 1, height: 20, color: const Color(0xFFE5E5EA)),
-                        _buildMetricCell('24/7', isAr ? 'دعم' : 'Support'),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
             // Bottom Actions Group
             Column(
@@ -462,7 +354,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   isLoading: auth.isLoading,
                   onPressed: () => _handleSubmit(isAr),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
                 // Switch to Email
                 Center(
@@ -480,18 +372,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                         decoration: TextDecoration.underline,
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 6),
-
-                // Legal Disclaimer
-                Center(
-                  child: Text(
-                    isAr
-                        ? 'بالمتابعة، أنت توافق على شروط الاستخدام وسياسة الخصوصية لمشوار'
-                        : 'By continuing, you agree to MASHWAR Terms & Privacy Policy',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 11),
                   ),
                 ),
               ],
@@ -670,164 +550,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                 : 'Egyptian phone starting with 010, 011, 012, or 015',
             style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 12),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOperatorChips(bool isAr) {
-    final operators = isAr
-        ? ['فودافون (010)', 'أورنج (012)', 'اتصالات (011)', 'وي (015)']
-        : ['Vodafone (010)', 'Orange (012)', 'Etisalat (011)', 'WE (015)'];
-
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      children: operators.map((op) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F3F4),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: const Color(0xFFE5E5EA), width: 0.6),
-          ),
-          child: Text(
-            op,
-            style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 10),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildFeatureMiniCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: AppColors.navy.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: AppColors.navy, size: 18),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.body(color: AppColors.navy).copyWith(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricCell(String value, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: AppTypography.body(color: AppColors.navy).copyWith(
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
-          ),
-        ),
-        Text(
-          label,
-          style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 10),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWideTrustCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: AppColors.gold, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.body(color: Colors.white).copyWith(fontWeight: FontWeight.w700, fontSize: 15),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: AppTypography.label(color: Colors.white70).copyWith(fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildShowcaseMetric(String value, String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: AppTypography.title(color: AppColors.gold).copyWith(fontSize: 22, fontWeight: FontWeight.w800),
-        ),
-        Text(
-          label,
-          style: AppTypography.label(color: Colors.white70),
         ),
       ],
     );

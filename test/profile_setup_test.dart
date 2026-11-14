@@ -106,8 +106,8 @@ void main() {
       expect(find.text('المحافظة'), findsOneWidget);
 
       // Check Clean Gender Pills without emojis
-      expect(find.text('رجل'), findsOneWidget);
-      expect(find.text('سيدة'), findsOneWidget);
+      expect(find.text('ذكر'), findsOneWidget);
+      expect(find.text('أنثى'), findsOneWidget);
 
       // Check Continue Button (Uber style)
       expect(find.text('متابعة'), findsOneWidget);

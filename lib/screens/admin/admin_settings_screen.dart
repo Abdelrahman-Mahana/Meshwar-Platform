@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -128,11 +129,14 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 800),
-                    child: DataTable(
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final double minW = math.max(constraints.maxWidth, 850.0);
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(minWidth: minW),
+                        child: DataTable(
                       headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                       dataRowMinHeight: 64,
                       dataRowMaxHeight: 64,
@@ -180,7 +184,9 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
                       }).toList(),
                     ),
                   ),
-                ),
+                );
+              },
+            ),
 
                 // Footer notice (Page 75)
                 Padding(

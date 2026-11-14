@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -197,57 +198,73 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Sub-tabs & Filter Dropdowns (Page 73)
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            alignment: WrapAlignment.spaceBetween,
-            children: [
-              // 3 Segmented sub-tabs
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+          // Sub-tabs & Filter Toolbar Card
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-                padding: const EdgeInsets.all(3),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              ],
+            ),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                // 3 Segmented sub-tabs
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  padding: const EdgeInsets.all(3),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildSegment(isAr ? 'رحلات (${admin.rides.length})' : 'Rides (${admin.rides.length})', 0),
+                      _buildSegment(isAr ? 'حجوزات (${admin.bookings.length})' : 'Bookings (${admin.bookings.length})', 1),
+                      _buildSegment(isAr ? 'طرود (${admin.parcels.length})' : 'Parcels (${admin.parcels.length})', 2),
+                    ],
+                  ),
+                ),
+
+                // Interactive Filter Dropdowns (Page 73 - Responsive Wrap)
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    _buildSegment(isAr ? 'رحلات (${admin.rides.length})' : 'Rides (${admin.rides.length})', 0),
-                    _buildSegment(isAr ? 'حجوزات (${admin.bookings.length})' : 'Bookings (${admin.bookings.length})', 1),
-                    _buildSegment(isAr ? 'طرود (${admin.parcels.length})' : 'Parcels (${admin.parcels.length})', 2),
+                    _buildDropdownFilter(
+                      label: isAr ? 'المحافظة' : 'Governorate',
+                      value: _selectedGov,
+                      items: ['الكل', 'كفر الشيخ', 'الغربية', 'القاهرة', 'الإسكندرية'],
+                      onChanged: (val) => setState(() => _selectedGov = val),
+                    ),
+                    _buildDropdownFilter(
+                      label: isAr ? 'الحالة' : 'Status',
+                      value: _selectedStatus,
+                      items: ['الكل', 'منشورة', 'مكتملة الحجز', 'ملغاة', 'جارية'],
+                      onChanged: (val) => setState(() => _selectedStatus = val),
+                    ),
+                    _buildDropdownFilter(
+                      label: isAr ? 'التاريخ' : 'Date',
+                      value: _selectedDate,
+                      items: ['اليوم', 'آخر 7 أيام', 'آخر 30 يوم'],
+                      onChanged: (val) => setState(() => _selectedDate = val),
+                    ),
                   ],
                 ),
-              ),
-
-              // Interactive Filter Dropdowns (Page 73 - Responsive Wrap)
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildDropdownFilter(
-                    label: isAr ? 'المحافظة' : 'Governorate',
-                    value: _selectedGov,
-                    items: ['الكل', 'كفر الشيخ', 'الغربية', 'القاهرة', 'الإسكندرية'],
-                    onChanged: (val) => setState(() => _selectedGov = val),
-                  ),
-                  _buildDropdownFilter(
-                    label: isAr ? 'الحالة' : 'Status',
-                    value: _selectedStatus,
-                    items: ['الكل', 'منشورة', 'مكتملة الحجز', 'ملغاة', 'جارية'],
-                    onChanged: (val) => setState(() => _selectedStatus = val),
-                  ),
-                  _buildDropdownFilter(
-                    label: isAr ? 'التاريخ' : 'Date',
-                    value: _selectedDate,
-                    items: ['اليوم', 'آخر 7 أيام', 'آخر 30 يوم'],
-                    onChanged: (val) => setState(() => _selectedDate = val),
-                  ),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
 
           const SizedBox(height: AppDimens.space16),
@@ -304,52 +321,57 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
       return true;
     }).toList();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 800),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-          dataRowMinHeight: 64,
-          dataRowMaxHeight: 64,
-          columns: [
-            DataColumn(label: Text(isAr ? 'الرقم' : 'ID', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'السائق' : 'Driver', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'المسار' : 'Route', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الموعد' : 'Date & Time', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الكراسي' : 'Seats', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
-          ],
-          rows: filtered.map((ride) {
-            BadgeType bType = BadgeType.verified;
-            if (ride.status == 'ملغاة') bType = BadgeType.rejected;
-            if (ride.status == 'مكتملة الحجز') bType = BadgeType.pending;
-
-            return DataRow(
-              cells: [
-                DataCell(Text(ride.id, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold))),
-                DataCell(Text(ride.driver, style: const TextStyle(fontWeight: FontWeight.w600))),
-                DataCell(Text(ride.route)),
-                DataCell(Text(ride.time)),
-                DataCell(Text(ride.seats, style: const TextStyle(fontWeight: FontWeight.w700))),
-                DataCell(MashwarBadge(type: bType, customLabel: ride.status)),
-                DataCell(
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.navy,
-                      side: const BorderSide(color: AppColors.navy),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    ),
-                    onPressed: () => _showRideDetail(context, ride),
-                    child: Text(isAr ? 'عرض' : 'View', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                  ),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double minW = math.max(constraints.maxWidth, 850.0);
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: minW),
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+              dataRowMinHeight: 64,
+              dataRowMaxHeight: 64,
+              columns: [
+                DataColumn(label: Text(isAr ? 'الرقم' : 'ID', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'السائق' : 'Driver', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'المسار' : 'Route', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الموعد' : 'Date & Time', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الكراسي' : 'Seats', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
               ],
-            );
-          }).toList(),
-        ),
-      ),
+              rows: filtered.map((ride) {
+                BadgeType bType = BadgeType.verified;
+                if (ride.status == 'ملغاة') bType = BadgeType.rejected;
+                if (ride.status == 'مكتملة الحجز') bType = BadgeType.pending;
+
+                return DataRow(
+                  cells: [
+                    DataCell(Text(ride.id, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold))),
+                    DataCell(Text(ride.driver, style: const TextStyle(fontWeight: FontWeight.w600))),
+                    DataCell(Text(ride.route)),
+                    DataCell(Text(ride.time)),
+                    DataCell(Text(ride.seats, style: const TextStyle(fontWeight: FontWeight.w700))),
+                    DataCell(MashwarBadge(type: bType, customLabel: ride.status)),
+                    DataCell(
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.navy,
+                          side: const BorderSide(color: AppColors.navy),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                        ),
+                        onPressed: () => _showRideDetail(context, ride),
+                        child: Text(isAr ? 'عرض' : 'View', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -359,48 +381,53 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
       return true;
     }).toList();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 800),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-          dataRowMinHeight: 64,
-          dataRowMaxHeight: 64,
-          columns: [
-            DataColumn(label: Text(isAr ? 'الرقم' : 'ID', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الراكب' : 'Passenger', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'السائق' : 'Driver', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'المسار' : 'Route', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الموعد' : 'Date & Time', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'المقاعد' : 'Seats', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'المبلغ' : 'Fare', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
-          ],
-          rows: filtered.map((b) {
-            BadgeType bType = b.status == 'مؤكد' ? BadgeType.verified : (b.status == 'ملغى' ? BadgeType.rejected : BadgeType.pending);
-            return DataRow(
-              cells: [
-                DataCell(Text(b.id, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold))),
-                DataCell(Text(b.passenger, style: const TextStyle(fontWeight: FontWeight.w600))),
-                DataCell(Text(b.driver)),
-                DataCell(Text(b.route)),
-                DataCell(Text(b.time)),
-                DataCell(Text('${b.seats}')),
-                DataCell(Text('${b.fare.toStringAsFixed(0)} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(MashwarBadge(type: bType, customLabel: b.status)),
-                DataCell(
-                  OutlinedButton(
-                    onPressed: () => _showBookingDetail(context, b),
-                    child: Text(isAr ? 'عرض' : 'View', style: const TextStyle(fontSize: 12)),
-                  ),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double minW = math.max(constraints.maxWidth, 850.0);
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: minW),
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+              dataRowMinHeight: 64,
+              dataRowMaxHeight: 64,
+              columns: [
+                DataColumn(label: Text(isAr ? 'الرقم' : 'ID', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الراكب' : 'Passenger', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'السائق' : 'Driver', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'المسار' : 'Route', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الموعد' : 'Date & Time', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'المقاعد' : 'Seats', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'المبلغ' : 'Fare', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
               ],
-            );
-          }).toList(),
-        ),
-      ),
+              rows: filtered.map((b) {
+                BadgeType bType = b.status == 'مؤكد' ? BadgeType.verified : (b.status == 'ملغى' ? BadgeType.rejected : BadgeType.pending);
+                return DataRow(
+                  cells: [
+                    DataCell(Text(b.id, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold))),
+                    DataCell(Text(b.passenger, style: const TextStyle(fontWeight: FontWeight.w600))),
+                    DataCell(Text(b.driver)),
+                    DataCell(Text(b.route)),
+                    DataCell(Text(b.time)),
+                    DataCell(Text('${b.seats}')),
+                    DataCell(Text('${b.fare.toStringAsFixed(0)} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(MashwarBadge(type: bType, customLabel: b.status)),
+                    DataCell(
+                      OutlinedButton(
+                        onPressed: () => _showBookingDetail(context, b),
+                        child: Text(isAr ? 'عرض' : 'View', style: const TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -410,48 +437,53 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
       return true;
     }).toList();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 800),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-          dataRowMinHeight: 64,
-          dataRowMaxHeight: 64,
-          columns: [
-            DataColumn(label: Text(isAr ? 'الرقم' : 'ID', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'المرسل' : 'Sender', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'المستلم' : 'Receiver', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'السائق' : 'Driver', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'المسار' : 'Route', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الأجر' : 'Fee', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'كود التسليم' : 'PIN', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
-            DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
-          ],
-          rows: filtered.map((p) {
-            BadgeType bType = p.status == 'تم التسليم' ? BadgeType.verified : (p.status == 'متنازع عليه' ? BadgeType.rejected : BadgeType.pending);
-            return DataRow(
-              cells: [
-                DataCell(Text(p.id, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold))),
-                DataCell(Text(p.sender)),
-                DataCell(Text(p.receiver)),
-                DataCell(Text(p.driver)),
-                DataCell(Text(p.route)),
-                DataCell(Text('${p.fee.toStringAsFixed(0)} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataCell(Text(p.pin, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, color: AppColors.teal))),
-                DataCell(MashwarBadge(type: bType, customLabel: p.status)),
-                DataCell(
-                  OutlinedButton(
-                    onPressed: () => _showParcelDetail(context, p),
-                    child: Text(isAr ? 'عرض' : 'View', style: const TextStyle(fontSize: 12)),
-                  ),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double minW = math.max(constraints.maxWidth, 850.0);
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: minW),
+            child: DataTable(
+              headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
+              dataRowMinHeight: 64,
+              dataRowMaxHeight: 64,
+              columns: [
+                DataColumn(label: Text(isAr ? 'الرقم' : 'ID', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'المرسل' : 'Sender', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'المستلم' : 'Receiver', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'السائق' : 'Driver', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'المسار' : 'Route', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الأجر' : 'Fee', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'كود التسليم' : 'PIN', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
               ],
-            );
-          }).toList(),
-        ),
-      ),
+              rows: filtered.map((p) {
+                BadgeType bType = p.status == 'تم التسليم' ? BadgeType.verified : (p.status == 'متنازع عليه' ? BadgeType.rejected : BadgeType.pending);
+                return DataRow(
+                  cells: [
+                    DataCell(Text(p.id, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold))),
+                    DataCell(Text(p.sender)),
+                    DataCell(Text(p.receiver)),
+                    DataCell(Text(p.driver)),
+                    DataCell(Text(p.route)),
+                    DataCell(Text('${p.fee.toStringAsFixed(0)} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text(p.pin, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, color: AppColors.teal))),
+                    DataCell(MashwarBadge(type: bType, customLabel: p.status)),
+                    DataCell(
+                      OutlinedButton(
+                        onPressed: () => _showParcelDetail(context, p),
+                        child: Text(isAr ? 'عرض' : 'View', style: const TextStyle(fontSize: 12)),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 

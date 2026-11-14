@@ -429,7 +429,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                   children: [
                                     Expanded(
                                       child: _buildGenderPill(
-                                        label: isAr ? 'رجل' : 'Male',
+                                        label: isAr ? 'ذكر' : 'Male',
                                         isSelected: _selectedGender == UserGender.male,
                                         onTap: () => setState(() => _selectedGender = UserGender.male),
                                       ),
@@ -437,7 +437,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: _buildGenderPill(
-                                        label: isAr ? 'سيدة' : 'Female',
+                                        label: isAr ? 'أنثى' : 'Female',
                                         isSelected: _selectedGender == UserGender.female,
                                         onTap: () => setState(() => _selectedGender = UserGender.female),
                                       ),

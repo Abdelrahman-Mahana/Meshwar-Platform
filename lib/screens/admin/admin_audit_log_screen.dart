@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
@@ -202,11 +203,14 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                     ),
                   )
                 else
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minWidth: 800),
-                      child: DataTable(
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final double minW = math.max(constraints.maxWidth, 850.0);
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minWidth: minW),
+                          child: DataTable(
                         headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
                         dataRowMinHeight: 60,
                         dataRowMaxHeight: 60,
@@ -240,7 +244,9 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                         }).toList(),
                       ),
                     ),
-                  ),
+                  );
+                },
+              ),
 
                 // Footer Immutable Warning (Page 76)
                 Container(
