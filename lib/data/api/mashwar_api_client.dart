@@ -87,6 +87,8 @@ class MashwarApiClient {
     _locale = localeCode;
   }
 
+  String get currentLocale => _locale;
+
   void setUseMockAdapter(bool value) {
     _useMockAdapter = value;
   }
