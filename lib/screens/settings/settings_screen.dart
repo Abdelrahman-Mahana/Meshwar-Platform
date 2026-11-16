@@ -28,129 +28,180 @@ class SettingsScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
           ),
-          padding: const EdgeInsets.all(AppDimens.space24),
+          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: AppDimens.space16),
           child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 44,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE5E5EA),
-                      borderRadius: BorderRadius.circular(2),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 44,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE5E5EA),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppDimens.space16),
-                Text(
-                  isAr ? 'اختر لغة التطبيق' : 'Select App Language',
-                  style: AppTypography.title(),
-                ),
-                const SizedBox(height: AppDimens.space16),
+                  const SizedBox(height: AppDimens.space16),
+                  Text(
+                    isAr ? 'اختر لغة التطبيق' : 'Select App Language',
+                    style: AppTypography.title(),
+                  ),
+                  const SizedBox(height: AppDimens.space16),
 
-                // Arabic Option
-                Material(
-                  color: Colors.transparent,
-                  child: ListTile(
-                    leading: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: isAr ? AppColors.navy : const Color(0xFFF3F3F4),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'AR',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                            color: isAr ? Colors.white : AppColors.navy,
+                  // System Default Option
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: settings.isFollowingSystem ? AppColors.navy : const Color(0xFFF3F3F4),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Icon(
+                            Icons.smartphone_rounded,
+                            size: 20,
+                            color: settings.isFollowingSystem ? Colors.white : AppColors.navy,
                           ),
                         ),
                       ),
-                    ),
-                    title: Text(
-                      'العربية (مصر)',
-                      style: AppTypography.body().copyWith(
-                        fontWeight: isAr ? FontWeight.w800 : FontWeight.w600,
-                        color: isAr ? AppColors.navy : AppColors.textPrimary,
+                      title: Text(
+                        isAr ? 'لغة الهاتف الافتراضية' : 'System Default Language',
+                        style: AppTypography.body().copyWith(
+                          fontWeight: settings.isFollowingSystem ? FontWeight.w800 : FontWeight.w600,
+                          color: settings.isFollowingSystem ? AppColors.navy : AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    trailing: isAr
-                        ? const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 22)
-                        : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimens.radiusField),
-                      side: BorderSide(
-                        color: isAr ? AppColors.teal : const Color(0xFFE5E5EA),
-                        width: isAr ? 1.5 : 0.8,
+                      subtitle: Text(
+                        isAr ? 'يتبع لغة الجهاز تلقائياً' : 'Follows phone settings automatically',
+                        style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
                       ),
+                      trailing: settings.isFollowingSystem
+                          ? const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 22)
+                          : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                        side: BorderSide(
+                          color: settings.isFollowingSystem ? AppColors.teal : const Color(0xFFE5E5EA),
+                          width: settings.isFollowingSystem ? 1.5 : 0.8,
+                        ),
+                      ),
+                      onTap: () {
+                        settings.setFollowSystem();
+                        Navigator.of(ctx).pop();
+                      },
                     ),
-                    onTap: () {
-                      settings.setLocale(const Locale('ar', 'EG'));
-                      Navigator.of(ctx).pop();
-                    },
                   ),
-                ),
-                const SizedBox(height: AppDimens.space12),
+                  const SizedBox(height: AppDimens.space12),
 
-                // English Option
-                Material(
-                  color: Colors.transparent,
-                  child: ListTile(
-                    leading: Container(
-                      width: 38,
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: !isAr ? AppColors.navy : const Color(0xFFF3F3F4),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'EN',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                            color: !isAr ? Colors.white : AppColors.navy,
+                  // Arabic Option
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: (!settings.isFollowingSystem && isAr) ? AppColors.navy : const Color(0xFFF3F3F4),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'AR',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: (!settings.isFollowingSystem && isAr) ? Colors.white : AppColors.navy,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    title: Text(
-                      'English (United States)',
-                      style: AppTypography.body().copyWith(
-                        fontWeight: !isAr ? FontWeight.w800 : FontWeight.w600,
-                        color: !isAr ? AppColors.navy : AppColors.textPrimary,
+                      title: Text(
+                        'العربية (مصر)',
+                        style: AppTypography.body().copyWith(
+                          fontWeight: (!settings.isFollowingSystem && isAr) ? FontWeight.w800 : FontWeight.w600,
+                          color: (!settings.isFollowingSystem && isAr) ? AppColors.navy : AppColors.textPrimary,
+                        ),
                       ),
-                    ),
-                    trailing: !isAr
-                        ? const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 22)
-                        : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimens.radiusField),
-                      side: BorderSide(
-                        color: !isAr ? AppColors.teal : const Color(0xFFE5E5EA),
-                        width: !isAr ? 1.5 : 0.8,
+                      trailing: (!settings.isFollowingSystem && isAr)
+                          ? const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 22)
+                          : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                        side: BorderSide(
+                          color: (!settings.isFollowingSystem && isAr) ? AppColors.teal : const Color(0xFFE5E5EA),
+                          width: (!settings.isFollowingSystem && isAr) ? 1.5 : 0.8,
+                        ),
                       ),
+                      onTap: () {
+                        settings.setLocale(const Locale('ar', 'EG'));
+                        Navigator.of(ctx).pop();
+                      },
                     ),
-                    onTap: () {
-                      settings.setLocale(const Locale('en', 'US'));
-                      Navigator.of(ctx).pop();
-                    },
                   ),
-                ),
-                const SizedBox(height: AppDimens.space16),
-              ],
+                  const SizedBox(height: AppDimens.space12),
+
+                  // English Option
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      leading: Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: (!settings.isFollowingSystem && !isAr) ? AppColors.navy : const Color(0xFFF3F3F4),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Center(
+                          child: Text(
+                            'EN',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: (!settings.isFollowingSystem && !isAr) ? Colors.white : AppColors.navy,
+                            ),
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        'English (United States)',
+                        style: AppTypography.body().copyWith(
+                          fontWeight: (!settings.isFollowingSystem && !isAr) ? FontWeight.w800 : FontWeight.w600,
+                          color: (!settings.isFollowingSystem && !isAr) ? AppColors.navy : AppColors.textPrimary,
+                        ),
+                      ),
+                      trailing: (!settings.isFollowingSystem && !isAr)
+                          ? const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 22)
+                          : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                        side: BorderSide(
+                          color: (!settings.isFollowingSystem && !isAr) ? AppColors.teal : const Color(0xFFE5E5EA),
+                          width: (!settings.isFollowingSystem && !isAr) ? 1.5 : 0.8,
+                        ),
+                      ),
+                      onTap: () {
+                        settings.setLocale(const Locale('en', 'US'));
+                        Navigator.of(ctx).pop();
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                ],
+              ),
             ),
           ),
         );
@@ -390,7 +441,9 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.language_rounded,
                     iconColor: AppColors.navy,
                     title: isAr ? 'لغة التطبيق' : 'App Language',
-                    subtitle: isAr ? 'العربية (جمهورية مصر العربية)' : 'English (United States)',
+                    subtitle: settings.isFollowingSystem
+                        ? (isAr ? 'لغة الهاتف الافتراضية' : 'System Default (Phone)')
+                        : (isAr ? 'العربية (جمهورية مصر العربية)' : 'English (United States)'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -402,7 +455,9 @@ class SettingsScreen extends StatelessWidget {
                             border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
                           ),
                           child: Text(
-                            isAr ? 'العربية' : 'English',
+                            settings.isFollowingSystem
+                                ? (isAr ? 'لغة الهاتف' : 'System')
+                                : (isAr ? 'العربية' : 'English'),
                             style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),

@@ -9,7 +9,6 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
-import '../../state/settings_provider.dart';
 import 'email_input_screen.dart';
 import 'otp_verification_screen.dart';
 
@@ -83,7 +82,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final settings = context.watch<SettingsProvider>();
     final isAr = context.isArabic;
     final hasError = _errorText != null && _errorText!.isNotEmpty;
 
@@ -97,21 +95,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsetsDirectional.only(end: 16),
-            child: ActionChip(
-              backgroundColor: Colors.white,
-              side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-              avatar: const Icon(Icons.language_rounded, size: 16, color: AppColors.navy),
-              label: Text(
-                isAr ? 'English' : 'العربية',
-                style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.bold),
-              ),
-              onPressed: () => settings.toggleLanguage(),
-            ),
-          ),
-        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
