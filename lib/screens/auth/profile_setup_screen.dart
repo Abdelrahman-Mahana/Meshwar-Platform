@@ -194,21 +194,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           ),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => settings.toggleLanguage(),
-            child: Text(
-              isAr ? 'English' : 'العربية',
-              style: const TextStyle(
-                color: AppColors.navy,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                fontFamily: 'Cairo',
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
