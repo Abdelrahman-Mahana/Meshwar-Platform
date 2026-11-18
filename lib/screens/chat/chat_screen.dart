@@ -126,10 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: const BackButton(color: AppColors.navy),
         title: Row(
           children: [
             Container(
@@ -320,7 +317,10 @@ class _ChatScreenState extends State<ChatScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                      icon: Transform.flip(
+                        flipX: isAr,
+                        child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                      ),
                       onPressed: () => _sendMessage(),
                     ),
                   ),

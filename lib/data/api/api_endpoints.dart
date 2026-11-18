@@ -50,13 +50,20 @@ class ApiEndpoints {
   static String verifyParcelDeliveryOtp(String parcelId) => '/parcels/$parcelId/verify-delivery-otp';
   static String parcelDispute(String parcelId) => '/parcels/$parcelId/disputes';
 
-  // 5. Community Board (إعلانات المشاوير والطرود)
+  // 5. Community Board (إعلانات المشاوير والطرود وقضاء المصالح)
   static const String boardAds = '/board/ads';
   static const String myBoardAds = '/board/ads/mine';
+  static const String boardCategories = '/board/categories';
   static String makeBoardOffer(String adId) => '/board/ads/$adId/offers';
   static String boardAdOffers(String adId) => '/board/ads/$adId/offers';
+  static String acceptBoardOffer(String adId, String offerId) =>
+      '/board/ads/$adId/offers/$offerId/accept';
+  static String withdrawBoardOffer(String adId, String offerId) =>
+      '/board/ads/$adId/offers/$offerId/withdraw';
 
-  // 6. Route Alerts
+  // 6. Notifications & Route Alerts
+  static const String notifications = '/users/me/notifications';
+  static String markNotificationRead(String id) => '/users/me/notifications/$id/read';
   static const String routeAlerts = '/alerts/routes';
   static String routeAlertItem(String alertId) => '/alerts/routes/$alertId';
 

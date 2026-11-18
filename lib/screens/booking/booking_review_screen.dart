@@ -186,6 +186,36 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: AppDimens.space16),
+
+              // Security & OTP Trust note
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.teal.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                  border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.verified_user_rounded, color: AppColors.teal, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        isAr
+                            ? 'أمان مؤكد: ستحصل على كود OTP مكون من 4 أرقام لتأكيد ركوبك مع السائق وضمان حق الطرفين.'
+                            : 'Verified Safety: You will receive a 4-digit OTP code to verify your ride upon boarding.',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w500,
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               const Spacer(),
 

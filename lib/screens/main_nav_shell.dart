@@ -328,11 +328,13 @@ class _MainNavShellState extends State<MainNavShell> {
                         children: [
                           _buildOrderFilterChip(0, isAr ? 'الكل' : 'All'),
                           const SizedBox(width: 8),
-                          _buildOrderFilterChip(1, isAr ? 'انتقال وسفر' : 'Mobility & Travel'),
+                          _buildOrderFilterChip(1, isAr ? 'سفر وانتقال' : 'Mobility & Travel'),
                           const SizedBox(width: 8),
-                          _buildOrderFilterChip(2, isAr ? 'قضاء مصالح' : 'Errand Services'),
+                          _buildOrderFilterChip(2, isAr ? 'شراء طلبات ومصالح' : 'Errand & Shopping'),
                           const SizedBox(width: 8),
-                          _buildOrderFilterChip(3, isAr ? 'لوجستيات وأمانات' : 'Logistics & Cargo'),
+                          _buildOrderFilterChip(3, isAr ? 'لوجستيات وبضائع' : 'Store Logistics'),
+                          const SizedBox(width: 8),
+                          _buildOrderFilterChip(4, isAr ? 'شحن أمانات' : 'Parcel Delivery'),
                         ],
                       ),
                     ),
@@ -515,8 +517,49 @@ class _MainNavShellState extends State<MainNavShell> {
       );
     }
 
-    // Category 2: Errand Service (Filter 0 or 2)
+    // Category 2: Errand & Shopping Service (Filter 0 or 2)
     if (_ordersFilterIndex == 0 || _ordersFilterIndex == 2) {
+      // Shopping & Parts Delivery Order
+      cards.add(
+        _buildUnifiedOrderCard(
+          context: context,
+          categoryTag: isAr ? 'شراء طلبات ومستلزمات' : 'Shopping & Errands',
+          categoryColor: const Color(0xFF0D9488),
+          route: isAr ? 'التوفيقية، القاهرة ← بلطيم' : 'Tawfikiya, Cairo ← Baltim',
+          description: isAr
+              ? 'شراء قطع غيار وفلاتر أصلية للسيارات وجلبها مع مسافر · المنفذ: إبراهيم الدسوقي'
+              : 'Original spare parts & filters purchased from Cairo · Courier: Ibrahim El-Desouky',
+          badgeText: isAr ? 'قيد الشراء' : 'Purchasing',
+          badgeType: BadgeType.underReview,
+          otpCode: '6284',
+          isAr: isAr,
+          actionButtons: [
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.teal,
+                side: const BorderSide(color: AppColors.teal),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+              label: Text(isAr ? 'محادثة المشتري/المنفذ' : 'Chat Courier'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(
+                      driverName: 'إبراهيم الدسوقي',
+                      driverCar: isAr ? 'خدمة شراء مستلزمات وتوصيل' : 'Shopping & Errand Courier',
+                      tripRoute: isAr ? 'التوفيقية، القاهرة ← بلطيم' : 'Cairo ← Baltim',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+
+      // Official Documents Errand
       cards.add(
         _buildUnifiedOrderCard(
           context: context,
@@ -557,7 +600,7 @@ class _MainNavShellState extends State<MainNavShell> {
       );
     }
 
-    // Category 3: Logistics & Supplies (Filter 0 or 3)
+    // Category 3: Logistics & Merchant Supplies (Filter 0 or 3)
     if (_ordersFilterIndex == 0 || _ordersFilterIndex == 3) {
       cards.add(
         _buildUnifiedOrderCard(
@@ -597,7 +640,10 @@ class _MainNavShellState extends State<MainNavShell> {
           ],
         ),
       );
+    }
 
+    // Category 4: Crowd-shipping & Parcels (Filter 0 or 4)
+    if (_ordersFilterIndex == 0 || _ordersFilterIndex == 4) {
       // Parcels from ParcelsProvider
       for (final p in parcels.parcels) {
         cards.add(
@@ -1809,6 +1855,7 @@ class _MainNavShellState extends State<MainNavShell> {
     String? trailingText,
     Widget? badge,
   }) {
+    final isAr = Directionality.of(context) == TextDirection.rtl;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       leading: Container(
@@ -1828,7 +1875,11 @@ class _MainNavShellState extends State<MainNavShell> {
           if (trailingText != null)
             Text(trailingText, style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(width: 4),
-          const Icon(Icons.arrow_back_ios_new_rounded, size: 13, color: Color(0xFF8E8E93)),
+          Icon(
+            isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+            size: 16,
+            color: const Color(0xFF8E8E93),
+          ),
         ],
       ),
       onTap: onTap,
