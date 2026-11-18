@@ -26,6 +26,7 @@ import 'package:mashwar/screens/safety/safety_screens.dart';
 import 'package:mashwar/screens/search/search_results_screen.dart';
 import 'package:mashwar/screens/settings/settings_screen.dart';
 import 'package:mashwar/screens/wallet/wallet_screen.dart';
+import 'package:mashwar/screens/board/post_ad_screen.dart';
 import 'package:mashwar/state/admin_provider.dart';
 import 'package:mashwar/state/alerts_provider.dart';
 import 'package:mashwar/state/auth_provider.dart';
@@ -276,6 +277,56 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('PostAdScreen renders cleanly across viewports with intent switch & dynamic fields', (tester) async {
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      // 1. Verify responsive layout without any overflow across all screen sizes
+      for (final size in [const Size(320, 568), const Size(375, 812), const Size(1280, 800)]) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+
+        await tester.pumpWidget(wrapWithProviders(const PostAdScreen()));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(find.text('انشر إعلان على اللوحة'), findsOneWidget);
+      }
+
+      // 2. Interactive test on standard mobile viewport
+      tester.view.physicalSize = const Size(375, 812);
+      tester.view.devicePixelRatio = 1.0;
+      await tester.pumpWidget(wrapWithProviders(const PostAdScreen()));
+      await tester.pumpAndSettle();
+
+      expect(find.text('أنا أطلب خدمة / مشوار'), findsOneWidget);
+      expect(find.text('أنا مسافر / أقدم خدمة'), findsOneWidget);
+
+      // Toggle intent switch to provider mode
+      await tester.tap(find.text('أنا مسافر / أقدم خدمة'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('عرض سفر تشاركي'), findsOneWidget);
+
+      // Toggle back to requester mode
+      await tester.tap(find.text('أنا أطلب خدمة / مشوار'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Select errand service category
+      await tester.tap(find.text('قضاء مصالح رسمية'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('تفاصيل المصلحة والأوراق الرسمية'), findsOneWidget);
+
+      // Select logistics & cargo category
+      await tester.tap(find.text('لوجستيات وتوريد'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('تفاصيل البضاعة والتوريد'), findsOneWidget);
+    });
+
     testWidgets('Full-Screen Responsive Layout Check: MainNavShell (all 5 tabs + NavigationRail), Wallet, Settings, UserProfile & ProfileSetup render cleanly at 375x812 and 1280x800', (tester) async {
       addTearDown(() {
         tester.view.resetPhysicalSize();
@@ -304,7 +355,7 @@ void main() {
           expect(find.byType(NavigationRail), findsNothing);
         }
 
-        for (final tabLabel in ['اللوحة', 'رحلاتي', 'طرودي', 'حسابي']) {
+        for (final tabLabel in ['اللوحة', 'طلباتي', 'الرسائل', 'حسابي']) {
           await tester.tap(find.text(tabLabel));
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);

@@ -154,9 +154,11 @@ class AppStrings {
     // General & Navigation
     'الرئيسية': 'Home',
     'اللوحة': 'Board',
+    'طلباتي': 'My Requests',
+    'الرسائل': 'Messages',
+    'حسابي': 'Account',
     'رحلاتي': 'My Rides',
     'طرودي': 'My Parcels',
-    'حسابي': 'Account',
     'مشوار': 'MASHWAR',
     'أهلاً': 'Hello',
     'كراسي': 'Seats',

@@ -7,10 +7,12 @@ import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../data/models/user_model.dart';
+import '../../state/alerts_provider.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 import '../account/account_extra_screens.dart';
 import '../account/legal_and_backend_screens.dart';
+import '../alerts/my_alerts_screen.dart';
 import '../auth/id_verification_screen.dart';
 import '../auth/welcome_screen.dart';
 import '../safety/safety_screens.dart';
@@ -278,6 +280,12 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final auth = context.watch<AuthProvider>();
+    AlertsProvider? alerts;
+    try {
+      alerts = context.watch<AlertsProvider>();
+    } catch (_) {
+      alerts = null;
+    }
     final isAr = settings.isArabic;
     final user = auth.user;
 
@@ -547,6 +555,46 @@ class SettingsScreen extends StatelessWidget {
                       isAr ? 'تنبيه فوري عند نشر طلب مشوار أو طرد في نطاق 50 كم' : 'Alerts when a request is posted within 50 km',
                       style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
                     ),
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
+                    icon: Icons.add_alert_rounded,
+                    iconColor: AppColors.teal,
+                    title: isAr ? 'تنبيهاتي للمسارات المتابعة' : 'My Monitored Route Alerts',
+                    subtitle: isAr ? 'إدارة وتخصيص تنبيهات المسارات ومواعيد السفر' : 'Manage custom corridor alerts & departure dates',
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (alerts != null && alerts.alerts.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFBBF7D0), width: 0.8),
+                            ),
+                            child: Text(
+                              '${alerts.alerts.where((a) => a.isActive).length} ${isAr ? 'نشط' : 'active'}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF15803D),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const MyAlertsScreen()),
+                      );
+                    },
                   ),
                 ]),
               ],

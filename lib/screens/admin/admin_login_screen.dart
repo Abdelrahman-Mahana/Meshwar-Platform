@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
-import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
@@ -79,120 +78,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 880;
-            if (isWide) {
-              return _buildWideLayout(context, settings, isAr, constraints);
-            }
             return _buildMobileLayout(context, settings, isAr, constraints);
           },
         ),
       ),
-    );
-  }
-
-  Widget _buildWideLayout(
-    BuildContext context,
-    SettingsProvider settings,
-    bool isAr,
-    BoxConstraints constraints,
-  ) {
-    return Row(
-      children: [
-        // Left Showcase Panel
-        Expanded(
-          flex: 6,
-          child: Container(
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.navy, Color(0xFF091E33)],
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const BrandLogo(fontSize: 44, isLight: true),
-                    const SizedBox(height: 18),
-                    Text(
-                      isAr ? 'منصة العمليات والإدارة المركزية' : 'Central Operations & Admin Portal',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      isAr
-                          ? 'إدارة الرحلات بين المحافظات، توثيق السائقين بالرقم القومي، ومراقبة أمان شحن الطرود لحظياً.'
-                          : 'Intercity carpooling ops, National ID driver verifications, and parcel delivery monitoring.',
-                      style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14, height: 1.5),
-                    ),
-                  ],
-                ),
-
-                // Feature Highlights
-                Column(
-                  children: [
-                    _buildFeatureCard(
-                      icon: Icons.cell_tower_rounded,
-                      title: isAr ? 'تغطية شاملة لـ 27 محافظة' : 'All 27 Governorates Active',
-                      subtitle: isAr ? 'متابعة حية للرحلات ومحاور السفر الرئيسية على مدار الساعة.' : 'Real-time tracking of intercity travel corridors.',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildFeatureCard(
-                      icon: Icons.verified_user_rounded,
-                      title: isAr ? 'مراجعة وتدقيق المستندات الرسمية' : 'Verified Identity Checks',
-                      subtitle: isAr ? 'فحص بطاقات الرقم القومي ورخص القيادة والسيارات بدقة.' : 'Thorough review of National IDs, driver and car licenses.',
-                    ),
-                    const SizedBox(height: 12),
-                    _buildFeatureCard(
-                      icon: Icons.security_rounded,
-                      title: isAr ? 'سجل تدقيق رقابي غير قابل للتعديل' : 'Immutable Operations Audit Log',
-                      subtitle: isAr ? 'كل إجراء إداري موثق بالوقت ومسؤول التشغيل والسبب.' : 'Every action logged with timestamp, actor role, and reason.',
-                    ),
-                  ],
-                ),
-
-                // Metrics Strip
-                Row(
-                  children: [
-                    _buildMetricChip('99.98%', isAr ? 'جاهزية الخوادم' : 'System Uptime'),
-                    const SizedBox(width: 24),
-                    _buildMetricChip('27', isAr ? 'محافظة مغطاة' : 'Governorates'),
-                    const SizedBox(width: 24),
-                    _buildMetricChip('24/7', isAr ? 'مراقبة أمنية' : 'Live Ops'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // Right Login Form Area
-        Expanded(
-          flex: 5,
-          child: Container(
-            height: double.infinity,
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: _buildFormContent(context, settings, isAr),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -439,66 +328,6 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
               ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeatureCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: AppColors.gold, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricChip(String value, String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20),
-        ),
-        Text(
-          label,
-          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
         ),
       ],
     );

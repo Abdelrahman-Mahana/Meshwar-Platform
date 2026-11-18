@@ -7,7 +7,6 @@ import '../core/constants/app_typography.dart';
 import '../core/widgets/brand_logo.dart';
 import '../core/widgets/mashwar_badge.dart';
 import '../core/widgets/mashwar_button.dart';
-import '../core/localization/app_strings.dart';
 import '../data/mock_data.dart';
 import '../data/models/user_model.dart';
 import '../state/auth_provider.dart';
@@ -19,9 +18,7 @@ import 'board/board_screen.dart';
 import 'trip/active_trip_screen.dart';
 import 'trip/rate_trip_screen.dart';
 import 'chat/chat_screen.dart';
-import 'booking/booking_waiting_screen.dart';
 import 'parcel/parcel_tracking_screen.dart';
-import 'parcel/parcel_dispute_screen.dart';
 import 'alerts/my_alerts_screen.dart';
 import 'auth/id_verification_screen.dart';
 import 'settings/settings_screen.dart';
@@ -45,9 +42,16 @@ class MainNavShell extends StatefulWidget {
 class _MainNavShellState extends State<MainNavShell> {
   int _currentIndex = 0;
 
-  // Segment states for Tabs
-  bool _isUpcomingRides = true;
-  bool _isUpcomingParcels = true;
+  // Segment state for Orders / Requests Tab
+  bool _isActiveOrders = true;
+  int _ordersFilterIndex = 0; // 0: All, 1: Mobility/Travel, 2: Errands, 3: Logistics/Cargo
+  final TextEditingController _messagesSearchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _messagesSearchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +64,8 @@ class _MainNavShellState extends State<MainNavShell> {
     final List<Widget> pages = [
       const HomeScreen(),
       const BoardScreen(),
-      _buildMyRidesTab(context, rides, isAr),
-      _buildMyParcelsTab(context, parcels, isAr),
+      _buildMyOrdersTab(context, rides, parcels, isAr),
+      _buildMessagesTab(context, isAr),
       _buildAccountTab(context, auth, settings),
     ];
 
@@ -135,19 +139,19 @@ class _MainNavShellState extends State<MainNavShell> {
                       label: Text(isAr ? 'الرئيسية' : 'Home'),
                     ),
                     NavigationRailDestination(
-                      icon: const Icon(Icons.dashboard_outlined),
-                      selectedIcon: const Icon(Icons.dashboard_rounded),
+                      icon: const Icon(Icons.explore_outlined),
+                      selectedIcon: const Icon(Icons.explore_rounded),
                       label: Text(isAr ? 'اللوحة' : 'Board'),
                     ),
                     NavigationRailDestination(
-                      icon: const Icon(Icons.directions_car_outlined),
-                      selectedIcon: const Icon(Icons.directions_car_rounded),
-                      label: Text(isAr ? 'رحلاتي' : 'My Rides'),
+                      icon: const Icon(Icons.assignment_outlined),
+                      selectedIcon: const Icon(Icons.assignment_rounded),
+                      label: Text(isAr ? 'طلباتي' : 'My Requests'),
                     ),
                     NavigationRailDestination(
-                      icon: const Icon(Icons.inventory_2_outlined),
-                      selectedIcon: const Icon(Icons.inventory_2_rounded),
-                      label: Text(isAr ? 'طرودي' : 'My Parcels'),
+                      icon: const Icon(Icons.chat_bubble_outline_rounded),
+                      selectedIcon: const Icon(Icons.chat_bubble_rounded),
+                      label: Text(isAr ? 'الرسائل' : 'Messages'),
                     ),
                     NavigationRailDestination(
                       icon: const Icon(Icons.person_outline_rounded),
@@ -176,17 +180,24 @@ class _MainNavShellState extends State<MainNavShell> {
           bottomNavigationBar: Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(
-                top: BorderSide(color: AppColors.borderDisabled.withValues(alpha: 0.5)),
+              border: const Border(
+                top: BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, -3),
+                ),
+              ],
             ),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
               onTap: (index) => setState(() => _currentIndex = index),
-              selectedLabelStyle: AppTypography.label().copyWith(fontWeight: FontWeight.w700),
-              unselectedLabelStyle: AppTypography.label(),
+              selectedLabelStyle: AppTypography.label().copyWith(fontWeight: FontWeight.w800, fontSize: 11),
+              unselectedLabelStyle: AppTypography.label().copyWith(fontWeight: FontWeight.w600, fontSize: 11),
               selectedItemColor: AppColors.navy,
-              unselectedItemColor: AppColors.textSecondary,
+              unselectedItemColor: const Color(0xFF8E8E93),
               backgroundColor: Colors.white,
               elevation: 0,
               type: BottomNavigationBarType.fixed,
@@ -197,19 +208,19 @@ class _MainNavShellState extends State<MainNavShell> {
                   label: isAr ? 'الرئيسية' : 'Home',
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.dashboard_outlined),
-                  activeIcon: const Icon(Icons.dashboard_rounded),
+                  icon: const Icon(Icons.explore_outlined),
+                  activeIcon: const Icon(Icons.explore_rounded),
                   label: isAr ? 'اللوحة' : 'Board',
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.directions_car_outlined),
-                  activeIcon: const Icon(Icons.directions_car_rounded),
-                  label: isAr ? 'رحلاتي' : 'My Rides',
+                  icon: const Icon(Icons.assignment_outlined),
+                  activeIcon: const Icon(Icons.assignment_rounded),
+                  label: isAr ? 'طلباتي' : 'My Requests',
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.inventory_2_outlined),
-                  activeIcon: const Icon(Icons.inventory_2_rounded),
-                  label: isAr ? 'طرودي' : 'My Parcels',
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  activeIcon: const Icon(Icons.chat_bubble_rounded),
+                  label: isAr ? 'الرسائل' : 'Messages',
                 ),
                 BottomNavigationBarItem(
                   icon: const Icon(Icons.person_outline_rounded),
@@ -224,15 +235,22 @@ class _MainNavShellState extends State<MainNavShell> {
     );
   }
 
-  // Page 28: My Rides Tab (رحلاتي)
-  Widget _buildMyRidesTab(BuildContext context, RidesProvider rides, bool isAr) {
+  // ==========================================
+  // UNIFIED ACTIVITY TAB: طلباتي (My Requests)
+  // ==========================================
+  Widget _buildMyOrdersTab(
+    BuildContext context,
+    RidesProvider rides,
+    ParcelsProvider parcels,
+    bool isAr,
+  ) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: Text(isAr ? 'رحلاتي' : 'My Rides', style: AppTypography.title()),
+        title: Text(isAr ? 'طلباتي' : 'My Requests', style: AppTypography.title()),
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -240,77 +258,92 @@ class _MainNavShellState extends State<MainNavShell> {
             final isWide = constraints.maxWidth >= 760;
             return Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: isWide ? 1200 : 680),
+                constraints: BoxConstraints(maxWidth: isWide ? 1200 : 720),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Segmented Switch: قادمة vs سابقة (Page 28)
+                    // Segment Switch: قيد التنفيذ vs المكتملة
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: 10),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: isWide ? 380 : double.infinity),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3F3F4),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _isUpcomingRides = true),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 160),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: _isUpcomingRides ? AppColors.navy : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        isAr ? 'قادمة' : 'Upcoming',
-                                        style: AppTypography.bodySecondary(
-                                          color: _isUpcomingRides ? Colors.white : AppColors.textPrimary,
-                                        ).copyWith(fontWeight: _isUpcomingRides ? FontWeight.w700 : FontWeight.w500),
-                                      ),
+                      padding: const EdgeInsets.fromLTRB(AppDimens.space16, 12, AppDimens.space16, 6),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEBEBF0),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isActiveOrders = true),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 160),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: _isActiveOrders ? AppColors.navy : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      isAr ? 'الطلبات النشطة والجارية' : 'Active Requests',
+                                      style: AppTypography.bodySecondary(
+                                        color: _isActiveOrders ? Colors.white : AppColors.textPrimary,
+                                      ).copyWith(fontWeight: _isActiveOrders ? FontWeight.w700 : FontWeight.w500),
                                     ),
                                   ),
                                 ),
                               ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _isUpcomingRides = false),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 160),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: !_isUpcomingRides ? AppColors.navy : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        isAr ? 'سابقة' : 'Past',
-                                        style: AppTypography.bodySecondary(
-                                          color: !_isUpcomingRides ? Colors.white : AppColors.textPrimary,
-                                        ).copyWith(fontWeight: !_isUpcomingRides ? FontWeight.w700 : FontWeight.w500),
-                                      ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _isActiveOrders = false),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 160),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: !_isActiveOrders ? AppColors.navy : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      isAr ? 'المكتملة والسابقة' : 'Completed / History',
+                                      style: AppTypography.bodySecondary(
+                                        color: !_isActiveOrders ? Colors.white : AppColors.textPrimary,
+                                      ).copyWith(fontWeight: !_isActiveOrders ? FontWeight.w700 : FontWeight.w500),
                                     ),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
+
+                    // Filter chips for service categories
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 4),
+                      child: Row(
+                        children: [
+                          _buildOrderFilterChip(0, isAr ? 'الكل' : 'All'),
+                          const SizedBox(width: 8),
+                          _buildOrderFilterChip(1, isAr ? 'انتقال وسفر' : 'Mobility & Travel'),
+                          const SizedBox(width: 8),
+                          _buildOrderFilterChip(2, isAr ? 'قضاء مصالح' : 'Errand Services'),
+                          const SizedBox(width: 8),
+                          _buildOrderFilterChip(3, isAr ? 'لوجستيات وأمانات' : 'Logistics & Cargo'),
+                        ],
+                      ),
+                    ),
+
                     const SizedBox(height: 4),
 
-                    // Rides List or Empty State
+                    // Orders list
                     Expanded(
-                      child: _isUpcomingRides
-                          ? _buildUpcomingRidesList(context, rides, isAr, isWide: isWide)
-                          : _buildPastRidesList(context, isAr, isWide: isWide),
+                      child: _isActiveOrders
+                          ? _buildActiveOrdersList(context, rides, parcels, isAr, isWide: isWide)
+                          : _buildPastOrdersList(context, isAr, isWide: isWide),
                     ),
                   ],
                 ),
@@ -322,24 +355,444 @@ class _MainNavShellState extends State<MainNavShell> {
     );
   }
 
+  Widget _buildOrderFilterChip(int index, String label) {
+    final isSelected = _ordersFilterIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _ordersFilterIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.navy : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.navy : const Color(0xFFD1D1D6),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : AppColors.textPrimary,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveOrdersList(
+    BuildContext context,
+    RidesProvider rides,
+    ParcelsProvider parcels,
+    bool isAr, {
+    bool isWide = false,
+  }) {
+    final cards = <Widget>[];
+
+    // Category 1: Mobility & Inter-city Travel (Filter 0 or 1)
+    if (_ordersFilterIndex == 0 || _ordersFilterIndex == 1) {
+      // Dynamic booked rides from provider
+      for (final bookedRide in rides.bookedRides) {
+        cards.add(
+          _buildUnifiedOrderCard(
+            context: context,
+            categoryTag: isAr ? 'سفر تشاركي' : 'Carpooling',
+            categoryColor: AppColors.navy,
+            route: '${bookedRide.fromCity} ← ${bookedRide.toCity}',
+            description: '${bookedRide.departureDate}، ${bookedRide.departureTime} · السائق: ${bookedRide.driverName}',
+            badgeText: isAr ? 'حجز مؤكد' : 'Confirmed',
+            badgeType: BadgeType.confirmed,
+            otpCode: '4291',
+            isAr: isAr,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => ActiveTripScreen(ride: bookedRide)),
+              );
+            },
+            actionButtons: [
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.teal,
+                  side: const BorderSide(color: AppColors.teal),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                label: Text(isAr ? 'محادثة السائق' : 'Chat Driver'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatScreen(
+                        driverName: bookedRide.driverName,
+                        driverCar: bookedRide.driverCar,
+                        tripRoute: '${bookedRide.fromCity} ← ${bookedRide.toCity}',
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.navy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.navigation_outlined, size: 16),
+                label: Text(isAr ? 'تفاصيل المشوار' : 'Trip Details'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => ActiveTripScreen(ride: bookedRide)),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      }
+
+      // Default Active Inter-city Ride Card
+      cards.add(
+        _buildUnifiedOrderCard(
+          context: context,
+          categoryTag: isAr ? 'سفر بين المحافظات' : 'Inter-city Travel',
+          categoryColor: AppColors.navy,
+          route: isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh ← Cairo',
+          description: isAr
+              ? 'الجمعة 6 نوفمبر، 7:30 ص · الكابتن: محمد سعيد (سيارة خاصة إلنترا مكيفة)'
+              : 'Fri Nov 6, 7:30 AM · Captain: Mohamed Saeed (Hyundai Elantra)',
+          badgeText: isAr ? 'مؤكد' : 'Confirmed',
+          badgeType: BadgeType.confirmed,
+          otpCode: '5912',
+          isAr: isAr,
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => ActiveTripScreen(ride: MockData.initialRides[0])),
+            );
+          },
+          actionButtons: [
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.teal,
+                side: const BorderSide(color: AppColors.teal),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+              label: Text(isAr ? 'محادثة السائق' : 'Chat Driver'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const ChatScreen(
+                      driverName: 'محمد سعيد',
+                      driverCar: 'هيونداي إلنترا، أبيض (س ق ر 1942)',
+                      tripRoute: 'كفر الشيخ ← القاهرة',
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.navy,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.navigation_outlined, size: 16),
+              label: Text(isAr ? 'تفاصيل المشوار' : 'Trip Details'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => ActiveTripScreen(ride: MockData.initialRides[0])),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Category 2: Errand Service (Filter 0 or 2)
+    if (_ordersFilterIndex == 0 || _ordersFilterIndex == 2) {
+      cards.add(
+        _buildUnifiedOrderCard(
+          context: context,
+          categoryTag: isAr ? 'قضاء مصالح رسمية' : 'Official Errand',
+          categoryColor: const Color(0xFFD97706),
+          route: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+          description: isAr
+              ? 'استخراج شهادة تخرج ومستندات رسمية من جامعة القاهرة وتسليمها في كفر الشيخ'
+              : 'Official certificate & documents pickup from Cairo University',
+          badgeText: isAr ? 'قيد التنفيذ' : 'In Progress',
+          badgeType: BadgeType.underReview,
+          otpCode: '4821',
+          isAr: isAr,
+          actionButtons: [
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.teal,
+                side: const BorderSide(color: AppColors.teal),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+              label: Text(isAr ? 'محادثة المنفذ' : 'Chat Provider'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(
+                      driverName: 'أحمد نبيل',
+                      driverCar: isAr ? 'خدمة قضاء مصالح وأوراق رسمية' : 'Official Documents Courier',
+                      tripRoute: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Category 3: Logistics & Supplies (Filter 0 or 3)
+    if (_ordersFilterIndex == 0 || _ordersFilterIndex == 3) {
+      cards.add(
+        _buildUnifiedOrderCard(
+          context: context,
+          categoryTag: isAr ? 'لوجستيات وتوريد بضائع' : 'Commercial Cargo',
+          categoryColor: const Color(0xFF2563EB),
+          route: isAr ? 'العتبة، القاهرة ← كفر الشيخ' : 'Attaba, Cairo ← Kafr El-Sheikh',
+          description: isAr
+              ? 'توريد 5 كراتين مستلزمات لمحل تجاري وسط البلد · الناقل: طارق رضوان'
+              : 'Store stock & supplies (5 cartons) · Carrier: Tarek Radwan',
+          badgeText: isAr ? 'في الطريق' : 'In Transit',
+          badgeType: BadgeType.confirmed,
+          otpCode: '9314',
+          isAr: isAr,
+          actionButtons: [
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.teal,
+                side: const BorderSide(color: AppColors.teal),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+              label: Text(isAr ? 'محادثة الناقل' : 'Chat Carrier'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(
+                      driverName: 'طارق رضوان',
+                      driverCar: isAr ? 'نقل وتوريد بضائع تجارية' : 'Commercial Cargo Transport',
+                      tripRoute: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+
+      // Parcels from ParcelsProvider
+      for (final p in parcels.parcels) {
+        cards.add(
+          _buildUnifiedOrderCard(
+            context: context,
+            categoryTag: isAr ? 'شحن أمانات وطرود' : 'Parcel Delivery',
+            categoryColor: AppColors.teal,
+            route: p.route.split(' · ').first,
+            description: '${p.description} · مع الناقل ${p.driverName}',
+            badgeText: isAr ? 'في الطريق' : 'In Transit',
+            badgeType: BadgeType.confirmed,
+            otpCode: p.pickupOtp,
+            isAr: isAr,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => ParcelTrackingScreen(parcel: p)),
+              );
+            },
+            actionButtons: [
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.teal,
+                  side: const BorderSide(color: AppColors.teal),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
+                label: Text(isAr ? 'محادثة الناقل' : 'Chat Carrier'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatScreen(
+                        driverName: p.driverName,
+                        driverCar: 'توصيل أمانة: ${p.route}',
+                        tripRoute: 'كود الاستلام: ${p.pickupOtp}',
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.navy,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                icon: const Icon(Icons.track_changes_rounded, size: 16),
+                label: Text(isAr ? 'تتبع الشحنة' : 'Track Parcel'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => ParcelTrackingScreen(parcel: p)),
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      }
+    }
+
+    return _buildResponsiveCardList(cards, isWide);
+  }
+
+  Widget _buildPastOrdersList(BuildContext context, bool isAr, {bool isWide = false}) {
+    final cards = <Widget>[
+      // Completed Trip
+      _buildUnifiedOrderCard(
+        context: context,
+        categoryTag: isAr ? 'سفر تشاركي' : 'Carpooling',
+        categoryColor: AppColors.navy,
+        route: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+        description: isAr ? 'الأحد 25 أكتوبر · الكابتن: منى حسن (تويوتا كورولا)' : 'Sun Oct 25 · Captain: Mona Hassan',
+        badgeText: isAr ? 'مكتمل' : 'Completed',
+        badgeType: BadgeType.verified,
+        isAr: isAr,
+        actionButtons: [
+          TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: AppColors.gold),
+            icon: const Icon(Icons.star_outline_rounded, size: 18),
+            label: Text(
+              isAr ? 'تقييم المشوار' : 'Rate Trip',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const RateTripScreen(
+                    driverName: 'منى حسن',
+                    route: 'القاهرة ← كفر الشيخ',
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      // Completed Official Errand
+      _buildUnifiedOrderCard(
+        context: context,
+        categoryTag: isAr ? 'قضاء مصلحة رسمية' : 'Official Errand',
+        categoryColor: const Color(0xFFD97706),
+        route: isAr ? 'مجمع التحرير ← كفر الشيخ' : 'Tahrir Complex ← Kafr El-Sheikh',
+        description: isAr ? 'استخراج شهادة قيد رسمي · تم الإنجاز 20 أكتوبر' : 'Official records retrieval · Done Oct 20',
+        badgeText: isAr ? 'مكتمل' : 'Completed',
+        badgeType: BadgeType.verified,
+        isAr: isAr,
+        actionButtons: [
+          TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: AppColors.gold),
+            icon: const Icon(Icons.star_outline_rounded, size: 18),
+            label: Text(
+              isAr ? 'تقييم الخدمة' : 'Rate Service',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const RateTripScreen(
+                    driverName: 'إسلام رجب',
+                    route: 'مجمع التحرير ← كفر الشيخ',
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      // Completed Parcel
+      _buildUnifiedOrderCard(
+        context: context,
+        categoryTag: isAr ? 'شحن أمانات وطرود' : 'Parcel Delivery',
+        categoryColor: AppColors.teal,
+        route: isAr ? 'الإسكندرية ← كفر الشيخ' : 'Alexandria ← Kafr El-Sheikh',
+        description: isAr ? 'طرد مستندات وأمانات · تم التسليم بكود OTP' : 'Parcel · Delivered via OTP confirmation',
+        badgeText: isAr ? 'تم التسليم' : 'Delivered',
+        badgeType: BadgeType.verified,
+        isAr: isAr,
+        actionButtons: [
+          TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: AppColors.gold),
+            icon: const Icon(Icons.star_outline_rounded, size: 18),
+            label: Text(
+              isAr ? 'تقييم الشحن' : 'Rate Shipping',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const RateTripScreen(
+                    driverName: 'أحمد علي',
+                    route: 'الإسكندرية ← كفر الشيخ',
+                    isParcel: true,
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      // Disputed/Cancelled
+      _buildUnifiedOrderCard(
+        context: context,
+        categoryTag: isAr ? 'لوجستيات وتوريد' : 'Logistics',
+        categoryColor: const Color(0xFF2563EB),
+        route: isAr ? 'طنطا ← القاهرة' : 'Tanta ← Cairo',
+        description: isAr ? 'طلب توريد ملغى لعدم مطابقة الشروط' : 'Logistics request cancelled',
+        badgeText: isAr ? 'ملغى' : 'Cancelled',
+        badgeType: BadgeType.rejected,
+        isAr: isAr,
+      ),
+    ];
+
+    return _buildResponsiveCardList(cards, isWide);
+  }
+
   Widget _buildResponsiveCardList(List<Widget> cards, bool isWide) {
     if (!isWide) {
       return ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: AppDimens.space12),
+        padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: AppDimens.space12),
         itemCount: cards.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppDimens.space16),
+        separatorBuilder: (_, __) => const SizedBox(height: AppDimens.space12),
         itemBuilder: (_, i) => cards[i],
       );
     }
     final pairCount = (cards.length / 2).ceil();
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: AppDimens.space12),
+      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: AppDimens.space12),
       itemCount: pairCount,
       itemBuilder: (_, rowIdx) {
         final first = rowIdx * 2;
         final second = first + 1;
         return Padding(
-          padding: const EdgeInsets.only(bottom: AppDimens.space16),
+          padding: const EdgeInsets.only(bottom: AppDimens.space12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -355,140 +808,18 @@ class _MainNavShellState extends State<MainNavShell> {
     );
   }
 
-  Widget _buildUpcomingRidesList(BuildContext context, RidesProvider rides, bool isAr, {bool isWide = false}) {
-    final cards = <Widget>[
-      // Dynamically booked rides from RidesProvider
-      ...rides.bookedRides.map(
-        (bookedRide) => _buildTripCard(
-          context: context,
-          route: context.trRoute('${bookedRide.fromCity} ← ${bookedRide.toCity}'),
-          dateText: '${context.trDate(bookedRide.departureDate)}، ${bookedRide.departureTime}',
-          driverName: bookedRide.driverName,
-          badgeText: isAr ? 'حجز جديد' : 'New Booking',
-          badgeType: BadgeType.confirmed,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ActiveTripScreen(ride: bookedRide),
-              ),
-            );
-          },
-        ),
-      ),
-      // Card 1: مؤكد
-      _buildTripCard(
-        context: context,
-        route: context.trRoute('كفر الشيخ ← القاهرة'),
-        dateText: isAr ? 'الجمعة 6 نوفمبر، 7:30 ص' : 'Fri Nov 6, 7:30 AM',
-        driverName: 'محمد سعيد',
-        badgeText: isAr ? 'مؤكد' : 'Confirmed',
-        badgeType: BadgeType.confirmed,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => ActiveTripScreen(ride: MockData.initialRides[0]),
-            ),
-          );
-        },
-        actionButton: OutlinedButton.icon(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.teal,
-            side: const BorderSide(color: AppColors.teal),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-          label: Text(isAr ? 'محادثة السائق' : 'Chat Driver'),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(
-                  driverName: 'محمد سعيد',
-                  driverCar: 'هيونداي إلنترا، أبيض (س ق ر 1942)',
-                  tripRoute: context.trRoute('كفر الشيخ ← القاهرة'),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      // Card 2: بانتظار الرد
-      _buildTripCard(
-        context: context,
-        route: context.trRoute('طنطا ← الإسكندرية'),
-        dateText: isAr ? 'السبت 7 نوفمبر، 9:00 ص' : 'Sat Nov 7, 9:00 AM',
-        driverName: 'أحمد علي',
-        badgeText: isAr ? 'بانتظار الرد' : 'Waiting',
-        badgeType: BadgeType.underReview,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => BookingWaitingScreen(
-                ride: MockData.initialRides[1],
-                seatsCount: 1,
-                totalPrice: 110,
-              ),
-            ),
-          );
-        },
-      ),
-    ];
-
-    return _buildResponsiveCardList(cards, isWide);
-  }
-
-  Widget _buildPastRidesList(BuildContext context, bool isAr, {bool isWide = false}) {
-    final cards = <Widget>[
-      // Past Card 1: مكتمل
-      _buildTripCard(
-        context: context,
-        route: context.trRoute('القاهرة ← كفر الشيخ'),
-        dateText: isAr ? 'الأحد 25 أكتوبر' : 'Sun Oct 25',
-        driverName: 'منى حسن',
-        badgeText: isAr ? 'مكتمل' : 'Completed',
-        badgeType: BadgeType.verified,
-        actionButton: TextButton.icon(
-          style: TextButton.styleFrom(foregroundColor: AppColors.gold),
-          icon: const Icon(Icons.star_outline_rounded, size: 18),
-          label: Text(
-            isAr ? 'تقييم المشوار' : 'Rate Trip',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => RateTripScreen(
-                  driverName: 'منى حسن',
-                  route: context.trRoute('القاهرة ← كفر الشيخ'),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      // Past Card 2: ملغى
-      _buildTripCard(
-        context: context,
-        route: context.trRoute('طنطا ← القاهرة'),
-        dateText: isAr ? 'الخميس 22 أكتوبر' : 'Thu Oct 22',
-        driverName: 'أحمد علي',
-        badgeText: isAr ? 'ملغى' : 'Cancelled',
-        badgeType: BadgeType.rejected,
-      ),
-    ];
-
-    return _buildResponsiveCardList(cards, isWide);
-  }
-
-  Widget _buildTripCard({
+  Widget _buildUnifiedOrderCard({
     required BuildContext context,
+    required String categoryTag,
+    required Color categoryColor,
     required String route,
-    required String dateText,
-    required String driverName,
+    required String description,
     required String badgeText,
     required BadgeType badgeType,
+    String? otpCode,
+    required bool isAr,
     VoidCallback? onTap,
-    Widget? actionButton,
+    List<Widget>? actionButtons,
   }) {
     return InkWell(
       onTap: onTap,
@@ -510,53 +841,174 @@ class _MainNavShellState extends State<MainNavShell> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Top Row: Category pill & Status badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: categoryColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                   child: Text(
-                    route,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.title().copyWith(fontSize: 18),
+                    categoryTag,
+                    style: TextStyle(
+                      color: categoryColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
                 MashwarBadge(type: badgeType, customLabel: badgeText),
               ],
             ),
-            const SizedBox(height: 6),
-            Text(dateText, style: AppTypography.bodySecondary()),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    driverName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.label(color: AppColors.textSecondary),
-                  ),
-                ),
-                if (actionButton != null) actionButton,
-              ],
+            const SizedBox(height: 8),
+
+            // Route
+            Text(
+              route,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.title().copyWith(fontSize: 17),
             ),
+            const SizedBox(height: 6),
+
+            // Description
+            Text(
+              description,
+              style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+            ),
+
+            // OTP Guarantee Box if active
+            if (otpCode != null) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                ),
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    const Icon(Icons.lock_outline_rounded, size: 14, color: Color(0xFF16A34A)),
+                    Text(
+                      isAr ? 'كود أمان التسليم: ' : 'Security OTP: ',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF166534),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      otpCode,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF166534),
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            // Actions row
+            if (actionButtons != null && actionButtons.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: actionButtons,
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  // Page 35: My Parcels Tab (طرودي)
-  Widget _buildMyParcelsTab(BuildContext context, ParcelsProvider parcels, bool isAr) {
+  // ==========================================
+  // DIRECT MESSAGING TAB: الرسائل (Messages)
+  // ==========================================
+  Widget _buildMessagesTab(BuildContext context, bool isAr) {
+    final List<Map<String, dynamic>> allChats = [
+      {
+        'id': 'chat_1',
+        'name': 'محمد سعيد',
+        'verified': true,
+        'tag': isAr ? 'سفر تشاركي' : 'Carpooling',
+        'car': 'هيونداي إلنترا، أبيض (س ق ر 1942)',
+        'route': isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh ← Cairo',
+        'lastMsg': isAr
+            ? 'تمام يا غالي، أنا ركنت قدام الكافيه عند مدخل المحطة. سيارة بيضاء.'
+            : 'Great! I parked near the station entrance in a white car.',
+        'time': '7:22 ص',
+        'unread': 1,
+      },
+      {
+        'id': 'chat_2',
+        'name': 'أحمد نبيل',
+        'verified': true,
+        'tag': isAr ? 'قضاء مصلحة رسمية' : 'Official Errand',
+        'car': isAr ? 'استخراج شهادة ومستندات رسمية' : 'Document Pickup Service',
+        'route': isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+        'lastMsg': isAr
+            ? 'استلمت الظرف والمستندات الرسمية وجاري التحرك للموقف.'
+            : 'I collected the official envelope and heading to the station.',
+        'time': '11:15 ص',
+        'unread': 2,
+      },
+      {
+        'id': 'chat_3',
+        'name': 'طارق رضوان',
+        'verified': true,
+        'tag': isAr ? 'لوجستيات وتوريد' : 'Logistics',
+        'car': isAr ? 'نقل وتوريد بضائع ومستلزمات' : 'Goods & Commercial Cargo',
+        'route': isAr ? 'العتبة، القاهرة ← كفر الشيخ' : 'Attaba, Cairo ← Kafr El-Sheikh',
+        'lastMsg': isAr
+            ? 'وصلت نقطة التسليم أمام المحل التجاري في انتظار كود OTP.'
+            : 'Arrived at the shop drop-off, waiting for OTP code.',
+        'time': '1:45 م',
+        'unread': 0,
+      },
+      {
+        'id': 'chat_4',
+        'name': 'خالد السيد',
+        'verified': true,
+        'tag': isAr ? 'شحن أمانة وطرود' : 'Parcel Delivery',
+        'car': isAr ? 'طرد إلكترونيات وأمانات' : 'Parcel Delivery Service',
+        'route': isAr ? 'طنطا ← الإسكندرية' : 'Tanta ← Alexandria',
+        'lastMsg': isAr
+            ? 'تم تأكيد كود الاستلام بنجاح، شكراً لذوقك.'
+            : 'Delivery OTP confirmed successfully. Thank you!',
+        'time': isAr ? 'أمس' : 'Yesterday',
+        'unread': 0,
+      },
+    ];
+
+    final query = _messagesSearchController.text.trim().toLowerCase();
+    final filteredChats = query.isEmpty
+        ? allChats
+        : allChats.where((chat) {
+            final name = (chat['name'] as String).toLowerCase();
+            final lastMsg = (chat['lastMsg'] as String).toLowerCase();
+            final route = (chat['route'] as String).toLowerCase();
+            return name.contains(query) || lastMsg.contains(query) || route.contains(query);
+          }).toList();
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: Text(isAr ? 'طرودي' : 'My Parcels', style: AppTypography.title()),
+        title: Text(isAr ? 'الرسائل والمحادثات' : 'Messages', style: AppTypography.title()),
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -564,238 +1016,240 @@ class _MainNavShellState extends State<MainNavShell> {
             final isWide = constraints.maxWidth >= 760;
             return Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: isWide ? 1200 : 680),
+                constraints: BoxConstraints(maxWidth: isWide ? 1000 : 720),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Segmented Switch: قادمة vs سابقة (Page 35)
+                    // Search Field
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: 10),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: isWide ? 380 : double.infinity),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3F3F4),
+                      padding: const EdgeInsets.fromLTRB(AppDimens.space16, 12, AppDimens.space16, 6),
+                      child: TextField(
+                        controller: _messagesSearchController,
+                        onChanged: (_) => setState(() {}),
+                        decoration: InputDecoration(
+                          hintText: isAr ? 'بحث في الرسائل والأسماء...' : 'Search messages & names...',
+                          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy, size: 20),
+                          suffixIcon: _messagesSearchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear_rounded, size: 18),
+                                  onPressed: () {
+                                    _messagesSearchController.clear();
+                                    setState(() {});
+                                  },
+                                )
+                              : null,
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
                           ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _isUpcomingParcels = true),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 160),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: _isUpcomingParcels ? AppColors.navy : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        isAr ? 'قادمة' : 'Active',
-                                        style: AppTypography.bodySecondary(
-                                          color: _isUpcomingParcels ? Colors.white : AppColors.textPrimary,
-                                        ).copyWith(fontWeight: _isUpcomingParcels ? FontWeight.w700 : FontWeight.w500),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => setState(() => _isUpcomingParcels = false),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 160),
-                                    padding: const EdgeInsets.symmetric(vertical: 10),
-                                    decoration: BoxDecoration(
-                                      color: !_isUpcomingParcels ? AppColors.navy : Colors.transparent,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        isAr ? 'سابقة' : 'Delivered',
-                                        style: AppTypography.bodySecondary(
-                                          color: !_isUpcomingParcels ? Colors.white : AppColors.textPrimary,
-                                        ).copyWith(fontWeight: !_isUpcomingParcels ? FontWeight.w700 : FontWeight.w500),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.teal, width: 1.5),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 4),
 
-                    // Parcels List
+                    const SizedBox(height: 6),
+
+                    // Chat threads list
                     Expanded(
-                      child: _isUpcomingParcels
-                          ? _buildUpcomingParcelsList(context, parcels, isAr, isWide: isWide)
-                          : _buildPastParcelsList(context, isAr, isWide: isWide),
+                      child: filteredChats.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.chat_bubble_outline_rounded, size: 48, color: Color(0xFFC7C7CC)),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    isAr ? 'لا توجد محادثات مطابقة للبحث' : 'No matching chats found',
+                                    style: AppTypography.bodySecondary(),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
+                              itemCount: filteredChats.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final chat = filteredChats[index];
+                                final unread = (chat['unread'] as int?) ?? 0;
+                                return InkWell(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => ChatScreen(
+                                          driverName: chat['name'] as String,
+                                          driverCar: chat['car'] as String,
+                                          tripRoute: chat['route'] as String,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: unread > 0 ? AppColors.teal.withValues(alpha: 0.5) : const Color(0xFFE5E5EA),
+                                        width: unread > 0 ? 1.2 : 0.8,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.02),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // Avatar with verification badge
+                                        Stack(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 24,
+                                              backgroundColor: AppColors.navy.withValues(alpha: 0.1),
+                                              child: Text(
+                                                (chat['name'] as String).substring(0, 1),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                  color: AppColors.navy,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                            Positioned(
+                                              bottom: 0,
+                                              right: isAr ? null : 0,
+                                              left: isAr ? 0 : null,
+                                              child: Container(
+                                                padding: const EdgeInsets.all(2),
+                                                decoration: const BoxDecoration(
+                                                  color: Colors.white,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: const Icon(
+                                                  Icons.verified_rounded,
+                                                  size: 14,
+                                                  color: AppColors.teal,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(width: 12),
+
+                                        // Name, tags, and message snippet
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                children: [
+                                                  Flexible(
+                                                    child: Text(
+                                                      chat['name'] as String,
+                                                      maxLines: 1,
+                                                      overflow: TextOverflow.ellipsis,
+                                                      style: AppTypography.title().copyWith(fontSize: 15),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    chat['time'] as String,
+                                                    style: AppTypography.bodySmall(color: AppColors.textSecondary),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+
+                                              // Category tag & route
+                                              Wrap(
+                                                spacing: 6,
+                                                runSpacing: 4,
+                                                crossAxisAlignment: WrapCrossAlignment.center,
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(0xFFF1F5F9),
+                                                      borderRadius: BorderRadius.circular(4),
+                                                    ),
+                                                    child: Text(
+                                                      chat['tag'] as String,
+                                                      style: const TextStyle(
+                                                        fontSize: 10,
+                                                        color: AppColors.navy,
+                                                        fontWeight: FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    '· ${chat['route']}',
+                                                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 6),
+
+                                              // Message text
+                                              Text(
+                                                chat['lastMsg'] as String,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: AppTypography.bodySecondary(
+                                                  color: unread > 0 ? AppColors.textPrimary : AppColors.textSecondary,
+                                                ).copyWith(
+                                                  fontWeight: unread > 0 ? FontWeight.w700 : FontWeight.w400,
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        // Unread Badge
+                                        if (unread > 0) ...[
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                            decoration: const BoxDecoration(
+                                              color: AppColors.teal,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Text(
+                                              '$unread',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                     ),
                   ],
                 ),
               ),
             );
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUpcomingParcelsList(BuildContext context, ParcelsProvider parcels, bool isAr, {bool isWide = false}) {
-    final cards = parcels.parcels
-        .map(
-          (parcelItem) => _buildParcelCard(
-            context: context,
-            route: context.trRoute(parcelItem.route.split(' · ').first),
-            descText: isAr
-                ? '${parcelItem.description} · مع السائق ${parcelItem.driverName}'
-                : '${parcelItem.description} · With driver ${parcelItem.driverName}',
-            badgeText: isAr ? 'في الطريق' : 'In Transit',
-            badgeType: BadgeType.confirmed,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ParcelTrackingScreen(
-                    parcel: parcelItem,
-                  ),
-                ),
-              );
-            },
-            actionButton: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.teal,
-                side: const BorderSide(color: AppColors.teal),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-              label: Text(isAr ? 'محادثة الناقل' : 'Chat Carrier'),
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ChatScreen(
-                      driverName: parcelItem.driverName,
-                      driverCar: isAr
-                          ? 'توصيل طرد ${parcelItem.route}'
-                          : 'Parcel: ${parcelItem.route}',
-                      tripRoute: isAr
-                          ? 'كود الاستلام: ${parcelItem.pickupOtp}'
-                          : 'Pickup OTP: ${parcelItem.pickupOtp}',
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        )
-        .toList();
-
-    return _buildResponsiveCardList(cards, isWide);
-  }
-
-  Widget _buildPastParcelsList(BuildContext context, bool isAr, {bool isWide = false}) {
-    final cards = <Widget>[
-      // Past Parcel 1: تم التسليم
-      _buildParcelCard(
-        context: context,
-        route: context.trRoute('الإسكندرية ← كفر الشيخ'),
-        descText: isAr ? 'ملابس · تم التسليم 28 أكتوبر' : 'Clothes · Delivered Oct 28',
-        badgeText: isAr ? 'تم التسليم' : 'Delivered',
-        badgeType: BadgeType.verified,
-        actionButton: TextButton.icon(
-          style: TextButton.styleFrom(foregroundColor: AppColors.gold),
-          icon: const Icon(Icons.star_outline_rounded, size: 18),
-          label: Text(isAr ? 'تقييم الشحن' : 'Rate Shipping', style: const TextStyle(fontWeight: FontWeight.bold)),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => RateTripScreen(
-                  driverName: 'أحمد علي',
-                  route: context.trRoute('الإسكندرية ← كفر الشيخ'),
-                  isParcel: true,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-      // Past Parcel 2: متنازع عليه (Page 35)
-      _buildParcelCard(
-        context: context,
-        route: context.trRoute('طنطا ← القاهرة'),
-        descText: isAr ? 'هدية · 12 أكتوبر' : 'Gift · Oct 12',
-        badgeText: isAr ? 'متنازع عليه' : 'Disputed',
-        badgeType: BadgeType.rejected,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ParcelDisputeScreen(reportId: '#4821')),
-          );
-        },
-      ),
-    ];
-
-    return _buildResponsiveCardList(cards, isWide);
-  }
-
-  Widget _buildParcelCard({
-    required BuildContext context,
-    required String route,
-    required String descText,
-    required String badgeText,
-    required BadgeType badgeType,
-    VoidCallback? onTap,
-    Widget? actionButton,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(AppDimens.space16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    route,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.title().copyWith(fontSize: 18),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                MashwarBadge(type: badgeType, customLabel: badgeText),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(descText, style: AppTypography.bodySecondary()),
-            if (actionButton != null) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: actionButton,
-              ),
-            ],
-          ],
         ),
       ),
     );

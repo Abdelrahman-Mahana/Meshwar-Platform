@@ -36,7 +36,13 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
         ? 'أقدر أستلم الطرد وأوصّله في ميعاد رحلتي'
         : widget.ad.type == BoardAdType.rideOffer
             ? 'محتاج أحجز معاك في الرحلة دي'
-            : 'أقدر أعدّي عليك في طريقي';
+            : widget.ad.type == BoardAdType.errandService
+                ? 'نازل في نفس الموعد ومستعد أقضي لك المصلحة وأجيب الورق'
+                : widget.ad.type == BoardAdType.localTrip
+                    ? 'أنا قريب من موقعك ومعايا وسيلة وأقدر أوصلك فوراً'
+                    : widget.ad.type == BoardAdType.goodsDelivery
+                        ? 'مستعد أنقل البضاعة للمحل بسلامة مع كود التسليم'
+                        : 'أقدر أعدّي عليك في طريقي';
     _noteController = TextEditingController(text: defaultNote);
   }
 
@@ -83,6 +89,12 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
       primaryButtonLabel = isAr ? 'أقدر أوصّل الطرد' : 'I Can Deliver This Parcel';
     } else if (currentAd.type == BoardAdType.rideOffer) {
       primaryButtonLabel = isAr ? 'طلب حجز / تقديم عرض' : 'Request Seat / Make Offer';
+    } else if (currentAd.type == BoardAdType.localTrip) {
+      primaryButtonLabel = isAr ? 'أقدر أوصلك دلوقتي' : 'I Can Take This Ride';
+    } else if (currentAd.type == BoardAdType.errandService) {
+      primaryButtonLabel = isAr ? 'مستعد أقضي المصلحة' : 'I Can Fulfill This Errand';
+    } else if (currentAd.type == BoardAdType.goodsDelivery) {
+      primaryButtonLabel = isAr ? 'مستعد أنقل البضاعة' : 'I Can Deliver Goods';
     } else {
       primaryButtonLabel = isAr ? 'قدّم عرض توصيل' : 'Make a Ride Offer';
     }

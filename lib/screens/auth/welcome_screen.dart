@@ -198,174 +198,19 @@ class WelcomeScreen extends StatelessWidget {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 840;
-            if (isWide) {
-              return _buildWideSplitLayout(context, settings, isAr, constraints);
-            }
-            return _buildMobileLayout(context, settings, isAr, constraints);
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: _buildSingleLayout(context, settings, isAr, constraints),
+              ),
+            );
           },
         ),
       ),
     );
   }
 
-  Widget _buildWideSplitLayout(
-    BuildContext context,
-    SettingsProvider settings,
-    bool isAr,
-    BoxConstraints constraints,
-  ) {
-    return Row(
-      children: [
-        // Left/Start Brand Showcase Panel
-        Expanded(
-          flex: 6,
-          child: Container(
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.navy, Color(0xFF14385A)],
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-              ),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: (constraints.maxHeight - 80).clamp(0.0, double.infinity),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Brand Logo & Headline
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const BrandLogo(fontSize: 48, isLight: true),
-                        const SizedBox(height: 16),
-                        Text(
-                          isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
-                          style: AppTypography.title(color: Colors.white.withValues(alpha: 0.92)).copyWith(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          isAr
-                              ? 'منصة السفر التشاركي ونقل الطرود بين المحافظات المصرية بأمان وشفافية.'
-                              : 'Egypt’s intercity carpooling & peer-to-peer parcel network with verified members.',
-                          style: AppTypography.body(color: Colors.white70).copyWith(fontSize: 15),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // Architectural Service Highlights (not cluttered pills)
-                    Column(
-                      children: [
-                        _buildWideFeatureCard(
-                          icon: Icons.route_rounded,
-                          title: isAr ? 'تغطية شاملة لـ 27 محافظة' : 'All 27 Governorates Covered',
-                          subtitle: isAr
-                              ? 'تشارك المقاعد الفارغة يومياً بين القاهرة والدلتا والصعيد والساحل.'
-                              : 'Share intercity seats daily between Cairo, Delta, Upper Egypt & Coast.',
-                        ),
-                        const SizedBox(height: 14),
-                        _buildWideFeatureCard(
-                          icon: Icons.verified_user_outlined,
-                          title: isAr ? 'مجتمع موثق ومراقب لحظياً' : 'Verified Community & Live Tracking',
-                          subtitle: isAr
-                              ? 'مراجعة بطاقة الرقم القومي وتقييمات حقيقية ومشاركة مسار الرحلة.'
-                              : 'National ID checks, authentic ratings, and real-time trip sharing.',
-                        ),
-                        const SizedBox(height: 14),
-                        _buildWideFeatureCard(
-                          icon: Icons.inventory_2_outlined,
-                          title: isAr ? 'شحن طرود ذكي بكود استلام' : 'OTP-Protected Parcel Delivery',
-                          subtitle: isAr
-                              ? 'سلّم طردك مع مسافر متجه لنفس مدينتك ولا يتم التسليم إلا بكود OTP.'
-                              : 'Send parcels with travelers heading your way, verified with pickup OTP.',
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Bottom Coverage Metric Strip
-                    Row(
-                      children: [
-                        _buildShowcaseMetric(isAr ? '27' : '27', isAr ? 'محافظة مصرية' : 'Governorates'),
-                        const SizedBox(width: 32),
-                        _buildShowcaseMetric('4.9 ★', isAr ? 'تقييم المسافرين' : 'Rider Rating'),
-                        const SizedBox(width: 32),
-                        _buildShowcaseMetric('24/7', isAr ? 'دعم ومتابعة' : 'Live Support'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // Right/End Authentication Form Area
-        Expanded(
-          flex: 5,
-          child: Container(
-            height: double.infinity,
-            color: Colors.white,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: (constraints.maxHeight - 56).clamp(0.0, double.infinity),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: _buildLanguageButton(settings, isAr),
-                    ),
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 400),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              isAr ? 'ابدأ رحلتك الآن' : 'Get started',
-                              style: AppTypography.largeTitle().copyWith(fontSize: 28),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              isAr
-                                  ? 'اختر وسيلة الدخول المناسبة للمتابعة إلى حسابك في مشوار'
-                                  : 'Choose how you would like to sign in or create your MASHWAR account',
-                              style: AppTypography.bodySecondary(),
-                            ),
-                            const SizedBox(height: 28),
-                            _buildAuthActions(context, isAr),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMobileLayout(
+  Widget _buildSingleLayout(
     BuildContext context,
     SettingsProvider settings,
     bool isAr,
@@ -427,67 +272,6 @@ class WelcomeScreen extends StatelessWidget {
         style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.bold),
       ),
       onPressed: () => settings.toggleLanguage(),
-    );
-  }
-
-  Widget _buildWideFeatureCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: AppColors.gold, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTypography.body(color: Colors.white).copyWith(fontWeight: FontWeight.w700, fontSize: 15),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: AppTypography.label(color: Colors.white70).copyWith(fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildShowcaseMetric(String value, String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: AppTypography.title(color: AppColors.gold).copyWith(fontSize: 22, fontWeight: FontWeight.w800),
-        ),
-        Text(
-          label,
-          style: AppTypography.label(color: Colors.white70),
-        ),
-      ],
     );
   }
 

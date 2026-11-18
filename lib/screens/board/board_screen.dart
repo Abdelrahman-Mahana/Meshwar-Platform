@@ -272,19 +272,34 @@ class _BoardScreenState extends State<BoardScreen> {
                                     onTap: () => board.setSelectedType(BoardAdType.all),
                                   ),
                                   MashwarChip(
-                                    label: isAr ? 'رحلات' : 'Rides',
+                                    label: isAr ? 'سفر بين المحافظات' : 'Inter-city Rides',
                                     isSelected: board.selectedType == BoardAdType.rideOffer,
                                     onTap: () => board.setSelectedType(BoardAdType.rideOffer),
                                   ),
                                   MashwarChip(
-                                    label: isAr ? 'طلب مشوار' : 'Ride Request',
-                                    isSelected: board.selectedType == BoardAdType.rideRequest,
-                                    onTap: () => board.setSelectedType(BoardAdType.rideRequest),
+                                    label: isAr ? 'انتقال ومشاوير محلية' : 'Local Mobility',
+                                    isSelected: board.selectedType == BoardAdType.localTrip,
+                                    onTap: () => board.setSelectedType(BoardAdType.localTrip),
                                   ),
                                   MashwarChip(
-                                    label: isAr ? 'طلب طرد' : 'Parcel Request',
+                                    label: isAr ? 'قضاء مصالح وخدمات' : 'Errands & Services',
+                                    isSelected: board.selectedType == BoardAdType.errandService,
+                                    onTap: () => board.setSelectedType(BoardAdType.errandService),
+                                  ),
+                                  MashwarChip(
+                                    label: isAr ? 'لوجستيات وتوريدات' : 'Logistics & Supplies',
+                                    isSelected: board.selectedType == BoardAdType.goodsDelivery,
+                                    onTap: () => board.setSelectedType(BoardAdType.goodsDelivery),
+                                  ),
+                                  MashwarChip(
+                                    label: isAr ? 'شحن وتوصيل أمانات' : 'Parcels & Cargo',
                                     isSelected: board.selectedType == BoardAdType.parcelRequest,
                                     onTap: () => board.setSelectedType(BoardAdType.parcelRequest),
+                                  ),
+                                  MashwarChip(
+                                    label: isAr ? 'طلب سفر ونقل' : 'Travel Requests',
+                                    isSelected: board.selectedType == BoardAdType.rideRequest,
+                                    onTap: () => board.setSelectedType(BoardAdType.rideRequest),
                                   ),
                                 ],
                               ),
@@ -316,21 +331,39 @@ class _BoardScreenState extends State<BoardScreen> {
                             ),
                             const SizedBox(width: 8),
                             MashwarChip(
-                              label: isAr ? 'رحلات' : 'Rides',
+                              label: isAr ? 'سفر بين المحافظات' : 'Inter-city Rides',
                               isSelected: board.selectedType == BoardAdType.rideOffer,
                               onTap: () => board.setSelectedType(BoardAdType.rideOffer),
                             ),
                             const SizedBox(width: 8),
                             MashwarChip(
-                              label: isAr ? 'طلب مشوار' : 'Ride Request',
-                              isSelected: board.selectedType == BoardAdType.rideRequest,
-                              onTap: () => board.setSelectedType(BoardAdType.rideRequest),
+                              label: isAr ? 'انتقال ومشاوير محلية' : 'Local Mobility',
+                              isSelected: board.selectedType == BoardAdType.localTrip,
+                              onTap: () => board.setSelectedType(BoardAdType.localTrip),
                             ),
                             const SizedBox(width: 8),
                             MashwarChip(
-                              label: isAr ? 'طلب طرد' : 'Parcel Request',
+                              label: isAr ? 'قضاء مصالح وخدمات' : 'Errands & Services',
+                              isSelected: board.selectedType == BoardAdType.errandService,
+                              onTap: () => board.setSelectedType(BoardAdType.errandService),
+                            ),
+                            const SizedBox(width: 8),
+                            MashwarChip(
+                              label: isAr ? 'لوجستيات وتوريدات' : 'Logistics & Supplies',
+                              isSelected: board.selectedType == BoardAdType.goodsDelivery,
+                              onTap: () => board.setSelectedType(BoardAdType.goodsDelivery),
+                            ),
+                            const SizedBox(width: 8),
+                            MashwarChip(
+                              label: isAr ? 'شحن وتوصيل أمانات' : 'Parcels & Cargo',
                               isSelected: board.selectedType == BoardAdType.parcelRequest,
                               onTap: () => board.setSelectedType(BoardAdType.parcelRequest),
+                            ),
+                            const SizedBox(width: 8),
+                            MashwarChip(
+                              label: isAr ? 'طلب سفر ونقل' : 'Travel Requests',
+                              isSelected: board.selectedType == BoardAdType.rideRequest,
+                              onTap: () => board.setSelectedType(BoardAdType.rideRequest),
                             ),
                           ],
                         ),
@@ -476,22 +509,37 @@ class _BoardScreenState extends State<BoardScreen> {
     switch (ad.type) {
       case BoardAdType.parcelRequest:
         typeColor = AppColors.teal;
-        typeLabel = isAr ? 'طلب طرد' : 'Parcel Request';
+        typeLabel = isAr ? 'شحن طرد' : 'Parcel Request';
         typeIcon = Icons.inventory_2_outlined;
         break;
       case BoardAdType.rideRequest:
         typeColor = AppColors.warning;
-        typeLabel = isAr ? 'طلب مشوار' : 'Ride Request';
+        typeLabel = isAr ? 'طلب سفر تشاركي' : 'Ride Request';
         typeIcon = Icons.person_search_outlined;
         break;
       case BoardAdType.rideOffer:
         typeColor = AppColors.navy;
-        typeLabel = isAr ? 'عرض توصيل' : 'Ride Offer';
+        typeLabel = isAr ? 'عرض سفر (كراسي)' : 'Ride Offer';
         typeIcon = Icons.directions_car_outlined;
+        break;
+      case BoardAdType.localTrip:
+        typeColor = const Color(0xFFE65100);
+        typeLabel = isAr ? 'مشوار محلي وتوصيلة' : 'Local Ride';
+        typeIcon = Icons.two_wheeler_outlined;
+        break;
+      case BoardAdType.errandService:
+        typeColor = const Color(0xFF6A1B9A);
+        typeLabel = isAr ? 'قضاء مصلحة وأوراق' : 'Inter-city Errand';
+        typeIcon = Icons.description_outlined;
+        break;
+      case BoardAdType.goodsDelivery:
+        typeColor = const Color(0xFF00695C);
+        typeLabel = isAr ? 'نقل بضاعة لمحل' : 'Goods Delivery';
+        typeIcon = Icons.local_shipping_outlined;
         break;
       case BoardAdType.all:
         typeColor = AppColors.navy;
-        typeLabel = isAr ? 'إعلان' : 'Ad';
+        typeLabel = isAr ? 'مشوار أو خدمة' : 'Service';
         typeIcon = Icons.campaign_outlined;
         break;
     }
@@ -519,10 +567,16 @@ class _BoardScreenState extends State<BoardScreen> {
       buttonText = isAr ? 'عرض العروض' : 'View Offers';
     } else if (isOfferSent) {
       buttonText = isAr ? 'عرضك (${ad.myOfferPrice ?? ad.priceOrBudget} ج)' : 'Your Offer (${ad.myOfferPrice ?? ad.priceOrBudget})';
+    } else if (ad.type == BoardAdType.rideOffer) {
+      buttonText = isAr ? 'احجز كرسي / تفاوض' : 'Book Seat / Offer';
+    } else if (ad.type == BoardAdType.localTrip) {
+      buttonText = isAr ? 'أقدر أوصلك' : 'I can take it';
+    } else if (ad.type == BoardAdType.errandService) {
+      buttonText = isAr ? 'أقضي المصلحة' : 'I can do errand';
+    } else if (ad.type == BoardAdType.goodsDelivery) {
+      buttonText = isAr ? 'أنقل البضاعة' : 'I can transport';
     } else if (ad.type == BoardAdType.parcelRequest) {
       buttonText = isAr ? 'أقدر أوصّلها' : 'I can deliver it';
-    } else if (ad.type == BoardAdType.rideOffer) {
-      buttonText = isAr ? 'احجز / قدّم عرض' : 'Book / Offer';
     } else {
       buttonText = isAr ? 'قدّم عرض' : 'Make Offer';
     }
@@ -555,63 +609,67 @@ class _BoardScreenState extends State<BoardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header: Author, rating, relative time, and type badge
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  runSpacing: 6,
                   children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 38,
-                            height: 38,
-                            decoration: BoxDecoration(
-                              color: typeColor.withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(typeIcon, color: typeColor, size: 20),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: typeColor.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
                           ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          child: Icon(typeIcon, color: typeColor, size: 18),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
-                                        ad.authorName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
-                                      ),
-                                    ),
-                                    if (ad.isVerified) ...[
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.verified_rounded, size: 15, color: AppColors.teal),
-                                    ],
-                                  ],
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 130),
+                                  child: Text(
+                                    ad.authorName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                                  ),
                                 ),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.star_rounded, size: 14, color: AppColors.gold),
-                                    Text('${ad.authorRating}', style: AppTypography.label()),
-                                    Flexible(
-                                      child: Text(
-                                        ' · ${context.trDate(ad.timeAgo)}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTypography.label(color: AppColors.textSecondary),
-                                      ),
-                                    ),
-                                  ],
+                                if (ad.isVerified) ...[
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.verified_rounded, size: 14, color: AppColors.teal),
+                                ],
+                              ],
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star_rounded, size: 14, color: AppColors.gold),
+                                Text('${ad.authorRating}', style: AppTypography.label()),
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 110),
+                                  child: Text(
+                                    ' · ${context.trDate(ad.timeAgo)}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.label(color: AppColors.textSecondary),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

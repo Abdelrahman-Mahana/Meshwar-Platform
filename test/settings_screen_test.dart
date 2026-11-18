@@ -4,18 +4,21 @@ import 'package:provider/provider.dart';
 
 import 'package:mashwar/core/widgets/mashwar_button.dart';
 import 'package:mashwar/screens/settings/settings_screen.dart';
+import 'package:mashwar/state/alerts_provider.dart';
 import 'package:mashwar/state/auth_provider.dart';
 import 'package:mashwar/state/settings_provider.dart';
 
 void main() {
-  Widget buildSettingsWidget({AuthProvider? auth, SettingsProvider? settings}) {
+  Widget buildSettingsWidget({AuthProvider? auth, SettingsProvider? settings, AlertsProvider? alerts}) {
     final authProvider = auth ?? AuthProvider();
     final settingsProvider = settings ?? SettingsProvider();
+    final alertsProvider = alerts ?? AlertsProvider();
 
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ChangeNotifierProvider<SettingsProvider>.value(value: settingsProvider),
+        ChangeNotifierProvider<AlertsProvider>.value(value: alertsProvider),
       ],
       child: MaterialApp(
         title: 'مشوار',

@@ -1,8 +1,11 @@
 enum BoardAdType {
   all,
-  rideOffer,     // رحلات
-  rideRequest,   // طلب مشوار
-  parcelRequest, // طلب طرد
+  rideOffer,     // عرض سفر / كراسي فاضية بعربية
+  rideRequest,   // طلب سفر تشاركي
+  localTrip,     // انتقال ومشاوير محلية ومركبات فورية
+  errandService, // قضاء مصلحة / إحضار أوراق ومستندات
+  goodsDelivery, // توصيل ونقل بضائع ومستلزمات محلات
+  parcelRequest, // شحن طرد أو شنطة
 }
 
 enum BoardAdStatus {
@@ -48,9 +51,47 @@ class BoardAdModel {
   });
 
   String get timeAgo => postedAgo;
-  double get authorRating => 4.8;
+  double get authorRating => 4.9;
   String get route => '$fromCity ← $toCity';
   int get suggestedPrice => priceOrBudget;
+
+  String typeTitle(bool isAr) {
+    switch (type) {
+      case BoardAdType.rideOffer:
+        return isAr ? 'سفر بين المحافظات' : 'Inter-city Travel';
+      case BoardAdType.rideRequest:
+        return isAr ? 'طلب سفر بين المحافظات' : 'Travel Request';
+      case BoardAdType.localTrip:
+        return isAr ? 'انتقال ومشاوير محلية' : 'Local Mobility';
+      case BoardAdType.errandService:
+        return isAr ? 'قضاء مصالح وخدمات رسمية' : 'Official Errand Service';
+      case BoardAdType.goodsDelivery:
+        return isAr ? 'لوجستيات وتوريد بضائع' : 'Commercial Logistics';
+      case BoardAdType.parcelRequest:
+        return isAr ? 'شحن وتوصيل أمانات' : 'Express Delivery';
+      case BoardAdType.all:
+        return isAr ? 'كافة الخدمات والمشاوير' : 'All Services';
+    }
+  }
+
+  String priceTagLabel(bool isAr) {
+    switch (type) {
+      case BoardAdType.rideOffer:
+        return isAr ? 'للمقعد' : 'Per Seat';
+      case BoardAdType.rideRequest:
+        return isAr ? 'الميزانية' : 'Budget';
+      case BoardAdType.localTrip:
+        return isAr ? 'أجرة الانتقال' : 'Fare';
+      case BoardAdType.errandService:
+        return isAr ? 'أتعاب الخدمة' : 'Service Fee';
+      case BoardAdType.goodsDelivery:
+        return isAr ? 'أجرة التوريد' : 'Freight';
+      case BoardAdType.parcelRequest:
+        return isAr ? 'أجرة الشحن' : 'Delivery Fee';
+      case BoardAdType.all:
+        return isAr ? 'السعر' : 'Price';
+    }
+  }
 
   BoardAdModel copyWith({
     String? id,

@@ -99,172 +99,19 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 840;
-            if (isWide) {
-              return _buildWideSplitLayout(context, auth, isAr, hasError, constraints);
-            }
-            return _buildMobileLayout(context, auth, isAr, hasError, constraints);
+            return Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: _buildSingleLayout(context, auth, isAr, hasError, constraints),
+              ),
+            );
           },
         ),
       ),
     );
   }
 
-  Widget _buildWideSplitLayout(
-    BuildContext context,
-    AuthProvider auth,
-    bool isAr,
-    bool hasError,
-    BoxConstraints constraints,
-  ) {
-    return Row(
-      children: [
-        // Left Showcase Panel
-        Expanded(
-          flex: 6,
-          child: Container(
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.navy, Color(0xFF14385A)],
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-              ),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 40),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: (constraints.maxHeight - 80).clamp(0.0, double.infinity),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const BrandLogo(fontSize: 48, isLight: true),
-                        const SizedBox(height: 18),
-                        Text(
-                          isAr ? 'سفر موثق وآمن برقم موبايلك' : 'Verified & Secure Intercity Travel',
-                          style: AppTypography.title(color: Colors.white).copyWith(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          isAr
-                              ? 'رقم هاتفك هو وسيلة التحقق الأساسية لحجز المقاعد ومتابعة الرحلات بأعلى درجات الأمان والخصوصية.'
-                              : 'Your phone number is the primary verification key for secure intercity rides and privacy.',
-                          style: AppTypography.body(color: Colors.white70).copyWith(fontSize: 15, height: 1.6),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // Right Phone Input Form Area
-        Expanded(
-          flex: 5,
-          child: Container(
-            height: double.infinity,
-            color: Colors.white,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: (constraints.maxHeight - 64).clamp(0.0, double.infinity),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 420),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Step Indicator Badge
-                            _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
-                            const SizedBox(height: 14),
-
-                            // Title
-                            Text(
-                              isAr ? 'أدخل رقم موبايلك' : 'Enter your mobile number',
-                              style: AppTypography.largeTitle().copyWith(fontSize: 26),
-                            ),
-                            const SizedBox(height: 6),
-
-                            // Subtitle
-                            Text(
-                              isAr ? 'هنبعتلك كود تأكيد عبر رسالة SMS' : 'We will send you a verification code via SMS',
-                              style: AppTypography.bodySecondary(),
-                            ),
-                            const SizedBox(height: 22),
-
-                            // Input Label
-                            Text(
-                              isAr ? 'رقم الهاتف المحمول' : 'Mobile Phone Number',
-                              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 8),
-
-                            // Phone input field card
-                            _buildPhoneInputField(hasError: hasError, isAr: isAr),
-                            const SizedBox(height: 10),
-
-                            // Helper / Error
-                            _buildHelperOrError(hasError: hasError, isAr: isAr),
-                            const SizedBox(height: 24),
-
-                            // Submit Button
-                            MashwarButton(
-                              text: isAr ? 'إرسال الكود' : 'Send Code',
-                              isLoading: auth.isLoading,
-                              onPressed: () => _handleSubmit(isAr),
-                            ),
-                            const SizedBox(height: 16),
-
-                            // Switch to email
-                            Center(
-                              child: TextButton.icon(
-                                icon: const Icon(Icons.mail_outline_rounded, size: 18, color: AppColors.navy),
-                                onPressed: () {
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(builder: (_) => const EmailInputScreen()),
-                                  );
-                                },
-                                label: Text(
-                                  isAr ? 'المتابعة بالبريد الإلكتروني بدلاً من ذلك' : 'Continue with email instead',
-                                  style: AppTypography.body(color: AppColors.navy).copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMobileLayout(
+  Widget _buildSingleLayout(
     BuildContext context,
     AuthProvider auth,
     bool isAr,

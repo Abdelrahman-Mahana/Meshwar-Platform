@@ -185,11 +185,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final ad = activeAds[index];
-        final typeLabel = ad.type == BoardAdType.parcelRequest
-            ? (isAr ? 'طلب طرد' : 'Parcel Request')
-            : (ad.type == BoardAdType.rideOffer
-                ? (isAr ? 'عرض رحلة' : 'Ride Offer')
-                : (isAr ? 'طلب مشوار' : 'Ride Request'));
+        final typeLabel = ad.typeTitle(isAr);
         return _buildAdCard(
           typeLabel: typeLabel,
           route: context.trRoute('${ad.fromCity} ← ${ad.toCity}'),

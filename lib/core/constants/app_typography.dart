@@ -53,6 +53,14 @@ class AppTypography {
         height: 1.4,
       );
 
+  // نص صغير 12 / 500
+  static TextStyle bodySmall({Color color = AppColors.textSecondary}) => _cairo(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: color,
+        height: 1.35,
+      );
+
   // تسمية 12 / 600
   static TextStyle label({Color color = AppColors.textSecondary}) => _cairo(
         fontSize: 12,
