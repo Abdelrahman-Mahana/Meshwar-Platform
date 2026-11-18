@@ -1,0 +1,1098 @@
+rules_version = '2';
+
+// ==============================================================================
+// Assumed Data Model & Schema Invariants
+// ==============================================================================
+//
+// Platform: MASHWAR (مشوار) Egyptian Carpooling & Crowd-Shipping Platform
+//
+// Collections & Document Structure:
+//
+// 1. users/{userId}
+//    Document ID: Firebase Auth UID (`request.auth.uid`)
+//    Fields:
+//      - id: string (required, immutable) - Must match document ID / auth UID
+//      - fullName: string (required, 2-100 chars)
+//      - phone: string (required, 10-20 chars) - Egyptian phone number
+//      - gender: string (required, enum: 'male', 'female', 'preferNotToSay')
+//      - avatarUrl: string (optional, <= 500 chars)
+//      - isVerified: bool (required, server/admin verified driver flag)
+//      - hasActiveAlerts: bool (optional)
+//      - hasUpcomingBooking: bool (optional)
+//      - governorate: string (optional, <= 50 chars)
+//      - city: string (optional, <= 50 chars)
+//      - birthDate: string (optional, <= 20 chars)
+//      - email: string (optional, <= 100 chars)
+//      - emergencyContactName: string (optional, <= 100 chars)
+//      - emergencyContactPhone: string (optional, <= 20 chars, sensitive PII)
+//      - occupation: string (optional, <= 100 chars)
+//      - smokingPreference: string (optional, <= 50 chars)
+//      - tripVibe: string (optional, <= 50 chars)
+//      - ladiesOnlyPreference: bool (optional)
+//      - idVerificationStatus: string (required, enum: 'unverified', 'underReview', 'verified', 'rejected')
+//      - nationalId: string (optional, 14-20 chars, sensitive Egyptian National ID)
+//      - idFrontImage: string (optional, <= 500 chars, sensitive ID photo)
+//      - idBackImage: string (optional, <= 500 chars, sensitive ID photo)
+//      - selfieImage: string (optional, <= 500 chars, sensitive verification photo)
+//      - idRejectionReason: string (optional, <= 500 chars)
+//      - walletBalance: number (required, >= 0, server/admin managed ledger)
+//      - rating: number (required, 0.0 - 5.0, computed by server)
+//      - completedRides: int (required, >= 0, computed by server)
+//      - completedParcels: int (required, >= 0, computed by server)
+//      - createdAt: timestamp (optional)
+//      - updatedAt: timestamp (optional)
+//
+// 2. rides/{rideId}
+//    Document ID: Unique ride identifier (e.g., UUID or push ID)
+//    Fields:
+//      - id: string (required, immutable)
+//      - driverId: string (required, immutable) - Must match request.auth.uid
+//      - driverName: string (required, 2-100 chars)
+//      - driverCar: string (required, 2-100 chars)
+//      - driverPhone: string (required, 10-20 chars)
+//      - fromCity: string (required, 1-100 chars)
+//      - toCity: string (required, 1-100 chars)
+//      - pickupPoint: string (required, 1-200 chars)
+//      - dropoffPoint: string (required, 1-200 chars)
+//      - departureTime: string (required, 1-50 chars)
+//      - departureDate: string (required, 1-50 chars)
+//      - remainingSeats: int (required, 0 - 10)
+//      - pricePerSeat: number (required, 0 - 5000 EGP)
+//      - acceptsParcels: bool (optional)
+//      - parcelPrice: number (optional, 0 - 5000 EGP)
+//      - isVerified: bool (optional)
+//      - isLadiesOnly: bool (optional)
+//      - isInstantBooking: bool (optional)
+//      - driverRating: number (optional, 0.0 - 5.0)
+//      - status: string (optional, enum: 'active', 'completed', 'cancelled')
+//      - createdAt: timestamp (optional, immutable)
+//      - updatedAt: timestamp (optional)
+//
+// 3. board_ads/{adId}
+//    Document ID: Unique ad identifier
+//    Fields:
+//      - id: string (required, immutable)
+//      - authorId: string (required, immutable) - Must match request.auth.uid
+//      - type: string (required, enum: 'all', 'rideOffer', 'rideRequest', 'localTrip', 'errandService', 'goodsDelivery', 'parcelRequest')
+//      - authorName: string (required, 2-100 chars)
+//      - isVerified: bool (optional)
+//      - tripCount: int (optional, >= 0)
+//      - postedAgo: string (optional, <= 100 chars)
+//      - fromCity: string (required, 1-100 chars)
+//      - toCity: string (required, 1-100 chars)
+//      - timeText: string (required, 1-150 chars)
+//      - description: string (required, 1-1000 chars)
+//      - priceOrBudget: number (required, 0 - 50000 EGP)
+//      - notes: string (optional, <= 500 chars)
+//      - isLadiesOnly: bool (optional)
+//      - status: string (required, enum: 'active', 'offerSent', 'completed', 'expired', 'cancelled')
+//      - myOfferPrice: number (optional)
+//      - createdAt: timestamp (optional, immutable)
+//      - updatedAt: timestamp (optional)
+//
+// 4. board_ads/{adId}/offers/{offerId}
+//    Subcollection under board_ads
+//    Fields:
+//      - id: string (required, immutable)
+//      - adId: string (required, immutable) - Must match parent adId
+//      - driverId: string (required, immutable) - Must match request.auth.uid
+//      - driverName: string (required, 2-100 chars)
+//      - offerPrice: number (required, 1 - 50000 EGP)
+//      - timeText: string (required, 1-150 chars)
+//      - status: string (required, enum: 'pending', 'accepted', 'rejected', 'withdrawn')
+//      - notes: string (optional, <= 500 chars)
+//      - createdAt: timestamp (optional, immutable)
+//      - updatedAt: timestamp (optional)
+//
+// 5. parcels/{parcelId}
+//    Document ID: Unique parcel tracking code/id
+//    Fields:
+//      - id: string (required, immutable)
+//      - senderId: string (required, immutable) - Must match request.auth.uid on create
+//      - senderName: string (optional, 2-100 chars)
+//      - senderPhone: string (optional, 10-20 chars)
+//      - driverId: string (optional, carrier UID, <= 128 chars)
+//      - driverName: string (optional, <= 100 chars)
+//      - receiverId: string (optional, recipient UID, <= 128 chars)
+//      - receiverName: string (required, 2-100 chars)
+//      - receiverPhone: string (required, 10-20 chars)
+//      - route: string (required, 1-200 chars)
+//      - fromCity: string (optional, <= 100 chars)
+//      - toCity: string (optional, <= 100 chars)
+//      - description: string (required, 1-500 chars)
+//      - size: string (required, enum: 'envelope', 'small', 'medium', 'large')
+//      - weightKg: number (required, 0.1 - 50.0 kg)
+//      - estimatedValue: number (required, 0 - 100000 EGP)
+//      - fee: number (required, 0 - 10000 EGP)
+//      - pickupOtp: string (required, 4-8 chars)
+//      - deliveryOtp: string (optional, <= 8 chars)
+//      - status: string (required, enum: 'requested', 'accepted', 'handedOver', 'inTransit', 'delivered', 'cancelled', 'disputed')
+//      - submittedOtp: string (optional, verification payload)
+//      - createdAt: timestamp (optional, immutable)
+//      - updatedAt: timestamp (optional)
+//
+// 6. bookings/{bookingId}
+//    Document ID: Unique booking code/id
+//    Fields:
+//      - id: string (required, immutable)
+//      - rideId: string (required, immutable)
+//      - passengerId: string (required, immutable) - Must match request.auth.uid on create
+//      - passengerName: string (required, 2-100 chars)
+//      - passengerPhone: string (required, 10-20 chars)
+//      - driverId: string (required, immutable)
+//      - seats: int (required, 1 - 10)
+//      - totalPrice: number (required, 0 - 50000 EGP)
+//      - pickupLocation: string (required, 1-200 chars)
+//      - dropoffLocation: string (required, 1-200 chars)
+//      - status: string (required, enum: 'pending', 'confirmed', 'active', 'completed', 'cancelled')
+//      - otpCode: string (required, 4-8 chars)
+//      - cancellationReason: string (optional, <= 500 chars)
+//      - createdAt: timestamp (required, immutable)
+//      - updatedAt: timestamp (optional)
+//
+// 7. conversations/{conversationId} & subcollection messages/{messageId}
+//    Fields (conversations):
+//      - id: string (required, immutable)
+//      - participantIds: list of strings (required, 2-10 items)
+//      - lastMessage: string (optional, <= 500 chars)
+//      - lastMessageTimestamp: timestamp (optional)
+//      - lastSenderId: string (optional, <= 128 chars)
+//      - createdAt: timestamp (required, immutable)
+//      - updatedAt: timestamp (optional)
+//    Fields (messages):
+//      - id: string (required, immutable)
+//      - conversationId: string (required, immutable)
+//      - senderId: string (required, immutable) - Must match request.auth.uid
+//      - senderName: string (required, 2-100 chars)
+//      - text: string (required, 1-2000 chars)
+//      - timestamp: timestamp (optional)
+//      - isRead: bool (required)
+//      - attachmentUrl: string (optional, <= 500 chars)
+//
+// 8. route_alerts/{alertId}
+//    Fields:
+//      - id: string (required, immutable)
+//      - userId: string (required, immutable) - Must match request.auth.uid
+//      - fromCity: string (required, 1-100 chars)
+//      - toCity: string (required, 1-100 chars)
+//      - dateRange: string (required, 1-100 chars)
+//      - category: string (required, 1-50 chars)
+//      - isActive: bool (required)
+//      - isExpired: bool (required)
+//      - createdAt: timestamp (optional, immutable)
+//      - updatedAt: timestamp (optional)
+//
+// 9. wallet_transactions/{txId}
+//    Fields:
+//      - id: string (required, immutable)
+//      - userId: string (required, immutable)
+//      - amount: number (required)
+//      - type: string (required, enum: 'deposit', 'withdraw', 'ridePayment', 'rideEarning', 'errandPayment', 'errandEarning', 'parcelPayment', 'parcelEarning')
+//      - method: string (required, enum: 'vodafoneCash', 'instapay', 'fawry', 'creditCard', 'cash')
+//      - referenceNumber: string (required, 1-100 chars)
+//      - status: string (required, enum: 'pending', 'success', 'failed', 'cancelled')
+//      - titleAr: string (required, 1-200 chars)
+//      - titleEn: string (required, 1-200 chars)
+//      - timestamp: timestamp (optional)
+//
+// 10. driver_verifications/{verificationId}
+//     Fields:
+//       - id: string (required, immutable)
+//       - driverId: string (required, immutable) - Must match request.auth.uid
+//       - driverName: string (required, 2-100 chars)
+//       - governorate: string (required, 1-50 chars)
+//       - carModel: string (required, 1-100 chars)
+//       - carPlate: string (required, 1-50 chars)
+//       - licenseExpiryDate: string (required, 1-50 chars)
+//       - nationalId: string (optional, 14-20 chars)
+//       - licenseFrontImage: string (optional, <= 500 chars)
+//       - licenseBackImage: string (optional, <= 500 chars)
+//       - carFrontImage: string (optional, <= 500 chars)
+//       - status: string (required, enum: 'pending', 'underReview', 'accepted', 'rejected', 'قيد المراجعة', 'مقبولة', 'مرفوضة')
+//       - rejectionReason: string (optional, <= 500 chars)
+//       - rejectionNote: string (optional, <= 500 chars)
+//       - submittedAt: timestamp (optional)
+//       - updatedAt: timestamp (optional)
+//
+// 11. admin_audit_logs/{logId}
+//     Internal security audit log for admin operations (read/write restricted to admin claim).
+//
+// ==============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================================================
+    // Core Helper Functions & Standard Security Invariants
+    // ==========================================================================
+
+    // Check if the request is authenticated with Firebase Auth
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    // Role-Based Access Control: Trust ONLY server-minted Auth Token Custom Claims
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') == 'admin' ||
+        request.auth.token.get('role', '') == 'superAdmin'
+      );
+    }
+
+    // Check if the authenticated caller owns the document by matching userId param
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check verified driver status via custom claim or verified user profile document
+    function isVerifiedDriver() {
+      return isAuthenticated() && (
+        request.auth.token.get('driverVerified', false) == true ||
+        isAdmin() ||
+        (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.idVerificationStatus == 'verified'
+        )
+      );
+    }
+
+    // Validate that required fields are present in the document
+    function hasRequiredFields(data, fields) {
+      return data.keys().hasAll(fields);
+    }
+
+    // Validate that only strictly whitelisted fields are present in the document
+    function hasOnlyAllowedFields(data, fields) {
+      return data.keys().hasOnly(fields);
+    }
+
+    // Validate that immutable fields have not been altered in an update operation
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Validate string bounds
+    function validString(str, minLen, maxLen) {
+      return str is string && str.size() >= minLen && str.size() <= maxLen;
+    }
+
+    // Validate optional string: if present and non-null, must be string within bounds
+    function validOptionalString(data, field, minLen, maxLen) {
+      return !(field in data) || data[field] == null || (data[field] is string && data[field].size() >= minLen && data[field].size() <= maxLen);
+    }
+
+    // Validate optional URL: if present and non-null, must be string within bounds
+    function validOptionalUrl(data, field) {
+      return !(field in data) || data[field] == null || data[field] == '' || (
+        data[field] is string &&
+        data[field].size() <= 500 &&
+        (data[field].matches('^https://.*') || data[field].matches('^http://.*') || data[field].matches('^gs://.*') || data[field].matches('^assets/.*'))
+      );
+    }
+
+    // Validate optional email format
+    function validOptionalEmail(data, field) {
+      return !(field in data) || data[field] == null || (
+        data[field] is string &&
+        data[field].size() <= 100 &&
+        data[field].matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$')
+      );
+    }
+
+    // Check if user document contains sensitive PII or financial fields
+    function hasSensitiveUserFields(data) {
+      return data.keys().hasAny([
+        'nationalId',
+        'idFrontImage',
+        'idBackImage',
+        'selfieImage',
+        'emergencyContactPhone',
+        'walletBalance'
+      ]);
+    }
+
+    // ==========================================================================
+    // Domain Validators (Enforced on BOTH create AND update)
+    // ==========================================================================
+
+    // Validator for users/{userId}
+    function isValidUser(data) {
+      let allowed = [
+        'id', 'fullName', 'phone', 'gender', 'avatarUrl', 'isVerified',
+        'hasActiveAlerts', 'hasUpcomingBooking', 'governorate', 'city',
+        'birthDate', 'email', 'emergencyContactName', 'emergencyContactPhone',
+        'occupation', 'smokingPreference', 'tripVibe', 'ladiesOnlyPreference',
+        'idVerificationStatus', 'nationalId', 'idFrontImage', 'idBackImage',
+        'selfieImage', 'idRejectionReason', 'walletBalance', 'rating',
+        'completedRides', 'completedParcels', 'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'fullName', 'phone', 'gender', 'isVerified',
+        'idVerificationStatus', 'walletBalance', 'rating',
+        'completedRides', 'completedParcels'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.fullName, 2, 100) &&
+        validString(data.phone, 10, 20) &&
+        data.gender in ['male', 'female', 'preferNotToSay'] &&
+        data.isVerified is bool &&
+        data.idVerificationStatus in ['unverified', 'underReview', 'verified', 'rejected'] &&
+        data.walletBalance is number && data.walletBalance >= 0 &&
+        data.rating is number && data.rating >= 0 && data.rating <= 5 &&
+        data.completedRides is int && data.completedRides >= 0 &&
+        data.completedParcels is int && data.completedParcels >= 0 &&
+        validOptionalUrl(data, 'avatarUrl') &&
+        validOptionalString(data, 'governorate', 1, 50) &&
+        validOptionalString(data, 'city', 1, 50) &&
+        validOptionalString(data, 'birthDate', 1, 20) &&
+        validOptionalEmail(data, 'email') &&
+        validOptionalString(data, 'emergencyContactName', 1, 100) &&
+        validOptionalString(data, 'emergencyContactPhone', 10, 20) &&
+        validOptionalString(data, 'occupation', 1, 100) &&
+        validOptionalString(data, 'smokingPreference', 1, 50) &&
+        validOptionalString(data, 'tripVibe', 1, 50) &&
+        (!('ladiesOnlyPreference' in data) || data.ladiesOnlyPreference == null || data.ladiesOnlyPreference is bool) &&
+        (!('hasActiveAlerts' in data) || data.hasActiveAlerts == null || data.hasActiveAlerts is bool) &&
+        (!('hasUpcomingBooking' in data) || data.hasUpcomingBooking == null || data.hasUpcomingBooking is bool) &&
+        validOptionalString(data, 'nationalId', 14, 20) &&
+        validOptionalUrl(data, 'idFrontImage') &&
+        validOptionalUrl(data, 'idBackImage') &&
+        validOptionalUrl(data, 'selfieImage') &&
+        validOptionalString(data, 'idRejectionReason', 1, 500);
+    }
+
+    // Validator for rides/{rideId}
+    function isValidRide(data) {
+      let allowed = [
+        'id', 'driverId', 'driverName', 'driverCar', 'driverPhone',
+        'fromCity', 'toCity', 'pickupPoint', 'dropoffPoint',
+        'departureTime', 'departureDate', 'remainingSeats', 'pricePerSeat',
+        'acceptsParcels', 'parcelPrice', 'isVerified', 'isLadiesOnly',
+        'isInstantBooking', 'driverRating', 'status', 'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'driverId', 'driverName', 'driverCar', 'driverPhone',
+        'fromCity', 'toCity', 'pickupPoint', 'dropoffPoint',
+        'departureTime', 'departureDate', 'remainingSeats', 'pricePerSeat'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.driverId, 1, 128) &&
+        validString(data.driverName, 2, 100) &&
+        validString(data.driverCar, 2, 100) &&
+        validString(data.driverPhone, 10, 20) &&
+        validString(data.fromCity, 1, 100) &&
+        validString(data.toCity, 1, 100) &&
+        validString(data.pickupPoint, 1, 200) &&
+        validString(data.dropoffPoint, 1, 200) &&
+        validString(data.departureTime, 1, 50) &&
+        validString(data.departureDate, 1, 50) &&
+        data.remainingSeats is int && data.remainingSeats >= 0 && data.remainingSeats <= 10 &&
+        data.pricePerSeat is number && data.pricePerSeat >= 0 && data.pricePerSeat <= 5000 &&
+        (!('acceptsParcels' in data) || data.acceptsParcels == null || data.acceptsParcels is bool) &&
+        (!('parcelPrice' in data) || data.parcelPrice == null || (data.parcelPrice is number && data.parcelPrice >= 0 && data.parcelPrice <= 5000)) &&
+        (!('isVerified' in data) || data.isVerified == null || data.isVerified is bool) &&
+        (!('isLadiesOnly' in data) || data.isLadiesOnly == null || data.isLadiesOnly is bool) &&
+        (!('isInstantBooking' in data) || data.isInstantBooking == null || data.isInstantBooking is bool) &&
+        (!('driverRating' in data) || data.driverRating == null || (data.driverRating is number && data.driverRating >= 0 && data.driverRating <= 5)) &&
+        (!('status' in data) || data.status == null || data.status in ['active', 'completed', 'cancelled']);
+    }
+
+    // Validator for board_ads/{adId}
+    function isValidBoardAd(data) {
+      let allowed = [
+        'id', 'authorId', 'type', 'authorName', 'isVerified',
+        'tripCount', 'postedAgo', 'fromCity', 'toCity', 'timeText',
+        'description', 'priceOrBudget', 'notes', 'isLadiesOnly',
+        'status', 'myOfferPrice', 'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'authorId', 'type', 'authorName', 'fromCity', 'toCity',
+        'timeText', 'description', 'priceOrBudget', 'status'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.authorId, 1, 128) &&
+        data.type in ['all', 'rideOffer', 'rideRequest', 'localTrip', 'errandService', 'goodsDelivery', 'parcelRequest'] &&
+        validString(data.authorName, 2, 100) &&
+        validString(data.fromCity, 1, 100) &&
+        validString(data.toCity, 1, 100) &&
+        validString(data.timeText, 1, 150) &&
+        validString(data.description, 1, 1000) &&
+        data.priceOrBudget is number && data.priceOrBudget >= 0 && data.priceOrBudget <= 50000 &&
+        data.status in ['active', 'offerSent', 'completed', 'expired', 'cancelled'] &&
+        (!('isVerified' in data) || data.isVerified == null || data.isVerified is bool) &&
+        (!('tripCount' in data) || data.tripCount == null || (data.tripCount is int && data.tripCount >= 0)) &&
+        validOptionalString(data, 'postedAgo', 1, 100) &&
+        validOptionalString(data, 'notes', 1, 500) &&
+        (!('isLadiesOnly' in data) || data.isLadiesOnly == null || data.isLadiesOnly is bool) &&
+        (!('myOfferPrice' in data) || data.myOfferPrice == null || (data.myOfferPrice is number && data.myOfferPrice >= 0));
+    }
+
+    // Validator for board_ads/{adId}/offers/{offerId}
+    function isValidBoardOffer(data) {
+      let allowed = [
+        'id', 'adId', 'driverId', 'driverName', 'offerPrice',
+        'timeText', 'status', 'notes', 'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'adId', 'driverId', 'driverName', 'offerPrice', 'timeText', 'status'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.adId, 1, 128) &&
+        validString(data.driverId, 1, 128) &&
+        validString(data.driverName, 2, 100) &&
+        data.offerPrice is number && data.offerPrice > 0 && data.offerPrice <= 50000 &&
+        validString(data.timeText, 1, 150) &&
+        data.status in ['pending', 'accepted', 'rejected', 'withdrawn'] &&
+        validOptionalString(data, 'notes', 1, 500);
+    }
+
+    // Validator for parcels/{parcelId}
+    function isValidParcel(data) {
+      let allowed = [
+        'id', 'senderId', 'senderName', 'senderPhone', 'driverId',
+        'driverName', 'receiverId', 'receiverName', 'receiverPhone',
+        'route', 'fromCity', 'toCity', 'description', 'size',
+        'weightKg', 'estimatedValue', 'fee', 'pickupOtp',
+        'deliveryOtp', 'status', 'submittedOtp', 'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'senderId', 'receiverName', 'receiverPhone',
+        'route', 'description', 'size', 'weightKg',
+        'estimatedValue', 'fee', 'pickupOtp', 'status'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.senderId, 1, 128) &&
+        validString(data.receiverName, 2, 100) &&
+        validString(data.receiverPhone, 10, 20) &&
+        validString(data.route, 1, 200) &&
+        validString(data.description, 1, 500) &&
+        data.size in ['envelope', 'small', 'medium', 'large'] &&
+        data.weightKg is number && data.weightKg > 0 && data.weightKg <= 50 &&
+        data.estimatedValue is number && data.estimatedValue >= 0 && data.estimatedValue <= 100000 &&
+        data.fee is number && data.fee >= 0 && data.fee <= 10000 &&
+        validString(data.pickupOtp, 4, 8) &&
+        data.status in ['requested', 'accepted', 'handedOver', 'inTransit', 'delivered', 'cancelled', 'disputed'] &&
+        validOptionalString(data, 'senderName', 2, 100) &&
+        validOptionalString(data, 'senderPhone', 10, 20) &&
+        validOptionalString(data, 'driverId', 1, 128) &&
+        validOptionalString(data, 'driverName', 2, 100) &&
+        validOptionalString(data, 'receiverId', 1, 128) &&
+        validOptionalString(data, 'fromCity', 1, 100) &&
+        validOptionalString(data, 'toCity', 1, 100) &&
+        validOptionalString(data, 'deliveryOtp', 4, 8) &&
+        validOptionalString(data, 'submittedOtp', 4, 8);
+    }
+
+    // Validator for bookings/{bookingId}
+    function isValidBooking(data) {
+      let allowed = [
+        'id', 'rideId', 'passengerId', 'passengerName', 'passengerPhone',
+        'driverId', 'seats', 'totalPrice', 'pickupLocation',
+        'dropoffLocation', 'status', 'otpCode', 'createdAt',
+        'cancellationReason', 'updatedAt'
+      ];
+      let required = [
+        'id', 'rideId', 'passengerId', 'passengerName', 'passengerPhone',
+        'driverId', 'seats', 'totalPrice', 'pickupLocation',
+        'dropoffLocation', 'status', 'otpCode'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.rideId, 1, 128) &&
+        validString(data.passengerId, 1, 128) &&
+        validString(data.driverId, 1, 128) &&
+        validString(data.passengerName, 2, 100) &&
+        validString(data.passengerPhone, 10, 20) &&
+        data.seats is int && data.seats >= 1 && data.seats <= 10 &&
+        data.totalPrice is number && data.totalPrice >= 0 && data.totalPrice <= 50000 &&
+        validString(data.pickupLocation, 1, 200) &&
+        validString(data.dropoffLocation, 1, 200) &&
+        data.status in ['pending', 'confirmed', 'active', 'completed', 'cancelled'] &&
+        validString(data.otpCode, 4, 8) &&
+        validOptionalString(data, 'cancellationReason', 1, 500);
+    }
+
+    // Validator for conversations/{conversationId}
+    function isValidConversation(data) {
+      let allowed = [
+        'id', 'participantIds', 'lastMessage',
+        'lastMessageTimestamp', 'lastSenderId', 'createdAt', 'updatedAt'
+      ];
+      let required = ['id', 'participantIds'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        data.participantIds is list &&
+        data.participantIds.size() >= 2 &&
+        data.participantIds.size() <= 10 &&
+        validOptionalString(data, 'lastMessage', 1, 500) &&
+        validOptionalString(data, 'lastSenderId', 1, 128);
+    }
+
+    // Validator for messages/{messageId}
+    function isValidChatMessage(data) {
+      let allowed = [
+        'id', 'conversationId', 'senderId', 'senderName',
+        'text', 'timestamp', 'isRead', 'attachmentUrl'
+      ];
+      let required = [
+        'id', 'conversationId', 'senderId', 'senderName', 'text', 'isRead'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.conversationId, 1, 128) &&
+        validString(data.senderId, 1, 128) &&
+        validString(data.senderName, 2, 100) &&
+        validString(data.text, 1, 2000) &&
+        data.isRead is bool &&
+        validOptionalUrl(data, 'attachmentUrl');
+    }
+
+    // Validator for route_alerts/{alertId}
+    function isValidRouteAlert(data) {
+      let allowed = [
+        'id', 'userId', 'fromCity', 'toCity', 'dateRange',
+        'category', 'isActive', 'isExpired', 'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'userId', 'fromCity', 'toCity', 'dateRange',
+        'category', 'isActive', 'isExpired'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.userId, 1, 128) &&
+        validString(data.fromCity, 1, 100) &&
+        validString(data.toCity, 1, 100) &&
+        validString(data.dateRange, 1, 100) &&
+        validString(data.category, 1, 50) &&
+        data.isActive is bool &&
+        data.isExpired is bool;
+    }
+
+    // Validator for wallet_transactions/{txId}
+    function isValidWalletTransaction(data) {
+      let allowed = [
+        'id', 'userId', 'amount', 'type', 'method',
+        'referenceNumber', 'status', 'titleAr', 'titleEn', 'timestamp', 'createdAt'
+      ];
+      let required = [
+        'id', 'userId', 'amount', 'type', 'method',
+        'referenceNumber', 'status', 'titleAr', 'titleEn'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.userId, 1, 128) &&
+        data.amount is number &&
+        data.type in ['deposit', 'withdraw', 'ridePayment', 'rideEarning', 'errandPayment', 'errandEarning', 'parcelPayment', 'parcelEarning'] &&
+        data.method in ['vodafoneCash', 'instapay', 'fawry', 'creditCard', 'cash'] &&
+        validString(data.referenceNumber, 1, 100) &&
+        data.status in ['pending', 'success', 'failed', 'cancelled'] &&
+        validString(data.titleAr, 1, 200) &&
+        validString(data.titleEn, 1, 200);
+    }
+
+    // Validator for driver_verifications/{verificationId}
+    function isValidDriverVerification(data) {
+      let allowed = [
+        'id', 'driverId', 'driverName', 'governorate', 'carModel',
+        'carPlate', 'licenseExpiryDate', 'nationalId', 'licenseFrontImage',
+        'licenseBackImage', 'carFrontImage', 'status', 'rejectionReason',
+        'rejectionNote', 'submittedAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'driverId', 'driverName', 'governorate', 'carModel',
+        'carPlate', 'licenseExpiryDate', 'status'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.driverId, 1, 128) &&
+        validString(data.driverName, 2, 100) &&
+        validString(data.governorate, 1, 50) &&
+        validString(data.carModel, 1, 100) &&
+        validString(data.carPlate, 1, 50) &&
+        validString(data.licenseExpiryDate, 1, 50) &&
+        data.status in ['pending', 'underReview', 'accepted', 'rejected', 'قيد المراجعة', 'مقبولة', 'مرفوضة'] &&
+        validOptionalString(data, 'nationalId', 14, 20) &&
+        validOptionalUrl(data, 'licenseFrontImage') &&
+        validOptionalUrl(data, 'licenseBackImage') &&
+        validOptionalUrl(data, 'carFrontImage') &&
+        validOptionalString(data, 'rejectionReason', 1, 500) &&
+        validOptionalString(data, 'rejectionNote', 1, 500);
+    }
+
+    // Helper for conversation participant verification
+    function isConversationParticipant(convId) {
+      return isAuthenticated() && (
+        isAdmin() ||
+        (
+          exists(/databases/$(database)/documents/conversations/$(convId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participantIds
+        )
+      );
+    }
+
+    // Helper for parcel access verification (sender, driver, receiver via uid or verified phone)
+    function isParcelParty() {
+      return isAuthenticated() && (
+        resource.data.senderId == request.auth.uid ||
+        (resource.data.driverId != null && resource.data.driverId == request.auth.uid) ||
+        ('receiverId' in resource.data && resource.data.receiverId == request.auth.uid) ||
+        (
+          request.auth.token.phone_number != null && (
+            resource.data.receiverPhone == request.auth.token.phone_number ||
+            request.auth.token.phone_number == "+2" + resource.data.receiverPhone ||
+            request.auth.token.phone_number == "+20" + resource.data.receiverPhone
+          )
+        ) ||
+        isAdmin()
+      );
+    }
+
+    // ==========================================================================
+    // Default Deny Root Matcher
+    // ==========================================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ==========================================================================
+    // 1. User Profiles Collection: users/{userId}
+    // ==========================================================================
+    match /users/{userId} {
+      // READ RULES:
+      // Protects sensitive PII. If a document contains sensitive fields (nationalId,
+      // id images, emergency contact phone, wallet balance), it can ONLY be read by
+      // the owner themselves or an administrator.
+      // Other authenticated users can read basic non-sensitive profiles.
+      allow get: if isOwner(userId) || isAdmin() || (
+        isAuthenticated() && !hasSensitiveUserFields(resource.data)
+      );
+
+      // List queries across all users are restricted to administrators to prevent PII scraping.
+      allow list: if isAdmin();
+
+      // CREATE RULES:
+      // Authenticated users can register their profile document under their own UID.
+      // Privilege Escalation Prevention:
+      //   - User cannot mark themselves as verified (`isVerified == false`).
+      //   - User cannot set verification status to 'verified'.
+      //   - User cannot seed arbitrary starting wallet balance (`walletBalance == 0`).
+      //   - User cannot falsify completed ride/parcel statistics.
+      //   - User cannot assign themselves an admin role.
+      allow create: if isOwner(userId) &&
+        request.resource.data.id == userId &&
+        isValidUser(request.resource.data) &&
+        request.resource.data.isVerified == false &&
+        request.resource.data.idVerificationStatus in ['unverified', 'underReview'] &&
+        (request.resource.data.walletBalance == 0 || request.resource.data.walletBalance == 0.0) &&
+        request.resource.data.completedRides == 0 &&
+        request.resource.data.completedParcels == 0;
+
+      // UPDATE RULES:
+      // Administrators can update any profile (e.g. approve verification, reconcile ledger).
+      // Regular users can update their own personal info, but:
+      //   - Cannot alter their own wallet balance directly.
+      //   - Cannot set `idVerificationStatus` to 'verified' (requires admin review).
+      //   - Cannot alter `isVerified`, `rating`, `completedRides`, or `completedParcels`.
+      //   - Cannot change their user document ID.
+      allow update: if (
+        isAdmin() && isValidUser(request.resource.data)
+      ) || (
+        isOwner(userId) &&
+        isValidUser(request.resource.data) &&
+        areImmutableFieldsUnchanged([
+          'id', 'walletBalance', 'rating', 'completedRides',
+          'completedParcels', 'isVerified'
+        ]) &&
+        // Verification status escalation guard: user cannot transition to 'verified'
+        (
+          request.resource.data.idVerificationStatus == resource.data.idVerificationStatus ||
+          (resource.data.idVerificationStatus in ['unverified', 'rejected'] && request.resource.data.idVerificationStatus == 'underReview')
+        )
+      );
+
+      // DELETE RULES: User account deletion or admin purge
+      allow delete: if isOwner(userId) || isAdmin();
+
+      // Subcollection for isolated sensitive/private data (if client splits collections)
+      match /private/{docId} {
+        allow read, write: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // Public Profile mirror (for apps leveraging collection splitting for public directory)
+    match /users_public/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    // ==========================================================================
+    // 2. Rides Collection: rides/{rideId}
+    // ==========================================================================
+    match /rides/{rideId} {
+      // Read: Any authenticated user can read active rides (supports search and browse queries)
+      allow read: if isAuthenticated();
+
+      // Create: Any verified driver can create a ride under their own driverId
+      allow create: if isVerifiedDriver() &&
+        request.resource.data.driverId == request.auth.uid &&
+        isValidRide(request.resource.data);
+
+      // Update: Only the driver can update departure time, cancel, or edit ride details.
+      // Immutable fields protected: ride ID, driverId, createdAt.
+      allow update: if (isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.driverId)) &&
+        isValidRide(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'driverId', 'createdAt']);
+
+      // Delete: Driver or administrator only
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.driverId || isAdmin());
+    }
+
+    // ==========================================================================
+    // 3. Community Board Ads: board_ads/{adId}
+    // ==========================================================================
+    match /board_ads/{adId} {
+      // Read: Any authenticated user can read board ads
+      allow read: if isAuthenticated();
+
+      // Create: Any authenticated user can post an ad under their own authorId
+      allow create: if isAuthenticated() &&
+        request.resource.data.authorId == request.auth.uid &&
+        isValidBoardAd(request.resource.data);
+
+      // Update: Only the original author or administrator can edit or close an ad
+      allow update: if (isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.authorId)) &&
+        isValidBoardAd(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'authorId', 'createdAt']);
+
+      // Delete: Author or administrator only
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.authorId || isAdmin());
+
+      // ========================================================================
+      // 4. Board Ad Offers: board_ads/{adId}/offers/{offerId}
+      // ========================================================================
+      match /offers/{offerId} {
+        // Read: Ad author (creator of parent ad) OR the offer maker (driverId) OR admin
+        allow read: if isAuthenticated() && (
+          resource.data.driverId == request.auth.uid ||
+          get(/databases/$(database)/documents/board_ads/$(adId)).data.authorId == request.auth.uid ||
+          isAdmin()
+        );
+
+        // Create: Verified driver/courier creating an offer for an active ad
+        allow create: if isVerifiedDriver() &&
+          request.resource.data.driverId == request.auth.uid &&
+          request.resource.data.adId == adId &&
+          request.resource.data.status == 'pending' &&
+          isValidBoardOffer(request.resource.data) &&
+          exists(/databases/$(database)/documents/board_ads/$(adId)) &&
+          get(/databases/$(database)/documents/board_ads/$(adId)).data.status == 'active';
+
+        // Update:
+        //   - Ad author can change status to 'accepted' or 'rejected'
+        //   - Offer maker can withdraw their offer ('withdrawn')
+        //   - Administrator can update for dispute resolution
+        allow update: if isAuthenticated() &&
+          isValidBoardOffer(request.resource.data) &&
+          areImmutableFieldsUnchanged(['id', 'adId', 'driverId', 'offerPrice', 'timeText', 'createdAt']) &&
+          (
+            isAdmin() ||
+            (
+              get(/databases/$(database)/documents/board_ads/$(adId)).data.authorId == request.auth.uid &&
+              request.resource.data.status in ['accepted', 'rejected']
+            ) ||
+            (
+              resource.data.driverId == request.auth.uid &&
+              request.resource.data.status == 'withdrawn'
+            )
+          );
+
+        // Delete: Offer maker before acceptance or administrator
+        allow delete: if isAuthenticated() && (
+          (resource.data.driverId == request.auth.uid && resource.data.status in ['pending', 'withdrawn']) ||
+          isAdmin()
+        );
+      }
+    }
+
+    // ==========================================================================
+    // 5. Crowd-Shipping Parcels: parcels/{parcelId}
+    // ==========================================================================
+    match /parcels/{parcelId} {
+      // Read: Sender (senderId), Carrier/Driver (driverId), Receiver (by UID or verified phone), or Admin
+      allow read: if isParcelParty();
+
+      // Create: Authenticated sender creates a delivery request
+      allow create: if isAuthenticated() &&
+        request.resource.data.senderId == request.auth.uid &&
+        request.resource.data.status in ['requested', 'accepted'] &&
+        isValidParcel(request.resource.data);
+
+      // Update:
+      //   - Sender can cancel while status is still 'requested'
+      //   - Carrier can accept an unassigned parcel (`driverId == null` -> `driverId == request.auth.uid`)
+      //   - Carrier can advance status to 'handedOver', 'inTransit', or 'delivered'
+      //     Handover and delivery require OTP verification check.
+      //   - Immutable fields protected: parcel ID, senderId, pickupOtp, createdAt.
+      allow update: if isAuthenticated() &&
+        isValidParcel(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'senderId', 'createdAt', 'pickupOtp']) &&
+        (
+          isAdmin() ||
+          // Sender cancellation
+          (
+            resource.data.senderId == request.auth.uid &&
+            request.resource.data.status == 'cancelled' &&
+            resource.data.status == 'requested'
+          ) ||
+          // Driver accepting parcel
+          (
+            isVerifiedDriver() &&
+            (resource.data.driverId == null || !('driverId' in resource.data)) &&
+            request.resource.data.driverId == request.auth.uid &&
+            request.resource.data.status == 'accepted' &&
+            resource.data.status == 'requested'
+          ) ||
+          // Driver status transitions with OTP verification check
+          (
+            resource.data.driverId == request.auth.uid &&
+            (
+              // Handover: Carrier confirms pickup
+              (
+                resource.data.status == 'accepted' &&
+                request.resource.data.status == 'handedOver' &&
+                (
+                  !('submittedOtp' in request.resource.data) ||
+                  request.resource.data.submittedOtp == resource.data.pickupOtp
+                )
+              ) ||
+              // In Transit: Carrier is en route
+              (
+                resource.data.status == 'handedOver' &&
+                request.resource.data.status == 'inTransit'
+              ) ||
+              // Delivered: Carrier delivers to recipient
+              (
+                resource.data.status == 'inTransit' &&
+                request.resource.data.status == 'delivered'
+              )
+            )
+          )
+        );
+
+      // Delete: Administrator only (parcels maintain full audit history)
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 6. Ride Bookings: bookings/{bookingId}
+    // ==========================================================================
+    match /bookings/{bookingId} {
+      // Read: Passenger (passengerId), Driver (driverId), or Administrator
+      allow read: if isAuthenticated() && (
+        resource.data.passengerId == request.auth.uid ||
+        resource.data.driverId == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Create: Authenticated passenger booking seats on a published ride
+      allow create: if isAuthenticated() &&
+        request.resource.data.passengerId == request.auth.uid &&
+        request.resource.data.status in ['pending', 'confirmed'] &&
+        isValidBooking(request.resource.data) &&
+        exists(/databases/$(database)/documents/rides/$(request.resource.data.rideId));
+
+      // Update:
+      //   - Passenger can cancel their booking if not yet completed
+      //   - Driver can complete trip or activate trip
+      //   - Administrator can resolve disputes
+      //   - Immutable fields protected: booking ID, rideId, passengerId, driverId, seats, totalPrice, createdAt.
+      allow update: if isAuthenticated() &&
+        isValidBooking(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'rideId', 'passengerId', 'driverId', 'seats', 'totalPrice', 'createdAt']) &&
+        (
+          isAdmin() ||
+          // Passenger cancellation
+          (
+            resource.data.passengerId == request.auth.uid &&
+            request.resource.data.status == 'cancelled' &&
+            resource.data.status in ['pending', 'confirmed']
+          ) ||
+          // Driver trip completion / activation
+          (
+            resource.data.driverId == request.auth.uid &&
+            request.resource.data.status in ['active', 'completed'] &&
+            resource.data.status in ['confirmed', 'active']
+          )
+        );
+
+      // Delete: Administrator only
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 7. Conversations & Messages Collection
+    // ==========================================================================
+    match /conversations/{conversationId} {
+      // Read: Conversation participants only or administrator
+      allow read: if isAuthenticated() && (
+        request.auth.uid in resource.data.participantIds ||
+        isAdmin()
+      );
+
+      // Create: Authenticated participant starting a thread
+      allow create: if isAuthenticated() &&
+        request.auth.uid in request.resource.data.participantIds &&
+        isValidConversation(request.resource.data);
+
+      // Update: Participants updating thread metadata (e.g., lastMessage, lastSenderId)
+      allow update: if isAuthenticated() &&
+        request.auth.uid in resource.data.participantIds &&
+        isValidConversation(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'participantIds', 'createdAt']);
+
+      // Delete: Administrator only
+      allow delete: if isAdmin();
+
+      // Nested Messages Subcollection: conversations/{conversationId}/messages/{messageId}
+      match /messages/{messageId} {
+        // Read: Verified participant of parent conversation
+        allow read: if isConversationParticipant(conversationId);
+
+        // Create: Verified participant sending a message under their own senderId
+        allow create: if isConversationParticipant(conversationId) &&
+          request.resource.data.senderId == request.auth.uid &&
+          request.resource.data.conversationId == conversationId &&
+          isValidChatMessage(request.resource.data);
+
+        // Update:
+        //   - Recipient marking message as read (`isRead == true`)
+        //   - Sender editing text content (immutable metadata preserved)
+        allow update: if isConversationParticipant(conversationId) && (
+          // Mark read
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']) &&
+            request.resource.data.isRead is bool
+          ) ||
+          // Text edit by author
+          (
+            resource.data.senderId == request.auth.uid &&
+            isValidChatMessage(request.resource.data) &&
+            areImmutableFieldsUnchanged(['id', 'conversationId', 'senderId', 'timestamp'])
+          )
+        );
+
+        // Delete: Message author or administrator
+        allow delete: if isAuthenticated() && (resource.data.senderId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // Collection Group Query Support for messages
+    match /{path=**}/messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid ||
+        (
+          'conversationId' in resource.data &&
+          exists(/databases/$(database)/documents/conversations/$(resource.data.conversationId)) &&
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(resource.data.conversationId)).data.participantIds
+        ) ||
+        isAdmin()
+      );
+    }
+
+    // ==========================================================================
+    // 8. Route Alerts: route_alerts/{alertId}
+    // ==========================================================================
+    match /route_alerts/{alertId} {
+      // Read: Alert creator / owner only or administrator
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Create: Authenticated user creating an alert under their own userId
+      allow create: if isAuthenticated() &&
+        request.resource.data.userId == request.auth.uid &&
+        isValidRouteAlert(request.resource.data);
+
+      // Update: Owner can toggle active state, update cities, or edit route range
+      allow update: if isAuthenticated() &&
+        resource.data.userId == request.auth.uid &&
+        request.resource.data.userId == request.auth.uid &&
+        isValidRouteAlert(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'userId', 'createdAt']);
+
+      // Delete: Owner or administrator
+      allow delete: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+    }
+
+    // ==========================================================================
+    // 9. Wallet Transactions: wallet_transactions/{txId}
+    // ==========================================================================
+    match /wallet_transactions/{txId} {
+      // Read: Transaction owner (userId) or administrator
+      allow read: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Write (Create / Update / Delete):
+      // Disallowed for untrusted client SDK calls.
+      // Must be written strictly by backend Cloud Functions or administrative service accounts.
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 10. Driver Verifications: driver_verifications/{verificationId}
+    // ==========================================================================
+    match /driver_verifications/{verificationId} {
+      // Read: Driver themselves or administrator
+      allow read: if isAuthenticated() && (
+        resource.data.driverId == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Create: Driver submitting their onboarding and verification application
+      allow create: if isAuthenticated() &&
+        request.resource.data.driverId == request.auth.uid &&
+        request.resource.data.status in ['pending', 'underReview', 'قيد المراجعة'] &&
+        isValidDriverVerification(request.resource.data);
+
+      // Update: Administrator only (reviewing, accepting, or rejecting verification)
+      allow update: if isAdmin() && isValidDriverVerification(request.resource.data);
+
+      // Delete: Administrator only
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 11. Admin Audit Logs: admin_audit_logs/{logId}
+    // ==========================================================================
+    match /admin_audit_logs/{logId} {
+      // Read & Write restricted strictly to administrator custom claims
+      allow read, create: if isAdmin();
+      // Immutable audit log: updates and deletes are forbidden
+      allow update, delete: if false;
+    }
+
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "rides",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fromCity", "order": "ASCENDING" },
+        { "fieldPath": "toCity", "order": "ASCENDING" },
+        { "fieldPath": "departureDate", "order": "ASCENDING" },
+        { "fieldPath": "remainingSeats", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rides",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fromCity", "order": "ASCENDING" },
+        { "fieldPath": "toCity", "order": "ASCENDING" },
+        { "fieldPath": "isLadiesOnly", "order": "ASCENDING" },
+        { "fieldPath": "departureDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "board_ads",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "type", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "fromCity", "order": "ASCENDING" },
+        { "fieldPath": "toCity", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "parcels",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "senderId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "parcels",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "driverId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "bookings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "passengerId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "wallet_transactions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "route_alerts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fromCity", "order": "ASCENDING" },
+        { "fieldPath": "toCity", "order": "ASCENDING" },
+        { "fieldPath": "isActive", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
