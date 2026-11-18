@@ -125,7 +125,7 @@ class _BoardScreenState extends State<BoardScreen> {
           children: [
             Text(isAr ? 'اللوحة' : 'Board', style: AppTypography.title()),
             Text(
-              isAr ? 'رحلات وطلبات الناس على طريقك' : 'Rides & requests along your route',
+              isAr ? 'سوق المشاوير، الخدمات اليومية، والسفر التشاركي' : 'Marketplace for errands, services & rides',
               style: AppTypography.label(color: AppColors.textSecondary),
             ),
           ],

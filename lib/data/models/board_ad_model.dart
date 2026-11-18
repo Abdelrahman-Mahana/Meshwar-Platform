@@ -58,17 +58,17 @@ class BoardAdModel {
   String typeTitle(bool isAr) {
     switch (type) {
       case BoardAdType.rideOffer:
-        return isAr ? 'سفر بين المحافظات' : 'Inter-city Travel';
+        return isAr ? 'عرض سفر تشاركي (كراسي)' : 'Carpooling Offer';
       case BoardAdType.rideRequest:
-        return isAr ? 'طلب سفر بين المحافظات' : 'Travel Request';
+        return isAr ? 'طلب سفر ومقعد' : 'Need a Seat';
       case BoardAdType.localTrip:
-        return isAr ? 'انتقال ومشاوير محلية' : 'Local Mobility';
+        return isAr ? 'انتقال ومشوار محلي' : 'Local Ride / Errand';
       case BoardAdType.errandService:
-        return isAr ? 'قضاء مصالح وخدمات رسمية' : 'Official Errand Service';
+        return isAr ? 'قضاء مصلحة وشراء طلبات' : 'Errand & Shopping';
       case BoardAdType.goodsDelivery:
-        return isAr ? 'لوجستيات وتوريد بضائع' : 'Commercial Logistics';
+        return isAr ? 'لوجستيات وتوريد بضائع' : 'Store Cargo Logistics';
       case BoardAdType.parcelRequest:
-        return isAr ? 'شحن وتوصيل أمانات' : 'Express Delivery';
+        return isAr ? 'شحن أمانات وطرود' : 'Express Delivery';
       case BoardAdType.all:
         return isAr ? 'كافة الخدمات والمشاوير' : 'All Services';
     }
@@ -77,11 +77,11 @@ class BoardAdModel {
   String priceTagLabel(bool isAr) {
     switch (type) {
       case BoardAdType.rideOffer:
-        return isAr ? 'للمقعد' : 'Per Seat';
+        return isAr ? 'للكرسي' : 'Per Seat';
       case BoardAdType.rideRequest:
         return isAr ? 'الميزانية' : 'Budget';
       case BoardAdType.localTrip:
-        return isAr ? 'أجرة الانتقال' : 'Fare';
+        return isAr ? 'أجرة المشوار' : 'Trip Fare';
       case BoardAdType.errandService:
         return isAr ? 'أتعاب الخدمة' : 'Service Fee';
       case BoardAdType.goodsDelivery:

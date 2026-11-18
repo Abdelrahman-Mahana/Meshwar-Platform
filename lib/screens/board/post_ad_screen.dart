@@ -14,11 +14,13 @@ import 'board_extra_screens.dart';
 class PostAdScreen extends StatefulWidget {
   final bool initialIsOffer;
   final BoardAdType? initialCategory;
+  final int? initialIntent;
 
   const PostAdScreen({
     super.key,
     this.initialIsOffer = false,
     this.initialCategory,
+    this.initialIntent,
   });
 
   @override
@@ -27,7 +29,7 @@ class PostAdScreen extends StatefulWidget {
 
 class _PostAdScreenState extends State<PostAdScreen> {
   late BoardAdType _selectedCategory;
-  int _intentIndex = 0; // 0 = أنا أطلب خدمة (Requests), 1 = أنا أقدم خدمة / مسافر (Offers), 2 = كل الفئات
+  int _intentIndex = 0; // 0 = أنا أطلب خدمة (Requests), 1 = أنا أقدم خدمة / مسافر (Offers)
   bool _isSubmitted = false;
   String? _formError;
 
@@ -35,7 +37,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
   final TextEditingController _fromController = TextEditingController(text: 'طنطا');
   final TextEditingController _toController = TextEditingController(text: 'القاهرة');
   final TextEditingController _timeController = TextEditingController(text: 'الجمعة بعد الظهر');
-  final TextEditingController _seatsController = TextEditingController(text: '1');
+  final TextEditingController _seatsController = TextEditingController(text: '3');
   final TextEditingController _priceController = TextEditingController(text: '80');
   final TextEditingController _parcelDescController = TextEditingController(text: 'أوراق ومستندات رسمية');
   final TextEditingController _weightController = TextEditingController(text: '2');
@@ -48,7 +50,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialCategory != null) {
+    if (widget.initialIntent != null) {
+      _intentIndex = widget.initialIntent!;
+      _selectedCategory = _intentIndex == 1 ? BoardAdType.rideOffer : BoardAdType.rideRequest;
+    } else if (widget.initialCategory != null) {
       _selectedCategory = widget.initialCategory!;
       _intentIndex = widget.initialCategory == BoardAdType.rideOffer ? 1 : 0;
     } else if (widget.initialIsOffer) {
@@ -531,28 +536,28 @@ class _PostAdScreenState extends State<PostAdScreen> {
         {
           'type': BoardAdType.localTrip,
           'title': isAr ? 'انتقال ومشوار محلي' : 'Local Mobility',
-          'subtitle': isAr ? 'طلب مركبة داخل المدينة فوراً' : 'On-demand local direct vehicle',
+          'subtitle': isAr ? 'طلب مشوار فوري بالأماكن التي تنعدم بها المواصلات' : 'On-demand local direct vehicle',
           'icon': Icons.near_me_rounded,
           'color': const Color(0xFF0D9488),
         },
         {
           'type': BoardAdType.errandService,
           'title': isAr ? 'قضاء مصالح رسمية' : 'Official Errand',
-          'subtitle': isAr ? 'إحضار مستندات وشهادات حكومية' : 'Document and official errand pickup',
+          'subtitle': isAr ? 'شراء طلبات، جلب حاجة، أو تخليص أوراق' : 'Buying items, errands or papers',
           'icon': Icons.description_rounded,
           'color': const Color(0xFFD97706),
         },
         {
           'type': BoardAdType.goodsDelivery,
           'title': isAr ? 'لوجستيات وتوريد' : 'Store Logistics',
-          'subtitle': isAr ? 'نقل مستلزمات وبضائع للمحل' : 'Stock & supplies delivery for shops',
+          'subtitle': isAr ? 'نقل مستلزمات وبضائع للمحل وموقع العمل' : 'Stock & supplies delivery for shops',
           'icon': Icons.local_shipping_rounded,
           'color': const Color(0xFF6366F1),
         },
         {
           'type': BoardAdType.parcelRequest,
           'title': isAr ? 'شحن أمانات وطرود' : 'Parcel Delivery',
-          'subtitle': isAr ? 'توصيل أمانة مع مسافر موثق' : 'Send package safely with a traveler',
+          'subtitle': isAr ? 'توصيل أمانة مع مسافر موثق بكود OTP' : 'Send package safely with a traveler',
           'icon': Icons.inventory_2_rounded,
           'color': const Color(0xFF10B981),
         },
@@ -563,21 +568,28 @@ class _PostAdScreenState extends State<PostAdScreen> {
         {
           'type': BoardAdType.rideOffer,
           'title': isAr ? 'عرض سفر تشاركي' : 'Offer Seats',
-          'subtitle': isAr ? 'مسافر ومعايا مقاعد شاغرة بسيارتي' : 'Empty seats in my private car',
+          'subtitle': isAr ? 'مسافر ومعايا كراسي فاضية بعربيتي بالكرسي' : 'Empty seats in my private car',
           'icon': Icons.directions_car_rounded,
           'color': AppColors.navy,
         },
         {
+          'type': BoardAdType.errandService,
+          'title': isAr ? 'قضاء مصالح بالسكة' : 'Errand & Shopping',
+          'subtitle': isAr ? 'مسافر ومستعد أشتري طلبات أو أخلص ورق بطريقي' : 'Traveler ready to buy or deliver papers',
+          'icon': Icons.description_rounded,
+          'color': const Color(0xFFD97706),
+        },
+        {
           'type': BoardAdType.goodsDelivery,
           'title': isAr ? 'عرض نقل وتوريد بضائع' : 'Freight Service',
-          'subtitle': isAr ? 'مركبة مجهزة لنقل وتوريد المستلزمات' : 'Vehicle ready for store logistics',
+          'subtitle': isAr ? 'مركبة مجهزة لنقل وتوريد مستلزمات المحلات' : 'Vehicle ready for store logistics',
           'icon': Icons.local_shipping_rounded,
           'color': const Color(0xFF6366F1),
         },
         {
           'type': BoardAdType.localTrip,
           'title': isAr ? 'عرض مشاوير محلية' : 'Offer Local Rides',
-          'subtitle': isAr ? 'سائق متاح لتوصيل المشاوير بالمدينة' : 'Driver available for local on-demand trips',
+          'subtitle': isAr ? 'سائق متاح لتوصيل المشاوير بالقرى والمدن' : 'Driver available for local on-demand trips',
           'icon': Icons.near_me_rounded,
           'color': const Color(0xFF0D9488),
         },
@@ -1035,6 +1047,20 @@ class _PostAdScreenState extends State<PostAdScreen> {
     }
 
     if (_selectedCategory == BoardAdType.errandService) {
+      final quickErrands = isAr
+          ? [
+              'شراء قطع غيار ومستلزمات',
+              'شراء طلبات وجلبها من القاهرة',
+              'تخليص شهادات وأوراق رسمية',
+              'روشتة وأدوية ضرورية',
+            ]
+          : [
+              'Buy parts & supplies',
+              'Shop items from Cairo',
+              'Official certificates & papers',
+              'Pharmacy prescription',
+            ];
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1043,22 +1069,82 @@ class _PostAdScreenState extends State<PostAdScreen> {
             style: AppTypography.title().copyWith(fontSize: 15),
           ),
           const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: quickErrands.map((chipText) {
+              final isSelected = _errandDescController.text.trim() == chipText;
+              return ActionChip(
+                label: Text(chipText),
+                labelStyle: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                ),
+                backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
+                side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
+                onPressed: () {
+                  setState(() {
+                    _errandDescController.text = chipText;
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
           MashwarTextField(
             controller: _errandDescController,
-            label: isAr ? 'نوع المصلحة أو المستند المطلوب' : 'Errand / Document Description',
-            hint: isAr ? 'مثال: استخراج شهادة تخرج من الجامعة، تصديق أوراق من الوزارة' : 'e.g. Official graduation certificate, ministry papers',
+            label: isAr ? 'نوع المصلحة أو طلب الشراء' : 'Errand / Shopping Description',
+            hint: isAr
+                ? 'مثال: شراء قطع غيار من التوفيقية، أو استخراج شهادة تخرج من الجامعة'
+                : 'e.g. Buying parts from Cairo, or official university certificate',
           ),
         ],
       );
     }
 
     if (_selectedCategory == BoardAdType.goodsDelivery) {
+      final quickGoods = isAr
+          ? [
+              'بضائع ومستلزمات محلات',
+              'كراتين وأجهزة تجارية',
+              'طلبيات وخامات ورش ومصانع',
+            ]
+          : [
+              'Store stock & supplies',
+              'Cartons & electronics',
+              'Workshop orders & materials',
+            ];
+
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             isAr ? 'تفاصيل البضاعة والتوريد' : 'Commercial Cargo Details',
             style: AppTypography.title().copyWith(fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: quickGoods.map((chipText) {
+              final isSelected = _goodsDescController.text.trim() == chipText;
+              return ActionChip(
+                label: Text(chipText),
+                labelStyle: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                ),
+                backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
+                side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
+                onPressed: () {
+                  setState(() {
+                    _goodsDescController.text = chipText;
+                  });
+                },
+              );
+            }).toList(),
           ),
           const SizedBox(height: 8),
           MashwarTextField(
@@ -1070,7 +1156,126 @@ class _PostAdScreenState extends State<PostAdScreen> {
       );
     }
 
-    // Rides & Mobility (rideOffer, rideRequest, localTrip)
+    if (_selectedCategory == BoardAdType.localTrip) {
+      final quickTrips = isAr
+          ? [
+              'مشوار فوري (مفيش مواصلات بالمنطقة)',
+              'انتقال بين القرى والمراكز',
+              'مشوار طوارئ أو مستشفى',
+            ]
+          : [
+              'Instant trip (no local transit)',
+              'Village / center commute',
+              'Hospital or clinic trip',
+            ];
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isAr ? 'نوع المشوار المحلي وسبب الانتقال' : 'Local Mobility Context',
+            style: AppTypography.title().copyWith(fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: quickTrips.map((chipText) {
+              final isSelected = _notesController.text.trim() == chipText;
+              return ActionChip(
+                label: Text(chipText),
+                labelStyle: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                ),
+                backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
+                side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
+                onPressed: () {
+                  setState(() {
+                    _notesController.text = chipText;
+                  });
+                },
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  isAr ? 'عدد الركاب' : 'Number of Passengers',
+                  style: AppTypography.title().copyWith(fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      iconSize: 18,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                      onPressed: () => _adjustSeats(-1),
+                      icon: const Icon(Icons.remove_rounded, color: AppColors.navy),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        _seatsController.text,
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.navy),
+                      ),
+                    ),
+                    IconButton(
+                      iconSize: 18,
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                      onPressed: () => _adjustSeats(1),
+                      icon: const Icon(Icons.add_rounded, color: AppColors.navy),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: _ladiesOnly,
+                  activeColor: AppColors.teal,
+                  onChanged: (val) => setState(() => _ladiesOnly = val ?? false),
+                ),
+                Expanded(
+                  child: Text(
+                    isAr ? 'مشوار مخصص للسيدات فقط 🌸' : 'Ladies Only Ride 🌸',
+                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Rides & Mobility (rideOffer, rideRequest)
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1124,7 +1329,35 @@ class _PostAdScreenState extends State<PostAdScreen> {
             ),
           ],
         ),
-
+        const SizedBox(height: 8),
+        // Quick Seat Selection Chips
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            {'label': isAr ? '1 مقعد' : '1 seat', 'val': '1'},
+            {'label': isAr ? '2 مقاعد' : '2 seats', 'val': '2'},
+            {'label': isAr ? '3 كراسي (شائع)' : '3 seats (common)', 'val': '3'},
+            {'label': isAr ? '4 كراسي' : '4 seats', 'val': '4'},
+          ].map((item) {
+            final isSelected = _seatsController.text.trim() == item['val'];
+            return ActionChip(
+              label: Text(item['label']!),
+              labelStyle: TextStyle(
+                fontSize: 11.5,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textPrimary,
+              ),
+              backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
+              side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
+              onPressed: () {
+                setState(() {
+                  _seatsController.text = item['val']!;
+                });
+              },
+            );
+          }).toList(),
+        ),
         const SizedBox(height: 6),
 
         // Ladies Only Checkbox

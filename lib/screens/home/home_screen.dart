@@ -222,14 +222,14 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: _buildActionCard(
             title: isAr ? 'اطلب مشوار أو خدمة' : 'Request Service',
-            subtitle: isAr ? 'توصيلة، سفر، أوراق، بضاعة لمحل' : 'Ride, papers, goods',
+            subtitle: isAr ? 'شراء طلبات، كراسي، أوراق، بضاعة' : 'Shop items, rides, errands, goods',
             icon: Icons.add_task_rounded,
             iconBg: AppColors.tealSurface,
             iconColor: AppColors.teal,
             borderColor: AppColors.teal.withValues(alpha: 0.35),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PostAdScreen()),
+                MaterialPageRoute(builder: (_) => const PostAdScreen(initialIntent: 0)),
               );
             },
           ),
@@ -240,14 +240,14 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: _buildActionCard(
             title: isAr ? 'اعرض مشوار أو خدمة' : 'Offer Service',
-            subtitle: isAr ? 'معاك كراسي، وسيلة، مسافر طريق' : 'Seats, vehicle, courier',
+            subtitle: isAr ? 'كراسي فاضية بعربيتك، توصيل بالسكة' : 'Empty seats, deliveries on your way',
             icon: Icons.directions_car_filled_rounded,
             iconBg: AppColors.goldSurface,
             iconColor: AppColors.navy,
             borderColor: const Color(0xFFE5E5EA),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PostAdScreen()),
+                MaterialPageRoute(builder: (_) => const PostAdScreen(initialIntent: 1, initialIsOffer: true)),
               );
             },
           ),
@@ -511,8 +511,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 2),
                   Text(
                     isAr
-                        ? 'طلبات وعروض حقيقية موثقة بالبطاقة'
-                        : 'Real requests & offers from verified members',
+                        ? 'شراء طلبات، سفر تشاركي، أوراق رسمية، وتوريد بضائع'
+                        : 'Shopping errands, rides, paperwork & goods delivery',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.bodySecondary().copyWith(fontSize: 12),

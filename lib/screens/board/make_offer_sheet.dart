@@ -37,7 +37,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
         : widget.ad.type == BoardAdType.rideOffer
             ? 'محتاج أحجز معاك في الرحلة دي'
             : widget.ad.type == BoardAdType.errandService
-                ? 'نازل في نفس الموعد ومستعد أقضي لك المصلحة وأجيب الورق'
+                ? 'نازل في نفس المسار ومستعد أشتري لك الطلبات أو أقضي لك المصلحة'
                 : widget.ad.type == BoardAdType.localTrip
                     ? 'أنا قريب من موقعك ومعايا وسيلة وأقدر أوصلك فوراً'
                     : widget.ad.type == BoardAdType.goodsDelivery
