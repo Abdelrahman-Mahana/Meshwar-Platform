@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../data/models/user_model.dart';
+import '../data/repositories/app_repositories.dart';
 
 enum AuthStatus {
   unauthenticated,
@@ -255,6 +256,7 @@ class AuthProvider extends ChangeNotifier {
       emergencyContactPhone: emergencyContactPhone ?? _user.emergencyContactPhone,
     );
     notifyListeners();
+    AppRepositories.instance.auth.updateProfile(_user).ignore();
   }
 
   void updateWalletBalance(double newBalance) {

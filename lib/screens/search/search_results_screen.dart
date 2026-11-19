@@ -13,6 +13,8 @@ import '../../state/rides_provider.dart';
 import '../../state/alerts_provider.dart';
 import '../ride_details/ride_details_screen.dart';
 import 'search_filters_sheet.dart';
+import '../../data/repositories/app_repositories.dart';
+import '../../data/repositories/contracts/i_maps_repository.dart';
 
 class SearchResultsScreen extends StatefulWidget {
   const SearchResultsScreen({super.key});
@@ -134,6 +136,50 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         ],
                       ),
                     ),
+
+                    // Google Maps Route calculation pill
+                    if (rides.fromCity.isNotEmpty && rides.toCity.isNotEmpty)
+                      FutureBuilder<RouteDetails>(
+                        future: AppRepositories.instance.maps.getRouteDetails(rides.fromCity, rides.toCity),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) return const SizedBox.shrink();
+                          final details = snapshot.data!;
+                          final hours = details.durationMinutes ~/ 60;
+                          final mins = details.durationMinutes % 60;
+                          final timeStr = hours > 0
+                              ? (isAr ? '$hours س و $mins د' : '${hours}h ${mins}m')
+                              : (isAr ? '$mins دقيقة' : '${mins}m');
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: 2),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: AppColors.teal.withValues(alpha: 0.07),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.teal.withValues(alpha: 0.2)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.alt_route_rounded, color: AppColors.teal, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      isAr
+                                          ? 'المسافة المقدرة: ${details.distanceKm.round()} كم · زمن القيادة: $timeStr تقريباً'
+                                          : 'Est. Distance: ${details.distanceKm.round()} km · Drive Time: ~$timeStr',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.navy,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
 
                     // Offline Banner State (Page 18)
                     if (_isOffline) ...[

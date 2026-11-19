@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../data/models/board_ad_model.dart';
+import '../data/repositories/app_repositories.dart';
 
 class BoardProvider extends ChangeNotifier {
   BoardAdType _selectedType = BoardAdType.all;
@@ -106,6 +107,7 @@ class BoardProvider extends ChangeNotifier {
     _ads.insert(0, newAd);
     _myAds.insert(0, newAd);
     notifyListeners();
+    AppRepositories.instance.board.createBoardAd(newAd).ignore();
   }
 
   void submitOffer({
@@ -121,6 +123,12 @@ class BoardProvider extends ChangeNotifier {
         notes: note ?? _ads[index].notes,
       );
       notifyListeners();
+      AppRepositories.instance.board.makeOffer(
+        adId: adId,
+        offerPrice: offerPrice,
+        timeText: _ads[index].timeText,
+        driverName: 'عبدالرحمن أحمد',
+      ).ignore();
     }
   }
 
@@ -132,6 +140,7 @@ class BoardProvider extends ChangeNotifier {
         myOfferPrice: null,
       );
       notifyListeners();
+      AppRepositories.instance.board.withdrawOffer(adId).ignore();
     }
   }
 
@@ -151,6 +160,7 @@ class BoardProvider extends ChangeNotifier {
     _myAds.removeWhere((a) => a.id == adId);
     _ads.removeWhere((a) => a.id == adId);
     notifyListeners();
+    AppRepositories.instance.board.deleteAd(adId).ignore();
   }
 }
 

@@ -10,6 +10,8 @@ import '../../data/models/board_ad_model.dart';
 import '../../state/board_provider.dart';
 import '../home/city_search_modal.dart';
 import 'board_extra_screens.dart';
+import '../../data/repositories/app_repositories.dart';
+import '../../data/repositories/contracts/i_maps_repository.dart';
 
 class PostAdScreen extends StatefulWidget {
   final bool initialIsOffer;
@@ -732,25 +734,28 @@ class _PostAdScreenState extends State<PostAdScreen> {
 
   // Connected Route Card (Departure 🟢 -> Destination 📍)
   Widget _buildConnectedRouteCard(bool isAr) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      child: Stack(
-        alignment: isAr ? Alignment.centerLeft : Alignment.centerRight,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Stack(
+            alignment: isAr ? Alignment.centerLeft : Alignment.centerRight,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Visual Route Connector (Green Dot -> Vertical Line -> Red Pin)
               Column(
@@ -983,8 +988,67 @@ class _PostAdScreenState extends State<PostAdScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+    // Dynamic Google Maps Route Estimate
+    ValueListenableBuilder<TextEditingValue>(
+      valueListenable: _fromController,
+      builder: (_, fromVal, __) {
+        return ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _toController,
+          builder: (_, toVal, __) {
+            final from = fromVal.text.trim();
+            final to = toVal.text.trim();
+            if (from.isEmpty || to.isEmpty || from == to) {
+              return const SizedBox.shrink();
+            }
+            return FutureBuilder<RouteDetails>(
+              future: AppRepositories.instance.maps.getRouteDetails(from, to),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) return const SizedBox.shrink();
+                final details = snapshot.data!;
+                final hours = details.durationMinutes ~/ 60;
+                final mins = details.durationMinutes % 60;
+                final timeStr = hours > 0
+                    ? (isAr ? '$hours س و $mins د' : '${hours}h ${mins}m')
+                    : (isAr ? '$mins دقيقة' : '${mins}m');
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8, right: 4, left: 4),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.teal.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.teal.withValues(alpha: 0.18)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.alt_route_rounded, color: AppColors.teal, size: 15),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            isAr
+                                ? 'المسافة المقدرة عبر خرائط جوجل: ${details.distanceKm.round()} كم · زمن السفر: $timeStr تقريباً'
+                                : 'Google Maps Est: ${details.distanceKm.round()} km · Travel Time: ~$timeStr',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    ),
+  ],
+);
+}
 
   // Quick Schedule Chip
   Widget _buildScheduleChip(String text) {

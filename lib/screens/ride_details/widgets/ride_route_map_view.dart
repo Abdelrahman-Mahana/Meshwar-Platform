@@ -4,6 +4,8 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../data/models/ride_model.dart';
+import '../../../data/repositories/app_repositories.dart';
+import '../../../data/repositories/contracts/i_maps_repository.dart';
 
 enum RoutePerspective {
   passenger, // منظور الراكب: تركيز على نقطة ركوبك ونزولك ومسافة المشي
@@ -30,16 +32,50 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
   late RoutePerspective _perspective;
   bool _showSatellite = false;
   bool _isRouteExpanded = false;
+  RouteDetails? _routeDetails;
 
   @override
   void initState() {
     super.initState();
     _perspective = widget.initialPerspective;
+    _loadRouteDetails();
   }
 
-  // Route metrics dynamically derived or defaulted realistically
-  String get _distanceKm => '135 كم';
-  String get _durationFormatted => 'ساعتان و 15 دقيقة';
+  void _loadRouteDetails() {
+    AppRepositories.instance.maps
+        .getRouteDetails(widget.ride.fromCity, widget.ride.toCity)
+        .then((details) {
+      if (mounted) {
+        setState(() {
+          _routeDetails = details;
+        });
+      }
+    }).catchError((_) {});
+  }
+
+  // Route metrics dynamically derived via Google Maps & Egyptian Highway calculations
+  String get _distanceKm {
+    if (_routeDetails != null) {
+      return '${_routeDetails!.distanceKm.round()} كم';
+    }
+    return '135 كم';
+  }
+
+  String get _durationFormatted {
+    if (_routeDetails != null) {
+      final hours = _routeDetails!.durationMinutes ~/ 60;
+      final mins = _routeDetails!.durationMinutes % 60;
+      if (hours > 0 && mins > 0) {
+        return '$hours س و $mins د';
+      } else if (hours > 0) {
+        return '$hours ساعات';
+      } else {
+        return '$mins دقيقة';
+      }
+    }
+    return 'ساعتان و 15 دقيقة';
+  }
+
   String get _highwayName => 'طريق مصر - الإسكندرية الزراعي (طريق 75)';
 
   void _openFullScreenMap(BuildContext context, bool isAr) {

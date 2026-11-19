@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../data/models/ride_model.dart';
+import '../data/repositories/app_repositories.dart';
 
 enum RideMode {
   seats,   // كراسي
@@ -134,6 +135,13 @@ class RidesProvider extends ChangeNotifier {
       _bookedRides.insert(0, ride);
     }
     notifyListeners();
+    // Sync with backend repository
+    AppRepositories.instance.rides.bookRide(
+      rideId: ride.id,
+      seats: _seatsCount,
+      pickupLocation: ride.pickupPoint,
+      dropoffLocation: ride.dropoffPoint,
+    ).ignore();
   }
 
   void confirmBooking(RideModel ride) {
@@ -142,14 +150,25 @@ class RidesProvider extends ChangeNotifier {
       _bookedRides.insert(0, ride);
     }
     notifyListeners();
+    AppRepositories.instance.rides.bookRide(
+      rideId: ride.id,
+      seats: _seatsCount,
+      pickupLocation: ride.pickupPoint,
+      dropoffLocation: ride.dropoffPoint,
+    ).ignore();
   }
 
   void cancelBooking() {
     if (_activeBooking != null) {
-      _bookedRides.removeWhere((r) => r.id == _activeBooking!.id);
+      final cancelledId = _activeBooking!.id;
+      _bookedRides.removeWhere((r) => r.id == cancelledId);
+      _activeBooking = null;
+      notifyListeners();
+      AppRepositories.instance.rides.cancelBooking(cancelledId).ignore();
+    } else {
+      _activeBooking = null;
+      notifyListeners();
     }
-    _activeBooking = null;
-    notifyListeners();
   }
 
   RideModel publishRide({
@@ -192,6 +211,7 @@ class RidesProvider extends ChangeNotifier {
     _allRides.insert(0, newRide);
     _myPublishedRides.insert(0, newRide);
     notifyListeners();
+    AppRepositories.instance.rides.publishRide(newRide).ignore();
     return newRide;
   }
 

@@ -7,6 +7,7 @@ import '../../core/widgets/mashwar_text_field.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/location_item.dart';
+import '../../data/repositories/app_repositories.dart';
 
 class CitySearchModal extends StatefulWidget {
   const CitySearchModal({
@@ -38,16 +39,38 @@ class _CitySearchModalState extends State<CitySearchModal> {
   }
 
   void _filterList(String query) {
+    final q = query.trim().toLowerCase();
     setState(() {
-      if (query.trim().isEmpty) {
+      if (q.isEmpty) {
         _filtered = MockData.locations;
       } else {
-        _filtered = MockData.locations.where((loc) {
-          final q = query.trim().toLowerCase();
+        final localMatches = MockData.locations.where((loc) {
           return loc.name.toLowerCase().contains(q) ||
               loc.region.toLowerCase().contains(q) ||
               AppStrings.translateCity(loc.name, isArabic: false).toLowerCase().contains(q);
         }).toList();
+
+        // Query Google Maps & Egyptian Catalog for matches
+        AppRepositories.instance.maps.searchLocations(query).then((results) {
+          if (!mounted) return;
+          final extraItems = <LocationItem>[];
+          for (final r in results) {
+            if (!localMatches.any((m) => m.name == r.mainText)) {
+              extraItems.add(LocationItem(
+                name: r.mainText,
+                region: r.secondaryText,
+                typeLabel: 'مدينة',
+              ));
+            }
+          }
+          if (extraItems.isNotEmpty && mounted) {
+            setState(() {
+              _filtered = [...localMatches, ...extraItems];
+            });
+          }
+        }).catchError((_) {});
+
+        _filtered = localMatches;
       }
     });
   }

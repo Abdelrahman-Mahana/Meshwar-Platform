@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../data/models/parcel_model.dart';
+import '../data/repositories/app_repositories.dart';
 
 class ParcelsProvider extends ChangeNotifier {
   final List<ParcelModel> _parcels = [MockData.activeParcel];
@@ -35,6 +36,7 @@ class ParcelsProvider extends ChangeNotifier {
     );
     _parcels.insert(0, newParcel);
     notifyListeners();
+    AppRepositories.instance.parcels.createParcel(newParcel).ignore();
   }
 
   void updateParcelStatus(String id, ParcelStatusStep newStatus) {
@@ -42,6 +44,7 @@ class ParcelsProvider extends ChangeNotifier {
     if (index != -1) {
       _parcels[index] = _parcels[index].copyWith(status: newStatus);
       notifyListeners();
+      AppRepositories.instance.parcels.updateParcelStatus(id, newStatus).ignore();
     }
   }
 
