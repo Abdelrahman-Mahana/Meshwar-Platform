@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart';
 
+import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_colors.dart';
 import 'state/settings_provider.dart';
 import 'state/admin_provider.dart';
 import 'screens/admin/admin_login_screen.dart';
 import 'screens/admin/admin_shell.dart';
+import 'data/repositories/app_repositories.dart';
+import 'data/services/firebase_firestore_service.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (FirebaseConfig.useFirebase) {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      AppRepositories.instance.useFirebase();
+    } catch (e) {
+      debugPrint('Firebase admin initialization notice: $e');
+    }
+  }
+
   runApp(const MashwarAdminWebApp());
 }
 

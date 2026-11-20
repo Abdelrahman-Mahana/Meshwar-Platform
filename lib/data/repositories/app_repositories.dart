@@ -12,6 +12,12 @@ import 'implementations/parcels_repository_impl.dart';
 import 'implementations/maps_repository_impl.dart';
 import 'implementations/chat_repository_impl.dart';
 import 'implementations/wallet_repository_impl.dart';
+import 'implementations/firebase/firebase_auth_repository.dart';
+import 'implementations/firebase/firebase_rides_repository.dart';
+import 'implementations/firebase/firebase_board_repository.dart';
+import 'implementations/firebase/firebase_parcels_repository.dart';
+import 'implementations/firebase/firebase_chat_repository.dart';
+import 'implementations/firebase/firebase_wallet_repository.dart';
 
 /// Central Dependency Injection & Repository Hub for MASHWAR Backend.
 /// Allows zero-friction switching between Firebase, REST API, and Local/Mock implementations.
@@ -27,6 +33,28 @@ class AppRepositories {
   late IMapsRepository maps = MapsRepositoryImpl();
   late IChatRepository chat = ChatRepositoryImpl();
   late IWalletRepository wallet = WalletRepositoryImpl();
+
+  /// Switch all repositories to live production Firebase implementations
+  void useFirebase() {
+    auth = FirebaseAuthRepository();
+    rides = FirebaseRidesRepository();
+    board = FirebaseBoardRepository();
+    parcels = FirebaseParcelsRepository();
+    chat = FirebaseChatRepository();
+    wallet = FirebaseWalletRepository();
+    maps = MapsRepositoryImpl();
+  }
+
+  /// Switch all repositories to local/offline mock implementations
+  void useLocalMocks() {
+    auth = AuthRepositoryImpl();
+    rides = RidesRepositoryImpl();
+    board = BoardRepositoryImpl();
+    parcels = ParcelsRepositoryImpl();
+    chat = ChatRepositoryImpl();
+    wallet = WalletRepositoryImpl();
+    maps = MapsRepositoryImpl();
+  }
 
   /// Configure custom repository implementations (e.g. for Firebase or Testing)
   void configure({
