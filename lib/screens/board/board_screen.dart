@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
-import '../../core/widgets/mashwar_chip.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../state/board_provider.dart';
@@ -22,6 +23,7 @@ class BoardScreen extends StatefulWidget {
 
 class _BoardScreenState extends State<BoardScreen> {
   bool _isSearchOpen = false;
+  int _intentFilter = 0; // 0 = All, 1 = Requests, 2 = Offers
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -104,18 +106,74 @@ class _BoardScreenState extends State<BoardScreen> {
     );
   }
 
+  List<_CategoryFilterOption> _categoryOptions(bool isAr) => [
+        _CategoryFilterOption(
+          type: BoardAdType.all,
+          label: isAr ? 'الكل' : 'All',
+          icon: Icons.apps_rounded,
+          accentColor: AppColors.navy,
+        ),
+        _CategoryFilterOption(
+          type: BoardAdType.rideOffer,
+          label: isAr ? 'سفر بين المحافظات' : 'Inter-city Rides',
+          assetPath: 'assets/images/service_ride.jpg',
+          icon: Icons.directions_car_rounded,
+          accentColor: AppColors.navy,
+        ),
+        _CategoryFilterOption(
+          type: BoardAdType.errandService,
+          label: isAr ? 'قضاء مصالح' : 'Errands',
+          assetPath: 'assets/images/service_errand.jpg',
+          icon: Icons.shopping_bag_rounded,
+          accentColor: const Color(0xFF6A1B9A),
+        ),
+        _CategoryFilterOption(
+          type: BoardAdType.parcelRequest,
+          label: isAr ? 'شحن أمانات' : 'Parcels',
+          assetPath: 'assets/images/service_parcel.jpg',
+          icon: Icons.inventory_2_rounded,
+          accentColor: AppColors.teal,
+        ),
+        _CategoryFilterOption(
+          type: BoardAdType.goodsDelivery,
+          label: isAr ? 'بضائع وتوريد' : 'Cargo',
+          assetPath: 'assets/images/service_cargo.jpg',
+          icon: Icons.local_shipping_rounded,
+          accentColor: const Color(0xFF00695C),
+        ),
+        _CategoryFilterOption(
+          type: BoardAdType.localTrip,
+          label: isAr ? 'مشاوير محلية' : 'Local Mobility',
+          icon: Icons.near_me_rounded,
+          accentColor: const Color(0xFFE65100),
+        ),
+        _CategoryFilterOption(
+          type: BoardAdType.rideRequest,
+          label: isAr ? 'طلب سفر' : 'Travel Requests',
+          icon: Icons.person_search_rounded,
+          accentColor: AppColors.warning,
+        ),
+      ];
+
   @override
   Widget build(BuildContext context) {
     final board = context.watch<BoardProvider>();
-    final ads = board.filteredAds;
     final isAr = context.isArabic;
+    final baseAds = board.filteredAds;
+    final ads = _intentFilter == 0
+        ? baseAds
+        : _intentFilter == 1
+            ? baseAds.where((ad) => ad.type != BoardAdType.rideOffer).toList()
+            : baseAds.where((ad) => ad.type == BoardAdType.rideOffer).toList();
+
     final activeMyAdsCount = board.myAds
         .where((a) => a.status != BoardAdStatus.completed && a.status != BoardAdStatus.expired)
         .length;
     final sentOffersCount = board.mySentOffers.length;
+    final categories = _categoryOptions(isAr);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -123,9 +181,56 @@ class _BoardScreenState extends State<BoardScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(isAr ? 'اللوحة' : 'Board', style: AppTypography.title()),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const MashwarPinIcon(size: 18),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    isAr ? 'اللوحة' : 'Board',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.title(),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.teal,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        isAr ? 'مباشر' : 'LIVE',
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.teal,
+                          fontFamily: 'Cairo',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             Text(
               isAr ? 'سوق المشاوير، الخدمات اليومية، والسفر التشاركي' : 'Marketplace for errands, services & rides',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.label(color: AppColors.textSecondary),
             ),
           ],
@@ -158,7 +263,7 @@ class _BoardScreenState extends State<BoardScreen> {
                   );
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.tealSurface,
                     borderRadius: BorderRadius.circular(20),
@@ -195,6 +300,7 @@ class _BoardScreenState extends State<BoardScreen> {
           ),
         ],
       ),
+      // Keep single Icons.add_rounded + exact 'انشر إعلان' label for widget tests
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.of(context).push(
@@ -203,7 +309,8 @@ class _BoardScreenState extends State<BoardScreen> {
         },
         backgroundColor: AppColors.navy,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        elevation: 3,
+        icon: const Icon(Icons.add_rounded, color: AppColors.gold),
         label: Text(
           isAr ? 'انشر إعلان' : 'Post Ad',
           style: AppTypography.button(color: Colors.white),
@@ -220,186 +327,160 @@ class _BoardScreenState extends State<BoardScreen> {
                 constraints: BoxConstraints(maxWidth: isWide ? 1200 : 720),
                 child: Column(
                   children: [
-                    // Search input bar when toggled
-                    if (_isSearchOpen)
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(horizontalPad, 6, horizontalPad, 8),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: board.setSearchQuery,
-                          decoration: InputDecoration(
-                            hintText: isAr ? 'ابحث بالمحافظة أو المدينة (مثال: القاهرة، طنطا)...' : 'Search by city or route...',
-                            prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.navy),
-                            suffixIcon: board.searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(Icons.clear_rounded, size: 18),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      board.setSearchQuery('');
-                                    },
-                                  )
-                                : null,
-                            filled: true,
-                            fillColor: const Color(0xFFF3F3F4),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-                            ),
-                          ),
-                        ),
-                      ),
+                    // Animated Collapsible Search Bar
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      child: _isSearchOpen
+                          ? Container(
+                              color: Colors.white,
+                              padding: EdgeInsets.fromLTRB(horizontalPad, 6, horizontalPad, 8),
+                              child: TextField(
+                                controller: _searchController,
+                                onChanged: board.setSearchQuery,
+                                decoration: InputDecoration(
+                                  hintText: isAr
+                                      ? 'ابحث بالمحافظة أو المدينة (مثال: القاهرة، طنطا)...'
+                                      : 'Search by city or route...',
+                                  prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.navy),
+                                  suffixIcon: board.searchQuery.isNotEmpty
+                                      ? IconButton(
+                                          icon: const Icon(Icons.clear_rounded, size: 18),
+                                          onPressed: () {
+                                            _searchController.clear();
+                                            board.setSearchQuery('');
+                                          },
+                                        )
+                                      : null,
+                                  filled: true,
+                                  fillColor: const Color(0xFFF3F3F4),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
 
-                    // Responsive Toolbar: Filter Pills + Radius & Sent Offers
-                    if (isWide)
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
+                    // Illustrated Category Strip + Segmented Intent Bar
+                    Container(
+                      color: Colors.white,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (isWide)
+                            Padding(
+                              padding: EdgeInsets.fromLTRB(horizontalPad, 10, horizontalPad, 8),
                               child: Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
+                                children: categories
+                                    .map((opt) => _buildVisualCategoryPill(board, opt))
+                                    .toList(),
+                              ),
+                            )
+                          else
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              padding: EdgeInsets.fromLTRB(horizontalPad, 8, horizontalPad, 8),
+                              child: Row(
                                 children: [
-                                  MashwarChip(
-                                    label: isAr ? 'الكل' : 'All',
-                                    isSelected: board.selectedType == BoardAdType.all,
-                                    onTap: () => board.setSelectedType(BoardAdType.all),
-                                  ),
-                                  MashwarChip(
-                                    label: isAr ? 'سفر بين المحافظات' : 'Inter-city Rides',
-                                    isSelected: board.selectedType == BoardAdType.rideOffer,
-                                    onTap: () => board.setSelectedType(BoardAdType.rideOffer),
-                                  ),
-                                  MashwarChip(
-                                    label: isAr ? 'انتقال ومشاوير محلية' : 'Local Mobility',
-                                    isSelected: board.selectedType == BoardAdType.localTrip,
-                                    onTap: () => board.setSelectedType(BoardAdType.localTrip),
-                                  ),
-                                  MashwarChip(
-                                    label: isAr ? 'قضاء مصالح وخدمات' : 'Errands & Services',
-                                    isSelected: board.selectedType == BoardAdType.errandService,
-                                    onTap: () => board.setSelectedType(BoardAdType.errandService),
-                                  ),
-                                  MashwarChip(
-                                    label: isAr ? 'لوجستيات وتوريدات' : 'Logistics & Supplies',
-                                    isSelected: board.selectedType == BoardAdType.goodsDelivery,
-                                    onTap: () => board.setSelectedType(BoardAdType.goodsDelivery),
-                                  ),
-                                  MashwarChip(
-                                    label: isAr ? 'شحن وتوصيل أمانات' : 'Parcels & Cargo',
-                                    isSelected: board.selectedType == BoardAdType.parcelRequest,
-                                    onTap: () => board.setSelectedType(BoardAdType.parcelRequest),
-                                  ),
-                                  MashwarChip(
-                                    label: isAr ? 'طلب سفر ونقل' : 'Travel Requests',
-                                    isSelected: board.selectedType == BoardAdType.rideRequest,
-                                    onTap: () => board.setSelectedType(BoardAdType.rideRequest),
-                                  ),
+                                  for (int i = 0; i < categories.length; i++) ...[
+                                    _buildVisualCategoryPill(board, categories[i]),
+                                    if (i < categories.length - 1) const SizedBox(width: 8),
+                                  ],
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _buildRadiusButton(context, board, isAr),
-                                if (sentOffersCount > 0) ...[
-                                  const SizedBox(width: 12),
-                                  _buildSentOffersLink(context, sentOffersCount, isAr),
-                                ],
-                              ],
-                            ),
-                          ],
-                        ),
-                      )
-                    else ...[
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 10),
-                        child: Row(
-                          children: [
-                            MashwarChip(
-                              label: isAr ? 'الكل' : 'All',
-                              isSelected: board.selectedType == BoardAdType.all,
-                              onTap: () => board.setSelectedType(BoardAdType.all),
-                            ),
-                            const SizedBox(width: 8),
-                            MashwarChip(
-                              label: isAr ? 'سفر بين المحافظات' : 'Inter-city Rides',
-                              isSelected: board.selectedType == BoardAdType.rideOffer,
-                              onTap: () => board.setSelectedType(BoardAdType.rideOffer),
-                            ),
-                            const SizedBox(width: 8),
-                            MashwarChip(
-                              label: isAr ? 'انتقال ومشاوير محلية' : 'Local Mobility',
-                              isSelected: board.selectedType == BoardAdType.localTrip,
-                              onTap: () => board.setSelectedType(BoardAdType.localTrip),
-                            ),
-                            const SizedBox(width: 8),
-                            MashwarChip(
-                              label: isAr ? 'قضاء مصالح وخدمات' : 'Errands & Services',
-                              isSelected: board.selectedType == BoardAdType.errandService,
-                              onTap: () => board.setSelectedType(BoardAdType.errandService),
-                            ),
-                            const SizedBox(width: 8),
-                            MashwarChip(
-                              label: isAr ? 'لوجستيات وتوريدات' : 'Logistics & Supplies',
-                              isSelected: board.selectedType == BoardAdType.goodsDelivery,
-                              onTap: () => board.setSelectedType(BoardAdType.goodsDelivery),
-                            ),
-                            const SizedBox(width: 8),
-                            MashwarChip(
-                              label: isAr ? 'شحن وتوصيل أمانات' : 'Parcels & Cargo',
-                              isSelected: board.selectedType == BoardAdType.parcelRequest,
-                              onTap: () => board.setSelectedType(BoardAdType.parcelRequest),
-                            ),
-                            const SizedBox(width: 8),
-                            MashwarChip(
-                              label: isAr ? 'طلب سفر ونقل' : 'Travel Requests',
-                              isSelected: board.selectedType == BoardAdType.rideRequest,
-                              onTap: () => board.setSelectedType(BoardAdType.rideRequest),
-                            ),
-                          ],
-                        ),
+
+                          // Segmented Intent Bar + Radius & Sent Offers Strip
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(horizontalPad, 2, horizontalPad, 10),
+                            child: isWide
+                                ? Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Flexible(child: _buildIntentSegmentedControl(isAr, fillWidth: false)),
+                                      const SizedBox(width: 12),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          _buildRadiusButton(context, board, isAr),
+                                          if (sentOffersCount > 0) ...[
+                                            const SizedBox(width: 12),
+                                            _buildSentOffersLink(context, sentOffersCount, isAr),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  )
+                                : Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      _buildIntentSegmentedControl(isAr),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(child: _buildRadiusButton(context, board, isAr)),
+                                          if (sentOffersCount > 0)
+                                            _buildSentOffersLink(context, sentOffersCount, isAr),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                          const Divider(height: 1, thickness: 0.8, color: Color(0xFFEDF2F7)),
+                        ],
                       ),
-                      Padding(
-                        padding: EdgeInsets.symmetric(horizontal: horizontalPad, vertical: 4),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Flexible(child: _buildRadiusButton(context, board, isAr)),
-                            if (sentOffersCount > 0) _buildSentOffersLink(context, sentOffersCount, isAr),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
+
                     const SizedBox(height: 8),
 
                     // Ads Feed (2-column pairs on wide viewports, single list on mobile)
                     Expanded(
                       child: ads.isEmpty
                           ? Center(
-                              child: Padding(
+                              child: SingleChildScrollView(
                                 padding: const EdgeInsets.all(AppDimens.space24),
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.dashboard_customize_outlined, size: 48, color: AppColors.textSecondary),
-                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(22),
+                                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                                      ),
+                                      child: MashwarAssetArt(
+                                        assetPath: 'assets/images/service_ride.jpg',
+                                        width: 84,
+                                        height: 84,
+                                        fit: BoxFit.contain,
+                                        borderRadius: BorderRadius.circular(14),
+                                        fallbackIcon: Icons.dashboard_customize_outlined,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 14),
                                     Text(
-                                      isAr ? 'مفيش إعلانات مطابقة حالياً في هذا القسم' : 'No matching ads currently in this category',
+                                      isAr
+                                          ? 'مفيش إعلانات مطابقة حالياً في هذا القسم'
+                                          : 'No matching ads currently in this category',
                                       style: AppTypography.bodySecondary(),
                                       textAlign: TextAlign.center,
                                     ),
                                     const SizedBox(height: 16),
                                     OutlinedButton.icon(
                                       onPressed: () {
+                                        setState(() => _intentFilter = 0);
                                         board.setSelectedType(BoardAdType.all);
                                         _searchController.clear();
                                         board.setSearchQuery('');
@@ -421,11 +502,11 @@ class _BoardScreenState extends State<BoardScreen> {
                                     return Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Expanded(child: _buildAdCard(context, ads[firstIdx], isAr)),
+                                        Expanded(child: _buildAdCard(context, ads[firstIdx], isAr, firstIdx)),
                                         const SizedBox(width: AppDimens.space16),
                                         Expanded(
                                           child: secondIdx < ads.length
-                                              ? _buildAdCard(context, ads[secondIdx], isAr)
+                                              ? _buildAdCard(context, ads[secondIdx], isAr, secondIdx)
                                               : const SizedBox.shrink(),
                                         ),
                                       ],
@@ -436,7 +517,7 @@ class _BoardScreenState extends State<BoardScreen> {
                                   padding: EdgeInsets.fromLTRB(horizontalPad, 4, horizontalPad, 96),
                                   itemCount: ads.length,
                                   itemBuilder: (context, index) {
-                                    return _buildAdCard(context, ads[index], isAr);
+                                    return _buildAdCard(context, ads[index], isAr, index);
                                   },
                                 ),
                     ),
@@ -446,6 +527,149 @@ class _BoardScreenState extends State<BoardScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildVisualCategoryPill(BoardProvider board, _CategoryFilterOption opt) {
+    final isSelected = board.selectedType == opt.type;
+    return MashwarPressable(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        if (_intentFilter != 0) {
+          setState(() => _intentFilter = 0);
+        }
+        board.setSelectedType(opt.type);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.navy : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppColors.navy : const Color(0xFFE2E8F0),
+            width: 1,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.navy.withValues(alpha: 0.14),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (opt.assetPath != null)
+              Container(
+                width: 24,
+                height: 24,
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: MashwarAssetArt(
+                  assetPath: opt.assetPath!,
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                  borderRadius: BorderRadius.circular(5),
+                  fallbackIcon: opt.icon,
+                  fallbackColor: opt.accentColor,
+                ),
+              )
+            else
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.16)
+                      : opt.accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Icon(
+                  opt.icon,
+                  size: 14,
+                  color: isSelected ? AppColors.gold : opt.accentColor,
+                ),
+              ),
+            const SizedBox(width: 7),
+            Text(
+              opt.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                color: isSelected ? Colors.white : AppColors.navy,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntentSegmentedControl(bool isAr, {bool fillWidth = true}) {
+    final segments = [
+      (0, isAr ? 'الكل' : 'Everything'),
+      (1, isAr ? 'طلبات المواطنين' : 'Requests'),
+      (2, isAr ? 'عروض المسافرين' : 'Travelers Offers'),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: fillWidth ? MainAxisSize.max : MainAxisSize.min,
+        children: segments.map((seg) {
+          final isSelected = _intentFilter == seg.$1;
+          final tile = InkWell(
+            borderRadius: BorderRadius.circular(9),
+            onTap: () => setState(() => _intentFilter = seg.$1),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 170),
+              padding: EdgeInsets.symmetric(
+                horizontal: fillWidth ? 8 : 14,
+                vertical: 7,
+              ),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(9),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Text(
+                seg.$2,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? AppColors.navy : AppColors.textSecondary,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+            ),
+          );
+          return fillWidth ? Expanded(child: tile) : tile;
+        }).toList(),
       ),
     );
   }
@@ -501,7 +725,7 @@ class _BoardScreenState extends State<BoardScreen> {
     );
   }
 
-  Widget _buildAdCard(BuildContext context, BoardAdModel ad, bool isAr) {
+  Widget _buildAdCard(BuildContext context, BoardAdModel ad, bool isAr, int index) {
     Color typeColor;
     String typeLabel;
     IconData typeIcon;
@@ -581,30 +805,31 @@ class _BoardScreenState extends State<BoardScreen> {
       buttonText = isAr ? 'قدّم عرض' : 'Make Offer';
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppDimens.space16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(
-          color: isOfferSent ? AppColors.teal : const Color(0xFFE5E5EA),
-          width: isOfferSent ? 1.2 : 0.8,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+    return MashwarFadeSlideIn(
+      duration: Duration(milliseconds: 220 + (index.clamp(0, 4) * 30)),
+      offsetY: 10,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppDimens.space16),
+        child: MashwarPressable(
+          borderRadius: BorderRadius.circular(18),
           onTap: handleOpenAd,
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.all(AppDimens.space20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isOfferSent ? AppColors.teal : const Color(0xFFE5E5EA),
+                width: isOfferSent ? 1.4 : 0.9,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.navy.withValues(alpha: 0.035),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -619,15 +844,15 @@ class _BoardScreenState extends State<BoardScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
                             color: typeColor.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(typeIcon, color: typeColor, size: 18),
+                          child: Icon(typeIcon, color: typeColor, size: 19),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 9),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
@@ -641,7 +866,7 @@ class _BoardScreenState extends State<BoardScreen> {
                                     ad.authorName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w800),
                                   ),
                                 ),
                                 if (ad.isVerified) ...[
@@ -684,11 +909,11 @@ class _BoardScreenState extends State<BoardScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: typeColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: Text(
                             typeLabel,
-                            style: AppTypography.label(color: typeColor).copyWith(fontWeight: FontWeight.w700),
+                            style: AppTypography.label(color: typeColor).copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
                       ],
@@ -697,44 +922,53 @@ class _BoardScreenState extends State<BoardScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Route + Ladies Only badge if applicable
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        context.trRoute(ad.route),
-                        style: AppTypography.title().copyWith(fontSize: 16),
+                // Uber/Careem Visual Route Box + Timing
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0), width: 0.6),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      MashwarRouteTimeline(
+                        from: context.trCity(ad.fromCity),
+                        to: context.trCity(ad.toCity),
+                        trailingBottom: ad.isLadiesOnly
+                            ? const MashwarBadge(type: BadgeType.ladiesOnly)
+                            : null,
+                        compact: true,
                       ),
-                    ),
-                    if (ad.isLadiesOnly)
-                      const MashwarBadge(type: BadgeType.ladiesOnly),
-                  ],
-                ),
-                const SizedBox(height: 4),
-
-                // Schedule / timeText row
-                Row(
-                  children: [
-                    const Icon(Icons.schedule_rounded, size: 14, color: AppColors.teal),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        ad.timeText,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                      const SizedBox(height: 8),
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      const SizedBox(height: 7),
+                      Row(
+                        children: [
+                          const Icon(Icons.schedule_rounded, size: 14, color: AppColors.teal),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              ad.timeText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 10),
 
                 // Description / details
                 Text(ad.description, style: AppTypography.bodySecondary()),
 
                 const SizedBox(height: 14),
 
-                // Footer: Suggested price + Chat & Action Button (Page 21)
+                // Footer: Suggested price + Chat & Action Button
                 LayoutBuilder(
                   builder: (context, footerConstraints) {
                     final priceWidget = Column(
@@ -754,12 +988,12 @@ class _BoardScreenState extends State<BoardScreen> {
                           children: [
                             Text(
                               '${ad.suggestedPrice}',
-                              style: AppTypography.title().copyWith(color: AppColors.navy),
+                              style: AppTypography.title().copyWith(color: AppColors.navy, fontSize: 20),
                             ),
-                            const SizedBox(width: 2),
+                            const SizedBox(width: 3),
                             Text(
-                              isAr ? 'ج' : 'EGP',
-                              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                              isAr ? 'ج.م' : 'EGP',
+                              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w800),
                             ),
                           ],
                         ),
@@ -773,7 +1007,14 @@ class _BoardScreenState extends State<BoardScreen> {
                           IconButton(
                             visualDensity: VisualDensity.compact,
                             tooltip: isAr ? 'محادثة صاحب الإعلان' : 'Chat with author',
-                            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20, color: AppColors.navy),
+                            icon: Container(
+                              padding: const EdgeInsets.all(7),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppColors.navy),
+                            ),
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -795,7 +1036,7 @@ class _BoardScreenState extends State<BoardScreen> {
                               minimumSize: const Size(0, 40),
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(AppDimens.radiusButton),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               elevation: 0,
@@ -843,4 +1084,20 @@ class _BoardScreenState extends State<BoardScreen> {
       ),
     );
   }
+}
+
+class _CategoryFilterOption {
+  const _CategoryFilterOption({
+    required this.type,
+    required this.label,
+    required this.icon,
+    required this.accentColor,
+    this.assetPath,
+  });
+
+  final BoardAdType type;
+  final String label;
+  final IconData icon;
+  final Color accentColor;
+  final String? assetPath;
 }
