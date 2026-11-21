@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
 import '../../core/localization/app_strings.dart';
@@ -28,31 +29,22 @@ class SearchFiltersSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Center(
-              child: Container(
-                width: 48,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.borderDisabled,
-                  borderRadius: BorderRadius.circular(2),
+            MashwarSheetHeader(
+              title: isAr ? 'الفلاتر والترتيب' : 'Filters & Sort',
+              leadingIcon: Icons.tune_rounded,
+              onClose: () => Navigator.of(context).pop(),
+            ),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton(
+                onPressed: () => rides.resetFilters(),
+                child: Text(
+                  isAr ? 'مسح الكل' : 'Reset All',
+                  style: AppTypography.bodySecondary(color: AppColors.teal),
                 ),
               ),
             ),
-            const SizedBox(height: AppDimens.space16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(isAr ? 'الفلاتر' : 'Filters', style: AppTypography.title()),
-                TextButton(
-                  onPressed: () => rides.resetFilters(),
-                  child: Text(
-                    isAr ? 'مسح الكل' : 'Reset All',
-                    style: AppTypography.bodySecondary(color: AppColors.navy),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimens.space16),
+            const SizedBox(height: AppDimens.space8),
 
             // Sort
             Text(isAr ? 'الترتيب' : 'Sort By', style: AppTypography.label()),

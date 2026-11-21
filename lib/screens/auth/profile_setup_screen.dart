@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../data/models/user_model.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
@@ -181,7 +182,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         : (isAr ? 'م' : 'M');
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -200,7 +201,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 760;
             return Container(
-              color: isWide ? AppColors.sand : Colors.white,
+              color: isWide ? AppColors.sand : const Color(0xFFFCFCFD),
               child: Column(
                 children: [
                   Expanded(
@@ -230,60 +231,61 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                     ],
                                   )
                                 : null,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 8),
+                            child: MashwarFadeSlideIn(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 8),
 
-                                // Title
-                                Text(
-                                  isAr ? 'ما اسمك؟' : "What's your name?",
-                                  style: const TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.navy,
-                                    fontFamily: 'Cairo',
+                                  // Title
+                                  Text(
+                                    isAr ? 'ما اسمك؟' : "What's your name?",
+                                    style: const TextStyle(
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.navy,
+                                      fontFamily: 'Cairo',
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  isAr
-                                      ? 'أدخل بياناتك كما تظهر في بطاقتك الشخصية لتسهيل رحلاتك وتأكيد هويتك للسائقين.'
-                                      : 'Enter your name as it appears on your ID so drivers can recognize you.',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: AppColors.textSecondary,
-                                    height: 1.45,
-                                    fontFamily: 'Cairo',
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    isAr
+                                        ? 'أدخل بياناتك كما تظهر في بطاقتك الشخصية لتسهيل رحلاتك وتأكيد هويتك للسائقين.'
+                                        : 'Enter your name as it appears on your ID so drivers can recognize you.',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: AppColors.textSecondary,
+                                      height: 1.45,
+                                      fontFamily: 'Cairo',
+                                    ),
                                   ),
-                                ),
 
-                                const SizedBox(height: 28),
+                                  const SizedBox(height: 28),
 
-                                // Avatar placeholder (Uber style)
-                                Center(
-                                  child: Stack(
-                                    children: [
-                                      Container(
-                                        width: 84,
-                                        height: 84,
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF3F3F4),
-                                          shape: BoxShape.circle,
-                                          border: Border.all(color: const Color(0xFFE5E5EA), width: 1.5),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            initialChar,
-                                            style: const TextStyle(
-                                              fontSize: 32,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.navy,
-                                              fontFamily: 'Cairo',
+                                  // Avatar placeholder (Uber style with Brand Gold accent)
+                                  Center(
+                                    child: Stack(
+                                      children: [
+                                        Container(
+                                          width: 84,
+                                          height: 84,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.goldSurface,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: AppColors.gold, width: 2.0),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              initialChar,
+                                              style: const TextStyle(
+                                                fontSize: 32,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.navy,
+                                                fontFamily: 'Cairo',
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
                                       PositionedDirectional(
                                         bottom: 0,
                                         end: 0,
@@ -439,6 +441,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                                 const SizedBox(height: 24),
                               ],
+                            ),
                             ),
                           ),
                         ),

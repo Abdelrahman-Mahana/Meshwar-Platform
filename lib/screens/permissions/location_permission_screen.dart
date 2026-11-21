@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/alert_banner.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
 import 'notification_permission_screen.dart';
@@ -52,39 +53,45 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                           const SizedBox(height: AppDimens.space24),
                         ] else
                           const SizedBox(height: AppDimens.space32),
-                        Column(
-                          children: [
-                            Container(
-                              width: 84,
-                              height: 84,
-                              decoration: BoxDecoration(
-                                color: AppColors.tealSurface,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
+                        MashwarFadeSlideIn(
+                          duration: const Duration(milliseconds: 300),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 96,
+                                height: 96,
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.tealSurface,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
+                                ),
+                                child: ClipOval(
+                                  child: MashwarAssetArt(
+                                    assetPath: 'assets/images/service_ride.jpg',
+                                    fit: BoxFit.contain,
+                                    fallbackIcon: Icons.my_location_rounded,
+                                  ),
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.my_location_rounded,
-                                color: AppColors.navy,
-                                size: 38,
+                              const SizedBox(height: AppDimens.space24),
+                              Text(
+                                _isDenied
+                                    ? (isAr ? 'إذن الموقع مقفول' : 'Location Permission Denied')
+                                    : (isAr ? 'نلاقي رحلات قريبة منك' : 'Find Rides Near You'),
+                                textAlign: TextAlign.center,
+                                style: AppTypography.largeTitle(),
                               ),
-                            ),
-                            const SizedBox(height: AppDimens.space24),
-                            Text(
-                              _isDenied
-                                  ? (isAr ? 'إذن الموقع مقفول' : 'Location Permission Denied')
-                                  : (isAr ? 'نلاقي رحلات قريبة منك' : 'Find Rides Near You'),
-                              textAlign: TextAlign.center,
-                              style: AppTypography.largeTitle(),
-                            ),
-                            const SizedBox(height: AppDimens.space12),
-                            Text(
-                              isAr
-                                  ? 'عشان نقترح نقطة صعود سهلة ونحسب المسافة بدقة.'
-                                  : 'To suggest convenient pickup spots and calculate distances accurately.',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.bodySecondary(),
-                            ),
-                          ],
+                              const SizedBox(height: AppDimens.space12),
+                              Text(
+                                isAr
+                                    ? 'عشان نقترح نقطة صعود سهلة ونحسب المسافة بدقة.'
+                                    : 'To suggest convenient pickup spots and calculate distances accurately.',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodySecondary(),
+                              ),
+                            ],
+                          ),
                         ),
                         Column(
                           children: [

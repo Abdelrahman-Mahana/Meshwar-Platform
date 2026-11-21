@@ -4,6 +4,7 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/alert_banner.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../account/account_extra_screens.dart';
 import '../auth/welcome_screen.dart';
@@ -17,7 +18,7 @@ Widget _buildSystemStateScaffold({
   Widget? topBanner,
 }) {
   return Scaffold(
-    backgroundColor: Colors.white,
+    backgroundColor: const Color(0xFFFCFCFD),
     body: SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) => SingleChildScrollView(
@@ -28,43 +29,45 @@ Widget _buildSystemStateScaffold({
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: Padding(
                   padding: const EdgeInsets.all(AppDimens.space24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (topBanner != null) topBanner else const SizedBox(height: AppDimens.space24),
-                      Column(
-                        children: [
-                          Container(
-                            width: 84,
-                            height: 84,
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceLight,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.borderDisabled),
+                  child: MashwarFadeSlideIn(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (topBanner != null) topBanner else const SizedBox(height: AppDimens.space24),
+                        Column(
+                          children: [
+                            Container(
+                              width: 88,
+                              height: 88,
+                              decoration: BoxDecoration(
+                                color: AppColors.goldSurface,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.gold.withValues(alpha: 0.55), width: 1.5),
+                              ),
+                              child: Icon(icon, size: 42, color: AppColors.navy),
                             ),
-                            child: Icon(icon, size: 40, color: AppColors.navy),
-                          ),
-                          const SizedBox(height: AppDimens.space24),
-                          Text(
-                            title,
-                            textAlign: TextAlign.center,
-                            style: AppTypography.largeTitle(),
-                          ),
-                          const SizedBox(height: AppDimens.space8),
-                          Text(
-                            subtitle,
-                            textAlign: TextAlign.center,
-                            style: AppTypography.bodySecondary(),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        children: [
-                          const SizedBox(height: AppDimens.space32),
-                          ...actions,
-                        ],
-                      ),
-                    ],
+                            const SizedBox(height: AppDimens.space24),
+                            Text(
+                              title,
+                              textAlign: TextAlign.center,
+                              style: AppTypography.largeTitle(),
+                            ),
+                            const SizedBox(height: AppDimens.space8),
+                            Text(
+                              subtitle,
+                              textAlign: TextAlign.center,
+                              style: AppTypography.bodySecondary(),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            const SizedBox(height: AppDimens.space32),
+                            ...actions,
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

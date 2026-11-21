@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../data/models/user_model.dart';
@@ -24,7 +25,7 @@ class UserProfileScreen extends StatelessWidget {
     final isIdVerified = user.idVerificationStatus == IdVerificationStatus.verified;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -54,36 +55,26 @@ class UserProfileScreen extends StatelessWidget {
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 840;
 
-            final heroCard = Container(
-              padding: const EdgeInsets.all(AppDimens.space20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: const BoxDecoration(
-                      color: AppColors.gold,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
-                        style: AppTypography.largeTitle(color: AppColors.navy).copyWith(fontSize: 32),
+            final heroCard = MashwarFadeSlideIn(
+              child: MashwarSectionCard(
+                padding: const EdgeInsets.all(AppDimens.space20),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 78,
+                      height: 78,
+                      decoration: BoxDecoration(
+                        color: AppColors.gold,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.navy.withValues(alpha: 0.16), width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
+                          style: AppTypography.largeTitle(color: AppColors.navy).copyWith(fontSize: 32),
+                        ),
                       ),
                     ),
-                  ),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -166,6 +157,7 @@ class UserProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ],
+              ),
               ),
             );
 
@@ -479,7 +471,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.watch<AuthProvider>().user;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -496,14 +488,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Avatar
+              // Avatar with Gold Accent Ring
               Center(
-                child: CircleAvatar(
-                  radius: 36,
-                  backgroundColor: AppColors.gold,
-                  child: Text(
-                    user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.navy),
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.gold, width: 2),
+                  ),
+                  child: CircleAvatar(
+                    radius: 36,
+                    backgroundColor: AppColors.goldSurface,
+                    child: Text(
+                      user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
+                      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.navy),
+                    ),
                   ),
                 ),
               ),
@@ -635,7 +634,7 @@ class HelpSupportScreen extends StatelessWidget {
           ];
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -647,75 +646,79 @@ class HelpSupportScreen extends StatelessWidget {
         title: Text(isAr ? 'المساعدة والدعم' : 'Help & Support', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(isAr ? 'أسئلة شائعة' : 'Frequently Asked Questions', style: AppTypography.title().copyWith(fontSize: 16)),
-              const SizedBox(height: 12),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space16),
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(isAr ? 'أسئلة شائعة' : 'Frequently Asked Questions', style: AppTypography.title().copyWith(fontSize: 16)),
+                    const SizedBox(height: 12),
 
-              Expanded(
-                child: ListView(
-                  children: faqs.map((f) {
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+                    Expanded(
+                      child: ListView(
+                        children: faqs.map((f) {
+                          return MashwarSectionCard(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: EdgeInsets.zero,
+                            borderRadius: 14,
+                            child: ExpansionTile(
+                              title: Text(f['q']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Text(f['a']!, style: AppTypography.bodySecondary()),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       ),
-                      child: ExpansionTile(
-                        title: Text(f['q']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(14),
-                            child: Text(f['a']!, style: AppTypography.bodySecondary()),
+                    ),
+
+                    MashwarButton(
+                      text: isAr ? 'محادثة مباشرة عبر واتساب' : 'Chat via WhatsApp Support',
+                      icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isAr ? 'جاري فتح دعم مشوار عبر واتساب (+201000019999)...' : 'Opening MASHWAR WhatsApp Support...',
+                            ),
+                            backgroundColor: AppColors.teal,
                           ),
-                        ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                    );
-                  }).toList(),
+                      icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isAr ? 'جاري الاتصال بالخط الساخن لخدمة عملاء مشوار 19884...' : 'Calling MASHWAR Hotline 19884...',
+                            ),
+                            backgroundColor: AppColors.navy,
+                          ),
+                        );
+                      },
+                      label: Text(isAr ? 'الاتصال بالخط الساخن' : 'Call Support Hotline', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    const SizedBox(height: AppDimens.space16),
+                  ],
                 ),
               ),
-
-              MashwarButton(
-                text: isAr ? 'محادثة مباشرة عبر واتساب' : 'Chat via WhatsApp Support',
-                icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        isAr ? 'جاري فتح دعم مشوار عبر واتساب (+201000019999)...' : 'Opening MASHWAR WhatsApp Support...',
-                      ),
-                      backgroundColor: AppColors.teal,
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.navy,
-                  side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        isAr ? 'جاري الاتصال بالخط الساخن لخدمة عملاء مشوار 19884...' : 'Calling MASHWAR Hotline 19884...',
-                      ),
-                      backgroundColor: AppColors.navy,
-                    ),
-                  );
-                },
-                label: Text(isAr ? 'الاتصال بالخط الساخن' : 'Call Support Hotline', style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: AppDimens.space16),
-            ],
+            ),
           ),
         ),
       ),
@@ -961,7 +964,7 @@ class NotificationsCenterScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -973,77 +976,80 @@ class NotificationsCenterScreen extends StatelessWidget {
         title: Text(isAr ? 'الإشعارات' : 'Notifications', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          itemCount: notifications.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final n = notifications[index];
-            final isNew = n['isNew'] as bool;
-            return Container(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: ListView.separated(
               padding: const EdgeInsets.all(AppDimens.space16),
-              decoration: BoxDecoration(
-                color: isNew ? const Color(0xFFF9FAFB) : Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isNew ? const Color(0xFFD1D5DB) : const Color(0xFFE5E5EA),
-                  width: 0.8,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isNew ? const Color(0xFFF0FDF4) : const Color(0xFFF3F3F4),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.notifications_active_outlined,
-                      color: isNew ? AppColors.teal : AppColors.navy,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              itemCount: notifications.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (context, index) {
+                final n = notifications[index];
+                final isNew = n['isNew'] as bool;
+                return MashwarFadeSlideIn(
+                  offsetY: 8,
+                  child: MashwarSectionCard(
+                    backgroundColor: isNew ? const Color(0xFFF9FAFB) : Colors.white,
+                    borderColor: isNew ? AppColors.teal.withValues(alpha: 0.35) : const Color(0xFFE5E5EA),
+                    padding: const EdgeInsets.all(AppDimens.space16),
+                    borderRadius: 14,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                n['title'] as String,
-                                style: TextStyle(
-                                  fontWeight: isNew ? FontWeight.w800 : FontWeight.w600,
-                                  fontSize: 14,
-                                  color: AppColors.navy,
-                                ),
-                              ),
-                            ),
-                            if (isNew)
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.teal,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                          ],
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: isNew ? AppColors.tealSurface : const Color(0xFFF3F3F4),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.notifications_active_outlined,
+                            color: isNew ? AppColors.teal : AppColors.navy,
+                            size: 20,
+                          ),
                         ),
-                        const SizedBox(height: 3),
-                        Text(n['sub'] as String, style: AppTypography.bodySecondary().copyWith(fontSize: 12)),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      n['title'] as String,
+                                      style: TextStyle(
+                                        fontWeight: isNew ? FontWeight.w800 : FontWeight.w600,
+                                        fontSize: 14,
+                                        color: AppColors.navy,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isNew)
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.teal,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              Text(n['sub'] as String, style: AppTypography.bodySecondary().copyWith(fontSize: 12)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(n['time'] as String, style: AppTypography.label(color: AppColors.textSecondary)),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(n['time'] as String, style: AppTypography.label(color: AppColors.textSecondary)),
-                ],
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ),
         ),
       ),
     );

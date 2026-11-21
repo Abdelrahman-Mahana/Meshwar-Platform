@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../data/models/user_model.dart';
@@ -290,7 +291,7 @@ class SettingsScreen extends StatelessWidget {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -802,13 +803,14 @@ class SettingsScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Avatar
+          // Avatar with subtle brand accent ring
           Container(
             width: 52,
             height: 52,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.gold,
               shape: BoxShape.circle,
+              border: Border.all(color: AppColors.navy.withValues(alpha: 0.15), width: 1.5),
             ),
             child: Center(
               child: Text(
@@ -891,13 +893,9 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildCardGroup(List<Widget> children) {
-    return Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-      ),
-      clipBehavior: Clip.antiAlias,
+    return MashwarSectionCard(
+      padding: EdgeInsets.zero,
+      borderRadius: 14,
       child: Column(
         children: children,
       ),
@@ -918,7 +916,7 @@ class SettingsScreen extends StatelessWidget {
         width: 38,
         height: 38,
         decoration: BoxDecoration(
-          color: const Color(0xFFF3F3F4),
+          color: iconColor.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: iconColor, size: 20),

@@ -7,6 +7,7 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
 import 'email_input_screen.dart';
@@ -86,7 +87,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     final hasError = _errorText != null && _errorText!.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -131,45 +132,47 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Top: Brand Identity Header with Step Indicator
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const BrandLogo(fontSize: 28),
-                    _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
-                  ],
-                ),
-                const SizedBox(height: 14),
+            MashwarFadeSlideIn(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top: Brand Identity Header with Step Indicator
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const BrandLogo(fontSize: 28),
+                      _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
 
-                // Title & Subtitle
-                Text(
-                  isAr ? 'أدخل رقم موبايلك' : 'Enter your mobile number',
-                  style: AppTypography.largeTitle().copyWith(fontSize: 24),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  isAr ? 'هنبعتلك كود تأكيد عبر رسالة SMS' : 'We will send you a verification code via SMS',
-                  style: AppTypography.bodySecondary().copyWith(fontSize: 13),
-                ),
-                const SizedBox(height: 16),
+                  // Title & Subtitle
+                  Text(
+                    isAr ? 'أدخل رقم موبايلك' : 'Enter your mobile number',
+                    style: AppTypography.largeTitle().copyWith(fontSize: 24),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isAr ? 'هنبعتلك كود تأكيد عبر رسالة SMS' : 'We will send you a verification code via SMS',
+                    style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
 
-                // Input Label
-                Text(
-                  isAr ? 'رقم الهاتف المحمول' : 'Mobile Phone Number',
-                  style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
+                  // Input Label
+                  Text(
+                    isAr ? 'رقم الهاتف المحمول' : 'Mobile Phone Number',
+                    style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
 
-                // Phone Input Card
-                _buildPhoneInputField(hasError: hasError, isAr: isAr),
-                const SizedBox(height: 8),
+                  // Phone Input Card
+                  _buildPhoneInputField(hasError: hasError, isAr: isAr),
+                  const SizedBox(height: 8),
 
-                // Helper text / Error text
-                _buildHelperOrError(hasError: hasError, isAr: isAr),
-              ],
+                  // Helper text / Error text
+                  _buildHelperOrError(hasError: hasError, isAr: isAr),
+                ],
+              ),
             ),
 
             const SizedBox(height: 24),

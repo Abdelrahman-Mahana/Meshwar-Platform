@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/alert_banner.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/ride_model.dart';
@@ -80,7 +81,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
     final isAr = context.isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -92,150 +93,196 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (widget.hasPriceChanged) ...[
-                AlertBanner(
-                  message: isAr
-                      ? 'السعر اتغير من ${widget.ride.pricePerSeat} إلى $_unitPrice ج. راجع قبل ما تكمل'
-                      : 'Price changed from ${widget.ride.pricePerSeat} to $_unitPrice EGP. Review before confirming',
-                  type: AlertBannerType.warning,
-                ),
-                const SizedBox(height: AppDimens.space12),
-              ],
-              if (_showSeatsWarning) ...[
-                AlertBanner(
-                  message: isAr
-                      ? 'المتاح في الرحلة ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "كرسي فقط" : "كراسي فقط"}'
-                      : 'Only ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "seat" : "seats"} remaining on this ride',
-                  type: AlertBannerType.warning,
-                ),
-                const SizedBox(height: AppDimens.space12),
-              ],
-
-              // Trip details card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Column(
-                  children: [
-                    _buildRow(isAr ? 'الرحلة' : 'Trip', context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}')),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'الموعد' : 'Schedule', '${context.trDate(widget.ride.departureDate)} ${widget.ride.departureTime}'),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'نقطة الصعود' : 'Pickup Point', widget.ride.pickupPoint),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'نقطة النزول' : 'Dropoff Point', widget.ride.dropoffPoint),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppDimens.space16),
-
-              // Seats Counter Card
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(isAr ? 'عدد الكراسي' : 'Number of Seats', style: AppTypography.body().copyWith(fontWeight: FontWeight.w700)),
-                    Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(AppDimens.space16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildCounterButton(
-                          icon: Icons.remove,
-                          onTap: _handleDecrement,
+                        if (widget.hasPriceChanged) ...[
+                          AlertBanner(
+                            message: isAr
+                                ? 'السعر اتغير من ${widget.ride.pricePerSeat} إلى $_unitPrice ج. راجع قبل ما تكمل'
+                                : 'Price changed from ${widget.ride.pricePerSeat} to $_unitPrice EGP. Review before confirming',
+                            type: AlertBannerType.warning,
+                          ),
+                          const SizedBox(height: AppDimens.space12),
+                        ],
+                        if (_showSeatsWarning) ...[
+                          AlertBanner(
+                            message: isAr
+                                ? 'المتاح في الرحلة ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "كرسي فقط" : "كراسي فقط"}'
+                                : 'Only ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "seat" : "seats"} remaining on this ride',
+                            type: AlertBannerType.warning,
+                          ),
+                          const SizedBox(height: AppDimens.space12),
+                        ],
+
+                        // Trip & Route Timeline Card
+                        MashwarFadeSlideIn(
+                          duration: const Duration(milliseconds: 260),
+                          offsetY: 10,
+                          child: MashwarSectionCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    MashwarAssetArt(
+                                      assetPath: 'assets/images/service_ride.jpg',
+                                      width: 44,
+                                      height: 44,
+                                      fit: BoxFit.contain,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}'),
+                                            style: AppTypography.title().copyWith(fontSize: 16),
+                                          ),
+                                          Text(
+                                            '${context.trDate(widget.ride.departureDate)} · ${widget.ride.departureTime}',
+                                            style: AppTypography.label(color: AppColors.textSecondary),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: MashwarRouteTimeline(
+                                    from: widget.ride.pickupPoint,
+                                    to: widget.ride.dropoffPoint,
+                                    compact: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text('$_seats', style: AppTypography.title()),
+                        const SizedBox(height: AppDimens.space16),
+
+                        // Seats Counter Card
+                        MashwarFadeSlideIn(
+                          duration: const Duration(milliseconds: 300),
+                          offsetY: 10,
+                          child: MashwarSectionCard(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(isAr ? 'عدد الكراسي' : 'Number of Seats', style: AppTypography.body().copyWith(fontWeight: FontWeight.w800)),
+                                Row(
+                                  children: [
+                                    _buildCounterButton(
+                                      icon: Icons.remove_rounded,
+                                      onTap: _handleDecrement,
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                                      child: Text('$_seats', style: AppTypography.title()),
+                                    ),
+                                    _buildCounterButton(
+                                      icon: Icons.add_rounded,
+                                      onTap: _handleIncrement,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                        _buildCounterButton(
-                          icon: Icons.add,
-                          onTap: _handleIncrement,
+                        const SizedBox(height: AppDimens.space16),
+
+                        // Price Summary Card
+                        MashwarFadeSlideIn(
+                          duration: const Duration(milliseconds: 340),
+                          offsetY: 10,
+                          child: MashwarSectionCard(
+                            child: Column(
+                              children: [
+                                _buildRow(isAr ? 'الدفع' : 'Payment Method', isAr ? 'نقداً للسائق' : 'Cash to driver'),
+                                const Divider(height: 20, color: AppColors.borderDisabled),
+                                _buildRow(isAr ? 'الإجمالي' : 'Total', '$total ${isAr ? "ج" : "EGP"}', isBold: true),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppDimens.space16),
+
+                        // Security & OTP Trust note
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.teal.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.verified_user_rounded, color: AppColors.teal, size: 20),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  isAr
+                                      ? 'أمان مؤكد: ستحصل على كود OTP مكون من 4 أرقام لتأكيد ركوبك مع السائق وضمان حق الطرفين.'
+                                      : 'Verified Safety: You will receive a 4-digit OTP code to verify your ride upon boarding.',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.navy,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: AppDimens.space16),
 
-              // Price Summary Card
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Column(
-                  children: [
-                    _buildRow(isAr ? 'الدفع' : 'Payment Method', isAr ? 'نقداً للسائق' : 'Cash to driver'),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'الإجمالي' : 'Total', '$total ${isAr ? "ج" : "EGP"}', isBold: true),
-                  ],
-                ),
-              ),
-              const SizedBox(height: AppDimens.space16),
-
-              // Security & OTP Trust note
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: AppColors.teal.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.verified_user_rounded, color: AppColors.teal, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        isAr
-                            ? 'أمان مؤكد: ستحصل على كود OTP مكون من 4 أرقام لتأكيد ركوبك مع السائق وضمان حق الطرفين.'
-                            : 'Verified Safety: You will receive a 4-digit OTP code to verify your ride upon boarding.',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.navy,
-                          fontWeight: FontWeight.w500,
-                          height: 1.35,
-                        ),
+                // Sticky Bottom CTA Container
+                Container(
+                  padding: const EdgeInsets.fromLTRB(AppDimens.space16, 12, AppDimens.space16, AppDimens.space16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: AppColors.borderDisabled.withValues(alpha: 0.7))),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MashwarButton(
+                        text: isAr ? 'تأكيد الحجز · $total ج' : 'Confirm Booking · $total EGP',
+                        isLoading: _isLoading,
+                        onPressed: _submitBooking,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        isAr ? 'الدفع كاش مع السائق بعد الصعود' : 'Payment in cash to driver after boarding',
+                        style: AppTypography.label(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-
-              const Spacer(),
-
-              // Submit Button (Page 25)
-              MashwarButton(
-                text: isAr ? 'تأكيد الحجز' : 'Confirm Booking',
-                isLoading: _isLoading,
-                onPressed: _submitBooking,
-              ),
-              const SizedBox(height: 12),
-              Center(
-                child: Text(
-                  isAr ? 'الدفع كاش مع السائق بعد الصعود' : 'Payment in cash to driver after boarding',
-                  style: AppTypography.label(color: AppColors.textSecondary),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space24),
-            ],
+              ],
+            ),
           ),
         ),
       ),

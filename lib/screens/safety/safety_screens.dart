@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../data/mock_data.dart';
@@ -25,7 +26,7 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
     final isAr = context.watch<SettingsProvider>().isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -260,24 +261,12 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: 44,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.borderDisabled,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+          MashwarSheetHeader(
+            title: isAr ? 'مشاركة رحلتك' : 'Share your Trip',
+            subtitle: isAr ? 'الرابط بيشتغل أثناء الرحلة بس، وبيتلغي لما تخلص.' : 'Link is active during trip only and expires on arrival.',
+            leadingIcon: Icons.share_location_rounded,
           ),
-          const SizedBox(height: 14),
-          Text(isAr ? 'مشاركة رحلتك' : 'Share your Trip', style: AppTypography.title()),
-          const SizedBox(height: 4),
-          Text(
-            isAr ? 'الرابط بيشتغل أثناء الرحلة بس، وبيتلغي لما تخلص.' : 'Link is active during trip only and expires on arrival.',
-            style: AppTypography.bodySecondary(),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
 
           // Contacts
           ListTile(
@@ -607,7 +596,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -788,7 +777,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     final isAr = context.watch<SettingsProvider>().isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -800,100 +789,101 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
         title: Text(isAr ? 'جهات الطوارئ' : 'Emergency Contacts', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
-              child: Container(
-                padding: const EdgeInsets.all(AppDimens.space12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.navy),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isAr
-                            ? 'يتم إشعار هذه الجهات فورياً عند الضغط على زر SOS مع إرسال رابط التتبع المباشر.'
-                            : 'These contacts will be notified instantly if you trigger SOS with live tracking.',
-                        style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 4),
-              child: Text(
-                isAr ? '${_contacts.length} من 3 جهات مسجلة' : '${_contacts.length} of 3 maximum contacts',
-                style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontWeight: FontWeight.w600),
-              ),
-            ),
-            const SizedBox(height: 8),
-
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-                itemCount: _contacts.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, index) {
-                  final c = _contacts[index];
-                  return Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                    ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
+                  child: MashwarSectionCard(
+                    backgroundColor: const Color(0xFFF8F9FA),
+                    padding: const EdgeInsets.all(AppDimens.space12),
+                    borderRadius: 12,
                     child: Row(
                       children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF3F3F4),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(Icons.contact_phone_rounded, color: AppColors.navy, size: 20),
-                        ),
-                        const SizedBox(width: 12),
+                        const Icon(Icons.info_outline_rounded, size: 18, color: AppColors.navy),
+                        const SizedBox(width: 8),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(c['name']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              const SizedBox(height: 2),
-                              Text(c['phone']!, style: AppTypography.bodySecondary().copyWith(fontSize: 13)),
-                            ],
+                          child: Text(
+                            isAr
+                                ? 'يتم إشعار هذه الجهات فورياً عند الضغط على زر SOS مع إرسال رابط التتبع المباشر.'
+                                : 'These contacts will be notified instantly if you trigger SOS with live tracking.',
+                            style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 12),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.coral, size: 22),
-                          onPressed: () => setState(() => _contacts.removeAt(index)),
                         ),
                       ],
                     ),
-                  );
-                },
-              ),
-            ),
-
-            if (_contacts.length < 3)
-              Padding(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                child: MashwarButton(
-                  text: isAr ? 'أضف جهة طوارئ' : 'Add Emergency Contact',
-                  icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
-                  onPressed: () => _addContactDialog(context),
+                  ),
                 ),
-              ),
-          ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 4),
+                  child: Text(
+                    isAr ? '${_contacts.length} من 3 جهات مسجلة' : '${_contacts.length} of 3 maximum contacts',
+                    style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
+                    itemCount: _contacts.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final c = _contacts[index];
+                      return MashwarFadeSlideIn(
+                        offsetY: 8,
+                        child: MashwarSectionCard(
+                          padding: const EdgeInsets.all(14),
+                          borderRadius: 14,
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: AppColors.navy.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.contact_phone_rounded, color: AppColors.navy, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(c['name']!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                                    const SizedBox(height: 2),
+                                    Text(c['phone']!, style: AppTypography.bodySecondary().copyWith(fontSize: 13)),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline_rounded, color: AppColors.coral, size: 22),
+                                onPressed: () => setState(() => _contacts.removeAt(index)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                if (_contacts.length < 3)
+                  Padding(
+                    padding: const EdgeInsets.all(AppDimens.space16),
+                    child: MashwarButton(
+                      text: isAr ? 'أضف جهة طوارئ' : 'Add Emergency Contact',
+                      icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                      onPressed: () => _addContactDialog(context),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

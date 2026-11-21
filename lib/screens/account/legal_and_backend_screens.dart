@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../data/api/api_endpoints.dart';
@@ -29,7 +30,7 @@ class LegalComplianceScreen extends StatelessWidget {
         length: 3,
         initialIndex: initialTabIndex.clamp(0, 2),
         child: Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: const Color(0xFFFCFCFD),
           appBar: AppBar(
             title: Text(
               isAr ? 'الشروط القانونية والترخيص' : 'Legal Terms & MoT License',
@@ -199,60 +200,66 @@ class LegalComplianceScreen extends StatelessWidget {
     required String subtitle,
     required List<String> points,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: AppColors.borderDisabled),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: AppColors.teal, size: 24),
-              const SizedBox(width: AppDimens.space12),
-              Expanded(
-                child: Column(
+    return MashwarFadeSlideIn(
+      offsetY: 10,
+      child: MashwarSectionCard(
+        padding: const EdgeInsets.all(AppDimens.space16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.teal.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: AppColors.teal, size: 22),
+                ),
+                const SizedBox(width: AppDimens.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: AppTypography.title().copyWith(fontSize: 16),
+                      ),
+                      Text(
+                        subtitle,
+                        style: AppTypography.label(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: AppDimens.space24, color: AppColors.borderDisabled),
+            ...points.map(
+              (point) => Padding(
+                padding: const EdgeInsets.only(bottom: AppDimens.space12),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: AppTypography.title().copyWith(fontSize: 16),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: Icon(Icons.check_circle, size: 16, color: AppColors.teal),
                     ),
-                    Text(
-                      subtitle,
-                      style: AppTypography.label(color: AppColors.textSecondary),
+                    const SizedBox(width: AppDimens.space8),
+                    Expanded(
+                      child: Text(
+                        point,
+                        style: AppTypography.bodySecondary(color: AppColors.textPrimary).copyWith(height: 1.5),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const Divider(height: AppDimens.space24, color: AppColors.borderDisabled),
-          ...points.map(
-            (point) => Padding(
-              padding: const EdgeInsets.only(bottom: AppDimens.space12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 6),
-                    child: Icon(Icons.check_circle, size: 16, color: AppColors.teal),
-                  ),
-                  const SizedBox(width: AppDimens.space8),
-                  Expanded(
-                    child: Text(
-                      point,
-                      style: AppTypography.bodySecondary(color: AppColors.textPrimary).copyWith(height: 1.5),
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -323,7 +330,7 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFCFCFD),
         appBar: AppBar(
           title: Text(
             isAr ? 'جاهزية الباك إند وواجهات API' : 'Backend API & JSON Contracts',

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_text_field.dart';
@@ -443,16 +444,19 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  context.trRoute(ad.route),
-                  style: AppTypography.title().copyWith(fontSize: 17),
+                child: MashwarRouteTimeline(
+                  from: context.trCity(ad.fromCity),
+                  to: context.trCity(ad.toCity),
+                  compact: true,
                 ),
               ),
-              if (ad.isLadiesOnly)
+              if (ad.isLadiesOnly) ...[
+                const SizedBox(width: 8),
                 const MashwarBadge(type: BadgeType.ladiesOnly),
+              ],
             ],
           ),
           const SizedBox(height: 6),

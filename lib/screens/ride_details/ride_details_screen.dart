@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/alert_banner.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
@@ -12,6 +13,7 @@ import '../../data/models/user_model.dart';
 import '../../state/auth_provider.dart';
 import '../../state/rides_provider.dart';
 import '../booking/booking_review_screen.dart';
+import '../chat/chat_screen.dart';
 import '../parcel/send_parcel_screen.dart';
 import 'widgets/ride_route_map_view.dart';
 
@@ -64,7 +66,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -147,7 +149,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildStatusBanners(isAr),
-                      _buildDriverHeaderCard(isAr),
+                      _buildDriverHeaderCard(context, isAr),
                       const SizedBox(height: AppDimens.space16),
                       _buildSafetyAndShareCard(context, isAr),
                       const SizedBox(height: AppDimens.space16),
@@ -238,8 +240,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                     // Status Banners
                     _buildStatusBanners(isAr),
 
-                    // Driver Header Card
-                    _buildDriverHeaderCard(isAr),
+                    // Driver Header Card with Instant Chat & Call
+                    _buildDriverHeaderCard(context, isAr),
                     const SizedBox(height: AppDimens.space16),
 
                     // Trip Details Container
@@ -267,12 +269,19 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               ),
             ),
 
-            // Bottom CTA according to state (Page 24)
+            // Sticky Uber-style Bottom Bar with Seat Price Summary & CTA
             Container(
-              padding: const EdgeInsets.all(AppDimens.space16),
+              padding: const EdgeInsets.fromLTRB(AppDimens.space16, 12, AppDimens.space16, AppDimens.space16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(top: BorderSide(color: AppColors.borderDisabled.withValues(alpha: 0.5))),
+                border: Border(top: BorderSide(color: AppColors.borderDisabled.withValues(alpha: 0.7))),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.navy.withValues(alpha: 0.05),
+                    blurRadius: 14,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
               ),
               child: _buildBottomButton(context, rides, isAr),
             ),
@@ -311,94 +320,206 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     return const SizedBox.shrink();
   }
 
-  Widget _buildDriverHeaderCard(bool isAr) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: AppColors.borderDisabled),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: AppColors.navy,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                widget.ride.driverName.isNotEmpty ? widget.ride.driverName[0] : 'م',
-                style: AppTypography.title(color: Colors.white),
-              ),
-            ),
-          ),
-          const SizedBox(width: AppDimens.space12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildDriverHeaderCard(BuildContext context, bool isAr) {
+    return MashwarFadeSlideIn(
+      duration: const Duration(milliseconds: 280),
+      offsetY: 10,
+      child: MashwarSectionCard(
+        child: Column(
+          children: [
+            Row(
               children: [
-                Text(
-                  widget.ride.driverName,
-                  style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                Stack(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: AppColors.gold,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.navy.withValues(alpha: 0.14), width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          widget.ride.driverName.isNotEmpty ? widget.ride.driverName[0] : 'م',
+                          style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 22),
+                        ),
+                      ),
+                    ),
+                    PositionedDirectional(
+                      bottom: 0,
+                      end: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.verified_rounded, size: 14, color: AppColors.teal),
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  widget.ride.driverCar,
-                  style: AppTypography.bodySecondary(),
+                const SizedBox(width: AppDimens.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              widget.ride.driverName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.title().copyWith(fontSize: 16.5),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.goldSurface,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star_rounded, size: 13, color: AppColors.gold),
+                                const SizedBox(width: 2),
+                                Text(
+                                  '${widget.ride.driverRating}',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.navy,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.ride.driverCar,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodySecondary().copyWith(fontSize: 12.5),
+                      ),
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 6),
+                MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'سائق موثق' : 'Verified Driver'),
               ],
             ),
-          ),
-          MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'سائق موثق' : 'Verified Driver'),
-        ],
+            const SizedBox(height: 14),
+            MashwarCommunicationBar(
+              chatLabel: isAr ? 'محادثة السائق' : 'Chat Driver',
+              callLabel: isAr ? 'اتصال' : 'Call',
+              onChat: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ChatScreen(
+                      driverName: widget.ride.driverName,
+                      driverCar: widget.ride.driverCar,
+                      tripRoute: context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}'),
+                    ),
+                  ),
+                );
+              },
+              onCall: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isAr
+                          ? 'جاري الاتصال بالكابتن ${widget.ride.driverName}...'
+                          : 'Calling Captain ${widget.ride.driverName}...',
+                    ),
+                    backgroundColor: AppColors.teal,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTripDetailsContainer(BuildContext context, bool isAr) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: AppColors.borderDisabled),
-      ),
-      child: Column(
-        children: [
-          _buildDetailRow(
-            label: isAr ? 'نقطة الصعود' : 'Pickup Spot',
-            value: widget.ride.pickupPoint,
-            isBold: true,
-          ),
-          const Divider(height: 24, color: AppColors.borderDisabled),
-          _buildDetailRow(
-            label: isAr ? 'نقطة النزول' : 'Dropoff Spot',
-            value: widget.ride.dropoffPoint,
-            isBold: true,
-          ),
-          const Divider(height: 24, color: AppColors.borderDisabled),
-          _buildDetailRow(
-            label: isAr ? 'الموعد' : 'Schedule',
-            value: '${context.trDate(widget.ride.departureDate)} ${widget.ride.departureTime} (± 15 ${isAr ? "د" : "mins"})',
-          ),
-          if (widget.ride.acceptsParcels) ...[
-            const Divider(height: 24, color: AppColors.borderDisabled),
-            _buildDetailRow(
-              label: isAr ? 'الطرود' : 'Parcels',
-              value: isAr ? 'تقبل: صغير ${widget.ride.parcelPrice} ج' : 'Accepts: Small ${widget.ride.parcelPrice} EGP',
-              actionWidget: TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => SendParcelScreen(ride: widget.ride)),
-                  );
-                },
-                child: Text(isAr ? 'ابعت طرد' : 'Send Parcel', style: AppTypography.label(color: AppColors.teal)),
+    return MashwarFadeSlideIn(
+      duration: const Duration(milliseconds: 320),
+      offsetY: 12,
+      child: MashwarSectionCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 0.7),
+              ),
+              child: MashwarRouteTimeline(
+                from: widget.ride.pickupPoint,
+                to: widget.ride.dropoffPoint,
+                trailingTop: widget.ride.departureTime,
               ),
             ),
+            const SizedBox(height: 12),
+            _buildDetailRow(
+              label: isAr ? 'الموعد' : 'Schedule',
+              value: '${context.trDate(widget.ride.departureDate)} ${widget.ride.departureTime} (± 15 ${isAr ? "د" : "mins"})',
+            ),
+            if (widget.ride.acceptsParcels) ...[
+              const Divider(height: 22, color: AppColors.borderDisabled),
+              Row(
+                children: [
+                  MashwarAssetArt(
+                    assetPath: 'assets/images/service_parcel.jpg',
+                    width: 44,
+                    height: 44,
+                    fit: BoxFit.contain,
+                    borderRadius: BorderRadius.circular(10),
+                    fallbackIcon: Icons.inventory_2_rounded,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(isAr ? 'الطرود' : 'Parcels', style: AppTypography.label(color: AppColors.textSecondary)),
+                        Text(
+                          isAr ? 'تقبل: صغير ${widget.ride.parcelPrice} ج' : 'Accepts: Small ${widget.ride.parcelPrice} EGP',
+                          style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: AppColors.tealSurface,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => SendParcelScreen(ride: widget.ride)),
+                      );
+                    },
+                    child: Text(
+                      isAr ? 'ابعت طرد' : 'Send Parcel',
+                      style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -471,7 +592,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
 
   Widget _buildErrorView(bool isAr) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -484,7 +605,16 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           child: Column(
             children: [
               const Spacer(flex: 3),
-              const Icon(Icons.error_outline_rounded, size: 64, color: AppColors.danger),
+              ClipOval(
+                child: MashwarAssetArt(
+                  assetPath: 'assets/images/service_ride.jpg',
+                  width: 96,
+                  height: 96,
+                  fallbackIcon: Icons.error_outline_rounded,
+                  fallbackBg: AppColors.danger.withValues(alpha: 0.1),
+                  fallbackColor: AppColors.danger,
+                ),
+              ),
               const SizedBox(height: AppDimens.space16),
               Text(isAr ? 'تعذر تحميل الرحلة' : 'Could not load ride', style: AppTypography.largeTitle()),
               const SizedBox(height: AppDimens.space8),
@@ -539,13 +669,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     final openSeats = widget.ride.remainingSeats.clamp(0, 4);
     final bookedSeats = (4 - openSeats).clamp(0, 4);
     final isLadies = widget.ride.isLadiesOnly;
-    return Container(
+    return MashwarSectionCard(
       padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: AppColors.borderDisabled, width: 0.8),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -697,13 +822,10 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
   }
 
   Widget _buildSafetyAndShareCard(BuildContext context, bool isAr) {
-    return Container(
+    return MashwarSectionCard(
+      backgroundColor: const Color(0xFFF8F9FA),
+      borderColor: const Color(0xFFE5E5EA),
       padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

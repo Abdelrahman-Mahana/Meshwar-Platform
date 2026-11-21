@@ -8,6 +8,7 @@ import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/alert_banner.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
 import 'profile_setup_screen.dart';
@@ -132,7 +133,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final targetDestination = isEmailMode ? widget.email! : _formatMaskedPhone(auth.phoneNumber);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -178,54 +179,56 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Top: Brand Identity Header with Step Indicator
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const BrandLogo(fontSize: 28),
-                    _buildStepBadge(isAr: isAr, currentStep: 2, totalSteps: 2),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // Title
-                Text(
-                  isAr ? 'أدخل الكود' : 'Enter Code',
-                  style: AppTypography.largeTitle().copyWith(fontSize: 26),
-                ),
-                const SizedBox(height: 6),
-
-                // Subtitle with destination
-                _buildDestinationSubtitle(targetDestination, isAr),
-                const SizedBox(height: 20),
-
-                // Error Banner
-                if (_errorMessage != null) ...[
-                  AlertBanner(message: _errorMessage!, type: AlertBannerType.danger),
-                  const SizedBox(height: 14),
-                ],
-
-                // Locked Warning
-                if (auth.isLocked) ...[
-                  AlertBanner(
-                    message: isAr
-                        ? 'تم إيقاف المحاولات مؤقتاً لتكرار الخطأ. جرّب بعد 15 دقيقة'
-                        : 'Attempts temporarily locked. Try after 15 mins',
-                    type: AlertBannerType.danger,
+            MashwarFadeSlideIn(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top: Brand Identity Header with Step Indicator
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const BrandLogo(fontSize: 28),
+                      _buildStepBadge(isAr: isAr, currentStep: 2, totalSteps: 2),
+                    ],
                   ),
                   const SizedBox(height: 14),
+
+                  // Title
+                  Text(
+                    isAr ? 'أدخل الكود' : 'Enter Code',
+                    style: AppTypography.largeTitle().copyWith(fontSize: 26),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Subtitle with destination
+                  _buildDestinationSubtitle(targetDestination, isAr),
+                  const SizedBox(height: 20),
+
+                  // Error Banner
+                  if (_errorMessage != null) ...[
+                    AlertBanner(message: _errorMessage!, type: AlertBannerType.danger),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // Locked Warning
+                  if (auth.isLocked) ...[
+                    AlertBanner(
+                      message: isAr
+                          ? 'تم إيقاف المحاولات مؤقتاً لتكرار الخطأ. جرّب بعد 15 دقيقة'
+                          : 'Attempts temporarily locked. Try after 15 mins',
+                      type: AlertBannerType.danger,
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  // OTP Cells Stack
+                  _buildOtpInputStack(isAr),
+                  const SizedBox(height: 16),
+
+                  // Resend Section
+                  _buildResendSection(auth, isEmailMode, isAr),
                 ],
-
-                // OTP Cells Stack
-                _buildOtpInputStack(isAr),
-                const SizedBox(height: 16),
-
-                // Resend Section
-                _buildResendSection(auth, isEmailMode, isAr),
-              ],
+              ),
             ),
 
             const SizedBox(height: 16),

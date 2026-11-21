@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../state/settings_provider.dart';
 
@@ -122,7 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final quickChips = isAr ? _quickChipsAr : _quickChipsEn;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
@@ -131,11 +132,12 @@ class _ChatScreenState extends State<ChatScreen> {
         title: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
                 color: AppColors.gold,
                 shape: BoxShape.circle,
+                border: Border.all(color: AppColors.navy.withValues(alpha: 0.14), width: 1.5),
               ),
               child: Center(
                 child: Text(
@@ -144,7 +146,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,7 +162,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const MashwarBadge(type: BadgeType.verified, customLabel: 'موثق'),
+                      MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'موثق' : 'Verified'),
                     ],
                   ),
                   Text(
@@ -176,7 +178,14 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.phone_in_talk_rounded, color: AppColors.teal),
+            icon: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: AppColors.tealSurface,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.phone_in_talk_rounded, color: AppColors.teal, size: 18),
+            ),
             tooltip: isAr ? 'اتصال بالسائق' : 'Call Driver',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -195,13 +204,72 @@ class _ChatScreenState extends State<ChatScreen> {
             constraints: const BoxConstraints(maxWidth: 720),
             child: Column(
               children: [
-                // Safety banner + trip route context
+                // Trip Route Context + 1-Tap Location Share Strip
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(bottom: BorderSide(color: Color(0xFFEDF2F7))),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.route_rounded, color: AppColors.teal, size: 16),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          widget.tripRoute,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                            fontFamily: 'Cairo',
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      MashwarPressable(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () => _sendMessage(
+                          isAr ? 'تمت مشاركة نقطة الالتقاء الحالية عبر الخريطة.' : 'Shared current pickup location via map.',
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.tealSurface,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.my_location_rounded, size: 13, color: AppColors.teal),
+                              const SizedBox(width: 4),
+                              Text(
+                                isAr ? 'مشاركة موقعي' : 'Share Location',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.teal,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Safety banner
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                   color: AppColors.goldSurface,
                   child: Row(
                     children: [
-                      const Icon(Icons.security_rounded, color: AppColors.navy, size: 16),
+                      const Icon(Icons.security_rounded, color: AppColors.navy, size: 15),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -229,44 +297,69 @@ class _ChatScreenState extends State<ChatScreen> {
                           final isMe = msg['isMe'] as bool;
                           final rawTime = msg['time'] as String;
                           final displayTime = rawTime == 'الآن' && !isAr ? 'Now' : rawTime;
-                          return Align(
-                            alignment: isMe
-                                ? AlignmentDirectional.centerEnd
-                                : AlignmentDirectional.centerStart,
-                            child: Container(
-                              margin: const EdgeInsets.only(bottom: 12),
-                              constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isMe ? AppColors.navy : AppColors.surfaceLight,
-                                border: isMe
-                                    ? null
-                                    : Border.all(color: AppColors.borderDisabled, width: 0.8),
-                                borderRadius: BorderRadiusDirectional.only(
-                                  topStart: const Radius.circular(16),
-                                  topEnd: const Radius.circular(16),
-                                  bottomStart: Radius.circular(isMe ? 16 : 4),
-                                  bottomEnd: Radius.circular(isMe ? 4 : 16),
+                          return MashwarFadeSlideIn(
+                            duration: const Duration(milliseconds: 220),
+                            offsetY: 8,
+                            child: Align(
+                              alignment: isMe
+                                  ? AlignmentDirectional.centerEnd
+                                  : AlignmentDirectional.centerStart,
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  gradient: isMe
+                                      ? const LinearGradient(
+                                          colors: [AppColors.navy, Color(0xFF173D61)],
+                                        )
+                                      : null,
+                                  color: isMe ? null : Colors.white,
+                                  border: isMe
+                                      ? null
+                                      : Border.all(color: AppColors.borderDisabled, width: 0.8),
+                                  borderRadius: BorderRadiusDirectional.only(
+                                    topStart: const Radius.circular(18),
+                                    topEnd: const Radius.circular(18),
+                                    bottomStart: Radius.circular(isMe ? 18 : 4),
+                                    bottomEnd: Radius.circular(isMe ? 4 : 18),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment:
-                                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isAr ? msg['text'] : msg['textEn'],
-                                    style: AppTypography.bodySecondary(
-                                      color: isMe ? Colors.white : AppColors.textPrimary,
-                                    ).copyWith(height: 1.4),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    displayTime,
-                                    style: AppTypography.label(
-                                      color: isMe ? Colors.white70 : AppColors.textSecondary,
-                                    ).copyWith(fontSize: 10),
-                                  ),
-                                ],
+                                child: Column(
+                                  crossAxisAlignment:
+                                      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isAr ? msg['text'] : msg['textEn'],
+                                      style: AppTypography.bodySecondary(
+                                        color: isMe ? Colors.white : AppColors.textPrimary,
+                                      ).copyWith(height: 1.45),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          displayTime,
+                                          style: AppTypography.label(
+                                            color: isMe ? Colors.white70 : AppColors.textSecondary,
+                                          ).copyWith(fontSize: 10),
+                                        ),
+                                        if (isMe) ...[
+                                          const SizedBox(width: 4),
+                                          const Icon(Icons.done_all_rounded, size: 13, color: AppColors.gold),
+                                        ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -279,20 +372,34 @@ class _ChatScreenState extends State<ChatScreen> {
                 // Quick Reply Chips
                 Container(
                   height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: quickChips.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
-                      return ActionChip(
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: AppColors.borderDisabled),
-                        label: Text(
-                          quickChips[index],
-                          style: AppTypography.label(color: AppColors.navy),
+                      return MashwarPressable(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => _sendMessage(quickChips[index]),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.bolt_rounded, size: 14, color: AppColors.gold),
+                              const SizedBox(width: 4),
+                              Text(
+                                quickChips[index],
+                                style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
                         ),
-                        onPressed: () => _sendMessage(quickChips[index]),
                       );
                     },
                   ),
@@ -302,11 +409,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 // Chat input bar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     border: Border(
-                      top: BorderSide(color: AppColors.borderDisabled.withValues(alpha: 0.6)),
+                      top: BorderSide(color: AppColors.borderDisabled.withValues(alpha: 0.7)),
                     ),
                   ),
                   child: Row(
@@ -315,17 +422,17 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: TextField(
                           controller: _msgController,
                           decoration: InputDecoration(
-                            hintText: isAr ? 'اكتب رسالتك للكابتن...' : 'Type message to driver...',
+                            hintText: isAr ? 'اكتب رسالتك هنا...' : 'Type your message...',
                             filled: true,
-                            fillColor: AppColors.surfaceLight,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            fillColor: const Color(0xFFF3F4F6),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: const BorderSide(color: AppColors.borderDisabled),
+                              borderRadius: BorderRadius.circular(26),
+                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              borderSide: const BorderSide(color: AppColors.borderDisabled),
+                              borderRadius: BorderRadius.circular(26),
+                              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                             ),
                           ),
                           onSubmitted: (_) => _sendMessage(),
@@ -334,12 +441,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       const SizedBox(width: 8),
                       Container(
                         decoration: const BoxDecoration(
-                          color: AppColors.teal,
+                          color: AppColors.navy,
                           shape: BoxShape.circle,
                         ),
                         child: IconButton(
                           tooltip: isAr ? 'إرسال' : 'Send',
-                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          icon: const Icon(Icons.send_rounded, color: AppColors.gold, size: 20),
                           onPressed: () => _sendMessage(),
                         ),
                       ),

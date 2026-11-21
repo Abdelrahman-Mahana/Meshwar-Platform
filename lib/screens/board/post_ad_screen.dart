@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_text_field.dart';
 import '../../core/localization/app_strings.dart';
@@ -547,6 +548,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'title': isAr ? 'قضاء مصالح رسمية' : 'Official Errand',
           'subtitle': isAr ? 'شراء طلبات، جلب حاجة، أو تخليص أوراق' : 'Buying items, errands or papers',
           'icon': Icons.description_rounded,
+          'asset': 'assets/images/service_errand.jpg',
           'color': const Color(0xFFD97706),
         },
         {
@@ -554,6 +556,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'title': isAr ? 'لوجستيات وتوريد' : 'Store Logistics',
           'subtitle': isAr ? 'نقل مستلزمات وبضائع للمحل وموقع العمل' : 'Stock & supplies delivery for shops',
           'icon': Icons.local_shipping_rounded,
+          'asset': 'assets/images/service_cargo.jpg',
           'color': const Color(0xFF6366F1),
         },
         {
@@ -561,6 +564,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'title': isAr ? 'شحن أمانات وطرود' : 'Parcel Delivery',
           'subtitle': isAr ? 'توصيل أمانة مع مسافر موثق بكود OTP' : 'Send package safely with a traveler',
           'icon': Icons.inventory_2_rounded,
+          'asset': 'assets/images/service_parcel.jpg',
           'color': const Color(0xFF10B981),
         },
       ];
@@ -572,6 +576,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'title': isAr ? 'عرض سفر تشاركي' : 'Offer Seats',
           'subtitle': isAr ? 'مسافر ومعايا كراسي فاضية بعربيتي بالكرسي' : 'Empty seats in my private car',
           'icon': Icons.directions_car_rounded,
+          'asset': 'assets/images/service_ride.jpg',
           'color': AppColors.navy,
         },
         {
@@ -579,6 +584,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'title': isAr ? 'قضاء مصالح بالسكة' : 'Errand & Shopping',
           'subtitle': isAr ? 'مسافر ومستعد أشتري طلبات أو أخلص ورق بطريقي' : 'Traveler ready to buy or deliver papers',
           'icon': Icons.description_rounded,
+          'asset': 'assets/images/service_errand.jpg',
           'color': const Color(0xFFD97706),
         },
         {
@@ -586,6 +592,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'title': isAr ? 'عرض نقل وتوريد بضائع' : 'Freight Service',
           'subtitle': isAr ? 'مركبة مجهزة لنقل وتوريد مستلزمات المحلات' : 'Vehicle ready for store logistics',
           'icon': Icons.local_shipping_rounded,
+          'asset': 'assets/images/service_cargo.jpg',
           'color': const Color(0xFF6366F1),
         },
         {
@@ -600,6 +607,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'title': isAr ? 'استقبال أمانات بالسكة' : 'Accept Parcels',
           'subtitle': isAr ? 'مسافر ومستعد أخد أمانات خفيفة بطريقي' : 'Traveler ready to take light parcels',
           'icon': Icons.inventory_2_rounded,
+          'asset': 'assets/images/service_parcel.jpg',
           'color': const Color(0xFF10B981),
         },
       ];
@@ -621,6 +629,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                 title: item['title'] as String,
                 subtitle: item['subtitle'] as String,
                 icon: item['icon'] as IconData,
+                assetPath: item['asset'] as String?,
                 accentColor: item['color'] as Color,
                 isSelected: isSelected,
                 onTap: () {
@@ -642,6 +651,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
     required String title,
     required String subtitle,
     required IconData icon,
+    String? assetPath,
     required Color accentColor,
     required bool isSelected,
     required VoidCallback onTap,
@@ -675,19 +685,40 @@ class _PostAdScreenState extends State<PostAdScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: isSelected ? accentColor : accentColor.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
+                if (assetPath != null)
+                  Container(
+                    width: 40,
+                    height: 40,
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: MashwarAssetArt(
+                      assetPath: assetPath,
+                      width: 34,
+                      height: 34,
+                      fit: BoxFit.contain,
+                      borderRadius: BorderRadius.circular(8),
+                      fallbackIcon: icon,
+                      fallbackColor: accentColor,
+                    ),
+                  )
+                else
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isSelected ? accentColor : accentColor.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 20,
+                      color: isSelected ? Colors.white : accentColor,
+                    ),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 20,
-                    color: isSelected ? Colors.white : accentColor,
-                  ),
-                ),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   width: 22,

@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/alert_banner.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
 import '../../core/localization/app_strings.dart';
@@ -100,18 +101,11 @@ class _CancellationSheetState extends State<CancellationSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 48,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.borderDisabled,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+          MashwarSheetHeader(
+            title: isAr ? 'إلغاء الحجز' : 'Cancel Booking',
+            leadingIcon: Icons.event_busy_rounded,
+            onClose: () => Navigator.of(context).pop(),
           ),
-          const SizedBox(height: AppDimens.space16),
-          Text(isAr ? 'إلغاء الحجز' : 'Cancel Booking', style: AppTypography.title()),
           const SizedBox(height: 8),
           if (widget.isLateCancellation) ...[
             AlertBanner(

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
@@ -11,8 +12,34 @@ class AppTheme {
     final baseTextTheme = GoogleFonts.cairoTextTheme();
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.scaffoldBg,
+      scaffoldBackgroundColor: const Color(0xFFFCFCFD),
       primaryColor: AppColors.navy,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimens.radiusBottomSheet),
+          ),
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        backgroundColor: AppColors.navy,
+        contentTextStyle: AppTypography.bodySecondary(color: Colors.white),
+      ),
       colorScheme: const ColorScheme.light(
         primary: AppColors.navy,
         onPrimary: Colors.white,

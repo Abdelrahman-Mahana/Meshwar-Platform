@@ -46,7 +46,20 @@ class _MainNavShellState extends State<MainNavShell> {
   // Segment state for Orders / Requests Tab
   bool _isActiveOrders = true;
   int _ordersFilterIndex = 0; // 0: All, 1: Mobility/Travel, 2: Errands, 3: Logistics/Cargo
+  bool _messagesUnreadOnly = false;
   final TextEditingController _messagesSearchController = TextEditingController();
+
+  Widget _buildNavIconPill(IconData icon, {bool active = false}) {
+    if (!active) return Icon(icon, size: 22);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.navy.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Icon(icon, size: 22, color: AppColors.navy),
+    );
+  }
 
   @override
   void dispose() {
@@ -204,28 +217,28 @@ class _MainNavShellState extends State<MainNavShell> {
               type: BottomNavigationBarType.fixed,
               items: [
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.home_outlined),
-                  activeIcon: const Icon(Icons.home_rounded),
+                  icon: _buildNavIconPill(Icons.home_outlined),
+                  activeIcon: _buildNavIconPill(Icons.home_rounded, active: true),
                   label: isAr ? 'الرئيسية' : 'Home',
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.explore_outlined),
-                  activeIcon: const Icon(Icons.explore_rounded),
+                  icon: _buildNavIconPill(Icons.explore_outlined),
+                  activeIcon: _buildNavIconPill(Icons.explore_rounded, active: true),
                   label: isAr ? 'اللوحة' : 'Board',
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.assignment_outlined),
-                  activeIcon: const Icon(Icons.assignment_rounded),
+                  icon: _buildNavIconPill(Icons.assignment_outlined),
+                  activeIcon: _buildNavIconPill(Icons.assignment_rounded, active: true),
                   label: isAr ? 'طلباتي' : 'My Requests',
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.chat_bubble_outline_rounded),
-                  activeIcon: const Icon(Icons.chat_bubble_rounded),
+                  icon: _buildNavIconPill(Icons.chat_bubble_outline_rounded),
+                  activeIcon: _buildNavIconPill(Icons.chat_bubble_rounded, active: true),
                   label: isAr ? 'الرسائل' : 'Messages',
                 ),
                 BottomNavigationBarItem(
-                  icon: const Icon(Icons.person_outline_rounded),
-                  activeIcon: const Icon(Icons.person_rounded),
+                  icon: _buildNavIconPill(Icons.person_outline_rounded),
+                  activeIcon: _buildNavIconPill(Icons.person_rounded, active: true),
                   label: isAr ? 'حسابي' : 'Account',
                 ),
               ],
@@ -246,12 +259,45 @@ class _MainNavShellState extends State<MainNavShell> {
     bool isAr,
   ) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: Text(isAr ? 'طلباتي' : 'My Requests', style: AppTypography.title()),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const MashwarPinIcon(size: 18),
+            const SizedBox(width: 6),
+            Text(isAr ? 'طلباتي' : 'My Requests', style: AppTypography.title()),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 14),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.sand,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  isAr
+                      ? '${rides.bookedRides.length + parcels.parcels.length} نشط'
+                      : '${rides.bookedRides.length + parcels.parcels.length} Active',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -263,14 +309,14 @@ class _MainNavShellState extends State<MainNavShell> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Segment Switch: قيد التنفيذ vs المكتملة
+                    // Uber-style Segment Switch: قيد التنفيذ vs المكتملة
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(AppDimens.space16, 12, AppDimens.space16, 6),
+                      padding: const EdgeInsets.fromLTRB(AppDimens.space16, 12, AppDimens.space16, 8),
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEBEBF0),
-                          borderRadius: BorderRadius.circular(12),
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
                           children: [
@@ -278,18 +324,32 @@ class _MainNavShellState extends State<MainNavShell> {
                               child: GestureDetector(
                                 onTap: () => setState(() => _isActiveOrders = true),
                                 child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 160),
+                                  duration: const Duration(milliseconds: 180),
                                   padding: const EdgeInsets.symmetric(vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: _isActiveOrders ? AppColors.navy : Colors.transparent,
+                                    color: _isActiveOrders ? Colors.white : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
+                                    boxShadow: _isActiveOrders
+                                        ? [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.06),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ]
+                                        : null,
                                   ),
                                   child: Center(
                                     child: Text(
                                       isAr ? 'الطلبات النشطة والجارية' : 'Active Requests',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: AppTypography.bodySecondary(
-                                        color: _isActiveOrders ? Colors.white : AppColors.textPrimary,
-                                      ).copyWith(fontWeight: _isActiveOrders ? FontWeight.w700 : FontWeight.w500),
+                                        color: _isActiveOrders ? AppColors.navy : AppColors.textSecondary,
+                                      ).copyWith(
+                                        fontWeight: _isActiveOrders ? FontWeight.w800 : FontWeight.w600,
+                                        fontSize: 12.5,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -299,18 +359,32 @@ class _MainNavShellState extends State<MainNavShell> {
                               child: GestureDetector(
                                 onTap: () => setState(() => _isActiveOrders = false),
                                 child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 160),
+                                  duration: const Duration(milliseconds: 180),
                                   padding: const EdgeInsets.symmetric(vertical: 10),
                                   decoration: BoxDecoration(
-                                    color: !_isActiveOrders ? AppColors.navy : Colors.transparent,
+                                    color: !_isActiveOrders ? Colors.white : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
+                                    boxShadow: !_isActiveOrders
+                                        ? [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.06),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ]
+                                        : null,
                                   ),
                                   child: Center(
                                     child: Text(
                                       isAr ? 'المكتملة والسابقة' : 'Completed / History',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: AppTypography.bodySecondary(
-                                        color: !_isActiveOrders ? Colors.white : AppColors.textPrimary,
-                                      ).copyWith(fontWeight: !_isActiveOrders ? FontWeight.w700 : FontWeight.w500),
+                                        color: !_isActiveOrders ? AppColors.navy : AppColors.textSecondary,
+                                      ).copyWith(
+                                        fontWeight: !_isActiveOrders ? FontWeight.w800 : FontWeight.w600,
+                                        fontSize: 12.5,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -321,32 +395,59 @@ class _MainNavShellState extends State<MainNavShell> {
                       ),
                     ),
 
-                    // Filter chips for service categories
+                    // Illustrated filter chips for service categories
                     SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 4),
                       child: Row(
                         children: [
-                          _buildOrderFilterChip(0, isAr ? 'الكل' : 'All'),
+                          _buildOrderFilterChip(0, isAr ? 'الكل' : 'All', icon: Icons.apps_rounded),
                           const SizedBox(width: 8),
-                          _buildOrderFilterChip(1, isAr ? 'سفر وانتقال' : 'Mobility & Travel'),
+                          _buildOrderFilterChip(
+                            1,
+                            isAr ? 'سفر وانتقال' : 'Mobility & Travel',
+                            assetPath: 'assets/images/service_ride.jpg',
+                            icon: Icons.directions_car_rounded,
+                          ),
                           const SizedBox(width: 8),
-                          _buildOrderFilterChip(2, isAr ? 'شراء طلبات ومصالح' : 'Errand & Shopping'),
+                          _buildOrderFilterChip(
+                            2,
+                            isAr ? 'شراء طلبات ومصالح' : 'Errand & Shopping',
+                            assetPath: 'assets/images/service_errand.jpg',
+                            icon: Icons.shopping_bag_rounded,
+                          ),
                           const SizedBox(width: 8),
-                          _buildOrderFilterChip(3, isAr ? 'لوجستيات وبضائع' : 'Store Logistics'),
+                          _buildOrderFilterChip(
+                            3,
+                            isAr ? 'لوجستيات وبضائع' : 'Store Logistics',
+                            assetPath: 'assets/images/service_cargo.jpg',
+                            icon: Icons.local_shipping_rounded,
+                          ),
                           const SizedBox(width: 8),
-                          _buildOrderFilterChip(4, isAr ? 'شحن أمانات' : 'Parcel Delivery'),
+                          _buildOrderFilterChip(
+                            4,
+                            isAr ? 'شحن أمانات' : 'Parcel Delivery',
+                            assetPath: 'assets/images/service_parcel.jpg',
+                            icon: Icons.inventory_2_rounded,
+                          ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
 
                     // Orders list
                     Expanded(
-                      child: _isActiveOrders
-                          ? _buildActiveOrdersList(context, rides, parcels, isAr, isWide: isWide)
-                          : _buildPastOrdersList(context, isAr, isWide: isWide),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 220),
+                        switchInCurve: Curves.easeOutCubic,
+                        child: KeyedSubtree(
+                          key: ValueKey('${_isActiveOrders}_$_ordersFilterIndex'),
+                          child: _isActiveOrders
+                              ? _buildActiveOrdersList(context, rides, parcels, isAr, isWide: isWide)
+                              : _buildPastOrdersList(context, isAr, isWide: isWide),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -358,27 +459,64 @@ class _MainNavShellState extends State<MainNavShell> {
     );
   }
 
-  Widget _buildOrderFilterChip(int index, String label) {
+  Widget _buildOrderFilterChip(
+    int index,
+    String label, {
+    String? assetPath,
+    IconData icon = Icons.apps_rounded,
+  }) {
     final isSelected = _ordersFilterIndex == index;
-    return GestureDetector(
+    return MashwarPressable(
+      borderRadius: BorderRadius.circular(14),
       onTap: () => setState(() => _ordersFilterIndex = index),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.navy : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppColors.navy : const Color(0xFFD1D1D6),
+            color: isSelected ? AppColors.navy : const Color(0xFFE2E8F0),
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppColors.textPrimary,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 12,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (assetPath != null)
+              Container(
+                width: 22,
+                height: 22,
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: MashwarAssetArt(
+                  assetPath: assetPath,
+                  width: 18,
+                  height: 18,
+                  fit: BoxFit.contain,
+                  borderRadius: BorderRadius.circular(4),
+                  fallbackIcon: icon,
+                ),
+              )
+            else
+              Icon(
+                icon,
+                size: 16,
+                color: isSelected ? AppColors.gold : AppColors.navy,
+              ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : AppColors.navy,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                fontSize: 12,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -868,117 +1006,150 @@ class _MainNavShellState extends State<MainNavShell> {
     VoidCallback? onTap,
     List<Widget>? actionButtons,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(AppDimens.space16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Top Row: Category pill & Status badge
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: categoryColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      categoryTag,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.label(color: categoryColor).copyWith(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+    final routeParts = route.contains('←')
+        ? route.split('←')
+        : route.contains('→')
+            ? route.split('→')
+            : [route, ''];
+    final fromCity = routeParts.first.trim();
+    final toCity = routeParts.length > 1 ? routeParts.sublist(1).join(' ← ').trim() : '';
+
+    return MashwarFadeSlideIn(
+      duration: const Duration(milliseconds: 260),
+      offsetY: 10,
+      child: MashwarPressable(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(AppDimens.space16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE5E5EA), width: 0.9),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.navy.withValues(alpha: 0.035),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Category pill & Status badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: categoryColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        categoryTag,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(color: categoryColor).copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  MashwarBadge(type: badgeType, customLabel: badgeText),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Visual Route Timeline
+              if (toCity.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: MashwarRouteTimeline(
+                    from: fromCity,
+                    to: toCity,
+                    compact: true,
+                  ),
+                )
+              else
+                Text(
+                  route,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.title().copyWith(fontSize: 17),
                 ),
-                const SizedBox(width: 8),
-                MashwarBadge(type: badgeType, customLabel: badgeText),
-              ],
-            ),
-            const SizedBox(height: 8),
-
-            // Route
-            Text(
-              route,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.title().copyWith(fontSize: 17),
-            ),
-            const SizedBox(height: 6),
-
-            // Description
-            Text(
-              description,
-              style: AppTypography.bodySecondary().copyWith(fontSize: 13),
-            ),
-
-            // OTP Guarantee Box if active
-            if (otpCode != null) ...[
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFBBF7D0)),
-                ),
-                child: Wrap(
-                  spacing: 4,
-                  runSpacing: 2,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    const Icon(Icons.lock_outline_rounded, size: 14, color: Color(0xFF16A34A)),
-                    Text(
-                      isAr ? 'كود أمان التسليم: ' : 'Security OTP: ',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF166534),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      otpCode,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF166534),
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
 
-            // Actions row
-            if (actionButtons != null && actionButtons.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: actionButtons,
+              // Description
+              Text(
+                description,
+                style: AppTypography.bodySecondary().copyWith(fontSize: 13),
               ),
+
+              // OTP Guarantee Box if active
+              if (otpCode != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                  ),
+                  child: Wrap(
+                    spacing: 6,
+                    runSpacing: 2,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      const Icon(Icons.lock_outline_rounded, size: 15, color: AppColors.teal),
+                      Text(
+                        isAr ? 'كود أمان التسليم:' : 'Security OTP:',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.navy,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          otpCode,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.gold,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              // Actions row
+              if (actionButtons != null && actionButtons.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: actionButtons,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -1044,22 +1215,64 @@ class _MainNavShellState extends State<MainNavShell> {
     ];
 
     final query = _messagesSearchController.text.trim().toLowerCase();
-    final filteredChats = query.isEmpty
-        ? allChats
-        : allChats.where((chat) {
-            final name = (chat['name'] as String).toLowerCase();
-            final lastMsg = (chat['lastMsg'] as String).toLowerCase();
-            final route = (chat['route'] as String).toLowerCase();
-            return name.contains(query) || lastMsg.contains(query) || route.contains(query);
-          }).toList();
+    final unreadTotal = allChats.where((c) => ((c['unread'] as int?) ?? 0) > 0).length;
+    final filteredChats = allChats.where((chat) {
+      if (_messagesUnreadOnly && ((chat['unread'] as int?) ?? 0) == 0) {
+        return false;
+      }
+      if (query.isEmpty) return true;
+      final name = (chat['name'] as String).toLowerCase();
+      final lastMsg = (chat['lastMsg'] as String).toLowerCase();
+      final route = (chat['route'] as String).toLowerCase();
+      return name.contains(query) || lastMsg.contains(query) || route.contains(query);
+    }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: Text(isAr ? 'الرسائل والمحادثات' : 'Messages', style: AppTypography.title()),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const MashwarPinIcon(size: 18),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                isAr ? 'الرسائل والمحادثات' : 'Messages',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.title(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          if (unreadTotal > 0)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 14),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    isAr ? '$unreadTotal غير مقروء' : '$unreadTotal Unread',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.teal,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: SafeArea(
         child: LayoutBuilder(
@@ -1070,229 +1283,313 @@ class _MainNavShellState extends State<MainNavShell> {
                 constraints: BoxConstraints(maxWidth: isWide ? 1000 : 720),
                 child: Column(
                   children: [
-                    // Search Field
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(AppDimens.space16, 12, AppDimens.space16, 6),
-                      child: TextField(
-                        controller: _messagesSearchController,
-                        onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          hintText: isAr ? 'بحث في الرسائل والأسماء...' : 'Search messages & names...',
-                          hintStyle: AppTypography.bodySecondary(
-                            color: AppColors.textSecondary.withValues(alpha: 0.72),
+                    // Uber-style Search Capsule + Unread filter pills
+                    Container(
+                      color: Colors.white,
+                      padding: const EdgeInsets.fromLTRB(AppDimens.space16, 10, AppDimens.space16, 10),
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _messagesSearchController,
+                            onChanged: (_) => setState(() {}),
+                            decoration: InputDecoration(
+                              hintText: isAr ? 'بحث في الرسائل، الأسماء أو الخطوط...' : 'Search messages, names & routes...',
+                              hintStyle: AppTypography.bodySecondary(
+                                color: AppColors.textSecondary.withValues(alpha: 0.72),
+                              ),
+                              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy, size: 20),
+                              suffixIcon: _messagesSearchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear_rounded, size: 18),
+                                      onPressed: () {
+                                        _messagesSearchController.clear();
+                                        setState(() {});
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: const Color(0xFFF3F4F6),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                borderSide: const BorderSide(color: AppColors.teal, width: 1.5),
+                              ),
+                            ),
                           ),
-                          prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy, size: 20),
-                          suffixIcon: _messagesSearchController.text.isNotEmpty
-                              ? IconButton(
-                                  icon: const Icon(Icons.clear_rounded, size: 18),
-                                  onPressed: () {
-                                    _messagesSearchController.clear();
-                                    setState(() {});
-                                  },
-                                )
-                              : null,
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
+                          const SizedBox(height: 10),
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () => setState(() => _messagesUnreadOnly = false),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 160),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: !_messagesUnreadOnly ? AppColors.navy : const Color(0xFFF3F4F6),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      isAr ? 'كل المحادثات' : 'All Chats',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: !_messagesUnreadOnly ? Colors.white : AppColors.navy,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () => setState(() => _messagesUnreadOnly = true),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 160),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: _messagesUnreadOnly ? AppColors.teal : const Color(0xFFF3F4F6),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      isAr ? 'غير مقروءة ($unreadTotal)' : 'Unread ($unreadTotal)',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: _messagesUnreadOnly ? Colors.white : AppColors.navy,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: Color(0xFFE5E5EA)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: AppColors.teal, width: 1.5),
-                          ),
-                        ),
+                        ],
                       ),
                     ),
-
-                    const SizedBox(height: 6),
+                    const Divider(height: 1, thickness: 0.8, color: Color(0xFFEDF2F7)),
 
                     // Chat threads list
                     Expanded(
                       child: filteredChats.isEmpty
                           ? Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.chat_bubble_outline_rounded, size: 48, color: Color(0xFFC7C7CC)),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    isAr ? 'لا توجد محادثات مطابقة للبحث' : 'No matching chats found',
-                                    style: AppTypography.bodySecondary(),
-                                  ),
-                                ],
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: const Color(0xFFE5E7EB)),
+                                      ),
+                                      child: const Icon(Icons.forum_outlined, size: 46, color: AppColors.navy),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      isAr ? 'لا توجد محادثات مطابقة' : 'No matching chats found',
+                                      style: AppTypography.bodySecondary(),
+                                    ),
+                                  ],
+                                ),
                               ),
                             )
                           : ListView.separated(
-                              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 12),
                               itemCount: filteredChats.length,
                               separatorBuilder: (_, __) => const SizedBox(height: 10),
                               itemBuilder: (context, index) {
                                 final chat = filteredChats[index];
                                 final unread = (chat['unread'] as int?) ?? 0;
-                                return InkWell(
-                                  onTap: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => ChatScreen(
-                                          driverName: chat['name'] as String,
-                                          driverCar: chat['car'] as String,
-                                          tripRoute: chat['route'] as String,
+                                return MashwarFadeSlideIn(
+                                  duration: Duration(milliseconds: 220 + (index.clamp(0, 4) * 35)),
+                                  offsetY: 10,
+                                  child: MashwarPressable(
+                                    borderRadius: BorderRadius.circular(18),
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => ChatScreen(
+                                            driverName: chat['name'] as String,
+                                            driverCar: chat['car'] as String,
+                                            tripRoute: chat['route'] as String,
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(14),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: unread > 0 ? AppColors.teal.withValues(alpha: 0.5) : const Color(0xFFE5E5EA),
-                                        width: unread > 0 ? 1.2 : 0.8,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.02),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(
+                                          color: unread > 0 ? AppColors.teal.withValues(alpha: 0.45) : const Color(0xFFE5E5EA),
+                                          width: unread > 0 ? 1.2 : 0.9,
                                         ),
-                                      ],
-                                    ),
-                                    child: Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Avatar with verification badge
-                                        Stack(
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 24,
-                                              backgroundColor: AppColors.navy.withValues(alpha: 0.1),
-                                              child: Text(
-                                                (chat['name'] as String).substring(0, 1),
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w800,
-                                                  color: AppColors.navy,
-                                                  fontSize: 16,
-                                                ),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              bottom: 0,
-                                              right: isAr ? null : 0,
-                                              left: isAr ? 0 : null,
-                                              child: Container(
-                                                padding: const EdgeInsets.all(2),
-                                                decoration: const BoxDecoration(
-                                                  color: Colors.white,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.navy.withValues(alpha: 0.03),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Avatar with gold/navy ring & verification badge
+                                          Stack(
+                                            children: [
+                                              Container(
+                                                width: 48,
+                                                height: 48,
+                                                decoration: BoxDecoration(
+                                                  color: unread > 0 ? AppColors.gold : AppColors.navy.withValues(alpha: 0.08),
                                                   shape: BoxShape.circle,
                                                 ),
-                                                child: const Icon(
-                                                  Icons.verified_rounded,
-                                                  size: 14,
-                                                  color: AppColors.teal,
+                                                child: Center(
+                                                  child: Text(
+                                                    (chat['name'] as String).substring(0, 1),
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.w800,
+                                                      color: AppColors.navy,
+                                                      fontSize: 18,
+                                                      fontFamily: 'Cairo',
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(width: 12),
-
-                                        // Name, tags, and message snippet
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                children: [
-                                                  Flexible(
-                                                    child: Text(
-                                                      chat['name'] as String,
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                      style: AppTypography.title().copyWith(fontSize: 15),
-                                                    ),
+                                              Positioned(
+                                                bottom: 0,
+                                                right: isAr ? null : 0,
+                                                left: isAr ? 0 : null,
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(2),
+                                                  decoration: const BoxDecoration(
+                                                    color: Colors.white,
+                                                    shape: BoxShape.circle,
                                                   ),
-                                                  Text(
-                                                    chat['time'] as String,
-                                                    style: AppTypography.bodySmall(color: AppColors.textSecondary),
+                                                  child: const Icon(
+                                                    Icons.verified_rounded,
+                                                    size: 14,
+                                                    color: AppColors.teal,
                                                   ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-
-                                              // Category tag & route
-                                              Wrap(
-                                                spacing: 6,
-                                                runSpacing: 4,
-                                                crossAxisAlignment: WrapCrossAlignment.center,
-                                                children: [
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(0xFFF1F5F9),
-                                                      borderRadius: BorderRadius.circular(4),
-                                                    ),
-                                                    child: Text(
-                                                      chat['tag'] as String,
-                                                      style: const TextStyle(
-                                                        fontSize: 10,
-                                                        color: AppColors.navy,
-                                                        fontWeight: FontWeight.w700,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    '· ${chat['route']}',
-                                                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 6),
-
-                                              // Message text
-                                              Text(
-                                                chat['lastMsg'] as String,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: AppTypography.bodySecondary(
-                                                  color: unread > 0 ? AppColors.textPrimary : AppColors.textSecondary,
-                                                ).copyWith(
-                                                  fontWeight: unread > 0 ? FontWeight.w700 : FontWeight.w400,
-                                                  fontSize: 13,
                                                 ),
                                               ),
                                             ],
                                           ),
-                                        ),
+                                          const SizedBox(width: 12),
 
-                                        // Unread Badge
-                                        if (unread > 0) ...[
-                                          const SizedBox(width: 8),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                            decoration: const BoxDecoration(
-                                              color: AppColors.teal,
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Text(
-                                              '$unread',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w800,
-                                                fontSize: 11,
-                                              ),
+                                          // Name, tags, and message snippet
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        chat['name'] as String,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                        style: AppTypography.title().copyWith(fontSize: 15.5),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      chat['time'] as String,
+                                                      style: AppTypography.bodySmall(
+                                                        color: unread > 0 ? AppColors.teal : AppColors.textSecondary,
+                                                      ).copyWith(fontWeight: unread > 0 ? FontWeight.w800 : FontWeight.w500),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+
+                                                // Category tag & route
+                                                Wrap(
+                                                  spacing: 6,
+                                                  runSpacing: 4,
+                                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.sand,
+                                                        borderRadius: BorderRadius.circular(6),
+                                                      ),
+                                                      child: Text(
+                                                        chat['tag'] as String,
+                                                        style: const TextStyle(
+                                                          fontSize: 10.5,
+                                                          color: AppColors.navy,
+                                                          fontWeight: FontWeight.w800,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '· ${chat['route']}',
+                                                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 6),
+
+                                                // Message text
+                                                Text(
+                                                  chat['lastMsg'] as String,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: AppTypography.bodySecondary(
+                                                    color: unread > 0 ? AppColors.textPrimary : AppColors.textSecondary,
+                                                  ).copyWith(
+                                                    fontWeight: unread > 0 ? FontWeight.w700 : FontWeight.w400,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
+
+                                          // Unread Badge
+                                          if (unread > 0) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              width: 24,
+                                              height: 24,
+                                              decoration: const BoxDecoration(
+                                                color: AppColors.teal,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  '$unread',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 11,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ],
-                                      ],
+                                      ),
                                     ),
                                   ),
                                 );

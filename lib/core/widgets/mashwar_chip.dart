@@ -38,12 +38,21 @@ class MashwarChip extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 40),
           padding: padding ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.navy : AppColors.chipInactiveBg,
+            color: isSelected ? AppColors.navy : Colors.white,
             borderRadius: BorderRadius.circular(AppDimens.radiusChip),
             border: Border.all(
               color: isSelected ? AppColors.navy : AppColors.chipInactiveBorder,
-              width: isSelected ? 1.0 : 0.8,
+              width: isSelected ? 1.0 : 0.9,
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: AppColors.navy.withValues(alpha: 0.14),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

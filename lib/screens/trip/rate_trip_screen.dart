@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/localization/app_strings.dart';
@@ -95,7 +96,7 @@ class _RateTripScreenState extends State<RateTripScreen> {
         : (isAr ? _complimentsRideAr : _complimentsRideEn);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -110,71 +111,87 @@ class _RateTripScreenState extends State<RateTripScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          child: Column(
-            children: [
-              // Driver Avatar & Name
-              Container(
-                width: 72,
-                height: 72,
-                decoration: const BoxDecoration(
-                  color: AppColors.gold,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Text(
-                    widget.driverName.isNotEmpty ? widget.driverName[0] : (isAr ? 'ك' : 'D'),
-                    style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 32),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      widget.driverName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.title().copyWith(fontSize: 18),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const MashwarBadge(type: BadgeType.verified, customLabel: 'موثق'),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(AppStrings.translateRoute(widget.route, isArabic: isAr), style: AppTypography.bodySecondary()),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimens.space16),
+              child: MashwarFadeSlideIn(
+                duration: const Duration(milliseconds: 280),
+                child: Column(
+                  children: [
+                    // Driver Hero Card
+                    MashwarSectionCard(
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 72,
+                            height: 72,
+                            decoration: BoxDecoration(
+                              color: AppColors.gold,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.navy.withValues(alpha: 0.14), width: 2),
+                            ),
+                            child: Center(
+                              child: Text(
+                                widget.driverName.isNotEmpty ? widget.driverName[0] : (isAr ? 'ك' : 'D'),
+                                style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 30),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  widget.driverName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.title().copyWith(fontSize: 18),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'موثق' : 'Verified'),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(AppStrings.translateRoute(widget.route, isArabic: isAr), style: AppTypography.bodySecondary()),
+                          const SizedBox(height: 16),
 
-              const SizedBox(height: AppDimens.space24),
-
-              // Star Rating Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(5, (index) {
-                  final starIndex = index + 1;
-                  return IconButton(
-                    iconSize: 42,
-                    icon: Icon(
-                      starIndex <= _rating ? Icons.star_rounded : Icons.star_outline_rounded,
-                      color: AppColors.gold,
+                          // Interactive Star Rating Row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(5, (index) {
+                              final starIndex = index + 1;
+                              final isActive = starIndex <= _rating;
+                              return AnimatedScale(
+                                scale: isActive ? 1.08 : 0.94,
+                                duration: const Duration(milliseconds: 140),
+                                child: IconButton(
+                                  iconSize: 40,
+                                  icon: Icon(
+                                    isActive ? Icons.star_rounded : Icons.star_outline_rounded,
+                                    color: isActive ? AppColors.gold : const Color(0xFFCBD5E1),
+                                  ),
+                                  onPressed: () => setState(() => _rating = starIndex),
+                                ),
+                              );
+                            }),
+                          ),
+                          Text(
+                            _rating == 5
+                                ? (isAr ? 'تجربة ممتازة 5/5' : 'Excellent Experience 5/5')
+                                : _rating >= 4
+                                    ? (isAr ? 'تجربة جيدة جداً' : 'Very Good')
+                                    : _rating >= 3
+                                        ? (isAr ? 'تجربة مقبولة' : 'Acceptable')
+                                        : (isAr ? 'تحتاج إلى تحسين' : 'Needs Improvement'),
+                            style: AppTypography.body().copyWith(fontWeight: FontWeight.w800, color: AppColors.navy),
+                          ),
+                        ],
+                      ),
                     ),
-                    onPressed: () => setState(() => _rating = starIndex),
-                  );
-                }),
-              ),
-              Text(
-                _rating == 5
-                    ? (isAr ? 'تجربة ممتازة 5/5' : 'Excellent Experience 5/5')
-                    : _rating >= 4
-                        ? (isAr ? 'تجربة جيدة جداً' : 'Very Good')
-                        : _rating >= 3
-                            ? (isAr ? 'تجربة مقبولة' : 'Acceptable')
-                            : (isAr ? 'تحتاج إلى تحسين' : 'Needs Improvement'),
-                style: AppTypography.body().copyWith(fontWeight: FontWeight.w700, color: AppColors.navy),
-              ),
 
               const SizedBox(height: AppDimens.space24),
 
@@ -304,6 +321,9 @@ class _RateTripScreenState extends State<RateTripScreen> {
           ),
         ),
       ),
+    ),
+    ),
+    ),
     );
   }
 }

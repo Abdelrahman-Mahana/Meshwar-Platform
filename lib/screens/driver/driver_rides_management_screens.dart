@@ -3,11 +3,13 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../state/rides_provider.dart';
 import '../../state/settings_provider.dart';
 import '../board/board_extra_screens.dart';
+import '../chat/chat_screen.dart';
 import '../safety/safety_screens.dart';
 import 'publish_ride_screen.dart';
 
@@ -153,7 +155,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
     final publishedRides = context.watch<RidesProvider>().myPublishedRides;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -177,38 +179,50 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
           child: Column(
             children: [
               // Driver Earnings Summary Banner
-              InkWell(
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                onTap: () => _showDriverEarningsAnalyticsSheet(context, isAr, publishedRides.length),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.tealSurface,
-                    borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                    border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.insights_rounded, color: AppColors.teal, size: 24),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              isAr ? 'أرباحك هذا الشهر: 4,850 ج.م' : 'Monthly Earnings: 4,850 EGP',
-                              style: AppTypography.body().copyWith(fontWeight: FontWeight.w800, color: AppColors.navy),
-                            ),
-                            Text(
-                              isAr ? 'اضغط لعرض تفاصيل الأرباح وتوفير الوقود' : 'Tap to view earnings & fuel savings breakdown',
-                              style: AppTypography.label(color: AppColors.textSecondary),
-                            ),
-                          ],
+              MashwarFadeSlideIn(
+                child: MashwarPressable(
+                  onTap: () => _showDriverEarningsAnalyticsSheet(context, isAr, publishedRides.length),
+                  child: MashwarSectionCard(
+                    backgroundColor: AppColors.tealSurface,
+                    borderColor: AppColors.teal.withValues(alpha: 0.3),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    margin: const EdgeInsets.only(bottom: 14),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: const MashwarAssetArt(
+                            assetPath: 'assets/images/driver_promo.jpg',
+                            width: 48,
+                            height: 48,
+                            fallbackIcon: Icons.insights_rounded,
+                            fallbackBg: Colors.white,
+                            fallbackColor: AppColors.teal,
+                          ),
                         ),
-                      ),
-                      const Icon(Icons.chevron_right_rounded, color: AppColors.teal),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isAr ? 'أرباحك هذا الشهر: 4,850 ج.م' : 'Monthly Earnings: 4,850 EGP',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.body().copyWith(fontWeight: FontWeight.w800, color: AppColors.navy),
+                              ),
+                              Text(
+                                isAr ? 'اضغط لعرض تفاصيل الأرباح وتوفير الوقود' : 'Tap to view earnings & fuel savings breakdown',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.label(color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: AppColors.teal),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -365,60 +379,59 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
     VoidCallback? onTap,
     VoidCallback? onReschedule,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-      child: Container(
-        padding: const EdgeInsets.all(AppDimens.space16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-          border: Border.all(color: AppColors.borderDisabled),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    route,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.title().copyWith(fontSize: 16),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                MashwarBadge(type: badgeType, customLabel: badge),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(date, style: AppTypography.bodySecondary()),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    stats,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 13),
-                  ),
-                ),
-                if (onReschedule != null)
-                  TextButton.icon(
-                    onPressed: onReschedule,
-                    icon: const Icon(Icons.schedule_rounded, size: 15, color: AppColors.navy),
-                    label: Text(
-                      isAr ? 'تعديل الموعد' : 'Reschedule',
-                      style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+    final parts = route.split(RegExp(r'\s*[←→]\s*'));
+    final fromLabel = parts.isNotEmpty ? parts.first : route;
+    final toLabel = parts.length > 1 ? parts.last : route;
+    return MashwarFadeSlideIn(
+      offsetY: 12,
+      child: MashwarPressable(
+        onTap: onTap,
+        child: MashwarSectionCard(
+          padding: const EdgeInsets.all(AppDimens.space16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: MashwarRouteTimeline(
+                      from: fromLabel,
+                      to: toLabel,
+                      compact: true,
                     ),
                   ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 8),
+                  MashwarBadge(type: badgeType, customLabel: badge),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(date, style: AppTypography.bodySecondary()),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      stats,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700, fontSize: 13),
+                    ),
+                  ),
+                  if (onReschedule != null)
+                    TextButton.icon(
+                      onPressed: onReschedule,
+                      icon: const Icon(Icons.schedule_rounded, size: 15, color: AppColors.navy),
+                      label: Text(
+                        isAr ? 'تعديل الموعد' : 'Reschedule',
+                        style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -550,7 +563,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
     final isAr = context.watch<SettingsProvider>().isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -562,139 +575,246 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
         title: Text(isAr ? 'الطلبات' : 'Incoming Requests', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          child: Column(
-            children: [
-              // Segment tabs (Page 46)
-              Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space16),
+              child: Column(
                 children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _tab == 0 ? AppColors.navy : Colors.white,
-                        foregroundColor: _tab == 0 ? Colors.white : AppColors.navy,
-                      ),
-                      onPressed: () => setState(() => _tab = 0),
-                      child: Text(isAr ? 'حجوزات (${_rideRequests.length})' : 'Bookings (${_rideRequests.length})'),
+                  // Segment tabs (Page 46)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _tab == 1 ? AppColors.navy : Colors.white,
-                        foregroundColor: _tab == 1 ? Colors.white : AppColors.navy,
-                      ),
-                      onPressed: () => setState(() => _tab = 1),
-                      child: Text(isAr ? 'طرود (${_parcelRequests.length})' : 'Parcels (${_parcelRequests.length})'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              Expanded(
-                child: _tab == 0
-                    ? (_rideRequests.isEmpty
-                        ? Center(
-                            child: Text(
-                              isAr ? 'لا توجد طلبات حجز معلقة حالياً' : 'No pending booking requests',
-                              style: AppTypography.bodySecondary(),
-                            ),
-                          )
-                        : ListView(
-                            children: _rideRequests.map((r) {
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                                  border: Border.all(color: AppColors.borderDisabled),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _tab = 0),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _tab == 0 ? Colors.white : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                isAr ? 'حجوزات (${_rideRequests.length})' : 'Bookings (${_rideRequests.length})',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _tab == 0 ? AppColors.navy : AppColors.textSecondary,
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(r['passenger'] as String, style: AppTypography.title().copyWith(fontSize: 16)),
-                                        MashwarBadge(type: BadgeType.newBadge, customLabel: isAr ? 'جديد' : 'New'),
-                                      ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _tab = 1),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _tab == 1 ? Colors.white : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                isAr ? 'طرود (${_parcelRequests.length})' : 'Parcels (${_parcelRequests.length})',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: _tab == 1 ? AppColors.navy : AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Expanded(
+                    child: _tab == 0
+                        ? (_rideRequests.isEmpty
+                            ? Center(
+                                child: Text(
+                                  isAr ? 'لا توجد طلبات حجز معلقة حالياً' : 'No pending booking requests',
+                                  style: AppTypography.bodySecondary(),
+                                ),
+                              )
+                            : ListView(
+                                children: _rideRequests.map((r) {
+                                  final routeText = (r['route'] as String?) ?? '';
+                                  final routeParts = routeText.split(RegExp(r'\s*[←→]\s*'));
+                                  final fromCity = routeParts.isNotEmpty ? routeParts.first : routeText;
+                                  final toCity = routeParts.length > 1 ? routeParts.last : routeText;
+                                  final passengerName = r['passenger'] as String;
+                                  return MashwarFadeSlideIn(
+                                    offsetY: 10,
+                                    child: MashwarSectionCard(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(2),
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  border: Border.all(color: AppColors.gold, width: 1.5),
+                                                ),
+                                                child: CircleAvatar(
+                                                  radius: 17,
+                                                  backgroundColor: AppColors.goldSurface,
+                                                  child: Text(
+                                                    passengerName[0],
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy),
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Text(
+                                                  passengerName,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: AppTypography.title().copyWith(fontSize: 16),
+                                                ),
+                                              ),
+                                              MashwarBadge(type: BadgeType.newBadge, customLabel: isAr ? 'جديد' : 'New'),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+                                          MashwarRouteTimeline(
+                                            from: fromCity,
+                                            to: toCity,
+                                            compact: true,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            '${r['seats']} ${isAr ? "كرسي" : "seat"} · ${isAr ? "باقي" : "expires in"} ${r['timeLeft']}',
+                                            style: AppTypography.bodySecondary(),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                '${r['price']} ${isAr ? "ج" : "EGP"}',
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal),
+                                              ),
+                                              Wrap(
+                                                spacing: 6,
+                                                runSpacing: 6,
+                                                crossAxisAlignment: WrapCrossAlignment.center,
+                                                children: [
+                                                  IconButton(
+                                                    visualDensity: VisualDensity.compact,
+                                                    tooltip: isAr ? 'محادثة الراكب' : 'Chat Passenger',
+                                                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 19, color: AppColors.navy),
+                                                    onPressed: () {
+                                                      Navigator.of(context).push(
+                                                        MaterialPageRoute(
+                                                          builder: (_) => ChatScreen(
+                                                            driverName: passengerName,
+                                                            driverCar: isAr ? 'طلب حجز مقعد' : 'Seat Booking Request',
+                                                            tripRoute: routeText,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                  OutlinedButton(
+                                                    onPressed: () => _declineRequest(r['id'] as String, passengerName, isAr),
+                                                    child: Text(isAr ? 'رفض' : 'Decline'),
+                                                  ),
+                                                  ElevatedButton(
+                                                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
+                                                    onPressed: () => _showPassengerDetails(context, r),
+                                                    child: Text(isAr ? 'قبول' : 'Accept'),
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      '${r['route']} · ${r['seats']} ${isAr ? "كرسي" : "seat"} · ${isAr ? "باقي" : "expires in"} ${r['timeLeft']}',
-                                      style: AppTypography.bodySecondary(),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          '${r['price']} ${isAr ? "ج" : "EGP"}',
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal),
-                                        ),
-                                        Row(
-                                          children: [
-                                            OutlinedButton(
-                                              onPressed: () => _declineRequest(r['id'] as String, r['passenger'] as String, isAr),
-                                              child: Text(isAr ? 'رفض' : 'Decline'),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            ElevatedButton(
-                                              style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
-                                              onPressed: () => _showPassengerDetails(context, r),
-                                              child: Text(isAr ? 'قبول' : 'Accept'),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ],
+                                  );
+                                }).toList(),
+                              ))
+                        : ListView(
+                            children: _parcelRequests.map((p) {
+                              final senderName = p['sender'] as String;
+                              return MashwarFadeSlideIn(
+                                offsetY: 10,
+                                child: MashwarSectionCard(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(senderName, style: AppTypography.title().copyWith(fontSize: 16)),
+                                      const SizedBox(height: 4),
+                                      Text(p['desc'] as String, style: AppTypography.bodySecondary()),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('${p['fee']} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal)),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              IconButton(
+                                                visualDensity: VisualDensity.compact,
+                                                tooltip: isAr ? 'محادثة المرسل' : 'Chat Sender',
+                                                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 19, color: AppColors.navy),
+                                                onPressed: () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (_) => ChatScreen(
+                                                        driverName: senderName,
+                                                        driverCar: isAr ? 'طلب توصيل طرد' : 'Parcel Request',
+                                                        tripRoute: p['desc'] as String,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                              ElevatedButton(
+                                                style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
+                                                onPressed: () {
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(builder: (_) => const DriverPreTripScreen()),
+                                                  );
+                                                },
+                                                child: Text(isAr ? 'قبول' : 'Accept'),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             }).toList(),
-                          ))
-                    : ListView(
-                        children: _parcelRequests.map((p) {
-                          return Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                              border: Border.all(color: AppColors.borderDisabled),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(p['sender'] as String, style: AppTypography.title().copyWith(fontSize: 16)),
-                                const SizedBox(height: 4),
-                                Text(p['desc'] as String, style: AppTypography.bodySecondary()),
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('${p['fee']} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal)),
-                                    ElevatedButton(
-                                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
-                                      onPressed: () {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(builder: (_) => const DriverPreTripScreen()),
-                                        );
-                                      },
-                                      child: Text(isAr ? 'قبول' : 'Accept'),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ),
+                          ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -868,18 +988,20 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
     required VoidCallback onNoShow,
     required bool isAr,
   }) {
-    return Container(
+    return MashwarSectionCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: AppColors.borderDisabled),
-      ),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: AppColors.sand,
-            child: Icon(icon, color: AppColors.navy),
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.gold, width: 1.5),
+            ),
+            child: CircleAvatar(
+              backgroundColor: AppColors.sand,
+              child: Icon(icon, color: AppColors.navy),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -896,6 +1018,22 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
             child: Text(isAr ? 'لم يحضر' : 'No Show', style: const TextStyle(color: AppColors.coral, fontSize: 12)),
           ),
           IconButton(
+            tooltip: isAr ? 'محادثة' : 'Chat',
+            icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.navy, size: 20),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChatScreen(
+                    driverName: title,
+                    driverCar: subtitle,
+                    tripRoute: isAr ? 'نقطة التجمع' : 'Pickup Point',
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            tooltip: isAr ? 'اتصال' : 'Call',
             icon: const Icon(Icons.phone_rounded, color: AppColors.teal),
             onPressed: onCall,
           ),

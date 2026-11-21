@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/parcel_model.dart';
@@ -44,35 +45,59 @@ class _PickupCodeDialogState extends State<PickupCodeDialog> {
           child: Column(
             children: [
               const Spacer(flex: 2),
-              Text(
-                isAr ? 'اعطي الكود ده للسائق عند تسليمه الطرد' : 'Give this 4-digit code to driver upon handing over the parcel',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
-              ),
-              const SizedBox(height: 24),
+              MashwarFadeSlideIn(
+                duration: const Duration(milliseconds: 260),
+                child: Column(
+                  children: [
+                    MashwarAssetArt(
+                      assetPath: 'assets/images/service_parcel.jpg',
+                      width: 76,
+                      height: 76,
+                      fit: BoxFit.contain,
+                      borderRadius: BorderRadius.circular(16),
+                      fallbackIcon: Icons.inventory_2_rounded,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      isAr ? 'اعطي الكود ده للسائق عند تسليمه الطرد' : 'Give this 4-digit code to driver upon handing over the parcel',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySecondary(),
+                    ),
+                    const SizedBox(height: 22),
 
-              // 4-Digit Boxes (Page 34)
-              Directionality(
-                textDirection: TextDirection.ltr,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: widget.parcel.pickupOtp.split(' ').map((digit) {
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 6),
-                      width: 58,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: AppColors.navy,
-                        borderRadius: BorderRadius.circular(12),
+                    // 4-Digit Boxes (Page 34) with Gold accent border
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: widget.parcel.pickupOtp.split(' ').map((digit) {
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
+                            width: 58,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: AppColors.navy,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.gold.withValues(alpha: 0.65), width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.navy.withValues(alpha: 0.14),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                digit,
+                                style: AppTypography.largeTitle(color: AppColors.gold).copyWith(fontSize: 28),
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       ),
-                      child: Center(
-                        child: Text(
-                          digit,
-                          style: AppTypography.largeTitle(color: Colors.white).copyWith(fontSize: 28),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                    ),
+                  ],
                 ),
               ),
 

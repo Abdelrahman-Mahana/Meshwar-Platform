@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
 import '../../core/localization/app_strings.dart';
@@ -46,18 +47,14 @@ class MyAlertsScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  isAr ? 'إضافة تنبيه لمسار جديد' : 'Create Route Alert',
-                  style: AppTypography.title(),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  isAr
+                MashwarSheetHeader(
+                  title: isAr ? 'إضافة تنبيه لمسار جديد' : 'Create Route Alert',
+                  subtitle: isAr
                       ? 'سنرسل لك إشعاراً فورياً بمجرد نشر رحلة تطابق مسارك'
                       : 'We will notify you immediately when a matching trip is posted',
-                  style: AppTypography.bodySecondary(),
+                  leadingIcon: Icons.notifications_active_rounded,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
 
                 Text(isAr ? 'من مدينة' : 'From City', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
@@ -171,7 +168,7 @@ class MyAlertsScreen extends StatelessWidget {
     final isAr = context.isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -183,103 +180,102 @@ class MyAlertsScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: alerts.isEmpty
-            ? _buildEmptyView(context, isAr)
-            : Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: alerts.length,
-                        itemBuilder: (context, index) {
-                          final alert = alerts[index];
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: AppDimens.space12),
-                            padding: const EdgeInsets.all(AppDimens.space16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.03),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: alerts.isEmpty
+                ? _buildEmptyView(context, isAr)
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: AppDimens.space12),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: alerts.length,
+                            itemBuilder: (context, index) {
+                              final alert = alerts[index];
+                              final routeStr = context.trRoute('${alert.fromCity} ← ${alert.toCity}');
+                              final routeParts = routeStr.split(RegExp(r'\s*[←→]\s*'));
+                              final fromLabel = routeParts.isNotEmpty ? routeParts.first : routeStr;
+                              final toLabel = routeParts.length > 1 ? routeParts.last : routeStr;
+                              return MashwarFadeSlideIn(
+                                offsetY: 10,
+                                child: MashwarSectionCard(
+                                  margin: const EdgeInsets.only(bottom: AppDimens.space12),
+                                  padding: const EdgeInsets.all(AppDimens.space16),
+                                  child: Column(
+                                    children: [
+                                      Row(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            context.trRoute('${alert.fromCity} ← ${alert.toCity}'),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: AppTypography.title().copyWith(fontSize: 18),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            '${context.trDate(alert.dateRange)} · ${alert.category == "ركاب" ? (isAr ? "ركاب" : "Rides") : (alert.category == "طرد" ? (isAr ? "طرد" : "Parcel") : context.tr(alert.category))}',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: AppTypography.bodySecondary(
-                                              color: alert.isExpired ? AppColors.textSecondary : AppColors.navy,
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                MashwarRouteTimeline(
+                                                  from: fromLabel,
+                                                  to: toLabel,
+                                                  compact: true,
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  '${context.trDate(alert.dateRange)} · ${alert.category == "ركاب" ? (isAr ? "ركاب" : "Rides") : (alert.category == "طرد" ? (isAr ? "طرد" : "Parcel") : context.tr(alert.category))}',
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: AppTypography.bodySecondary(
+                                                    color: alert.isExpired ? AppColors.textSecondary : AppColors.navy,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Switch.adaptive(
+                                            value: alert.isActive && !alert.isExpired,
+                                            activeTrackColor: AppColors.teal,
+                                            onChanged: alert.isExpired
+                                                ? null
+                                                : (_) => alertsProvider.toggleAlert(alert.id),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Switch.adaptive(
-                                      value: alert.isActive && !alert.isExpired,
-                                      activeTrackColor: AppColors.teal,
-                                      onChanged: alert.isExpired
-                                          ? null
-                                          : (_) => alertsProvider.toggleAlert(alert.id),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      alert.isExpired
-                                          ? (isAr ? 'منتهي الصلاحية' : 'Expired')
-                                          : (alert.isActive ? (isAr ? 'مفعّل للتنبيه' : 'Active') : (isAr ? 'معطّل مؤقتاً' : 'Paused')),
-                                      style: AppTypography.label(
-                                        color: alert.isExpired
-                                            ? AppColors.textSecondary
-                                            : (alert.isActive ? AppColors.teal : AppColors.textSecondary),
+                                      const Divider(height: 20, color: Color(0xFFF1F5F9)),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            alert.isExpired
+                                                ? (isAr ? 'منتهي الصلاحية' : 'Expired')
+                                                : (alert.isActive ? (isAr ? 'مفعّل للتنبيه' : 'Active') : (isAr ? 'معطّل مؤقتاً' : 'Paused')),
+                                            style: AppTypography.label(
+                                              color: alert.isExpired
+                                                  ? AppColors.textSecondary
+                                                  : (alert.isActive ? AppColors.teal : AppColors.textSecondary),
+                                            ).copyWith(fontWeight: FontWeight.w700),
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 20),
+                                            onPressed: () => alertsProvider.deleteAlert(alert.id),
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger, size: 20),
-                                      onPressed: () => alertsProvider.deleteAlert(alert.id),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                              );
+                            },
+                          ),
+                        ),
+                        MashwarButton(
+                          text: isAr ? '+ إضافة تنبيه لمسار جديد' : '+ Add New Route Alert',
+                          onPressed: () => _showAddAlertSheet(context, isAr),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ),
-                    MashwarButton(
-                      text: isAr ? '+ إضافة تنبيه لمسار جديد' : '+ Add New Route Alert',
-                      onPressed: () => _showAddAlertSheet(context, isAr),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
+                  ),
+          ),
+        ),
       ),
     );
   }
@@ -288,24 +284,33 @@ class MyAlertsScreen extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppDimens.space24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.notifications_none_rounded, size: 64, color: AppColors.borderDisabled),
-            const SizedBox(height: 16),
-            Text(isAr ? 'مفيش تنبيهات مسجلة' : 'No Active Alerts', style: AppTypography.title()),
-            const SizedBox(height: 8),
-            Text(
-              isAr ? 'لما تبحث عن رحلة ومش تلاقي، تقدر تعمل تنبيه وهنبلغك فور توفرها' : 'When you search for a ride with no matches, create an alert and we will notify you',
-              textAlign: TextAlign.center,
-              style: AppTypography.bodySecondary(),
-            ),
-            const SizedBox(height: 24),
-            MashwarButton(
-              text: isAr ? '+ إضافة تنبيه لمسار جديد' : '+ Add New Route Alert',
-              onPressed: () => _showAddAlertSheet(context, isAr),
-            ),
-          ],
+        child: MashwarFadeSlideIn(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.navy.withValues(alpha: 0.06),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.notifications_none_rounded, size: 52, color: AppColors.navy),
+              ),
+              const SizedBox(height: 16),
+              Text(isAr ? 'مفيش تنبيهات مسجلة' : 'No Active Alerts', style: AppTypography.title()),
+              const SizedBox(height: 8),
+              Text(
+                isAr ? 'لما تبحث عن رحلة ومش تلاقي، تقدر تعمل تنبيه وهنبلغك فور توفرها' : 'When you search for a ride with no matches, create an alert and we will notify you',
+                textAlign: TextAlign.center,
+                style: AppTypography.bodySecondary(),
+              ),
+              const SizedBox(height: 24),
+              MashwarButton(
+                text: isAr ? '+ إضافة تنبيه لمسار جديد' : '+ Add New Route Alert',
+                onPressed: () => _showAddAlertSheet(context, isAr),
+              ),
+            ],
+          ),
         ),
       ),
     );

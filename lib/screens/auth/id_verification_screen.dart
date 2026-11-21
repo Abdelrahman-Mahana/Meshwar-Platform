@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../data/models/user_model.dart';
@@ -225,7 +226,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
     final isAlreadyVerified = user.idVerificationStatus == IdVerificationStatus.verified;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -242,23 +243,21 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
               ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Security status card
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: isAlreadyVerified ? const Color(0xFFF0FDF4) : Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isAlreadyVerified ? const Color(0xFFBBF7D0) : const Color(0xFFE5E5EA),
-                    width: 0.8,
-                  ),
-                ),
-                child: Row(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 12),
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Security status card
+                    MashwarSectionCard(
+                      backgroundColor: isAlreadyVerified ? const Color(0xFFF0FDF4) : Colors.white,
+                      borderColor: isAlreadyVerified ? const Color(0xFFBBF7D0) : const Color(0xFFE5E5EA),
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      child: Row(
                   children: [
                     Container(
                       width: 44,
@@ -477,8 +476,11 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                   ),
                 ),
               ],
-              const SizedBox(height: AppDimens.space24),
-            ],
+                    const SizedBox(height: AppDimens.space24),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -493,16 +495,11 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
     required VoidCallback onTap,
     required bool isArabic,
   }) {
-    return Container(
+    return MashwarSectionCard(
+      backgroundColor: Colors.white,
+      borderColor: hasPhoto ? const Color(0xFFBBF7D0) : const Color(0xFFE5E5EA),
       padding: const EdgeInsets.all(AppDimens.space12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: hasPhoto ? const Color(0xFFBBF7D0) : const Color(0xFFE5E5EA),
-          width: 0.8,
-        ),
-      ),
+      borderRadius: 12,
       child: Row(
         children: [
           Container(

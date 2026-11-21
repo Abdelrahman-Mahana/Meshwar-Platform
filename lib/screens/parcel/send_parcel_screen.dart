@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
 import '../../core/widgets/mashwar_text_field.dart';
@@ -272,37 +273,66 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
   }
 
   Widget _buildRoutePreviewCard(BuildContext context, bool isAr) {
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: AppColors.borderDisabled),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.inventory_2_outlined, color: AppColors.navy, size: 28),
-          const SizedBox(width: AppDimens.space12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return MashwarFadeSlideIn(
+      duration: const Duration(milliseconds: 260),
+      offsetY: 10,
+      child: MashwarSectionCard(
+        child: Column(
+          children: [
+            Row(
               children: [
-                Text(
-                  context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}'),
-                  style: AppTypography.title().copyWith(fontSize: 16),
+                MashwarAssetArt(
+                  assetPath: 'assets/images/service_parcel.jpg',
+                  width: 52,
+                  height: 52,
+                  fit: BoxFit.contain,
+                  borderRadius: BorderRadius.circular(12),
+                  fallbackIcon: Icons.inventory_2_outlined,
                 ),
-                Text(
-                  isAr ? 'مع الكابتن ${widget.ride.driverName}' : 'With Captain ${widget.ride.driverName}',
-                  style: AppTypography.bodySecondary(),
+                const SizedBox(width: AppDimens.space12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}'),
+                        style: AppTypography.title().copyWith(fontSize: 16),
+                      ),
+                      Text(
+                        isAr ? 'مع الكابتن ${widget.ride.driverName}' : 'With Captain ${widget.ride.driverName}',
+                        style: AppTypography.bodySecondary(),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${widget.ride.parcelPrice} ${isAr ? "ج" : "EGP"}',
+                    style: AppTypography.title().copyWith(color: AppColors.teal, fontSize: 16),
+                  ),
                 ),
               ],
             ),
-          ),
-          Text(
-            '${widget.ride.parcelPrice} ${isAr ? "ج" : "EGP"}',
-            style: AppTypography.title().copyWith(color: AppColors.teal),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: MashwarRouteTimeline(
+                from: widget.ride.pickupPoint,
+                to: widget.ride.dropoffPoint,
+                compact: true,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,9 +3,11 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/alert_banner.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/parcel_model.dart';
+import '../chat/chat_screen.dart';
 import 'pickup_code_dialog.dart';
 import 'parcel_dispute_screen.dart';
 
@@ -82,113 +84,176 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                context.trRoute(widget.parcel.route),
-                style: AppTypography.title().copyWith(fontSize: 18),
-              ),
-              const SizedBox(height: 12),
-
-              // Status Top Banner (Page 33)
-              _buildStatusBanner(isAr),
-              const SizedBox(height: 16),
-
-              // Pickup OTP Security Box (Only shown if status is accepted)
-              if (_status == ParcelStatusStep.accepted) ...[
-                InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => PickupCodeDialog(parcel: widget.parcel)),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(AppDimens.space16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                      border: Border.all(color: AppColors.gold, width: 1.5),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(isAr ? 'كود الاستلام' : 'Pickup OTP Code', style: AppTypography.label(color: AppColors.textSecondary)),
-                        const SizedBox(height: 10),
-                        Directionality(
-                          textDirection: TextDirection.ltr,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: widget.parcel.pickupOtp.split(' ').map((digit) {
-                              return Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                width: 44,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: AppColors.navy,
-                                  borderRadius: BorderRadius.circular(10),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 10),
+              child: MashwarFadeSlideIn(
+                duration: const Duration(milliseconds: 260),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hero Parcel & Courier Card
+                    MashwarSectionCard(
+                      child: Row(
+                        children: [
+                          MashwarAssetArt(
+                            assetPath: 'assets/images/service_parcel.jpg',
+                            width: 56,
+                            height: 56,
+                            fit: BoxFit.contain,
+                            borderRadius: BorderRadius.circular(12),
+                            fallbackIcon: Icons.inventory_2_rounded,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  context.trRoute(widget.parcel.route),
+                                  style: AppTypography.title().copyWith(fontSize: 16.5),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    digit,
-                                    style: AppTypography.title(color: Colors.white).copyWith(fontSize: 22),
+                                Text(
+                                  '${isAr ? "الناقل:" : "Courier:"} ${widget.parcel.driverName}',
+                                  style: AppTypography.bodySecondary(),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: isAr ? 'محادثة الناقل' : 'Chat Courier',
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.navy,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 17),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => ChatScreen(
+                                    driverName: widget.parcel.driverName,
+                                    driverCar: isAr ? 'خدمة شحن طرد #${widget.parcel.id}' : 'Parcel Courier #${widget.parcel.id}',
+                                    tripRoute: context.trRoute(widget.parcel.route),
                                   ),
                                 ),
                               );
-                            }).toList(),
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Status Top Banner (Page 33)
+                    _buildStatusBanner(isAr),
+                    const SizedBox(height: 16),
+
+                    // Pickup OTP Security Box (Only shown if status is accepted)
+                    if (_status == ParcelStatusStep.accepted) ...[
+                      InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => PickupCodeDialog(parcel: widget.parcel)),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppDimens.space16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                            border: Border.all(color: AppColors.gold, width: 1.5),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(isAr ? 'كود الاستلام' : 'Pickup OTP Code', style: AppTypography.label(color: AppColors.textSecondary)),
+                              const SizedBox(height: 10),
+                              Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: widget.parcel.pickupOtp.split(' ').map((digit) {
+                                    return Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                                      width: 44,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.navy,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          digit,
+                                          style: AppTypography.title(color: Colors.white).copyWith(fontSize: 22),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                isAr ? 'اعطيه للسائق وقت ما تسلّمه الطرد' : 'Give this code to the driver upon handover',
+                                style: AppTypography.label(color: AppColors.textSecondary),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        Text(
-                          isAr ? 'اعطيه للسائق وقت ما تسلّمه الطرد' : 'Give this code to the driver upon handover',
-                          style: AppTypography.label(color: AppColors.textSecondary),
-                        ),
-                      ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+
+                    // 5-Step Timeline
+                    MashwarSectionCard(
+                      child: Column(
+                        children: [
+                          _buildTimelineStep(
+                            isAr ? 'تم إرسال الطلب' : 'Request Sent',
+                            isDone: _status.index >= ParcelStatusStep.requested.index,
+                            isLast: false,
+                          ),
+                          _buildTimelineStep(
+                            isAr ? 'وافق السائق' : 'Driver Accepted',
+                            isDone: _status.index >= ParcelStatusStep.accepted.index,
+                            isLast: false,
+                          ),
+                          _buildTimelineStep(
+                            isAr ? 'تسليم الطرد للسائق' : 'Handed Over to Driver',
+                            isDone: _status.index >= ParcelStatusStep.handedOver.index,
+                            isLast: false,
+                          ),
+                          _buildTimelineStep(
+                            isAr ? 'في الطريق' : 'In Transit',
+                            isDone: _status.index >= ParcelStatusStep.inTransit.index,
+                            isLast: false,
+                          ),
+                          _buildTimelineStep(
+                            isAr ? 'تم التسليم' : 'Delivered',
+                            isDone: _status.index >= ParcelStatusStep.delivered.index,
+                            isLast: true,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+
+                    // Live Recipient WhatsApp Share Card
+                    _buildRecipientLiveShareCard(context, isAr),
+                    const SizedBox(height: 20),
+
+                    // Action button based on phase
+                    _buildActionButton(context, isAr),
+                    const SizedBox(height: 24),
+                  ],
                 ),
-                const SizedBox(height: 20),
-              ],
-
-              // 5-Step Timeline
-              _buildTimelineStep(
-                isAr ? 'تم إرسال الطلب' : 'Request Sent',
-                isDone: _status.index >= ParcelStatusStep.requested.index,
-                isLast: false,
               ),
-              _buildTimelineStep(
-                isAr ? 'وافق السائق' : 'Driver Accepted',
-                isDone: _status.index >= ParcelStatusStep.accepted.index,
-                isLast: false,
-              ),
-              _buildTimelineStep(
-                isAr ? 'تسليم الطرد للسائق' : 'Handed Over to Driver',
-                isDone: _status.index >= ParcelStatusStep.handedOver.index,
-                isLast: false,
-              ),
-              _buildTimelineStep(
-                isAr ? 'في الطريق' : 'In Transit',
-                isDone: _status.index >= ParcelStatusStep.inTransit.index,
-                isLast: false,
-              ),
-              _buildTimelineStep(
-                isAr ? 'تم التسليم' : 'Delivered',
-                isDone: _status.index >= ParcelStatusStep.delivered.index,
-                isLast: true,
-              ),
-              const SizedBox(height: 20),
-
-              // Live Recipient WhatsApp Share Card
-              _buildRecipientLiveShareCard(context, isAr),
-              const SizedBox(height: 24),
-
-              // Action button based on phase
-              _buildActionButton(context, isAr),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),

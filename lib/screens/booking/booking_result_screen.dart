@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/ride_model.dart';
 import '../../state/rides_provider.dart';
+import '../chat/chat_screen.dart';
 import '../trip/active_trip_screen.dart';
 
 class BookingResultScreen extends StatefulWidget {
@@ -54,7 +56,7 @@ class _BookingResultScreenState extends State<BookingResultScreen> {
 
   Widget _buildConfirmedView(BuildContext context, bool isAr) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -65,78 +67,109 @@ class _BookingResultScreenState extends State<BookingResultScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const SizedBox(height: 24),
-              // Checkmark Circle
-              Container(
-                width: 72,
-                height: 72,
-                decoration: const BoxDecoration(
-                  color: AppColors.teal,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check_rounded, color: Colors.white, size: 42),
-              ),
-              const SizedBox(height: 16),
-              Text(isAr ? 'تم تأكيد حجزك' : 'Booking Confirmed', style: AppTypography.largeTitle()),
-              const SizedBox(height: 4),
-              Text(
-                isAr ? '${ride.driverName.split(" ").first} وافق على طلبك' : '${ride.driverName.split(" ").first} accepted your request',
-                style: AppTypography.bodySecondary(),
-              ),
-              const SizedBox(height: 24),
-
-              // Summary card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: AppDimens.space12),
+              child: MashwarFadeSlideIn(
+                duration: const Duration(milliseconds: 280),
                 child: Column(
                   children: [
-                    _buildRow(
-                      isAr ? 'الموعد' : 'Schedule',
-                      '${context.trDate(ride.departureDate)}${isAr ? "، " : ", "}${context.trDate(ride.departureTime)}',
+                    Container(
+                      width: 76,
+                      height: 76,
+                      decoration: const BoxDecoration(
+                        color: AppColors.teal,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.check_rounded, color: Colors.white, size: 42),
                     ),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'المسار' : 'Route', context.trRoute('${ride.fromCity} ← ${ride.toCity}')),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'نقطة الصعود' : 'Pickup Point', ride.pickupPoint),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'الإجمالي' : 'Total Price', '$totalPrice ${isAr ? "ج نقداً" : "EGP Cash"}', isBold: true),
+                    const SizedBox(height: 16),
+                    Text(isAr ? 'تم تأكيد حجزك' : 'Booking Confirmed', style: AppTypography.largeTitle()),
+                    const SizedBox(height: 4),
+                    Text(
+                      isAr ? '${ride.driverName.split(" ").first} وافق على طلبك' : '${ride.driverName.split(" ").first} accepted your request',
+                      style: AppTypography.bodySecondary(),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Summary card with Route Timeline
+                    MashwarSectionCard(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: MashwarRouteTimeline(
+                              from: context.trCity(ride.fromCity),
+                              to: context.trCity(ride.toCity),
+                              compact: true,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildRow(
+                            isAr ? 'الموعد' : 'Schedule',
+                            '${context.trDate(ride.departureDate)}${isAr ? "، " : ", "}${context.trDate(ride.departureTime)}',
+                          ),
+                          const Divider(height: 20, color: AppColors.borderDisabled),
+                          _buildRow(isAr ? 'نقطة الصعود' : 'Pickup Point', ride.pickupPoint),
+                          const Divider(height: 20, color: AppColors.borderDisabled),
+                          _buildRow(isAr ? 'الإجمالي' : 'Total Price', '$totalPrice ${isAr ? "ج نقداً" : "EGP Cash"}', isBold: true),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    MashwarCommunicationBar(
+                      chatLabel: isAr ? 'محادثة السائق' : 'Chat Driver',
+                      callLabel: isAr ? 'اتصال بالسائق' : 'Call Driver',
+                      onChat: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(
+                              driverName: ride.driverName,
+                              driverCar: ride.driverCar,
+                              tripRoute: context.trRoute('${ride.fromCity} ← ${ride.toCity}'),
+                            ),
+                          ),
+                        );
+                      },
+                      onCall: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(isAr ? 'الاتصال بـ ${ride.driverPhone}' : 'Calling ${ride.driverPhone}')),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Primary CTA (Page 27)
+                    MashwarButton(
+                      text: isAr ? 'تفاصيل الرحلة' : 'Ride Details',
+                      onPressed: () {
+                        context.read<RidesProvider>().confirmBooking(ride);
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => ActiveTripScreen(ride: ride),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                      child: Text(
+                        isAr ? 'الرجوع للرئيسية' : 'Back to Home',
+                        style: AppTypography.bodySecondary(color: AppColors.navy),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const Spacer(),
-
-              // Primary CTA (Page 27)
-              MashwarButton(
-                text: isAr ? 'تفاصيل الرحلة' : 'Ride Details',
-                onPressed: () {
-                  context.read<RidesProvider>().confirmBooking(ride);
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (_) => ActiveTripScreen(ride: ride),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
-                child: Text(
-                  isAr ? 'الرجوع للرئيسية' : 'Back to Home',
-                  style: AppTypography.bodySecondary(color: AppColors.navy),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),

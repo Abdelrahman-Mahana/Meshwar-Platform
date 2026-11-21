@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
@@ -48,7 +49,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   // Phase 1: قبل الرحلة (Page 29)
   Widget _buildPreTripView(BuildContext context, bool isAr) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -58,98 +59,124 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 12),
+            child: TextButton(
+              onPressed: () => setState(() => _phase = TripTrackingPhase.inTransit),
+              child: Text(
+                isAr ? 'التتبع المباشر' : 'Live Map',
+                style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w800, fontFamily: 'Cairo'),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${context.trDate(widget.ride.departureDate)}${isAr ? "، " : ", "}${context.trDate(widget.ride.departureTime)}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.bodySecondary(),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: AppDimens.space12),
+              child: MashwarFadeSlideIn(
+                duration: const Duration(milliseconds: 280),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            '${context.trDate(widget.ride.departureDate)}${isAr ? "، " : ", "}${context.trDate(widget.ride.departureTime)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodySecondary(),
+                          ),
                         ),
+                        const SizedBox(width: 8),
+                        MashwarBadge(type: BadgeType.confirmed, customLabel: isAr ? 'مؤكد' : 'Confirmed'),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Big Navy & Gold countdown block
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.navy, Color(0xFF173D61)],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      const SizedBox(width: 8),
-                      MashwarBadge(type: BadgeType.confirmed, customLabel: isAr ? 'مؤكد' : 'Confirmed'),
-                    ],
-                  ),
-              const SizedBox(height: 16),
-
-              // Big countdown block (Page 29)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7EA),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.gold),
-                ),
-                child: Column(
-                  children: [
-                    Text(isAr ? 'الرحلة هتبدأ بعد' : 'Trip starts in', style: AppTypography.label(color: AppColors.textSecondary)),
-                    const SizedBox(height: 8),
-                    Text(
-                      isAr ? '3 ساعات' : '3 Hours',
-                      style: AppTypography.largeTitle().copyWith(fontSize: 32, color: AppColors.navy),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isAr ? 'الرحلة هتبدأ بعد' : 'Trip starts in',
+                                  style: AppTypography.label(color: AppColors.gold).copyWith(fontWeight: FontWeight.w800),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  isAr ? '3 ساعات' : '3 Hours',
+                                  style: AppTypography.largeTitle(color: Colors.white).copyWith(fontSize: 28),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}'),
+                                  style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 12, fontFamily: 'Cairo'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          MashwarAssetArt(
+                            assetPath: 'assets/images/driver_promo.jpg',
+                            width: 72,
+                            height: 72,
+                            fit: BoxFit.cover,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-              // Details card
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Column(
-                  children: [
-                    _buildRow(isAr ? 'السائق' : 'Driver', widget.ride.driverName),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'السيارة' : 'Vehicle', widget.ride.driverCar),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'نقطة الصعود' : 'Pickup Point', widget.ride.pickupPoint),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'المسار' : 'Route', context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}')),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: MashwarButton(
-                      text: isAr ? 'اتصل بالسائق' : 'Call Driver',
-                      icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 20),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(isAr ? 'الاتصال بـ ${widget.ride.driverPhone}' : 'Calling ${widget.ride.driverPhone}')),
-                        );
-                      },
+                    // Details card with Route Timeline
+                    MashwarSectionCard(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: MashwarRouteTimeline(
+                              from: widget.ride.pickupPoint,
+                              to: widget.ride.dropoffPoint,
+                              compact: true,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildRow(isAr ? 'السائق' : 'Driver', widget.ride.driverName),
+                          const Divider(height: 20, color: AppColors.borderDisabled),
+                          _buildRow(isAr ? 'السيارة' : 'Vehicle', widget.ride.driverCar),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: MashwarButton(
-                      text: isAr ? 'محادثة شات' : 'Chat',
-                      variant: MashwarButtonVariant.secondary,
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.navy, size: 20),
-                      onPressed: () {
+                    const SizedBox(height: 16),
+
+                    // Seamless 1-Tap Communication Bar
+                    MashwarCommunicationBar(
+                      chatLabel: isAr ? 'محادثة شات' : 'Chat',
+                      callLabel: isAr ? 'اتصل بالسائق' : 'Call Driver',
+                      shareLabel: isAr ? 'مشاركة الرحلة' : 'Share Ride',
+                      onChat: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => ChatScreen(
@@ -160,47 +187,44 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                           ),
                         );
                       },
+                      onCall: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(isAr ? 'الاتصال بـ ${widget.ride.driverPhone}' : 'Calling ${widget.ride.driverPhone}')),
+                        );
+                      },
+                      onShare: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          builder: (_) => const ShareTripSheet(),
+                        );
+                      },
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              MashwarButton(
-                text: isAr ? 'مشاركة الرحلة' : 'Share Ride',
-                variant: MashwarButtonVariant.secondary,
-                icon: const Icon(Icons.share_outlined, color: AppColors.navy, size: 20),
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => const ShareTripSheet(),
-                  );
-                },
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (_) => CancellationSheet(
-                        onCancelled: () {
-                          context.read<RidesProvider>().cancelBooking();
+                    const SizedBox(height: 12),
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => CancellationSheet(
+                              onCancelled: () {
+                                context.read<RidesProvider>().cancelBooking();
+                              },
+                            ),
+                          );
                         },
+                        child: Text(isAr ? 'إلغاء الحجز' : 'Cancel Booking', style: AppTypography.button(color: AppColors.danger)),
                       ),
-                    );
-                  },
-                  child: Text(isAr ? 'إلغاء الحجز' : 'Cancel Booking', style: AppTypography.button(color: AppColors.danger)),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
-      ),
-      ),
       ),
     );
   }
@@ -208,7 +232,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
   // Phase 2: أثناء الرحلة (Page 29)
   Widget _buildInTransitView(BuildContext context, bool isAr) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -224,22 +248,15 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: AppDimens.space12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Accurate Live route map (Page 29)
                   RideRouteMapView(ride: widget.ride),
                   const SizedBox(height: 16),
 
                   // ETA & Speed status
-                  Container(
-                    padding: const EdgeInsets.all(AppDimens.space16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                      border: Border.all(color: AppColors.borderDisabled),
-                    ),
+                  MashwarSectionCard(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -250,94 +267,88 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                             Text(isAr ? '8:45 ص' : '8:45 AM', style: AppTypography.title().copyWith(color: AppColors.teal)),
                           ],
                         ),
-                    Container(width: 1, height: 32, color: AppColors.borderDisabled),
-                    Column(
-                      children: [
-                        Text(isAr ? 'المسافة المتبقية' : 'Distance Remaining', style: AppTypography.label(color: AppColors.textSecondary)),
-                        const SizedBox(height: 4),
-                        Text(isAr ? '42 كم' : '42 km', style: AppTypography.title().copyWith(color: AppColors.navy)),
+                        Container(width: 1, height: 32, color: AppColors.borderDisabled),
+                        Column(
+                          children: [
+                            Text(isAr ? 'المسافة المتبقية' : 'Distance Remaining', style: AppTypography.label(color: AppColors.textSecondary)),
+                            const SizedBox(height: 4),
+                            Text(isAr ? '42 كم' : '42 km', style: AppTypography.title().copyWith(color: AppColors.navy)),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Emergency SOS Button (Page 29)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFBECE9),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.danger),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, color: AppColors.danger),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isAr ? 'طوارئ: مشاركة خط السير مع جهات الاتصال' : 'Emergency SOS: Share live path with contacts',
-                        style: AppTypography.label(color: AppColors.danger),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor: Colors.transparent,
-                          builder: (_) => const EmergencySosSheet(),
-                        );
-                      },
-                      child: Text(isAr ? 'SOS طوارئ' : 'SOS', style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: MashwarButton(
-                      text: isAr ? 'اتصل بالسائق' : 'Call Driver',
-                      icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 20),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(isAr ? 'الاتصال بـ ${widget.ride.driverPhone}' : 'Calling ${widget.ride.driverPhone}')),
-                        );
-                      },
-                    ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: MashwarButton(
-                      text: isAr ? 'محادثة شات' : 'Chat',
-                      variant: MashwarButtonVariant.secondary,
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.navy, size: 20),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ChatScreen(
-                              driverName: widget.ride.driverName,
-                              driverCar: widget.ride.driverCar,
-                              tripRoute: context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}'),
-                            ),
+
+                  const SizedBox(height: 16),
+
+                  // Emergency SOS Button (Page 29)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFBECE9),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.danger.withValues(alpha: 0.6)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.warning_amber_rounded, color: AppColors.danger),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isAr ? 'طوارئ: مشاركة خط السير مع جهات الاتصال' : 'Emergency SOS: Share live path with contacts',
+                            style: AppTypography.label(color: AppColors.danger),
                           ),
-                        );
-                      },
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => const EmergencySosSheet(),
+                            );
+                          },
+                          child: Text(isAr ? 'SOS طوارئ' : 'SOS', style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(height: 14),
+
+                  MashwarCommunicationBar(
+                    chatLabel: isAr ? 'محادثة شات' : 'Chat',
+                    callLabel: isAr ? 'اتصل بالسائق' : 'Call Driver',
+                    shareLabel: isAr ? 'مشاركة المسار' : 'Share Trip',
+                    onChat: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(
+                            driverName: widget.ride.driverName,
+                            driverCar: widget.ride.driverCar,
+                            tripRoute: context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}'),
+                          ),
+                        ),
+                      );
+                    },
+                    onCall: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(isAr ? 'الاتصال بـ ${widget.ride.driverPhone}' : 'Calling ${widget.ride.driverPhone}')),
+                      );
+                    },
+                    onShare: () {
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => const ShareTripSheet(),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
                 ],
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
-      ),
-      ),
       ),
     );
   }

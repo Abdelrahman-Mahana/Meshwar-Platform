@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
 import '../../core/localization/app_strings.dart';
@@ -117,20 +117,11 @@ class _DateTimePickerSheetState extends State<DateTimePickerSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 48,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.borderDisabled,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+                  MashwarSheetHeader(
+                    title: isAr ? 'اختر تاريخ السفر' : 'Select Travel Date',
+                    leadingIcon: Icons.event_available_rounded,
+                    onClose: () => Navigator.of(context).pop(),
                   ),
-                  const SizedBox(height: AppDimens.space16),
-
-                  // Day Selection
-                  Text(isAr ? 'اختر تاريخ السفر' : 'Select Travel Date', style: AppTypography.title().copyWith(fontSize: 18)),
                   const SizedBox(height: AppDimens.space12),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,

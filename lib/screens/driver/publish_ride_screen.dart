@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
 import '../../state/auth_provider.dart';
@@ -164,62 +165,65 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
     if (_isPublished) {
       // Page 44: تم النشر
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFCFCFD),
         body: SafeArea(
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 560),
               child: Padding(
                 padding: const EdgeInsets.all(AppDimens.space24),
-                child: Column(
-                  children: [
-                    const Spacer(flex: 3),
-                    Container(
-                      width: 72,
-                      height: 72,
-                      decoration: const BoxDecoration(
-                        color: AppColors.teal,
-                        shape: BoxShape.circle,
+                child: MashwarFadeSlideIn(
+                  child: Column(
+                    children: [
+                      const Spacer(flex: 3),
+                      Container(
+                        width: 78,
+                        height: 78,
+                        decoration: BoxDecoration(
+                          color: AppColors.teal,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.gold, width: 2.5),
+                        ),
+                        child: const Icon(Icons.check_rounded, color: Colors.white, size: 42),
                       ),
-                      child: const Icon(Icons.check_rounded, color: Colors.white, size: 42),
-                    ),
-                    const SizedBox(height: AppDimens.space20),
-                    Text(
-                      isAr ? 'اتنشرت رحلتك' : 'Trip Published!',
-                      style: AppTypography.largeTitle(),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      isAr
-                          ? 'هنبلغك لما حد يحجز. شاركها عشان تتملي أسرع.'
-                          : 'We will notify you when passengers book. Share to fill seats faster.',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodySecondary(),
-                    ),
-                    const Spacer(flex: 3),
+                      const SizedBox(height: AppDimens.space20),
+                      Text(
+                        isAr ? 'اتنشرت رحلتك' : 'Trip Published!',
+                        style: AppTypography.largeTitle(),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isAr
+                            ? 'هنبلغك لما حد يحجز. شاركها عشان تتملي أسرع.'
+                            : 'We will notify you when passengers book. Share to fill seats faster.',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodySecondary(),
+                      ),
+                      const Spacer(flex: 3),
 
-                    MashwarButton(
-                      text: isAr ? 'شارك على واتساب' : 'Share on WhatsApp',
-                      icon: const Icon(Icons.share_rounded, color: Colors.white, size: 18),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(isAr ? 'تم تجهيز رابط الرحلة للمشاركة' : 'Trip link prepared for sharing'),
-                            backgroundColor: AppColors.teal,
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        isAr ? 'رحلاتي' : 'My Rides',
-                        style: AppTypography.body().copyWith(color: AppColors.navy, fontWeight: FontWeight.bold),
+                      MashwarButton(
+                        text: isAr ? 'شارك على واتساب' : 'Share on WhatsApp',
+                        icon: const Icon(Icons.share_rounded, color: Colors.white, size: 18),
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(isAr ? 'تم تجهيز رابط الرحلة للمشاركة' : 'Trip link prepared for sharing'),
+                              backgroundColor: AppColors.teal,
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(height: AppDimens.space16),
-                  ],
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: Text(
+                          isAr ? 'رحلاتي' : 'My Rides',
+                          style: AppTypography.body().copyWith(color: AppColors.navy, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.space16),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -229,7 +233,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -581,19 +585,27 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
   }
 
   Widget _buildSectionCard({required String title, required List<Widget> children}) {
-    return Material(
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        side: const BorderSide(color: AppColors.borderDisabled),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
+    return MashwarFadeSlideIn(
+      offsetY: 10,
+      child: MashwarSectionCard(
         padding: const EdgeInsets.all(AppDimens.space16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: AppTypography.title().copyWith(fontSize: 16)),
+            Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: AppColors.gold,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(title, style: AppTypography.title().copyWith(fontSize: 16))),
+              ],
+            ),
             const SizedBox(height: AppDimens.space16),
             ...children,
           ],

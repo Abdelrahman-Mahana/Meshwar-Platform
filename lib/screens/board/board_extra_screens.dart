@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../data/models/board_ad_model.dart';
@@ -45,7 +46,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -232,72 +233,77 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
       separatorBuilder: (_, __) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final ad = sentOffers[index];
-        return InkWell(
-          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-          onTap: () {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: Colors.transparent,
-              builder: (_) => MakeOfferSheet(ad: ad),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.all(AppDimens.space16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        '${isAr ? "صاحب الإعلان:" : "Author:"} ${ad.authorName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.label(color: AppColors.textSecondary),
+        final routeStr = context.trRoute('${ad.fromCity} ← ${ad.toCity}');
+        final routeParts = routeStr.split(RegExp(r'\s*[←→]\s*'));
+        final fromLabel = routeParts.isNotEmpty ? routeParts.first : routeStr;
+        final toLabel = routeParts.length > 1 ? routeParts.last : routeStr;
+        return MashwarFadeSlideIn(
+          offsetY: 12,
+          child: MashwarPressable(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (_) => MakeOfferSheet(ad: ad),
+              );
+            },
+            child: MashwarSectionCard(
+              borderColor: AppColors.teal.withValues(alpha: 0.4),
+              padding: const EdgeInsets.all(AppDimens.space16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${isAr ? "صاحب الإعلان:" : "Author:"} ${ad.authorName}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.label(color: AppColors.textSecondary),
+                        ),
                       ),
-                    ),
-                    MashwarBadge(
-                      type: BadgeType.confirmed,
-                      customLabel: isAr ? 'بانتظار الرد' : 'Offer Sent',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  context.trRoute('${ad.fromCity} ← ${ad.toCity}'),
-                  style: AppTypography.title().copyWith(fontSize: 16),
-                ),
-                const SizedBox(height: 4),
-                Text('${ad.timeText} · ${ad.description}', style: AppTypography.bodySecondary()),
-                const Divider(height: 20, color: Color(0xFFE5E5EA)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isAr
-                          ? 'عرضك المقدم: ${ad.myOfferPrice ?? ad.priceOrBudget} ج'
-                          : 'Your Offer: ${ad.myOfferPrice ?? ad.priceOrBudget} EGP',
-                      style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w800, fontSize: 14),
-                    ),
-                    TextButton.icon(
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.danger,
-                        visualDensity: VisualDensity.compact,
+                      MashwarBadge(
+                        type: BadgeType.confirmed,
+                        customLabel: isAr ? 'بانتظار الرد' : 'Offer Sent',
                       ),
-                      onPressed: () => boardProvider.withdrawOffer(ad.id),
-                      icon: const Icon(Icons.undo_rounded, size: 16),
-                      label: Text(isAr ? 'سحب العرض' : 'Withdraw'),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  MashwarRouteTimeline(
+                    from: fromLabel,
+                    to: toLabel,
+                    compact: true,
+                  ),
+                  const SizedBox(height: 8),
+                  Text('${ad.timeText} · ${ad.description}', style: AppTypography.bodySecondary()),
+                  const Divider(height: 20, color: Color(0xFFE5E5EA)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          isAr
+                              ? 'عرضك المقدم: ${ad.myOfferPrice ?? ad.priceOrBudget} ج'
+                              : 'Your Offer: ${ad.myOfferPrice ?? ad.priceOrBudget} EGP',
+                          style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w800, fontSize: 14),
+                        ),
+                      ),
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        onPressed: () => boardProvider.withdrawOffer(ad.id),
+                        icon: const Icon(Icons.undo_rounded, size: 16),
+                        label: Text(isAr ? 'سحب العرض' : 'Withdraw'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -348,80 +354,82 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
     VoidCallback? onTap,
     VoidCallback? onDelete,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-      child: Container(
-        padding: const EdgeInsets.all(AppDimens.space16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-          border: Border.all(color: AppColors.borderDisabled),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(typeLabel, style: AppTypography.label(color: AppColors.textSecondary)),
-                Row(
-                  children: [
-                    MashwarBadge(
-                      type: offersCount > 0 ? BadgeType.verified : BadgeType.confirmed,
-                      customLabel: offersCount > 0 ? (isAr ? 'نشط' : 'Active') : (isAr ? 'مكتمل' : 'Completed'),
+    final routeParts = route.split(RegExp(r'\s*[←→]\s*'));
+    final fromLabel = routeParts.isNotEmpty ? routeParts.first : route;
+    final toLabel = routeParts.length > 1 ? routeParts.last : route;
+    return MashwarFadeSlideIn(
+      offsetY: 12,
+      child: MashwarPressable(
+        onTap: onTap,
+        child: MashwarSectionCard(
+          padding: const EdgeInsets.all(AppDimens.space16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      typeLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(color: AppColors.textSecondary),
                     ),
-                    if (onDelete != null) ...[
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: onDelete,
-                        child: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.coral),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      MashwarBadge(
+                        type: offersCount > 0 ? BadgeType.verified : BadgeType.confirmed,
+                        customLabel: offersCount > 0 ? (isAr ? 'نشط' : 'Active') : (isAr ? 'مكتمل' : 'Completed'),
                       ),
+                      if (onDelete != null) ...[
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: onDelete,
+                          child: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.coral),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(route, style: AppTypography.title().copyWith(fontSize: 16)),
-                ),
-                Text(
-                  priceText,
-                  style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 15),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(details, style: AppTypography.bodySecondary()),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    offersCount > 0
-                        ? (isAr ? '$offersCount عروض جديدة (اضغط للمراجعة والاختيار)' : '$offersCount new offers (Tap to review)')
-                        : (isAr ? 'تم الاتفاق وإغلاق الإعلان' : 'Agreed & closed'),
-                    style: TextStyle(
-                      color: offersCount > 0 ? AppColors.teal : AppColors.textSecondary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              MashwarRouteTimeline(
+                from: fromLabel,
+                to: toLabel,
+                trailingTop: priceText,
+                compact: true,
+              ),
+              const SizedBox(height: 8),
+              Text(details, style: AppTypography.bodySecondary()),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      offersCount > 0
+                          ? (isAr ? '$offersCount عروض جديدة (اضغط للمراجعة والاختيار)' : '$offersCount new offers (Tap to review)')
+                          : (isAr ? 'تم الاتفاق وإغلاق الإعلان' : 'Agreed & closed'),
+                      style: TextStyle(
+                        color: offersCount > 0 ? AppColors.teal : AppColors.textSecondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
-                ),
-                if (offersCount > 0)
-                  const Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: AppColors.teal,
-                  ),
-              ],
-            ),
-          ],
+                  if (offersCount > 0)
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: AppColors.teal,
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -517,79 +525,96 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
     if (_accepted) {
       // Page 64: تم الاختيار
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFCFCFD),
         body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.space24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 64),
-                const SizedBox(height: 16),
-                Text(
-                  isAr ? 'اتفقت مع $_selectedDriverName' : 'Agreed with $_selectedDriverName',
-                  style: AppTypography.largeTitle(),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  isAr
-                      ? 'رقمه: $_selectedDriverPhone · المسار: $routeText'
-                      : 'Phone: $_selectedDriverPhone · Route: $routeText',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.bodySecondary(),
-                ),
-                const SizedBox(height: 24),
-                MashwarButton(
-                  text: isAr ? 'اتصل بـ $_selectedDriverName' : 'Call $_selectedDriverName',
-                  icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 18),
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          isAr
-                              ? 'جاري الاتصال بـ $_selectedDriverName على $_selectedDriverPhone...'
-                              : 'Calling $_selectedDriverName at $_selectedDriverPhone...',
-                        ),
-                        backgroundColor: AppColors.teal,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.tealSurface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.gold, width: 1.5),
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 10),
-                MashwarButton(
-                  text: isAr ? 'محادثة مباشرة' : 'Open Chat',
-                  variant: MashwarButtonVariant.secondary,
-                  icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.navy, size: 18),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ChatScreen(
-                          driverName: _selectedDriverName,
-                          driverCar: isAr ? 'اتفاق عبر اللوحة' : 'Board Agreement',
-                          tripRoute: routeText,
-                        ),
+                      child: const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 54),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      isAr ? 'اتفقت مع $_selectedDriverName' : 'Agreed with $_selectedDriverName',
+                      style: AppTypography.largeTitle(),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isAr
+                          ? 'رقمه: $_selectedDriverPhone · المسار: $routeText'
+                          : 'Phone: $_selectedDriverPhone · Route: $routeText',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySecondary(),
+                    ),
+                    const SizedBox(height: 24),
+                    MashwarButton(
+                      text: isAr ? 'اتصل بـ $_selectedDriverName' : 'Call $_selectedDriverName',
+                      icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 18),
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isAr
+                                  ? 'جاري الاتصال بـ $_selectedDriverName على $_selectedDriverPhone...'
+                                  : 'Calling $_selectedDriverName at $_selectedDriverPhone...',
+                            ),
+                            backgroundColor: AppColors.teal,
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    MashwarButton(
+                      text: isAr ? 'محادثة مباشرة' : 'Open Chat',
+                      variant: MashwarButtonVariant.secondary,
+                      icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.navy, size: 18),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(
+                              driverName: _selectedDriverName,
+                              driverCar: isAr ? 'اتفاق عبر اللوحة' : 'Board Agreement',
+                              tripRoute: routeText,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(
+                        isAr ? 'العودة للإعلانات' : 'Back to Ads',
+                        style: const TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold),
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 10),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: Text(
-                    isAr ? 'العودة للإعلانات' : 'Back to Ads',
-                    style: const TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       );
     }
 
+    final headerParts = routeText.split(RegExp(r'\s*[←→]\s*'));
+    final headerFrom = headerParts.isNotEmpty ? headerParts.first : routeText;
+    final headerTo = headerParts.length > 1 ? headerParts.last : routeText;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -601,50 +626,54 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
         title: Text(isAr ? 'العروض على طلبك' : 'Offers on your Request', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  MashwarFadeSlideIn(
+                    child: MashwarSectionCard(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
                         children: [
-                          Text(routeText, style: AppTypography.title().copyWith(fontSize: 16)),
-                          if (widget.ad != null) ...[
-                            const SizedBox(height: 2),
-                            Text(widget.ad!.timeText, style: AppTypography.label(color: AppColors.textSecondary)),
-                          ],
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                MashwarRouteTimeline(
+                                  from: headerFrom,
+                                  to: headerTo,
+                                  compact: true,
+                                ),
+                                if (widget.ad != null) ...[
+                                  const SizedBox(height: 6),
+                                  Text(widget.ad!.timeText, style: AppTypography.label(color: AppColors.textSecondary)),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: AppColors.tealSurface,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              isAr ? 'ميزانيتك $budgetPrice ج' : 'Budget $budgetPrice EGP',
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.teal, fontSize: 12),
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.tealSurface,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        isAr ? 'ميزانيتك $budgetPrice ج' : 'Budget $budgetPrice EGP',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.teal, fontSize: 12),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
+                  ),
+                  const SizedBox(height: 16),
 
-              Expanded(
+                  Expanded(
                 child: ListView(
                   children: [
                     _buildOfferCard(
@@ -707,7 +736,9 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
           ),
         ),
       ),
-    );
+    ),
+    ),
+  );
   }
 
   Widget _buildOfferCard({
@@ -721,83 +752,89 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
     required VoidCallback onSelect,
     required bool isAr,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: AppColors.borderDisabled),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: AppColors.gold,
-            child: Text(driverName[0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        driverName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.verified_rounded, size: 15, color: AppColors.teal),
-                  ],
-                ),
-                Text(stats, style: AppTypography.bodySecondary()),
-                Text(time, style: const TextStyle(fontSize: 12, color: AppColors.navy)),
-              ],
+    return MashwarFadeSlideIn(
+      offsetY: 12,
+      child: MashwarSectionCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.gold, width: 1.5),
+              ),
+              child: CircleAvatar(
+                backgroundColor: AppColors.goldSurface,
+                child: Text(driverName[0], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('$price ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.teal)),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppColors.navy),
-                    tooltip: isAr ? 'محادثة' : 'Chat',
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ChatScreen(
-                            driverName: driverName,
-                            driverCar: stats,
-                            tripRoute: routeText,
-                          ),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          driverName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.verified_rounded, size: 15, color: AppColors.teal),
+                    ],
                   ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.navy,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      elevation: 0,
-                    ),
-                    onPressed: onSelect,
-                    child: Text(isAr ? 'اختيار' : 'Select'),
-                  ),
+                  Text(stats, style: AppTypography.bodySecondary()),
+                  Text(time, style: const TextStyle(fontSize: 12, color: AppColors.navy)),
                 ],
               ),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text('$price ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.teal)),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: AppColors.navy),
+                      tooltip: isAr ? 'محادثة' : 'Chat',
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => ChatScreen(
+                              driverName: driverName,
+                              driverCar: stats,
+                              tripRoute: routeText,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.navy,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      onPressed: onSelect,
+                      child: Text(isAr ? 'اختيار' : 'Select'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -820,21 +857,26 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
 
     if (_state == 1) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFCFCFD),
         body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.space24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 64),
-                const SizedBox(height: 16),
-                Text(isAr ? 'تم تحديث موعدك' : 'Schedule Updated', style: AppTypography.largeTitle()),
-                const SizedBox(height: 6),
-                Text(isAr ? 'الرحلة هتتحرك الجمعة 9:00 ص.' : 'Trip now departs Friday at 9:00 AM.', style: AppTypography.bodySecondary()),
-                const SizedBox(height: 24),
-                MashwarButton(text: isAr ? 'عرض الحجز' : 'View Booking', onPressed: () => Navigator.of(context).pop()),
-              ],
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 64),
+                    const SizedBox(height: 16),
+                    Text(isAr ? 'تم تحديث موعدك' : 'Schedule Updated', style: AppTypography.largeTitle()),
+                    const SizedBox(height: 6),
+                    Text(isAr ? 'الرحلة هتتحرك الجمعة 9:00 ص.' : 'Trip now departs Friday at 9:00 AM.', style: AppTypography.bodySecondary()),
+                    const SizedBox(height: 24),
+                    MashwarButton(text: isAr ? 'عرض الحجز' : 'View Booking', onPressed: () => Navigator.of(context).pop()),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
@@ -843,25 +885,30 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
 
     if (_state == 2) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFCFCFD),
         body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.space24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 64),
-                const SizedBox(height: 16),
-                Text(isAr ? 'اتلغى حجزك' : 'Booking Cancelled', style: AppTypography.largeTitle()),
-                const SizedBox(height: 6),
-                Text(
-                  isAr ? 'مفيش أي أثر على معدل إلغائك لأن السائق هو اللي عدّل الموعد.' : 'Zero impact on cancellation rate because driver rescheduled.',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.bodySecondary(),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 64),
+                    const SizedBox(height: 16),
+                    Text(isAr ? 'اتلغى حجزك' : 'Booking Cancelled', style: AppTypography.largeTitle()),
+                    const SizedBox(height: 6),
+                    Text(
+                      isAr ? 'مفيش أي أثر على معدل إلغائك لأن السائق هو اللي عدّل الموعد.' : 'Zero impact on cancellation rate because driver rescheduled.',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySecondary(),
+                    ),
+                    const SizedBox(height: 24),
+                    MashwarButton(text: isAr ? 'ابحث عن رحلة تانية' : 'Search Other Rides', onPressed: () => Navigator.of(context).pop()),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                MashwarButton(text: isAr ? 'ابحث عن رحلة تانية' : 'Search Other Rides', onPressed: () => Navigator.of(context).pop()),
-              ],
+              ),
             ),
           ),
         ),
@@ -869,7 +916,7 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -877,53 +924,63 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
         title: Text(isAr ? 'تغيير موعد الرحلة' : 'Ride Rescheduled', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.goldSurface, borderRadius: BorderRadius.circular(8)),
-                child: Text(
-                  isAr ? 'محمد غيّر موعد الرحلة. محتاجين موافقتك' : 'Driver changed departure time. Need your decision',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppDimens.radiusCard)),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: MashwarFadeSlideIn(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildRow(isAr ? 'الرحلة' : 'Route', 'كفر الشيخ ← القاهرة'),
-                    const Divider(height: 16),
-                    _buildRow(isAr ? 'الموعد القديم' : 'Previous Time', 'الجمعة 7:30 ص'),
-                    const Divider(height: 16),
-                    _buildRow(isAr ? 'الموعد الجديد' : 'New Time', 'الجمعة 9:00 ص', isHighlighted: true),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.goldSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
+                      ),
+                      child: Text(
+                        isAr ? 'محمد غيّر موعد الرحلة. محتاجين موافقتك' : 'Driver changed departure time. Need your decision',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          _buildRow(isAr ? 'الرحلة' : 'Route', 'كفر الشيخ ← القاهرة'),
+                          const Divider(height: 16),
+                          _buildRow(isAr ? 'الموعد القديم' : 'Previous Time', 'الجمعة 7:30 ص'),
+                          const Divider(height: 16),
+                          _buildRow(isAr ? 'الموعد الجديد' : 'New Time', 'الجمعة 9:00 ص', isHighlighted: true),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      isAr
+                          ? 'لو الموعد الجديد مش مناسب تقدر تلغي حجزك بدون أي أثر على معدل إلغائك. باقي 2:00 ساعة للرد.'
+                          : 'If new time does not suit you, cancel penalty-free. 2 hours remaining.',
+                      style: AppTypography.label(color: AppColors.textSecondary),
+                    ),
+                    const Spacer(),
+                    MashwarButton(
+                      text: isAr ? 'وافق على الموعد الجديد' : 'Accept New Time',
+                      onPressed: () => setState(() => _state = 1),
+                    ),
+                    const SizedBox(height: 10),
+                    MashwarButton(
+                      text: isAr ? 'ألغي حجزي' : 'Cancel My Booking',
+                      variant: MashwarButtonVariant.danger,
+                      onPressed: () => setState(() => _state = 2),
+                    ),
+                    const SizedBox(height: AppDimens.space16),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                isAr
-                    ? 'لو الموعد الجديد مش مناسب تقدر تلغي حجزك بدون أي أثر على معدل إلغائك. باقي 2:00 ساعة للرد.'
-                    : 'If new time does not suit you, cancel penalty-free. 2 hours remaining.',
-                style: AppTypography.label(color: AppColors.textSecondary),
-              ),
-              const Spacer(),
-              MashwarButton(
-                text: isAr ? 'وافق على الموعد الجديد' : 'Accept New Time',
-                onPressed: () => setState(() => _state = 1),
-              ),
-              const SizedBox(height: 10),
-              MashwarButton(
-                text: isAr ? 'ألغي حجزي' : 'Cancel My Booking',
-                variant: MashwarButtonVariant.danger,
-                onPressed: () => setState(() => _state = 2),
-              ),
-              const SizedBox(height: AppDimens.space16),
-            ],
+            ),
           ),
         ),
       ),

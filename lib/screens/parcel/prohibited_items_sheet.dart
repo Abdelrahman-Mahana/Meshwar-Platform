@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
 
@@ -53,22 +54,13 @@ class ProhibitedItemsSheet extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 48,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: AppColors.borderDisabled,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.space16),
-                  Text(isAr ? 'قائمة الممنوعات' : 'Prohibited Items List', style: AppTypography.title()),
-                  const SizedBox(height: 6),
-                  Text(
-                    isAr ? 'لا نقبل نقل هذه المواد في الطرود بأي حال:' : 'The following items are strictly prohibited from shipment:',
-                    style: AppTypography.bodySecondary(),
+                  MashwarSheetHeader(
+                    title: isAr ? 'قائمة الممنوعات' : 'Prohibited Items List',
+                    subtitle: isAr
+                        ? 'لا نقبل نقل هذه المواد في الطرود بأي حال:'
+                        : 'The following items are strictly prohibited from shipment:',
+                    leadingIcon: Icons.gpp_bad_outlined,
+                    onClose: () => Navigator.of(context).pop(),
                   ),
                   const SizedBox(height: AppDimens.space16),
 

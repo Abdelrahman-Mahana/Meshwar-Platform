@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/settings_provider.dart';
@@ -61,7 +62,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     final isAr = settings.isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -78,57 +79,60 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Vehicle Approval Badge
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                ),
-                child: Row(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 640),
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 24),
-                    ),
-                    const SizedBox(width: AppDimens.space16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    // Vehicle Approval Badge
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      child: Row(
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                isAr ? 'مركبة معتمدة للرحلات' : 'Approved Vehicle',
-                                style: AppTypography.title().copyWith(fontSize: 15),
-                              ),
-                              const Spacer(),
-                              MashwarBadge(
-                                type: BadgeType.verified,
-                                customLabel: isAr ? 'معتمدة' : 'Verified',
-                              ),
-                            ],
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 24),
                           ),
-                          const SizedBox(height: 3),
-                          Text(
-                            isAr ? 'سيارتك مفعلة ويمكنك عرض مقاعد أو توصيل طرود.' : 'Your vehicle is active for carpool & parcel delivery.',
-                            style: AppTypography.label(color: AppColors.textSecondary),
+                          const SizedBox(width: AppDimens.space16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        isAr ? 'مركبة معتمدة للرحلات' : 'Approved Vehicle',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.title().copyWith(fontSize: 15),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    MashwarBadge(
+                                      type: BadgeType.verified,
+                                      customLabel: isAr ? 'معتمدة' : 'Verified',
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  isAr ? 'سيارتك مفعلة ويمكنك عرض مقاعد أو توصيل طرود.' : 'Your vehicle is active for carpool & parcel delivery.',
+                                  style: AppTypography.label(color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
 
               const SizedBox(height: AppDimens.space24),
 
@@ -346,6 +350,9 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
           ),
         ),
       ),
+    ),
+    ),
+    ),
     );
   }
 
@@ -385,13 +392,10 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     required VoidCallback onTap,
     required bool isAr,
   }) {
-    return Container(
+    return MashwarSectionCard(
       padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-      ),
+      borderRadius: 12,
+      borderColor: isUploaded ? AppColors.teal.withValues(alpha: 0.35) : const Color(0xFFE5E5EA),
       child: Row(
         children: [
           Container(

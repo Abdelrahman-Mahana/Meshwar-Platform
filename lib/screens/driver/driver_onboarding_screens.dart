@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../state/settings_provider.dart';
@@ -17,7 +18,7 @@ class DriverOnboardingScreen extends StatelessWidget {
     final isAr = context.watch<SettingsProvider>().isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -39,65 +40,80 @@ class DriverOnboardingScreen extends StatelessWidget {
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(vertical: AppDimens.space16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Icon Header
-                          Center(
-                            child: Container(
-                              width: 80,
-                              height: 80,
-                              decoration: const BoxDecoration(
-                                color: AppColors.goldSurface,
-                                shape: BoxShape.circle,
+                      child: MashwarFadeSlideIn(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // 3D Partner Driver Banner
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Stack(
+                                children: [
+                                  MashwarAssetArt(
+                                    assetPath: 'assets/images/driver_promo.jpg',
+                                    width: double.infinity,
+                                    height: 150,
+                                    borderRadius: BorderRadius.circular(20),
+                                    fallbackIcon: Icons.directions_car_filled_rounded,
+                                    fallbackBg: AppColors.goldSurface,
+                                  ),
+                                  Positioned.fill(
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            AppColors.navy.withValues(alpha: 0.45),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              child: const Icon(Icons.directions_car_filled_rounded, color: AppColors.navy, size: 40),
                             ),
-                          ),
-                          const SizedBox(height: AppDimens.space20),
+                            const SizedBox(height: AppDimens.space20),
 
-                          // Title & Subtitle (Page 37)
-                          Text(
-                            isAr ? 'اكسب من كراسيك الفاضية' : 'Earn from your empty seats',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.largeTitle(),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            isAr
-                                ? 'انشر رحلاتك بين المحافظات وخد ركاب وطرود في طريقك.'
-                                : 'Publish intercity trips and take riders and parcels along your way.',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.bodySecondary(),
-                          ),
-                          const SizedBox(height: AppDimens.space24),
-
-                          // 3 Steps Card (Page 37)
-                          Container(
-                            padding: const EdgeInsets.all(AppDimens.space20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                              border: Border.all(color: AppColors.borderDisabled),
+                            // Title & Subtitle (Page 37)
+                            Text(
+                              isAr ? 'اكسب من كراسيك الفاضية' : 'Earn from your empty seats',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.largeTitle(),
                             ),
-                            child: Column(
-                              children: [
-                                _buildStepRow('1', isAr ? 'وثّق هويتك ورخصتك' : 'Verify ID & Driver License'),
-                                const Divider(height: 24, color: AppColors.sand),
-                                _buildStepRow('2', isAr ? 'انشر رحلتك وحدد سعرك' : 'Post trip & set price'),
-                                const Divider(height: 24, color: AppColors.sand),
-                                _buildStepRow('3', isAr ? 'استقبل الحجوزات والطرود' : 'Accept bookings & parcels'),
-                              ],
+                            const SizedBox(height: 8),
+                            Text(
+                              isAr
+                                  ? 'انشر رحلاتك بين المحافظات وخد ركاب وطرود في طريقك.'
+                                  : 'Publish intercity trips and take riders and parcels along your way.',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.bodySecondary(),
                             ),
-                          ),
+                            const SizedBox(height: AppDimens.space20),
 
-                          const SizedBox(height: 12),
-                          Text(
-                            isAr ? 'المراجعة بتاخد لحد 24 ساعة.' : 'Verification review takes up to 24 hours.',
-                            textAlign: TextAlign.center,
-                            style: AppTypography.label(color: AppColors.textSecondary),
-                          ),
-                        ],
+                            // 3 Steps Card (Page 37)
+                            MashwarSectionCard(
+                              padding: const EdgeInsets.all(AppDimens.space20),
+                              child: Column(
+                                children: [
+                                  _buildStepRow('1', isAr ? 'وثّق هويتك ورخصتك' : 'Verify ID & Driver License'),
+                                  const Divider(height: 24, color: AppColors.sand),
+                                  _buildStepRow('2', isAr ? 'انشر رحلتك وحدد سعرك' : 'Post trip & set price'),
+                                  const Divider(height: 24, color: AppColors.sand),
+                                  _buildStepRow('3', isAr ? 'استقبل الحجوزات والطرود' : 'Accept bookings & parcels'),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+                            Text(
+                              isAr ? 'المراجعة بتاخد لحد 24 ساعة.' : 'Verification review takes up to 24 hours.',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.label(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -302,7 +318,7 @@ class _DriverVerificationStepsScreenState extends State<DriverVerificationStepsS
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -319,114 +335,111 @@ class _DriverVerificationStepsScreenState extends State<DriverVerificationStepsS
             constraints: const BoxConstraints(maxWidth: 680),
             child: Padding(
               padding: const EdgeInsets.all(AppDimens.space24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Progress subtitle (Page 38)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  isAr ? '$_completedSteps من 5 خطوات' : '$_completedSteps of 5 steps completed',
-                                  style: AppTypography.title().copyWith(fontSize: 16),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              if (_isReady)
-                                MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'جاهز للإرسال' : 'Ready')
-                              else
-                                MashwarBadge(type: BadgeType.pending, customLabel: isAr ? 'مطلوب إكمال' : 'In Progress'),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            isAr ? 'هنراجع بياناتك خلال 24 ساعة بعد الإرسال' : 'We review your documents within 24 hours',
-                            style: AppTypography.label(color: AppColors.textSecondary),
-                          ),
-                          const SizedBox(height: AppDimens.space20),
-
-                          // Steps List (Page 38)
-                          Material(
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                              side: const BorderSide(color: AppColors.borderDisabled),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Column(
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // Progress subtitle (Page 38)
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                _buildStepTile(
-                                  isAr ? 'بطاقة الرقم القومي' : 'Egyptian National ID',
-                                  isDone: true,
-                                  isAr: isAr,
+                                Expanded(
+                                  child: Text(
+                                    isAr ? '$_completedSteps من 5 خطوات' : '$_completedSteps of 5 steps completed',
+                                    style: AppTypography.title().copyWith(fontSize: 16),
+                                  ),
                                 ),
-                                const Divider(height: 1),
-                                _buildStepTile(
-                                  isAr ? 'رخصة القيادة' : 'Driving License',
-                                  isDone: true,
-                                  isAr: isAr,
-                                ),
-                                const Divider(height: 1),
-                                _buildStepTile(
-                                  isAr ? 'رخصة السيارة' : 'Car License',
-                                  isDone: _completedSteps >= 3,
-                                  isAr: isAr,
-                                  onTap: _triggerCapture,
-                                ),
-                                const Divider(height: 1),
-                                _buildStepTile(
-                                  isAr ? 'صور ومواصفات السيارة' : 'Car Photos & Specs',
-                                  isDone: _completedSteps >= 4,
-                                  isAr: isAr,
-                                  onTap: () async {
-                                    await Navigator.of(context).push(
-                                      MaterialPageRoute(builder: (_) => const DriverCarDetailsScreen()),
-                                    );
-                                    if (mounted && _completedSteps < 4) {
-                                      setState(() => _completedSteps = 4);
-                                    }
-                                  },
-                                ),
-                                const Divider(height: 1),
-                                _buildStepTile(
-                                  isAr ? 'سيلفي للتحقق' : 'Verification Selfie',
-                                  isDone: _completedSteps >= 5,
-                                  isAr: isAr,
-                                  onTap: _triggerCapture,
-                                ),
+                                const SizedBox(width: 8),
+                                if (_isReady)
+                                  MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'جاهز للإرسال' : 'Ready')
+                                else
+                                  MashwarBadge(type: BadgeType.pending, customLabel: isAr ? 'مطلوب إكمال' : 'In Progress'),
                               ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 6),
+                            Text(
+                              isAr ? 'هنراجع بياناتك خلال 24 ساعة بعد الإرسال' : 'We review your documents within 24 hours',
+                              style: AppTypography.label(color: AppColors.textSecondary),
+                            ),
+                            const SizedBox(height: AppDimens.space20),
+
+                            // Steps List (Page 38)
+                            MashwarSectionCard(
+                              padding: EdgeInsets.zero,
+                              child: Column(
+                                children: [
+                                  _buildStepTile(
+                                    isAr ? 'بطاقة الرقم القومي' : 'Egyptian National ID',
+                                    isDone: true,
+                                    isAr: isAr,
+                                  ),
+                                  const Divider(height: 1),
+                                  _buildStepTile(
+                                    isAr ? 'رخصة القيادة' : 'Driving License',
+                                    isDone: true,
+                                    isAr: isAr,
+                                  ),
+                                  const Divider(height: 1),
+                                  _buildStepTile(
+                                    isAr ? 'رخصة السيارة' : 'Car License',
+                                    isDone: _completedSteps >= 3,
+                                    isAr: isAr,
+                                    onTap: _triggerCapture,
+                                  ),
+                                  const Divider(height: 1),
+                                  _buildStepTile(
+                                    isAr ? 'صور ومواصفات السيارة' : 'Car Photos & Specs',
+                                    isDone: _completedSteps >= 4,
+                                    isAr: isAr,
+                                    onTap: () async {
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (_) => const DriverCarDetailsScreen()),
+                                      );
+                                      if (mounted && _completedSteps < 4) {
+                                        setState(() => _completedSteps = 4);
+                                      }
+                                    },
+                                  ),
+                                  const Divider(height: 1),
+                                  _buildStepTile(
+                                    isAr ? 'سيلفي للتحقق' : 'Verification Selfie',
+                                    isDone: _completedSteps >= 5,
+                                    isAr: isAr,
+                                    onTap: _triggerCapture,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: AppDimens.space16),
+                    const SizedBox(height: AppDimens.space16),
 
-                  // Primary Action (Page 38)
-                  if (_isReady) ...[
-                    MashwarButton(
-                      text: isAr ? 'إرسال للمراجعة' : 'Submit for Review',
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(builder: (_) => const DriverStatusScreen(statusType: DriverStatusType.underReview)),
-                        );
-                      },
-                    ),
-                  ] else ...[
-                    MashwarButton(
-                      text: isAr ? 'كمّل: رخصة السيارة' : 'Continue: Car License',
-                      onPressed: _triggerCapture,
-                    ),
+                    // Primary Action (Page 38)
+                    if (_isReady) ...[
+                      MashwarButton(
+                        text: isAr ? 'إرسال للمراجعة' : 'Submit for Review',
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(builder: (_) => const DriverStatusScreen(statusType: DriverStatusType.underReview)),
+                          );
+                        },
+                      ),
+                    ] else ...[
+                      MashwarButton(
+                        text: isAr ? 'كمّل: رخصة السيارة' : 'Continue: Car License',
+                        onPressed: _triggerCapture,
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -505,7 +518,7 @@ class _DriverCarDetailsScreenState extends State<DriverCarDetailsScreen> {
     final isAr = context.watch<SettingsProvider>().isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -517,89 +530,102 @@ class _DriverCarDetailsScreenState extends State<DriverCarDetailsScreen> {
         title: Text(isAr ? 'بيانات السيارة' : 'Car Specifications', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(isAr ? 'النوع والموديل' : 'Make & Model', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _modelController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space16),
-
-              Text(isAr ? 'اللون' : 'Color', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _colorController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space16),
-
-              Text(isAr ? 'رقم اللوحة' : 'License Plate', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _plateController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  errorText: _plateError,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space20),
-
-              // Seats Counter (Page 39)
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(isAr ? 'عدد الكراسي للركاب' : 'Passenger Seats', style: AppTypography.body()),
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: _seatsCount > 1 ? () => setState(() => _seatsCount--) : null,
-                          icon: const Icon(Icons.remove_circle_outline, color: AppColors.navy),
-                        ),
-                        Text('$_seatsCount', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                        IconButton(
-                          onPressed: _seatsCount < 4 ? () => setState(() => _seatsCount++) : null,
-                          icon: const Icon(Icons.add_circle_outline, color: AppColors.navy),
-                        ),
-                      ],
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(isAr ? 'النوع والموديل' : 'Make & Model', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _modelController,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.space16),
+
+                          Text(isAr ? 'اللون' : 'Color', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _colorController,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                          const SizedBox(height: AppDimens.space16),
+
+                          Text(isAr ? 'رقم اللوحة' : 'License Plate', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _plateController,
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              errorText: _plateError,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: AppDimens.space16),
+
+                    // Seats Counter (Page 39)
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(isAr ? 'عدد الكراسي للركاب' : 'Passenger Seats', style: AppTypography.body()),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                onPressed: _seatsCount > 1 ? () => setState(() => _seatsCount--) : null,
+                                icon: const Icon(Icons.remove_circle_outline, color: AppColors.navy),
+                              ),
+                              Text('$_seatsCount', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                              IconButton(
+                                onPressed: _seatsCount < 4 ? () => setState(() => _seatsCount++) : null,
+                                icon: const Icon(Icons.add_circle_outline, color: AppColors.navy),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isAr ? 'من غير السائق. الحد الأقصى 4 كراسي.' : 'Excluding driver. Maximum 4 seats.',
+                      style: AppTypography.label(color: AppColors.textSecondary),
+                    ),
+
+                    const Spacer(),
+                    MashwarButton(
+                      text: isAr ? 'حفظ' : 'Save',
+                      onPressed: () => _save(isAr),
+                    ),
+                    const SizedBox(height: AppDimens.space16),
                   ],
                 ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                isAr ? 'من غير السائق. الحد الأقصى 4 كراسي.' : 'Excluding driver. Maximum 4 seats.',
-                style: AppTypography.label(color: AppColors.textSecondary),
-              ),
-
-              const Spacer(),
-              MashwarButton(
-                text: isAr ? 'حفظ' : 'Save',
-                onPressed: () => _save(isAr),
-              ),
-              const SizedBox(height: AppDimens.space16),
-            ],
+            ),
           ),
         ),
       ),
@@ -697,7 +723,7 @@ class DriverStatusScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -708,49 +734,56 @@ class DriverStatusScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
-                  child: Icon(icon, color: iconColor, size: 44),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
+              child: MashwarFadeSlideIn(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Spacer(),
+                    Center(
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          color: bgColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.gold.withValues(alpha: 0.6), width: 1.5),
+                        ),
+                        child: Icon(icon, color: iconColor, size: 44),
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.space20),
+                    Text(title, textAlign: TextAlign.center, style: AppTypography.largeTitle()),
+                    const SizedBox(height: 8),
+                    Text(subtitle, textAlign: TextAlign.center, style: AppTypography.bodySecondary()),
+
+                    if (reason != null) ...[
+                      const SizedBox(height: AppDimens.space20),
+                      MashwarSectionCard(
+                        padding: const EdgeInsets.all(14),
+                        borderColor: AppColors.coral.withValues(alpha: 0.35),
+                        child: Text(
+                          reason,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.coral, fontSize: 13),
+                        ),
+                      ),
+                    ],
+
+                    const Spacer(flex: 2),
+                    MashwarButton(
+                      text: primaryBtnText,
+                      onPressed: onPrimary,
+                    ),
+                    const SizedBox(height: AppDimens.space16),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppDimens.space20),
-              Text(title, textAlign: TextAlign.center, style: AppTypography.largeTitle()),
-              const SizedBox(height: 8),
-              Text(subtitle, textAlign: TextAlign.center, style: AppTypography.bodySecondary()),
-
-              if (reason != null) ...[
-                const SizedBox(height: AppDimens.space20),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.borderDisabled),
-                  ),
-                  child: Text(
-                    reason,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.coral, fontSize: 13),
-                  ),
-                ),
-              ],
-
-              const Spacer(flex: 2),
-              MashwarButton(
-                text: primaryBtnText,
-                onPressed: onPrimary,
-              ),
-              const SizedBox(height: AppDimens.space16),
-            ],
+            ),
           ),
         ),
       ),

@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/alert_banner.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
 import '../../core/widgets/mashwar_text_field.dart';
@@ -66,7 +67,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
     final reasons = isAr ? _reasonsAr : _reasonsEn;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -78,66 +79,85 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(isAr ? 'إيه المشكلة اللي حصلت؟' : 'What issue occurred?', style: AppTypography.title().copyWith(fontSize: 18)),
-              const SizedBox(height: 12),
-
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: List.generate(reasons.length, (index) {
-                  final reasonAr = _reasonsAr[index];
-                  final isSelected = _selectedReason == reasonAr;
-                  return MashwarChip(
-                    label: reasons[index],
-                    isSelected: isSelected,
-                    onTap: () => setState(() => _selectedReason = reasonAr),
-                  );
-                }),
-              ),
-              const SizedBox(height: 20),
-
-              MashwarTextField(
-                controller: _descController,
-                label: isAr ? 'تفاصيل المشكلة' : 'Issue Details',
-                hint: isAr ? 'احكي بالتفصيل إيه اللي حصل' : 'Describe in detail what happened',
-                maxLines: 4,
-              ),
-              const SizedBox(height: 20),
-
-              // Photo proof upload box
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: AppDimens.space12),
+              child: MashwarFadeSlideIn(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.add_a_photo_outlined, size: 36, color: AppColors.navy),
-                    const SizedBox(height: 8),
-                    Text(
-                      isAr ? 'ارفع صور تثبت المشكلة (اختياري بس بيسرّع الحل)' : 'Upload photos proving issue (Optional but accelerates resolution)',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.label(color: AppColors.textSecondary),
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(isAr ? 'إيه المشكلة اللي حصلت؟' : 'What issue occurred?', style: AppTypography.title().copyWith(fontSize: 18)),
+                          const SizedBox(height: 12),
+
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: List.generate(reasons.length, (index) {
+                              final reasonAr = _reasonsAr[index];
+                              final isSelected = _selectedReason == reasonAr;
+                              return MashwarChip(
+                                label: reasons[index],
+                                isSelected: isSelected,
+                                onTap: () => setState(() => _selectedReason = reasonAr),
+                              );
+                            }),
+                          ),
+                          const SizedBox(height: 20),
+
+                          MashwarTextField(
+                            controller: _descController,
+                            label: isAr ? 'تفاصيل المشكلة' : 'Issue Details',
+                            hint: isAr ? 'احكي بالتفصيل إيه اللي حصل' : 'Describe in detail what happened',
+                            maxLines: 4,
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 16),
+
+                    // Photo proof upload box
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: AppColors.navy.withValues(alpha: 0.06),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.add_a_photo_outlined, size: 30, color: AppColors.navy),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              isAr ? 'ارفع صور تثبت المشكلة (اختياري بس بيسرّع الحل)' : 'Upload photos proving issue (Optional but accelerates resolution)',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.label(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    MashwarButton(
+                      text: isAr ? 'تقديم البلاغ' : 'Submit Dispute Report',
+                      onPressed: () => setState(() => _phase = DisputePhase.underReview),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-
-              MashwarButton(
-                text: isAr ? 'تقديم البلاغ' : 'Submit Dispute Report',
-                onPressed: () => setState(() => _phase = DisputePhase.underReview),
-              ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),
@@ -147,7 +167,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
   // Phase 2: قيد المراجعة (Page 36)
   Widget _buildUnderReviewView(bool isAr) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -159,53 +179,57 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const SizedBox(height: 24),
-              AlertBanner(
-                message: isAr
-                    ? 'فريق الدعم بيراجع بلاغك. الرد خلال 48 ساعة'
-                    : 'Support team is reviewing your dispute. Response within 48 hours',
-                type: AlertBannerType.warning,
-              ),
-              const SizedBox(height: 24),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
+              child: MashwarFadeSlideIn(
                 child: Column(
                   children: [
-                    _buildRow(isAr ? 'رقم البلاغ' : 'Report ID', widget.reportId),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(
-                      isAr ? 'السبب' : 'Reason',
-                      isAr
-                          ? _selectedReason
-                          : (_reasonsAr.contains(_selectedReason)
-                              ? _reasonsEn[_reasonsAr.indexOf(_selectedReason)]
-                              : _selectedReason),
+                    const SizedBox(height: 24),
+                    AlertBanner(
+                      message: isAr
+                          ? 'فريق الدعم بيراجع بلاغك. الرد خلال 48 ساعة'
+                          : 'Support team is reviewing your dispute. Response within 48 hours',
+                      type: AlertBannerType.warning,
                     ),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'الحالة' : 'Status', isAr ? 'قيد المراجعة والتحقيق' : 'Under Investigation'),
+                    const SizedBox(height: 24),
+
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          children: [
+                            _buildRow(isAr ? 'رقم البلاغ' : 'Report ID', widget.reportId),
+                            const Divider(height: 20, color: AppColors.borderDisabled),
+                            _buildRow(
+                              isAr ? 'السبب' : 'Reason',
+                              isAr
+                                  ? _selectedReason
+                                  : (_reasonsAr.contains(_selectedReason)
+                                      ? _reasonsEn[_reasonsAr.indexOf(_selectedReason)]
+                                      : _selectedReason),
+                            ),
+                            const Divider(height: 20, color: AppColors.borderDisabled),
+                            _buildRow(isAr ? 'الحالة' : 'Status', isAr ? 'قيد المراجعة والتحقيق' : 'Under Investigation'),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+                    MashwarButton(
+                      text: isAr ? 'الرجوع لطرودي' : 'Back to My Parcels',
+                      variant: MashwarButtonVariant.secondary,
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-
-              const Spacer(),
-              MashwarButton(
-                text: isAr ? 'الرجوع لطرودي' : 'Back to My Parcels',
-                variant: MashwarButtonVariant.secondary,
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),
@@ -215,7 +239,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
   // Phase 3: تم الحل (Page 36)
   Widget _buildResolvedView(bool isAr) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -227,43 +251,47 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const SizedBox(height: 24),
-              AlertBanner(
-                message: isAr
-                    ? 'تم تعويضك بـ 300 ج في محفظتك'
-                    : 'You have been compensated with 300 EGP in your wallet',
-                type: AlertBannerType.success,
-              ),
-              const SizedBox(height: 24),
-
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
+              child: MashwarFadeSlideIn(
                 child: Column(
                   children: [
-                    _buildRow(isAr ? 'القرار' : 'Resolution', isAr ? 'تمت الموافقة على التعويض' : 'Compensation Approved'),
-                    const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'المبلغ المودع' : 'Deposited Amount', '300 ${isAr ? "ج.م" : "EGP"}', isBold: true),
+                    const SizedBox(height: 24),
+                    AlertBanner(
+                      message: isAr
+                          ? 'تم تعويضك بـ 300 ج في محفظتك'
+                          : 'You have been compensated with 300 EGP in your wallet',
+                      type: AlertBannerType.success,
+                    ),
+                    const SizedBox(height: 24),
+
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Column(
+                          children: [
+                            _buildRow(isAr ? 'القرار' : 'Resolution', isAr ? 'تمت الموافقة على التعويض' : 'Compensation Approved'),
+                            const Divider(height: 20, color: AppColors.borderDisabled),
+                            _buildRow(isAr ? 'المبلغ المودع' : 'Deposited Amount', '300 ${isAr ? "ج.م" : "EGP"}', isBold: true),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+                    MashwarButton(
+                      text: isAr ? 'عرض رصيد المحفظة' : 'View Wallet Balance',
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
-
-              const Spacer(),
-              MashwarButton(
-                text: isAr ? 'عرض رصيد المحفظة' : 'View Wallet Balance',
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),

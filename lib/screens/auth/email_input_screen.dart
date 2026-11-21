@@ -6,6 +6,7 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
 import 'otp_verification_screen.dart';
@@ -73,7 +74,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     final hasError = _errorText != null && _errorText!.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -118,47 +119,49 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Top: Brand Identity Header with Step Indicator
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const BrandLogo(fontSize: 28),
-                    _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
-                  ],
-                ),
-                const SizedBox(height: 14),
+            MashwarFadeSlideIn(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Top: Brand Identity Header with Step Indicator
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const BrandLogo(fontSize: 28),
+                      _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
 
-                // Title & Subtitle
-                Text(
-                  isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
-                  style: AppTypography.largeTitle().copyWith(fontSize: 26),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  isAr
-                      ? 'هنبعتلك كود تأكيد لتسجيل الدخول أو إنشاء حساب'
-                      : 'We will send you a verification code to log in or create an account',
-                  style: AppTypography.bodySecondary(),
-                ),
-                const SizedBox(height: 18),
+                  // Title & Subtitle
+                  Text(
+                    isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
+                    style: AppTypography.largeTitle().copyWith(fontSize: 26),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    isAr
+                        ? 'هنبعتلك كود تأكيد لتسجيل الدخول أو إنشاء حساب'
+                        : 'We will send you a verification code to log in or create an account',
+                    style: AppTypography.bodySecondary(),
+                  ),
+                  const SizedBox(height: 18),
 
-                // Input Label
-                Text(
-                  isAr ? 'البريد الإلكتروني' : 'Email Address',
-                  style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
+                  // Input Label
+                  Text(
+                    isAr ? 'البريد الإلكتروني' : 'Email Address',
+                    style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
 
-                // Email Input Card
-                _buildEmailInputField(hasError: hasError, isAr: isAr),
-                const SizedBox(height: 8),
+                  // Email Input Card
+                  _buildEmailInputField(hasError: hasError, isAr: isAr),
+                  const SizedBox(height: 8),
 
-                // Helper text / Error text
-                _buildHelperOrError(hasError: hasError, isAr: isAr),
-              ],
+                  // Helper text / Error text
+                  _buildHelperOrError(hasError: hasError, isAr: isAr),
+                ],
+              ),
             ),
 
             const SizedBox(height: 16),

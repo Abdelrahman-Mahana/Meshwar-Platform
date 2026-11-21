@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
@@ -253,7 +254,7 @@ class _WalletScreenState extends State<WalletScreen> {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -297,11 +298,19 @@ class _WalletScreenState extends State<WalletScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
-                        child: Text(
-                          isAr ? 'الرصيد المتاح' : 'Available Balance',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.bodySecondary(color: Colors.white70),
+                        child: Row(
+                          children: [
+                            const MashwarPinIcon(size: 18, isLight: true),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                isAr ? 'الرصيد المتاح' : 'Available Balance',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.bodySecondary(color: Colors.white70),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(width: 8),

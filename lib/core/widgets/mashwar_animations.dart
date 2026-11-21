@@ -288,3 +288,263 @@ class MashwarAssetArt extends StatelessWidget {
     return image;
   }
 }
+
+/// Elevated Super-App white section card with soft MASHWAR navy shadow and border.
+class MashwarSectionCard extends StatelessWidget {
+  const MashwarSectionCard({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.all(16),
+    this.margin,
+    this.borderRadius = 18.0,
+    this.borderColor,
+    this.backgroundColor = Colors.white,
+    this.onTap,
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? margin;
+  final double borderRadius;
+  final Color? borderColor;
+  final Color backgroundColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(borderRadius);
+    final card = Container(
+      margin: onTap == null ? margin : null,
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.navy.withValues(alpha: 0.035),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: backgroundColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: BorderSide(
+            color: borderColor ?? const Color(0xFFE5E7EB),
+            width: 0.9,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: padding,
+          child: child,
+        ),
+      ),
+    );
+
+    if (onTap == null) return card;
+    return Padding(
+      padding: margin ?? EdgeInsets.zero,
+      child: MashwarPressable(
+        borderRadius: radius,
+        onTap: onTap,
+        child: card,
+      ),
+    );
+  }
+}
+
+/// Consistent Uber/Careem bottom-sheet header with drag handle and optional close button.
+class MashwarSheetHeader extends StatelessWidget {
+  const MashwarSheetHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+    this.onClose,
+    this.leadingIcon,
+  });
+
+  final String title;
+  final String? subtitle;
+  final VoidCallback? onClose;
+  final IconData? leadingIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Center(
+          child: Container(
+            width: 42,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1D5DB),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            if (leadingIcon != null) ...[
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.tealSurface,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(leadingIcon, color: AppColors.teal, size: 18),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.title().copyWith(fontSize: 17),
+                  ),
+                  if (subtitle != null && subtitle!.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodySecondary().copyWith(fontSize: 12),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (onClose != null)
+              IconButton(
+                onPressed: onClose,
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.close_rounded, color: AppColors.navy, size: 20),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Tactile human-to-human communication action row (Chat / Call / Share).
+class MashwarCommunicationBar extends StatelessWidget {
+  const MashwarCommunicationBar({
+    super.key,
+    required this.onChat,
+    required this.onCall,
+    this.onShare,
+    this.chatLabel = 'محادثة',
+    this.callLabel = 'اتصال',
+    this.shareLabel = 'مشاركة',
+  });
+
+  final VoidCallback onChat;
+  final VoidCallback onCall;
+  final VoidCallback? onShare;
+  final String chatLabel;
+  final String callLabel;
+  final String shareLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _ActionPill(
+            icon: Icons.chat_bubble_outline_rounded,
+            label: chatLabel,
+            bgColor: AppColors.navy,
+            fgColor: Colors.white,
+            onTap: onChat,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _ActionPill(
+            icon: Icons.phone_in_talk_rounded,
+            label: callLabel,
+            bgColor: AppColors.tealSurface,
+            fgColor: AppColors.teal,
+            borderColor: AppColors.teal.withValues(alpha: 0.3),
+            onTap: onCall,
+          ),
+        ),
+        if (onShare != null) ...[
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ActionPill(
+              icon: Icons.share_outlined,
+              label: shareLabel,
+              bgColor: AppColors.goldSurface,
+              fgColor: AppColors.navy,
+              borderColor: AppColors.gold.withValues(alpha: 0.45),
+              onTap: onShare!,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ActionPill extends StatelessWidget {
+  const _ActionPill({
+    required this.icon,
+    required this.label,
+    required this.bgColor,
+    required this.fgColor,
+    required this.onTap,
+    this.borderColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color bgColor;
+  final Color fgColor;
+  final Color? borderColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return MashwarPressable(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+          border: borderColor != null ? Border.all(color: borderColor!) : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: fgColor),
+            const SizedBox(width: 5),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: fgColor,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

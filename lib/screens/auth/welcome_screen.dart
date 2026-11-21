@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 import 'email_input_screen.dart';
@@ -237,21 +238,69 @@ class WelcomeScreen extends StatelessWidget {
               child: _buildLanguageButton(settings, isAr),
             ),
 
-            // Center Hero Brand Identity
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                BrandLogo(fontSize: isCompact ? 38 : 46),
-                const SizedBox(height: 10),
-                Text(
-                  isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
-                  textAlign: TextAlign.center,
-                  style: AppTypography.title(color: AppColors.navy).copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: isCompact ? 16 : 18,
+            // Center Hero Brand Identity + Framed 3D Illustration
+            MashwarFadeSlideIn(
+              duration: const Duration(milliseconds: 340),
+              offsetY: 12,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BrandLogo(fontSize: isCompact ? 34 : 44),
+                  const SizedBox(height: 8),
+                  Text(
+                    isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.title(color: AppColors.navy).copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: isCompact ? 15 : 17.5,
+                    ),
                   ),
-                ),
-              ],
+                  SizedBox(height: isCompact ? 12 : 18),
+                  Container(
+                    height: isCompact ? 116 : 156,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.navy,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.navy.withValues(alpha: 0.14),
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          MashwarAssetArt(
+                            assetPath: 'assets/images/hero_banner.jpg',
+                            fit: BoxFit.cover,
+                            flipX: isAr,
+                            fallbackIcon: Icons.directions_car_filled_rounded,
+                            fallbackBg: AppColors.navy,
+                            fallbackColor: AppColors.gold,
+                          ),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  AppColors.navy.withValues(alpha: 0.45),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             // Bottom Authentication Choices

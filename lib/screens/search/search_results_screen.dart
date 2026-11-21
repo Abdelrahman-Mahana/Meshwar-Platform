@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/alert_banner.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
@@ -11,6 +12,7 @@ import '../../core/localization/app_strings.dart';
 import '../../data/models/ride_model.dart';
 import '../../state/rides_provider.dart';
 import '../../state/alerts_provider.dart';
+import '../chat/chat_screen.dart';
 import '../ride_details/ride_details_screen.dart';
 import 'search_filters_sheet.dart';
 import '../../data/repositories/app_repositories.dart';
@@ -35,7 +37,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     final isAr = context.isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -257,200 +259,230 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
   }
 
   Widget _buildDriverCard(BuildContext context, RideModel ride, bool isAr) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    return MashwarFadeSlideIn(
+      duration: const Duration(milliseconds: 260),
+      offsetY: 10,
+      child: MashwarPressable(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => RideDetailsScreen(ride: ride)),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(AppDimens.space20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE5E5EA), width: 0.9),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.navy.withValues(alpha: 0.035),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => RideDetailsScreen(ride: ride)),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(AppDimens.space20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top row: Departure time, Route, and Price
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Text(
-                            ride.departureTime,
-                            style: AppTypography.title().copyWith(fontSize: 18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row: Departure time badge, Route title, and Price
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.navy,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              context.trRoute('${ride.fromCity} ← ${ride.toCity}'),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTypography.bodySecondary(),
+                          child: Text(
+                            ride.departureTime,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              fontFamily: 'Cairo',
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            context.trRoute('${ride.fromCity} ← ${ride.toCity}'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    Row(
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.sand,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
                           '${ride.pricePerSeat}',
-                          style: AppTypography.largeTitle().copyWith(fontSize: 22, color: AppColors.navy),
+                          style: AppTypography.largeTitle().copyWith(fontSize: 19, color: AppColors.navy),
                         ),
                         const SizedBox(width: 2),
                         Text(
                           isAr ? 'ج' : 'EGP',
-                          style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                          style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w800),
                         ),
                       ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: AppDimens.space12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
 
-                // Meeting & Dropoff Locations
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.trip_origin_rounded, size: 14, color: AppColors.teal),
-                    const SizedBox(width: 8),
-                    Expanded(
+              // Visual Route Timeline for Pickup & Dropoff
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: MashwarRouteTimeline(
+                  from: ride.pickupPoint,
+                  to: ride.dropoffPoint,
+                  compact: true,
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // Driver Info, Rating & 1-Tap Chat
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.gold,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.navy.withValues(alpha: 0.12), width: 1.5),
+                    ),
+                    child: Center(
                       child: Text(
-                        ride.pickupPoint,
-                        style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+                        ride.driverName.isNotEmpty ? ride.driverName[0] : 'ك',
+                        style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 17),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.location_on_rounded, size: 14, color: AppColors.gold),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        ride.dropoffPoint,
-                        style: AppTypography.bodySecondary().copyWith(fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 14),
-
-                // Driver Info, Rating & Badges
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: AppColors.gold,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          ride.driverName.isNotEmpty ? ride.driverName[0] : 'ك',
-                          style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 18),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppDimens.space12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              // Raw driver name from database
-                              Flexible(
-                                child: Text(
-                                  ride.driverName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              if (ride.isVerified)
-                                const Icon(Icons.verified_rounded, size: 16, color: AppColors.teal),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              const Icon(Icons.star_rounded, size: 16, color: AppColors.gold),
-                              const SizedBox(width: 2),
-                              Text('${ride.driverRating}', style: AppTypography.label()),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  '· ${ride.driverCar}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.label(color: AppColors.textSecondary),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Status Badge & Parcel Tag
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (ride.remainingSeats == 0)
-                          MashwarBadge(type: BadgeType.rejected, customLabel: isAr ? 'مكتمل' : 'Full')
-                        else if (ride.isLadiesOnly)
-                          MashwarBadge(type: BadgeType.ladiesOnly, customLabel: isAr ? 'سيدات فقط' : 'Ladies Only')
-                        else
-                          MashwarBadge(
-                            type: BadgeType.verified,
-                            customLabel: isAr ? 'متاح (${ride.remainingSeats})' : 'Available (${ride.remainingSeats})',
-                          ),
-                        if (ride.acceptsParcels) ...[
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.tealSurface,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppColors.teal.withValues(alpha: 0.35), width: 0.8),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                ride.driverName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.body().copyWith(fontWeight: FontWeight.w800),
+                              ),
                             ),
-                            child: Text(
-                              isAr ? 'يقبل طرود' : 'Parcels OK',
-                              style: AppTypography.label(color: AppColors.teal).copyWith(fontSize: 10, fontWeight: FontWeight.w700),
+                            if (ride.isVerified) ...[
+                              const SizedBox(width: 4),
+                              const Icon(Icons.verified_rounded, size: 15, color: AppColors.teal),
+                            ],
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            const Icon(Icons.star_rounded, size: 15, color: AppColors.gold),
+                            const SizedBox(width: 2),
+                            Text('${ride.driverRating}', style: AppTypography.label()),
+                            const SizedBox(width: 5),
+                            Flexible(
+                              child: Text(
+                                '· ${ride.driverCar}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.label(color: AppColors.textSecondary),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    tooltip: isAr ? 'محادثة السائق' : 'Chat Driver',
+                    icon: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: const Icon(Icons.chat_bubble_outline_rounded, size: 17, color: AppColors.navy),
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(
+                            driverName: ride.driverName,
+                            driverCar: ride.driverCar,
+                            tripRoute: context.trRoute('${ride.fromCity} ← ${ride.toCity}'),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Status Badge & Parcel Tag (Wrap prevents tight-width overflow on 320px screens)
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (ride.remainingSeats == 0)
+                    MashwarBadge(type: BadgeType.rejected, customLabel: isAr ? 'مكتمل' : 'Full')
+                  else if (ride.isLadiesOnly)
+                    MashwarBadge(type: BadgeType.ladiesOnly, customLabel: isAr ? 'سيدات فقط' : 'Ladies Only')
+                  else
+                    MashwarBadge(
+                      type: BadgeType.verified,
+                      customLabel: isAr ? 'متاح (${ride.remainingSeats})' : 'Available (${ride.remainingSeats})',
+                    ),
+                  if (ride.acceptsParcels)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.tealSurface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.teal.withValues(alpha: 0.35), width: 0.8),
+                      ),
+                      child: Text(
+                        isAr ? 'يقبل طرود' : 'Parcels OK',
+                        style: AppTypography.label(color: AppColors.teal).copyWith(fontSize: 10, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -466,16 +498,29 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           constraints: const BoxConstraints(maxWidth: 440),
           child: Column(
             children: [
-              const SizedBox(height: AppDimens.space32),
+              const SizedBox(height: AppDimens.space24),
               Container(
-                width: 80,
-                height: 80,
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.borderDisabled),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.navy.withValues(alpha: 0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.directions_car_outlined, size: 40, color: AppColors.textSecondary),
+                child: MashwarAssetArt(
+                  assetPath: 'assets/images/service_ride.jpg',
+                  width: 96,
+                  height: 96,
+                  fit: BoxFit.contain,
+                  borderRadius: BorderRadius.circular(16),
+                  fallbackIcon: Icons.directions_car_outlined,
+                ),
               ),
               const SizedBox(height: AppDimens.space16),
               Text(

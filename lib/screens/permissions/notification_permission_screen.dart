@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/localization/app_strings.dart';
 import '../main_nav_shell.dart';
@@ -36,37 +37,40 @@ class NotificationPermissionScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const SizedBox(height: AppDimens.space32),
-                        Column(
-                          children: [
-                            Container(
-                              width: 84,
-                              height: 84,
-                              decoration: BoxDecoration(
-                                color: AppColors.goldSurface,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+                        MashwarFadeSlideIn(
+                          duration: const Duration(milliseconds: 300),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 96,
+                                height: 96,
+                                decoration: BoxDecoration(
+                                  color: AppColors.goldSurface,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+                                ),
+                                child: const Icon(
+                                  Icons.notifications_active_rounded,
+                                  color: AppColors.navy,
+                                  size: 40,
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.notifications_active_outlined,
-                                color: AppColors.navy,
-                                size: 38,
+                              const SizedBox(height: AppDimens.space24),
+                              Text(
+                                isAr ? 'ماتفوتش أي تحديث' : 'Don\'t miss any update',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.largeTitle(),
                               ),
-                            ),
-                            const SizedBox(height: AppDimens.space24),
-                            Text(
-                              isAr ? 'ماتفوتش أي تحديث' : 'Don\'t miss any update',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.largeTitle(),
-                            ),
-                            const SizedBox(height: AppDimens.space12),
-                            Text(
-                              isAr
-                                  ? 'هنبلّغك فوراً لما السائق يوافق على حجزك أو يوصل نقطة الصعود.'
-                                  : 'We will notify you immediately when driver accepts booking or arrives at pickup.',
-                              textAlign: TextAlign.center,
-                              style: AppTypography.bodySecondary(),
-                            ),
-                          ],
+                              const SizedBox(height: AppDimens.space12),
+                              Text(
+                                isAr
+                                    ? 'هنبلّغك فوراً لما السائق يوافق على حجزك أو يوصل نقطة الصعود.'
+                                    : 'We will notify you immediately when driver accepts booking or arrives at pickup.',
+                                textAlign: TextAlign.center,
+                                style: AppTypography.bodySecondary(),
+                              ),
+                            ],
+                          ),
                         ),
                         Column(
                           children: [
