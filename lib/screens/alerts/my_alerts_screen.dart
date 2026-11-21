@@ -90,7 +90,7 @@ class MyAlertsScreen extends StatelessWidget {
                   runSpacing: 8,
                   children: dates.map((d) {
                     return MashwarChip(
-                      label: d,
+                      label: context.trDate(d),
                       isSelected: dateRange == d,
                       onTap: () => setSheetState(() => dateRange = d),
                     );

@@ -107,7 +107,7 @@ class _AdminShellState extends State<AdminShell> {
                 isAr ? 'بحاجة لمراجعة بطاقة الرقم القومي ورخص القيادة' : 'Requires National ID & License checks',
                 style: const TextStyle(fontSize: 11),
               ),
-              trailing: const Icon(Icons.chevron_left_rounded),
+              trailing: Icon(isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.of(ctx).pop();
                 setState(() => _selectedIndex = 1);
@@ -128,7 +128,7 @@ class _AdminShellState extends State<AdminShell> {
                 isAr ? 'تتطلب إسناداً لموظف دعم وحلاً عاجلاً' : 'Requires staff assignment & resolution',
                 style: const TextStyle(fontSize: 11),
               ),
-              trailing: const Icon(Icons.chevron_left_rounded),
+              trailing: Icon(isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.of(ctx).pop();
                 setState(() => _selectedIndex = 4);

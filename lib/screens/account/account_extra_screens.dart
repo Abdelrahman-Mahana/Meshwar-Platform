@@ -224,6 +224,7 @@ class UserProfileScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       _buildActionTile(
+                        context: context,
                         icon: Icons.person_outline_rounded,
                         title: isAr ? 'تعديل البيانات الشخصية' : 'Edit Personal Info',
                         onTap: () {
@@ -234,6 +235,7 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
+                        context: context,
                         icon: Icons.badge_outlined,
                         title: isAr ? 'توثيق بطاقة الرقم القومي' : 'National ID Verification',
                         onTap: () {
@@ -244,6 +246,7 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
+                        context: context,
                         icon: Icons.campaign_outlined,
                         title: isAr ? 'إعلاناتي وعروضي في اللوحة' : 'My Board Ads & Offers',
                         onTap: () {
@@ -254,6 +257,7 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
+                        context: context,
                         icon: Icons.account_balance_wallet_outlined,
                         title: isAr ? 'محفظة مشوار' : 'Wallet',
                         trailingText: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
@@ -265,6 +269,7 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
+                        context: context,
                         icon: Icons.settings_outlined,
                         title: isAr ? 'الإعدادات' : 'Settings',
                         onTap: () {
@@ -370,6 +375,7 @@ class UserProfileScreen extends StatelessWidget {
   }
 
   Widget _buildActionTile({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required VoidCallback onTap,
@@ -393,7 +399,13 @@ class UserProfileScreen extends StatelessWidget {
             Text(trailingText, style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(width: 6),
           ],
-          const Icon(Icons.arrow_back_ios_new_rounded, size: 13, color: Color(0xFF8E8E93)),
+          Icon(
+            Directionality.of(context) == TextDirection.rtl
+                ? Icons.chevron_left_rounded
+                : Icons.chevron_right_rounded,
+            size: 16,
+            color: const Color(0xFF8E8E93),
+          ),
         ],
       ),
       onTap: onTap,

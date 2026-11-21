@@ -65,13 +65,14 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage([String? quickText]) {
     final text = quickText ?? _msgController.text.trim();
     if (text.isEmpty) return;
+    final isAr = context.read<SettingsProvider>().isArabic;
 
     setState(() {
       _messages.add({
         'isMe': true,
         'text': text,
         'textEn': text,
-        'time': 'الآن',
+        'time': isAr ? 'الآن' : 'Now',
       });
       _msgController.clear();
     });
@@ -89,12 +90,13 @@ class _ChatScreenState extends State<ChatScreen> {
     // Simulate driver reply
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
+        final currentAr = context.read<SettingsProvider>().isArabic;
         setState(() {
           _messages.add({
             'isMe': false,
             'text': 'تمام يا فندم، مرحب بيك ومستنيك بالسيارة.',
             'textEn': 'Noted! Looking forward to seeing you.',
-            'time': 'الآن',
+            'time': currentAr ? 'الآن' : 'Now',
           });
         });
         if (_scrollController.hasClients) {
@@ -152,7 +154,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     children: [
                       Text(widget.driverName, style: AppTypography.title().copyWith(fontSize: 15)),
                       const SizedBox(width: 6),
-                      const MashwarBadge(type: BadgeType.verified, customLabel: 'موثق'),
+                      MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'موثق' : 'Verified'),
                     ],
                   ),
                   Text(widget.driverCar, style: AppTypography.label(color: AppColors.textSecondary)),
@@ -209,7 +211,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   final msg = _messages[index];
                   final isMe = msg['isMe'] as bool;
                   return Align(
-                    alignment: isMe ? Alignment.centerLeft : Alignment.centerRight,
+                    alignment: isMe ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       constraints: BoxConstraints(
@@ -218,12 +220,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: isMe ? AppColors.navy : Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: const Radius.circular(16),
-                          topRight: const Radius.circular(16),
-                          bottomLeft: Radius.circular(isMe ? 4 : 16),
-                          bottomRight: Radius.circular(isMe ? 16 : 4),
-                        ),
+                        borderRadius: BorderRadiusDirectional.only(
+                          topStart: const Radius.circular(16),
+                          topEnd: const Radius.circular(16),
+                          bottomStart: Radius.circular(isMe ? 16 : 4),
+                          bottomEnd: Radius.circular(isMe ? 4 : 16),
+                        ).resolve(Directionality.of(context)),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.04),
@@ -233,7 +235,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         ],
                       ),
                       child: Column(
-                        crossAxisAlignment: isMe ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+                        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                         children: [
                           Text(
                             isAr ? msg['text'] : msg['textEn'],
