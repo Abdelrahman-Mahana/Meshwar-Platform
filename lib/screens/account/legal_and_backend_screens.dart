@@ -12,6 +12,7 @@ import '../../data/api/mashwar_api_client.dart';
 import '../../data/mock_data.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
+import '../system/system_screens.dart';
 
 /// 1. Legal, Privacy & Ministry of Transport Compliance Screen
 class LegalComplianceScreen extends StatelessWidget {
@@ -581,6 +582,75 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
                             ),
                           ),
                         ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppDimens.space16),
+
+            // System State Screens Inspector (معاينة حالات النظام والاستجابة)
+            Container(
+              padding: const EdgeInsets.all(AppDimens.space16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                border: Border.all(color: AppColors.borderDisabled),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isAr ? 'معاينة شاشات وحالات النظام (System States)' : 'System State Screens Preview',
+                    style: AppTypography.title().copyWith(fontSize: 16),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    isAr
+                        ? 'تتيح هذه اللوحة فحص استجابة الواجهة لكل الحالات الاستثنائية كالتحديث والصيانة وانقطاع الاتصال.'
+                        : 'Inspect how the application behaves under force updates, maintenance, offline mode, and expired sessions.',
+                    style: AppTypography.bodySecondary(),
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ActionChip(
+                        avatar: const Icon(Icons.arrow_upward_rounded, size: 16, color: AppColors.navy),
+                        label: Text(isAr ? 'تحديث إجباري' : 'Force Update'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ForceUpdateScreen()),
+                        ),
+                      ),
+                      ActionChip(
+                        avatar: const Icon(Icons.build_circle_outlined, size: 16, color: AppColors.navy),
+                        label: Text(isAr ? 'شاشة الصيانة' : 'Maintenance'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const MaintenanceScreen()),
+                        ),
+                      ),
+                      ActionChip(
+                        avatar: const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.navy),
+                        label: Text(isAr ? 'انقطاع الاتصال' : 'Offline Mode'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const OfflineScreen()),
+                        ),
+                      ),
+                      ActionChip(
+                        avatar: const Icon(Icons.error_outline_rounded, size: 16, color: AppColors.coral),
+                        label: Text(isAr ? 'خطأ عام' : 'General Error'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const GeneralErrorScreen()),
+                        ),
+                      ),
+                      ActionChip(
+                        avatar: const Icon(Icons.lock_clock_rounded, size: 16, color: AppColors.navy),
+                        label: Text(isAr ? 'انتهاء الجلسة' : 'Session Expired'),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const SessionExpiredScreen()),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

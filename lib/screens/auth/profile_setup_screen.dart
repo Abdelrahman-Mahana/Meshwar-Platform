@@ -5,7 +5,7 @@ import '../../core/constants/app_dimens.dart';
 import '../../data/models/user_model.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
-import '../main_nav_shell.dart';
+import '../permissions/location_permission_screen.dart';
 
 /// Clean, minimalist, Uber/inDrive-style Profile Setup screen.
 /// Focuses on essential rider data without visual clutter, excessive lines, or emojis.
@@ -164,7 +164,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           );
 
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const MainNavShell()),
+        MaterialPageRoute(builder: (_) => const LocationPermissionScreen()),
         (route) => false,
       );
     }

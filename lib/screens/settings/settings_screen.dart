@@ -659,6 +659,25 @@ class SettingsScreen extends StatelessWidget {
                   ),
                   _buildIndentedDivider(),
                   _buildSettingsTile(
+                    icon: Icons.developer_mode_rounded,
+                    iconColor: AppColors.teal,
+                    title: isAr ? 'جاهزية الخادم وحالة النظام' : 'Backend & System Diagnostics',
+                    subtitle: isAr ? 'فحص العقود والواجهات البرمجية وحالات النظام' : 'API contracts & system state health check',
+                    trailing: Icon(
+                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const BackendReadinessScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
                     icon: Icons.delete_outline_rounded,
                     iconColor: AppColors.danger,
                     title: isAr ? 'حذف الحساب نهائياً' : 'Delete Account Permanently',

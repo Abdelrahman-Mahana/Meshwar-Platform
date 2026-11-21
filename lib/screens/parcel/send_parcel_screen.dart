@@ -9,6 +9,7 @@ import '../../core/widgets/mashwar_text_field.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/parcel_model.dart';
 import '../../data/models/ride_model.dart';
+import '../../state/auth_provider.dart';
 import '../../state/parcels_provider.dart';
 import 'parcel_tracking_screen.dart';
 import 'prohibited_items_sheet.dart';
@@ -30,8 +31,11 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
   final TextEditingController _receiverPhoneController = TextEditingController(text: '01155512345');
   ParcelSize _selectedSize = ParcelSize.small;
   bool _agreedProhibited = true;
+  String? _descError;
   String? _weightError;
   String? _valueError;
+  String? _receiverNameError;
+  String? _receiverPhoneError;
 
   @override
   void dispose() {
@@ -44,15 +48,41 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
   }
 
   void _validateAndSubmit(bool isAr) {
+    final desc = _descController.text.trim();
     final weight = double.tryParse(_weightController.text) ?? 0.0;
     final value = int.tryParse(_valController.text) ?? 0;
+    final receiverName = _receiverNameController.text.trim();
+    final receiverPhone = _receiverPhoneController.text.trim();
+
+    final phoneError = AuthProvider.validateEgyptianPhone(receiverPhone);
 
     setState(() {
-      _weightError = weight > 15 ? (isAr ? 'الوزن الأقصى 15 كجم' : 'Maximum weight is 15 kg') : null;
-      _valueError = value > 2000 ? (isAr ? 'القيمة القصوى المصرّح بها 2000 ج' : 'Maximum allowed value is 2000 EGP') : null;
+      _descError = desc.isEmpty ? (isAr ? 'يرجى كتابة وصف أو محتوى الطرد' : 'Please enter parcel description') : null;
+      _weightError = weight <= 0
+          ? (isAr ? 'يرجى إدخال وزن الطرد' : 'Please enter weight')
+          : weight > 15
+              ? (isAr ? 'الوزن الأقصى 15 كجم' : 'Maximum weight is 15 kg')
+              : null;
+      _valueError = value <= 0
+          ? (isAr ? 'يرجى إدخال القيمة التقديرية' : 'Please enter estimated value')
+          : value > 2000
+              ? (isAr ? 'القيمة القصوى المصرّح بها 2000 ج' : 'Maximum allowed value is 2000 EGP')
+              : null;
+      _receiverNameError = receiverName.length < 2
+          ? (isAr ? 'يرجى إدخال اسم المستلم' : 'Please enter receiver name')
+          : null;
+      _receiverPhoneError = phoneError != null
+          ? (isAr ? phoneError : 'Phone must be 11 digits starting with 010, 011, 012, or 015')
+          : null;
     });
 
-    if (_weightError != null || _valueError != null) return;
+    if (_descError != null ||
+        _weightError != null ||
+        _valueError != null ||
+        _receiverNameError != null ||
+        _receiverPhoneError != null) {
+      return;
+    }
 
     if (!_agreedProhibited) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,12 +95,12 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
     parcels.sendParcel(
       driverName: widget.ride.driverName,
       route: '${widget.ride.fromCity} ← ${widget.ride.toCity} · ${widget.ride.departureTime}',
-      description: _descController.text.trim(),
+      description: desc,
       size: _selectedSize,
       weightKg: weight,
       estimatedValue: value,
-      receiverName: _receiverNameController.text.trim(),
-      receiverPhone: _receiverPhoneController.text.trim(),
+      receiverName: receiverName,
+      receiverPhone: receiverPhone,
       fee: widget.ride.parcelPrice,
     );
 
@@ -330,6 +360,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
           controller: _descController,
           label: isAr ? 'محتوى الطرد' : 'Parcel Content',
           hint: isAr ? 'مثال: أوراق رسمية، ملابس، كتاب' : 'e.g. Official papers, clothes, book',
+          errorText: _descError,
         ),
         const SizedBox(height: AppDimens.space16),
         Row(
@@ -370,6 +401,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
           controller: _receiverNameController,
           label: isAr ? 'اسم المستلم' : 'Receiver Name',
           hint: isAr ? 'الاسم بالكامل' : 'Full Name',
+          errorText: _receiverNameError,
         ),
         const SizedBox(height: AppDimens.space12),
         MashwarTextField(
@@ -377,6 +409,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
           label: isAr ? 'رقم موبايل المستلم' : 'Receiver Phone',
           hint: '01XXXXXXXXX',
           keyboardType: TextInputType.phone,
+          errorText: _receiverPhoneError,
         ),
       ],
     );

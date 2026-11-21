@@ -52,31 +52,32 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          // Simulation menu to test all 7 status step variations from Page 33
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert_rounded, color: AppColors.navy),
-            onSelected: (val) {
-              setState(() {
-                _isRejected = false;
-                _isCancelled = false;
-                if (val == 'requested') _status = ParcelStatusStep.requested;
-                if (val == 'accepted') _status = ParcelStatusStep.accepted;
-                if (val == 'handedOver') _status = ParcelStatusStep.handedOver;
-                if (val == 'inTransit') _status = ParcelStatusStep.inTransit;
-                if (val == 'delivered') _status = ParcelStatusStep.delivered;
-                if (val == 'rejected') _isRejected = true;
-                if (val == 'cancelled') _isCancelled = true;
-              });
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: AppColors.navy),
+            tooltip: isAr ? 'مشاركة رابط التتبع مع المستلم' : 'Share Tracking Link',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isAr
+                        ? 'تم نسخ رابط التتبع السري مع المستلم: ${widget.parcel.receiverName}'
+                        : 'Tracking link copied for ${widget.parcel.receiverName}',
+                  ),
+                  backgroundColor: AppColors.teal,
+                ),
+              );
             },
-            itemBuilder: (_) => [
-              PopupMenuItem(value: 'requested', child: Text(isAr ? '1. بانتظار السائق' : '1. Waiting for Driver')),
-              PopupMenuItem(value: 'accepted', child: Text(isAr ? '2. مقبول' : '2. Accepted')),
-              PopupMenuItem(value: 'handedOver', child: Text(isAr ? '3. في عهدة السائق' : '3. In Driver Custody')),
-              PopupMenuItem(value: 'inTransit', child: Text(isAr ? '4. في الطريق' : '4. In Transit')),
-              PopupMenuItem(value: 'delivered', child: Text(isAr ? '5. تم التسليم' : '5. Delivered')),
-              PopupMenuItem(value: 'rejected', child: Text(isAr ? '6. مرفوض' : '6. Rejected')),
-              PopupMenuItem(value: 'cancelled', child: Text(isAr ? '7. ملغى' : '7. Cancelled')),
-            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.help_outline_rounded, color: AppColors.navy),
+            tooltip: isAr ? 'المساعدة والنزاعات' : 'Help & Disputes',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ParcelDisputeScreen(reportId: widget.parcel.id),
+                ),
+              );
+            },
           ),
         ],
       ),

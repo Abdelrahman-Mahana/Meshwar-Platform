@@ -75,17 +75,21 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
-          // Simulation menu to preview all 5 Page 24 states
-          PopupMenuButton<RideDetailsState>(
-            icon: const Icon(Icons.more_vert_rounded, color: AppColors.navy),
-            onSelected: (val) => setState(() => _state = val),
-            itemBuilder: (_) => [
-              PopupMenuItem(value: RideDetailsState.available, child: Text(isAr ? '1. متاحة' : '1. Available')),
-              PopupMenuItem(value: RideDetailsState.full, child: Text(isAr ? '2. مكتملة' : '2. Full')),
-              PopupMenuItem(value: RideDetailsState.cancelled, child: Text(isAr ? '3. ملغاة' : '3. Cancelled')),
-              PopupMenuItem(value: RideDetailsState.ladiesOnly, child: Text(isAr ? '4. للسيدات فقط' : '4. Ladies Only')),
-              PopupMenuItem(value: RideDetailsState.error, child: Text(isAr ? '5. خطأ' : '5. Error')),
-            ],
+          IconButton(
+            icon: const Icon(Icons.share_outlined, color: AppColors.navy),
+            tooltip: isAr ? 'مشاركة الرحلة' : 'Share Ride',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isAr
+                        ? 'تم نسخ رابط الرحلة: مشوار ${widget.ride.fromCity} إلى ${widget.ride.toCity}'
+                        : 'Ride link copied: MASHWAR ${widget.ride.fromCity} to ${widget.ride.toCity}',
+                  ),
+                  backgroundColor: AppColors.teal,
+                ),
+              );
+            },
           ),
         ],
       ),

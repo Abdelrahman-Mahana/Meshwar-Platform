@@ -34,10 +34,25 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_secondsLeft > 0) {
-        setState(() => _secondsLeft--);
+        if (mounted) setState(() => _secondsLeft--);
       } else {
-        setState(() => _isTimedOut = true);
+        if (mounted) setState(() => _isTimedOut = true);
         timer.cancel();
+      }
+    });
+
+    // Realistic driver response simulation for interactive prototype
+    Future.delayed(const Duration(milliseconds: 4500), () {
+      if (mounted && !_isTimedOut) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => BookingResultScreen(
+              ride: widget.ride,
+              isConfirmed: true,
+              totalPrice: widget.totalPrice,
+            ),
+          ),
+        );
       }
     });
   }
@@ -68,36 +83,16 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => BookingResultScreen(
-                    ride: widget.ride,
-                    isConfirmed: true,
-                    totalPrice: widget.totalPrice,
-                  ),
-                ),
-              );
-            },
-            child: Text(isAr ? 'تأكيد الحجز' : 'Confirm', style: AppTypography.label(color: AppColors.teal)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (_) => BookingResultScreen(
-                    ride: widget.ride,
-                    isConfirmed: false,
-                    totalPrice: widget.totalPrice,
-                  ),
-                ),
-              );
-            },
-            child: Text(isAr ? 'اعتذار' : 'Decline', style: AppTypography.label(color: AppColors.danger)),
-          ),
-        ],
+        title: Text(
+          isAr ? 'طلب حجز معلق' : 'Booking Pending',
+          style: AppTypography.title(),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.close_rounded, color: AppColors.navy),
+          onPressed: () {
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
+        ),
       ),
       body: SafeArea(
         child: Padding(

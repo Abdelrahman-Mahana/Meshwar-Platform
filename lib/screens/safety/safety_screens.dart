@@ -37,9 +37,15 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
         title: Text(isAr ? 'رحلتك الآن' : 'Live Trip', style: AppTypography.title()),
         actions: [
           IconButton(
-            icon: Icon(_isWeakSignal ? Icons.signal_cellular_connected_no_internet_4_bar_rounded : Icons.signal_cellular_alt_rounded),
-            tooltip: isAr ? 'محاكاة ضعف الإشارة' : 'Toggle Weak Signal',
-            onPressed: () => setState(() => _isWeakSignal = !_isWeakSignal),
+            icon: const Icon(Icons.share_outlined, color: AppColors.navy),
+            tooltip: isAr ? 'مشاركة مسار الرحلة' : 'Share Live Trip',
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                builder: (_) => const ShareTripSheet(),
+              );
+            },
           ),
         ],
       ),

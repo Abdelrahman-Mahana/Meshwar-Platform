@@ -123,6 +123,8 @@ void main() {
     final logoutBtn = find.byType(MashwarButton);
     expect(logoutBtn, findsOneWidget);
 
+    await tester.ensureVisible(logoutBtn);
+    await tester.pumpAndSettle();
     await tester.tap(logoutBtn);
     await tester.pumpAndSettle();
 
