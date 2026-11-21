@@ -39,7 +39,8 @@ class MashwarButton extends StatelessWidget {
     final isAr = settings?.isArabic ?? true;
     final displayLabel = AppStrings.translate(text, isArabic: isAr);
 
-    final bool isDisabled = onPressed == null || isLoading;
+    final bool isDisabled = onPressed == null;
+    final bool isNonInteractive = isDisabled || isLoading;
 
     Color bgColor;
     Color fgColor;
@@ -47,24 +48,36 @@ class MashwarButton extends StatelessWidget {
 
     switch (variant) {
       case MashwarButtonVariant.primary:
-        bgColor = isDisabled ? AppColors.borderDisabled : AppColors.navy;
-        fgColor = Colors.white;
+        bgColor = isLoading
+            ? AppColors.navy.withValues(alpha: 0.85)
+            : isDisabled
+                ? AppColors.borderDisabled
+                : AppColors.navy;
+        fgColor = isDisabled && !isLoading ? AppColors.textSecondary : Colors.white;
         break;
       case MashwarButtonVariant.secondary:
         bgColor = Colors.transparent;
-        fgColor = isDisabled ? AppColors.borderDisabled : AppColors.navy;
+        fgColor = isDisabled && !isLoading
+            ? AppColors.textSecondary.withValues(alpha: 0.65)
+            : AppColors.navy;
         borderSide = BorderSide(
-          color: isDisabled ? AppColors.borderDisabled : AppColors.navy,
+          color: isDisabled && !isLoading ? AppColors.borderDisabled : AppColors.navy,
           width: 1.5,
         );
         break;
       case MashwarButtonVariant.text:
         bgColor = Colors.transparent;
-        fgColor = isDisabled ? AppColors.borderDisabled : AppColors.navy;
+        fgColor = isDisabled && !isLoading
+            ? AppColors.textSecondary.withValues(alpha: 0.65)
+            : AppColors.navy;
         break;
       case MashwarButtonVariant.danger:
-        bgColor = isDisabled ? AppColors.borderDisabled : AppColors.danger;
-        fgColor = Colors.white;
+        bgColor = isLoading
+            ? AppColors.danger.withValues(alpha: 0.85)
+            : isDisabled
+                ? AppColors.borderDisabled
+                : AppColors.danger;
+        fgColor = isDisabled && !isLoading ? AppColors.textSecondary : Colors.white;
         break;
     }
 
@@ -101,23 +114,28 @@ class MashwarButton extends StatelessWidget {
       ],
     );
 
-    return SizedBox(
-      width: width ?? double.infinity,
-      height: height,
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        minWidth: width ?? double.infinity,
+        maxWidth: width ?? double.infinity,
+        minHeight: height,
+      ),
       child: Material(
         color: bgColor,
         borderRadius: BorderRadius.circular(AppDimens.radiusButton),
         child: InkWell(
-          onTap: isDisabled ? null : onPressed,
+          onTap: isNonInteractive ? null : onPressed,
           borderRadius: BorderRadius.circular(AppDimens.radiusButton),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppDimens.radiusButton),
               border: borderSide != null ? Border.fromBorderSide(borderSide) : null,
             ),
-            alignment: Alignment.center,
-            child: buttonChild,
+            child: Center(
+              heightFactor: 1.0,
+              child: buttonChild,
+            ),
           ),
         ),
       ),

@@ -231,7 +231,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
                 isAr ? 'حدد شارع أو علامة مميزة أو محطة' : 'Specify landmark, street, or station',
                 style: AppTypography.label(),
               ),
-              trailing: const Icon(Icons.chevron_left_rounded, color: AppColors.navy),
+              trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.navy),
               onTap: () {
                 setState(() => _showCustomMeetingPoint = true);
               },

@@ -108,12 +108,16 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
         _currentStep = 2;
       });
     } else if (_currentStep == 2) {
-      final price = int.tryParse(_priceController.text) ?? 120;
-      if (price > 150) {
+      final parsedPrice = int.tryParse(_priceController.text.trim());
+      if (parsedPrice == null) {
+        setState(() => _priceError = isAr ? 'يرجى إدخال سعر صحيح' : 'Please enter a valid price');
+        return;
+      }
+      if (parsedPrice > 150) {
         setState(() => _priceError = isAr ? 'السعر أعلى من الحد المسموح (150 ج)' : 'Price exceeds allowed ceiling (150 EGP)');
         return;
       }
-      if (price < 90) {
+      if (parsedPrice < 90) {
         setState(() => _priceError = isAr ? 'السعر أقل من الحد الأدنى (90 ج)' : 'Price below minimum (90 EGP)');
         return;
       }
@@ -537,7 +541,10 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
             _buildSectionCard(
               title: isAr ? 'مراجعة بيانات الرحلة' : 'Review Trip Details',
               children: [
-                _buildReviewRow(isAr ? 'المسار' : 'Route', '$_fromCity ← $_toCity'),
+                _buildReviewRow(
+                  isAr ? 'المسار' : 'Route',
+                  isAr ? '$_fromCity ← $_toCity' : '$_fromCity → $_toCity',
+                ),
                 const Divider(height: 16),
                 _buildReviewRow(isAr ? 'الموعد' : 'Date & Time', '$_date ($_flexibility)'),
                 const Divider(height: 16),

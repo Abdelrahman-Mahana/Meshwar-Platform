@@ -414,9 +414,9 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
                   ),
                 ),
                 if (offersCount > 0)
-                  Icon(
-                    isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-                    size: 16,
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
                     color: AppColors.teal,
                   ),
               ],

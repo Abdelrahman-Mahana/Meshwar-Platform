@@ -536,12 +536,15 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
   }
 
   Widget _buildCoPassengersCard(bool isAr) {
+    final openSeats = widget.ride.remainingSeats.clamp(0, 4);
+    final bookedSeats = (4 - openSeats).clamp(0, 4);
+    final isLadies = widget.ride.isLadiesOnly;
     return Container(
       padding: const EdgeInsets.all(AppDimens.space16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+        border: Border.all(color: AppColors.borderDisabled, width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -559,12 +562,12 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF3F3F4),
+                  color: AppColors.chipInactiveBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  isAr ? '2 محجوز · 2 متاح' : '2 Booked · 2 Open',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.teal),
+                  isAr ? '$bookedSeats محجوز · $openSeats متاح' : '$bookedSeats Booked · $openSeats Open',
+                  style: AppTypography.label(color: AppColors.teal).copyWith(fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -574,19 +577,29 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
             children: [
               Expanded(
                 child: _buildSeatPill(
-                  title: isAr ? 'سارة م.' : 'Sara M.',
-                  subtitle: isAr ? 'طالبة · موثقة' : 'Student · Verified',
-                  isOccupied: true,
-                  icon: Icons.person_rounded,
+                  title: bookedSeats >= 1
+                      ? (isAr ? 'سارة م.' : 'Sara M.')
+                      : (isAr ? 'مقعد متاح' : 'Open Seat'),
+                  subtitle: bookedSeats >= 1
+                      ? (isAr ? 'طالبة · موثقة' : 'Student · Verified')
+                      : (isAr ? 'متاح للحجز الآن' : 'Available now'),
+                  isOccupied: bookedSeats >= 1,
+                  icon: bookedSeats >= 1 ? Icons.person_rounded : Icons.airline_seat_recline_normal_rounded,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildSeatPill(
-                  title: isAr ? 'أحمد ك.' : 'Ahmed K.',
-                  subtitle: isAr ? 'مهندس · موثق' : 'Engineer · Verified',
-                  isOccupied: true,
-                  icon: Icons.person_rounded,
+                  title: bookedSeats >= 2
+                      ? (isLadies ? (isAr ? 'منى ح.' : 'Mona H.') : (isAr ? 'أحمد ك.' : 'Ahmed K.'))
+                      : (isAr ? 'مقعد متاح' : 'Open Seat'),
+                  subtitle: bookedSeats >= 2
+                      ? (isLadies
+                          ? (isAr ? 'طبيبة · موثقة' : 'Doctor · Verified')
+                          : (isAr ? 'مهندس · موثق' : 'Engineer · Verified'))
+                      : (isAr ? 'متاح للحجز' : 'Available'),
+                  isOccupied: bookedSeats >= 2,
+                  icon: bookedSeats >= 2 ? Icons.person_rounded : Icons.airline_seat_recline_normal_rounded,
                 ),
               ),
             ],
@@ -596,19 +609,27 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
             children: [
               Expanded(
                 child: _buildSeatPill(
-                  title: isAr ? 'مقعدك المحجوز' : 'Your Reserved Seat',
-                  subtitle: isAr ? 'متاح للحجز الآن' : 'Available now',
-                  isOccupied: false,
-                  icon: Icons.airline_seat_recline_normal_rounded,
+                  title: bookedSeats >= 3
+                      ? (isAr ? 'راكب موثق' : 'Verified Rider')
+                      : (isAr ? 'مقعد متاح لك' : 'Available Seat'),
+                  subtitle: bookedSeats >= 3
+                      ? (isAr ? 'موثق بالهوية' : 'ID Verified')
+                      : (isAr ? 'متاح للحجز الآن' : 'Available now'),
+                  isOccupied: bookedSeats >= 3,
+                  icon: bookedSeats >= 3 ? Icons.person_rounded : Icons.airline_seat_recline_normal_rounded,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildSeatPill(
-                  title: isAr ? 'مقعد إضافي' : 'Extra Seat',
-                  subtitle: isAr ? 'متاح للحجز' : 'Available',
-                  isOccupied: false,
-                  icon: Icons.airline_seat_recline_normal_rounded,
+                  title: bookedSeats >= 4
+                      ? (isAr ? 'راكب موثق' : 'Verified Rider')
+                      : (isAr ? 'مقعد إضافي' : 'Extra Seat'),
+                  subtitle: bookedSeats >= 4
+                      ? (isAr ? 'موثق بالهوية' : 'ID Verified')
+                      : (isAr ? 'متاح للحجز' : 'Available'),
+                  isOccupied: bookedSeats >= 4,
+                  icon: bookedSeats >= 4 ? Icons.person_rounded : Icons.airline_seat_recline_normal_rounded,
                 ),
               ),
             ],

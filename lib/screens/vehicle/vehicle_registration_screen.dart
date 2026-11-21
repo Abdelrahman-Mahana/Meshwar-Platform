@@ -241,34 +241,42 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          isAr ? 'عدد المقاعد المتاحة للركاب' : 'Available Seats',
-                          style: AppTypography.body().copyWith(fontWeight: FontWeight.w600),
+                        Expanded(
+                          child: Text(
+                            isAr ? 'عدد المقاعد المتاحة للركاب' : 'Available Seats',
+                            style: AppTypography.body().copyWith(fontWeight: FontWeight.w600),
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [2, 3, 4].map((count) {
                             final isSel = _seatsCount == count;
-                            return GestureDetector(
-                              onTap: () => setState(() => _seatsCount = count),
-                              child: Container(
-                                margin: const EdgeInsets.only(left: 6),
-                                width: 38,
-                                height: 38,
-                                decoration: BoxDecoration(
-                                  color: isSel ? AppColors.navy : const Color(0xFFF3F3F4),
+                            return Padding(
+                              padding: const EdgeInsetsDirectional.only(start: 6),
+                              child: Material(
+                                color: isSel ? AppColors.navy : AppColors.chipInactiveBg,
+                                borderRadius: BorderRadius.circular(10),
+                                child: InkWell(
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: isSel ? AppColors.navy : const Color(0xFFE5E5EA),
-                                    width: 0.8,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '$count',
-                                    style: TextStyle(
-                                      color: isSel ? Colors.white : AppColors.navy,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
+                                  onTap: () => setState(() => _seatsCount = count),
+                                  child: Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isSel ? AppColors.navy : AppColors.borderDisabled,
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '$count',
+                                        style: AppTypography.body(
+                                          color: isSel ? Colors.white : AppColors.navy,
+                                        ).copyWith(fontWeight: FontWeight.bold, fontSize: 15),
+                                      ),
                                     ),
                                   ),
                                 ),

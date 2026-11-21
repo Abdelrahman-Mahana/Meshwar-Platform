@@ -107,7 +107,7 @@ class _AdminShellState extends State<AdminShell> {
                 isAr ? 'بحاجة لمراجعة بطاقة الرقم القومي ورخص القيادة' : 'Requires National ID & License checks',
                 style: const TextStyle(fontSize: 11),
               ),
-              trailing: Icon(isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded),
+              trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.of(ctx).pop();
                 setState(() => _selectedIndex = 1);
@@ -128,7 +128,7 @@ class _AdminShellState extends State<AdminShell> {
                 isAr ? 'تتطلب إسناداً لموظف دعم وحلاً عاجلاً' : 'Requires staff assignment & resolution',
                 style: const TextStyle(fontSize: 11),
               ),
-              trailing: Icon(isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded),
+              trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.of(ctx).pop();
                 setState(() => _selectedIndex = 4);
@@ -182,8 +182,8 @@ class _AdminShellState extends State<AdminShell> {
               const SizedBox(height: 10),
               Text(
                 isAr
-                    ? 'بموجب مصفوفة الصلاحيات (صفحة 77)، دورك الحالي محدد فقط لأقسام معينة. يمكنك تبديل دورك التجريبي من الشريط العلوي لتجربة بقية الشاشات.'
-                    : 'Per the Page 77 permissions matrix, your current role does not have access to this screen. Switch roles from the top-bar to preview other views.',
+                    ? 'دورك الإداري الحالي مخصص لأقسام محددة فقط وفق سياسة الصلاحيات. تواصل مع المشرف الأول لطلب صلاحيات إضافية.'
+                    : 'Your current staff role is restricted to specific operational sections per role-based access policy.',
                 style: AppTypography.body(color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
@@ -487,8 +487,8 @@ class _AdminShellState extends State<AdminShell> {
                             SnackBar(
                               content: Text(
                                 isAr
-                                    ? 'هذه الشاشة مقصورة على أدوار إدارية أخرى بموجب مصفوفة الصلاحيات (صفحة 77).'
-                                    : 'Access restricted for current simulated role under Page 77 matrix.',
+                                    ? 'هذه الشاشة مقصورة على أدوار إدارية أخرى وفق سياسة الصلاحيات.'
+                                    : 'Access restricted for your current staff role.',
                               ),
                               duration: const Duration(seconds: 2),
                             ),

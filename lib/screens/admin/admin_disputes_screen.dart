@@ -207,16 +207,23 @@ class _DisputeDetailModalState extends State<_DisputeDetailModal> {
               // Header
               Row(
                 children: [
-                  Text(
-                    '${widget.dispute.id}: ${widget.dispute.category}',
-                    style: AppTypography.title().copyWith(fontSize: 18),
+                  Expanded(
+                    child: Text(
+                      '${widget.dispute.id}: ${widget.dispute.category}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.title().copyWith(fontSize: 18),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   MashwarBadge(
-                    type: widget.dispute.status == 'مفتوح' ? BadgeType.rejected : BadgeType.verified,
+                    type: widget.dispute.status == 'مفتوح'
+                        ? BadgeType.rejected
+                        : (widget.dispute.status == 'قيد المراجعة'
+                            ? BadgeType.pending
+                            : BadgeType.verified),
                     customLabel: widget.dispute.status,
                   ),
-                  const Spacer(),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
                     onPressed: () => Navigator.of(context).pop(),

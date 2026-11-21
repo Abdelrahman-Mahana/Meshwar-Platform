@@ -232,15 +232,15 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
   Widget _buildPhoneInputField({required bool hasError, required bool isAr}) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
-      height: 56,
+      constraints: const BoxConstraints(minHeight: 56),
       decoration: BoxDecoration(
-        color: _isFocused ? Colors.white : const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(12),
+        color: _isFocused ? Colors.white : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
         border: Border.all(
           color: hasError
               ? AppColors.danger
-              : (_isFocused ? AppColors.navy : const Color(0xFFE5E5EA)),
-          width: hasError ? 1.4 : (_isFocused ? 1.8 : 0.8),
+              : (_isFocused ? AppColors.navy : AppColors.borderDisabled),
+          width: hasError ? 1.4 : (_isFocused ? 1.8 : 1.0),
         ),
         boxShadow: _isFocused && !hasError
             ? [
@@ -253,24 +253,50 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
             : null,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        children: [
-          // Clear button if text exists
-          if (_phoneController.text.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 20),
-              onPressed: () {
-                setState(() {
-                  _phoneController.clear();
-                  _errorText = null;
-                });
-              },
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Row(
+          children: [
+            // Clean Egyptian Country Code Badge (+20 EG) always on left in LTR phone format
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.chipInactiveBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.borderDisabled, width: 0.8),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'EG',
+                    style: AppTypography.label(color: AppColors.teal).copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '+20',
+                    style: AppTypography.body(color: AppColors.navy).copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
             ),
 
-          // Phone input field
-          Expanded(
-            child: Directionality(
-              textDirection: TextDirection.ltr,
+            // Vertical Divider
+            Container(
+              height: 22,
+              width: 1,
+              margin: const EdgeInsets.symmetric(horizontal: 10),
+              color: AppColors.borderDisabled,
+            ),
+
+            // Phone input field
+            Expanded(
               child: TextField(
                 controller: _phoneController,
                 focusNode: _focusNode,
@@ -281,15 +307,12 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   counterText: '',
                   hintText: '01XXXXXXXXX',
-                  hintStyle: TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.0,
-                  ),
+                  hintStyle: AppTypography.bodySecondary(
+                    color: AppColors.textSecondary.withValues(alpha: 0.7),
+                  ).copyWith(fontSize: 15, letterSpacing: 1.0),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -311,45 +334,24 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                       selection: TextSelection.collapsed(offset: normalized.length),
                     );
                   }
-                  if (_errorText != null) {
-                    setState(() => _errorText = null);
-                  }
+                  setState(() => _errorText = null);
                 },
               ),
             ),
-          ),
 
-          // Vertical Divider
-          Container(
-            height: 22,
-            width: 1,
-            margin: const EdgeInsets.symmetric(horizontal: 10),
-            color: const Color(0xFFE5E5EA),
-          ),
-
-          // Egyptian Flag & Country Code Badge (+20 🇪🇬)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F3F4),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '+20',
-                  style: AppTypography.body(color: AppColors.navy).copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                const Text('🇪🇬', style: TextStyle(fontSize: 16)),
-              ],
-            ),
-          ),
-        ],
+            // Clear button if text exists
+            if (_phoneController.text.isNotEmpty)
+              IconButton(
+                icon: const Icon(Icons.cancel_rounded, color: AppColors.textSecondary, size: 20),
+                onPressed: () {
+                  setState(() {
+                    _phoneController.clear();
+                    _errorText = null;
+                  });
+                },
+              ),
+          ],
+        ),
       ),
     );
   }

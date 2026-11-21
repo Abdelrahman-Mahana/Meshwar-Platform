@@ -61,7 +61,7 @@ class AlertBanner extends StatelessWidget {
         iconData = Icons.wifi_off_rounded;
         break;
       case AlertBannerType.info:
-        borderColor = AppColors.navy;
+        borderColor = AppColors.info;
         bgColor = AppColors.infoBg;
         iconData = Icons.info_outline_rounded;
         break;
@@ -107,13 +107,16 @@ class AlertBanner extends StatelessWidget {
               ),
               if (onTap != null) ...[
                 const SizedBox(width: AppDimens.space8),
-                Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: borderColor),
+                Icon(Icons.chevron_right_rounded, size: 20, color: borderColor),
               ],
               if (showClose) ...[
-                const SizedBox(width: AppDimens.space8),
-                GestureDetector(
-                  onTap: onClose,
-                  child: Icon(Icons.close_rounded, size: 18, color: borderColor),
+                const SizedBox(width: AppDimens.space4),
+                IconButton(
+                  onPressed: onClose,
+                  icon: Icon(Icons.close_rounded, size: 18, color: borderColor),
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
                 ),
               ],
             ],

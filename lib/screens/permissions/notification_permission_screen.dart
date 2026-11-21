@@ -23,55 +23,78 @@ class NotificationPermissionScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              // Bell Icon Circle
-              Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: AppDimens.space20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const SizedBox(height: AppDimens.space32),
+                        Column(
+                          children: [
+                            Container(
+                              width: 84,
+                              height: 84,
+                              decoration: BoxDecoration(
+                                color: AppColors.goldSurface,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+                              ),
+                              child: const Icon(
+                                Icons.notifications_active_outlined,
+                                color: AppColors.navy,
+                                size: 38,
+                              ),
+                            ),
+                            const SizedBox(height: AppDimens.space24),
+                            Text(
+                              isAr ? 'ماتفوتش أي تحديث' : 'Don\'t miss any update',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.largeTitle(),
+                            ),
+                            const SizedBox(height: AppDimens.space12),
+                            Text(
+                              isAr
+                                  ? 'هنبلّغك فوراً لما السائق يوافق على حجزك أو يوصل نقطة الصعود.'
+                                  : 'We will notify you immediately when driver accepts booking or arrives at pickup.',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.bodySecondary(),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            const SizedBox(height: AppDimens.space32),
+                            MashwarButton(
+                              text: isAr ? 'تفعيل التنبيهات' : 'Enable Notifications',
+                              onPressed: () => _finishOnboarding(context),
+                            ),
+                            const SizedBox(height: AppDimens.space12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: AppDimens.minTouchTarget,
+                              child: TextButton(
+                                onPressed: () => _finishOnboarding(context),
+                                child: Text(
+                                  isAr ? 'مش دلوقتي' : 'Not now',
+                                  style: AppTypography.bodySecondary(color: AppColors.textSecondary),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: const Icon(
-                  Icons.notifications_active_outlined,
-                  color: AppColors.navy,
-                  size: 38,
-                ),
               ),
-              const SizedBox(height: AppDimens.space24),
-              Text(
-                isAr ? 'ماتفوتش أي تحديث' : 'Don\'t miss any update',
-                textAlign: TextAlign.center,
-                style: AppTypography.largeTitle(),
-              ),
-              const SizedBox(height: AppDimens.space12),
-              Text(
-                isAr
-                    ? 'هنبلّغك فوراً لما السائق يوافق على حجزك أو يوصل نقطة الصعود.'
-                    : 'We will notify you immediately when driver accepts booking or arrives at pickup.',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
-              ),
-              const Spacer(flex: 4),
-
-              MashwarButton(
-                text: isAr ? 'تفعيل التنبيهات' : 'Enable Notifications',
-                onPressed: () => _finishOnboarding(context),
-              ),
-              const SizedBox(height: AppDimens.space12),
-              TextButton(
-                onPressed: () => _finishOnboarding(context),
-                child: Text(
-                  isAr ? 'مش دلوقتي' : 'Not now',
-                  style: AppTypography.bodySecondary(color: AppColors.textSecondary),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space24),
-            ],
+            ),
           ),
         ),
       ),

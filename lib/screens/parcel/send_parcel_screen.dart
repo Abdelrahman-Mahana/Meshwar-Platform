@@ -428,21 +428,33 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  const Icon(Icons.shield_outlined, color: AppColors.navy, size: 20),
-                  const SizedBox(width: 8),
-                  Text(isAr ? 'شروط أمان الطرود' : 'Parcel Safety Terms', style: AppTypography.body().copyWith(fontWeight: FontWeight.w700)),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(Icons.shield_outlined, color: AppColors.navy, size: 20),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        isAr ? 'شروط أمان الطرود' : 'Parcel Safety Terms',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               TextButton(
-                onPressed: () {
-                  showModalBottomSheet(
+                onPressed: () async {
+                  final agreed = await showModalBottomSheet<bool>(
                     context: context,
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
                     builder: (_) => const ProhibitedItemsSheet(),
                   );
+                  if (agreed == true && mounted) {
+                    setState(() => _agreedProhibited = true);
+                  }
                 },
                 child: Text(isAr ? 'قائمة الممنوعات' : 'Prohibited Items', style: AppTypography.label(color: AppColors.teal)),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_dimens.dart';
 import '../constants/app_typography.dart';
@@ -7,9 +8,10 @@ class AppTheme {
   AppTheme._();
 
   static ThemeData get lightTheme {
+    final baseTextTheme = GoogleFonts.cairoTextTheme();
     return ThemeData(
       useMaterial3: true,
-      scaffoldBackgroundColor: AppColors.sand,
+      scaffoldBackgroundColor: AppColors.scaffoldBg,
       primaryColor: AppColors.navy,
       colorScheme: const ColorScheme.light(
         primary: AppColors.navy,
@@ -21,7 +23,8 @@ class AppTheme {
         error: AppColors.danger,
         onError: Colors.white,
       ),
-      fontFamily: 'Cairo',
+      textTheme: baseTextTheme,
+      primaryTextTheme: baseTextTheme,
       cardTheme: CardThemeData(
         color: AppColors.cardBg,
         elevation: 0,
@@ -35,7 +38,9 @@ class AppTheme {
         filled: true,
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        hintStyle: AppTypography.bodySecondary(color: AppColors.borderDisabled),
+        hintStyle: AppTypography.bodySecondary(
+          color: AppColors.textSecondary.withValues(alpha: 0.72),
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppDimens.radiusField),
           borderSide: const BorderSide(color: AppColors.borderDisabled, width: 1.5),

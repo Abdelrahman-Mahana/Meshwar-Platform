@@ -166,8 +166,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
         // Quick Role Presets (Helpful for review & testing)
         Text(
-          isAr ? 'محاكاة الأدوار الإدارية (صفحة 77):' : 'Simulated Admin Roles (Page 77):',
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF64748B)),
+          isAr ? 'اختر الدور الإداري:' : 'Select Staff Role:',
+          style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 6),
         Wrap(
@@ -317,18 +317,19 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
         const SizedBox(height: 14),
 
-        // Return to App
-        Center(
-          child: TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              isAr ? 'الرجوع لتطبيق مشوار' : 'Back to MASHWAR App',
-              style: AppTypography.bodySecondary(color: AppColors.navy).copyWith(
-                fontWeight: FontWeight.w700,
+        // Return to App (only when pushed over another route)
+        if (Navigator.of(context).canPop())
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                isAr ? 'الرجوع لتطبيق مشوار' : 'Back to MASHWAR App',
+                style: AppTypography.bodySecondary(color: AppColors.navy).copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

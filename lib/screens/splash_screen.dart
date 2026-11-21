@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
 import 'auth/welcome_screen.dart';
 
@@ -27,30 +28,33 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = context.isArabic;
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(),
-            const BrandLogo(fontSize: 40),
-            const Spacer(),
-            Text(
-              'جاري التحميل...',
-              style: AppTypography.bodySecondary(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: AppDimens.space12),
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy),
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Spacer(),
+              const BrandLogo(fontSize: 40),
+              const Spacer(),
+              Text(
+                isAr ? 'جاري التحميل...' : 'Loading...',
+                style: AppTypography.bodySecondary(color: AppColors.textSecondary),
               ),
-            ),
-            const SizedBox(height: AppDimens.space32),
-          ],
+              const SizedBox(height: AppDimens.space12),
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.navy),
+                ),
+              ),
+              const SizedBox(height: AppDimens.space32),
+            ],
+          ),
         ),
       ),
     );

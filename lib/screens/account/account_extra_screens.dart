@@ -224,7 +224,6 @@ class UserProfileScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       _buildActionTile(
-                        context: context,
                         icon: Icons.person_outline_rounded,
                         title: isAr ? 'تعديل البيانات الشخصية' : 'Edit Personal Info',
                         onTap: () {
@@ -235,7 +234,6 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
-                        context: context,
                         icon: Icons.badge_outlined,
                         title: isAr ? 'توثيق بطاقة الرقم القومي' : 'National ID Verification',
                         onTap: () {
@@ -246,7 +244,6 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
-                        context: context,
                         icon: Icons.campaign_outlined,
                         title: isAr ? 'إعلاناتي وعروضي في اللوحة' : 'My Board Ads & Offers',
                         onTap: () {
@@ -257,7 +254,6 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
-                        context: context,
                         icon: Icons.account_balance_wallet_outlined,
                         title: isAr ? 'محفظة مشوار' : 'Wallet',
                         trailingText: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
@@ -269,7 +265,6 @@ class UserProfileScreen extends StatelessWidget {
                       ),
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
-                        context: context,
                         icon: Icons.settings_outlined,
                         title: isAr ? 'الإعدادات' : 'Settings',
                         onTap: () {
@@ -375,7 +370,6 @@ class UserProfileScreen extends StatelessWidget {
   }
 
   Widget _buildActionTile({
-    required BuildContext context,
     required IconData icon,
     required String title,
     required VoidCallback onTap,
@@ -399,13 +393,7 @@ class UserProfileScreen extends StatelessWidget {
             Text(trailingText, style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(width: 6),
           ],
-          Icon(
-            Directionality.of(context) == TextDirection.rtl
-                ? Icons.chevron_left_rounded
-                : Icons.chevron_right_rounded,
-            size: 16,
-            color: const Color(0xFF8E8E93),
-          ),
+          const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
         ],
       ),
       onTap: onTap,
@@ -849,81 +837,93 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         title: Text(isAr ? 'حذف الحساب' : 'Delete Account', style: AppTypography.title()),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFECACA), width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 22),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        isAr ? 'الحذف نهائي ولا يمكن استرجاع الحساب' : 'Account deletion is permanent and irreversible',
-                        style: const TextStyle(color: Color(0xFF991B1B), fontWeight: FontWeight.bold, fontSize: 13),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.dangerBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.danger.withValues(alpha: 0.3), width: 0.8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            isAr ? 'الحذف نهائي ولا يمكن استرجاع الحساب' : 'Account deletion is permanent and irreversible',
+                            style: AppTypography.bodySecondary(color: AppColors.danger).copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    isAr
+                        ? 'سيتم حذف اسمك، صورة حسابك، وبياناتك الشخصية نهائياً. يتم الاحتفاظ بسجلات المعاملات القانونية وفقاً للقانون المصري رقم 151 لسنة 2020.'
+                        : 'Your personal data, name, and profile will be permanently deleted. Transaction audit records are retained per Egyptian Law #151/2020.',
+                    style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    isAr ? 'اكتب كلمة «حذف» للتأكيد:' : 'Type "delete" to confirm:',
+                    style: AppTypography.label().copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _confirmController,
+                    decoration: InputDecoration(
+                      hintText: isAr ? 'حذف' : 'delete',
+                      filled: true,
+                      fillColor: AppColors.chipInactiveBg,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                        borderSide: const BorderSide(color: AppColors.borderDisabled, width: 0.8),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                        borderSide: const BorderSide(color: AppColors.borderDisabled, width: 0.8),
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                isAr
-                    ? 'سيتم حذف اسمك، صورة حسابك، وبياناتك الشخصية نهائياً. يتم الاحتفاظ بسجلات المعاملات القانونية وفقاً للقانون المصري رقم 151 لسنة 2020.'
-                    : 'Your personal data, name, and profile will be permanently deleted. Transaction audit records are retained per Egyptian Law #151/2020.',
-                style: AppTypography.bodySecondary().copyWith(fontSize: 13),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                isAr ? 'اكتب كلمة «حذف» للتأكيد:' : 'Type "delete" to confirm:',
-                style: AppTypography.label().copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _confirmController,
-                decoration: InputDecoration(
-                  hintText: isAr ? 'حذف' : 'delete',
-                  filled: true,
-                  fillColor: const Color(0xFFF3F3F4),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+                  const SizedBox(height: AppDimens.space32),
+                  MashwarButton(
+                    text: isAr ? 'حذف الحساب نهائياً' : 'Delete My Account Permanently',
+                    variant: MashwarButtonVariant.danger,
+                    onPressed: () {
+                      final text = _confirmController.text.trim();
+                      if (text == 'حذف' || text.toLowerCase() == 'delete') {
+                        context.read<AuthProvider>().logout();
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isAr ? 'يرجى كتابة كلمة «حذف» للتأكيد أولاً' : 'Please type "delete" to confirm first'),
+                            backgroundColor: AppColors.danger,
+                          ),
+                        );
+                      }
+                    },
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      isAr ? 'إلغاء والرجوع' : 'Cancel',
+                      style: AppTypography.body().copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
               ),
-              const Spacer(),
-              MashwarButton(
-                text: isAr ? 'حذف الحساب نهائياً' : 'Delete My Account Permanently',
-                variant: MashwarButtonVariant.danger,
-                onPressed: () {
-                  final text = _confirmController.text.trim();
-                  if (text == 'حذف' || text.toLowerCase() == 'delete') {
-                    context.read<AuthProvider>().logout();
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  isAr ? 'إلغاء والرجوع' : 'Cancel',
-                  style: AppTypography.body().copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

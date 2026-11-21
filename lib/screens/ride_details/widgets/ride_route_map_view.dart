@@ -194,11 +194,10 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  '$_distanceKm · ${_durationFormatted.split(" ")[0]} ${isAr ? "ساعة" : "hrs"}',
-                                  style: const TextStyle(
-                                    fontSize: 10,
+                                  '$_distanceKm · $_durationFormatted',
+                                  style: AppTypography.label(color: AppColors.navy).copyWith(
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.navy,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -948,7 +947,7 @@ class _AccurateRouteMapPainter extends CustomPainter {
           fontWeight: FontWeight.w800,
         ),
       ),
-      textDirection: TextDirection.rtl,
+      textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
     )..layout();
     tp.paint(canvas, offset);
   }
@@ -958,7 +957,8 @@ class _AccurateRouteMapPainter extends CustomPainter {
     return oldDelegate.perspective != perspective ||
         oldDelegate.isSatellite != isSatellite ||
         oldDelegate.fromCity != fromCity ||
-        oldDelegate.toCity != toCity;
+        oldDelegate.toCity != toCity ||
+        oldDelegate.isAr != isAr;
   }
 }
 
@@ -991,6 +991,12 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal> {
   void initState() {
     super.initState();
     _currentPerspective = widget.perspective;
+  }
+
+  @override
+  void dispose() {
+    _transformController.dispose();
+    super.dispose();
   }
 
   @override

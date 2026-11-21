@@ -461,7 +461,7 @@ class _MainNavShellState extends State<MainNavShell> {
           context: context,
           categoryTag: isAr ? 'سفر بين المحافظات' : 'Inter-city Travel',
           categoryColor: AppColors.navy,
-          route: isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh ← Cairo',
+          route: isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo',
           description: isAr
               ? 'الجمعة 6 نوفمبر، 7:30 ص · الكابتن: محمد سعيد (سيارة خاصة إلنترا مكيفة)'
               : 'Fri Nov 6, 7:30 AM · Captain: Mohamed Saeed (Hyundai Elantra)',
@@ -525,7 +525,7 @@ class _MainNavShellState extends State<MainNavShell> {
           context: context,
           categoryTag: isAr ? 'شراء طلبات ومستلزمات' : 'Shopping & Errands',
           categoryColor: const Color(0xFF0D9488),
-          route: isAr ? 'التوفيقية، القاهرة ← بلطيم' : 'Tawfikiya, Cairo ← Baltim',
+          route: isAr ? 'التوفيقية، القاهرة ← بلطيم' : 'Tawfikiya, Cairo → Baltim',
           description: isAr
               ? 'شراء قطع غيار وفلاتر أصلية للسيارات وجلبها مع مسافر · المنفذ: إبراهيم الدسوقي'
               : 'Original spare parts & filters purchased from Cairo · Courier: Ibrahim El-Desouky',
@@ -565,7 +565,7 @@ class _MainNavShellState extends State<MainNavShell> {
           context: context,
           categoryTag: isAr ? 'قضاء مصالح رسمية' : 'Official Errand',
           categoryColor: const Color(0xFFD97706),
-          route: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+          route: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo → Kafr El-Sheikh',
           description: isAr
               ? 'استخراج شهادة تخرج ومستندات رسمية من جامعة القاهرة وتسليمها في كفر الشيخ'
               : 'Official certificate & documents pickup from Cairo University',
@@ -810,7 +810,7 @@ class _MainNavShellState extends State<MainNavShell> {
         context: context,
         categoryTag: isAr ? 'لوجستيات وتوريد' : 'Logistics',
         categoryColor: const Color(0xFF2563EB),
-        route: isAr ? 'طنطا ← القاهرة' : 'Tanta ← Cairo',
+        route: isAr ? 'طنطا ← القاهرة' : 'Tanta → Cairo',
         description: isAr ? 'طلب توريد ملغى لعدم مطابقة الشروط' : 'Logistics request cancelled',
         badgeText: isAr ? 'ملغى' : 'Cancelled',
         badgeType: BadgeType.rejected,
@@ -891,21 +891,25 @@ class _MainNavShellState extends State<MainNavShell> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: categoryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    categoryTag,
-                    style: TextStyle(
-                      color: categoryColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: categoryColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      categoryTag,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(color: categoryColor).copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 MashwarBadge(type: badgeType, customLabel: badgeText),
               ],
             ),
@@ -990,7 +994,7 @@ class _MainNavShellState extends State<MainNavShell> {
         'verified': true,
         'tag': isAr ? 'سفر تشاركي' : 'Carpooling',
         'car': 'هيونداي إلنترا، أبيض (س ق ر 1942)',
-        'route': isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh ← Cairo',
+        'route': isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo',
         'lastMsg': isAr
             ? 'تمام يا غالي، أنا ركنت قدام الكافيه عند مدخل المحطة. سيارة بيضاء.'
             : 'Great! I parked near the station entrance in a white car.',
@@ -1003,7 +1007,7 @@ class _MainNavShellState extends State<MainNavShell> {
         'verified': true,
         'tag': isAr ? 'قضاء مصلحة رسمية' : 'Official Errand',
         'car': isAr ? 'استخراج شهادة ومستندات رسمية' : 'Document Pickup Service',
-        'route': isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+        'route': isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo → Kafr El-Sheikh',
         'lastMsg': isAr
             ? 'استلمت الظرف والمستندات الرسمية وجاري التحرك للموقف.'
             : 'I collected the official envelope and heading to the station.',
@@ -1016,7 +1020,7 @@ class _MainNavShellState extends State<MainNavShell> {
         'verified': true,
         'tag': isAr ? 'لوجستيات وتوريد' : 'Logistics',
         'car': isAr ? 'نقل وتوريد بضائع ومستلزمات' : 'Goods & Commercial Cargo',
-        'route': isAr ? 'العتبة، القاهرة ← كفر الشيخ' : 'Attaba, Cairo ← Kafr El-Sheikh',
+        'route': isAr ? 'العتبة، القاهرة ← كفر الشيخ' : 'Attaba, Cairo → Kafr El-Sheikh',
         'lastMsg': isAr
             ? 'وصلت نقطة التسليم أمام المحل التجاري في انتظار كود OTP.'
             : 'Arrived at the shop drop-off, waiting for OTP code.',
@@ -1029,7 +1033,7 @@ class _MainNavShellState extends State<MainNavShell> {
         'verified': true,
         'tag': isAr ? 'شحن أمانة وطرود' : 'Parcel Delivery',
         'car': isAr ? 'طرد إلكترونيات وأمانات' : 'Parcel Delivery Service',
-        'route': isAr ? 'طنطا ← الإسكندرية' : 'Tanta ← Alexandria',
+        'route': isAr ? 'طنطا ← الإسكندرية' : 'Tanta → Alexandria',
         'lastMsg': isAr
             ? 'تم تأكيد كود الاستلام بنجاح، شكراً لذوقك.'
             : 'Delivery OTP confirmed successfully. Thank you!',
@@ -1073,6 +1077,9 @@ class _MainNavShellState extends State<MainNavShell> {
                         onChanged: (_) => setState(() {}),
                         decoration: InputDecoration(
                           hintText: isAr ? 'بحث في الرسائل والأسماء...' : 'Search messages & names...',
+                          hintStyle: AppTypography.bodySecondary(
+                            color: AppColors.textSecondary.withValues(alpha: 0.72),
+                          ),
                           prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy, size: 20),
                           suffixIcon: _messagesSearchController.text.isNotEmpty
                               ? IconButton(
@@ -1855,14 +1862,13 @@ class _MainNavShellState extends State<MainNavShell> {
     String? trailingText,
     Widget? badge,
   }) {
-    final isAr = Directionality.of(context) == TextDirection.rtl;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       leading: Container(
         width: 36,
         height: 36,
         decoration: const BoxDecoration(
-          color: Color(0xFFF3F3F4),
+          color: AppColors.chipInactiveBg,
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: AppColors.navy, size: 18),
@@ -1875,10 +1881,10 @@ class _MainNavShellState extends State<MainNavShell> {
           if (trailingText != null)
             Text(trailingText, style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(width: 4),
-          Icon(
-            isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
-            size: 16,
-            color: const Color(0xFF8E8E93),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 18,
+            color: AppColors.textSecondary,
           ),
         ],
       ),

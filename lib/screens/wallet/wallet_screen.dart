@@ -620,7 +620,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 style: const TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.bold),
               ),
             )
-          : const Icon(Icons.chevron_left_rounded, color: AppColors.borderDisabled),
+          : const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
     );
   }
 }

@@ -187,8 +187,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(
-            isAr ? Icons.arrow_forward_ios_rounded : Icons.arrow_back_ios_new_rounded,
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
             size: 20,
           ),
@@ -284,10 +284,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                           ),
                                         ),
                                       ),
-                                      Positioned(
+                                      PositionedDirectional(
                                         bottom: 0,
-                                        right: isAr ? 0 : null,
-                                        left: isAr ? null : 0,
+                                        end: 0,
                                         child: Container(
                                           padding: const EdgeInsets.all(6),
                                           decoration: const BoxDecoration(
@@ -500,8 +499,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            Icon(
-                                              isAr ? Icons.arrow_back_rounded : Icons.arrow_forward_rounded,
+                                            const Icon(
+                                              Icons.arrow_forward_rounded,
                                               size: 18,
                                               color: Colors.white,
                                             ),
@@ -608,23 +607,33 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 44,
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.navy : const Color(0xFFF3F3F4),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? Colors.white : const Color(0xFF555555),
-              fontFamily: 'Cairo',
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          constraints: const BoxConstraints(minHeight: AppDimens.minTouchTarget),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.navy : AppColors.chipInactiveBg,
+            borderRadius: BorderRadius.circular(AppDimens.radiusField),
+            border: Border.all(
+              color: isSelected ? AppColors.navy : AppColors.borderDisabled,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+              ),
             ),
           ),
         ),

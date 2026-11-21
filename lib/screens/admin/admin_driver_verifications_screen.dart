@@ -60,7 +60,7 @@ class _AdminDriverVerificationsScreenState extends State<AdminDriverVerification
             children: [
               _buildFilterTab(
                 label: isAr ? 'قيد المراجعة ($pendingCount)' : 'Pending ($pendingCount)',
-                isSelected: _selectedTab.startsWith('قيد') || _selectedTab.startsWith('Pend'),
+                isSelected: _selectedTab.startsWith('قيد') || _selectedTab.startsWith('Pend') || _selectedTab.startsWith('Under'),
                 onTap: () => setState(() => _selectedTab = isAr ? 'قيد المراجعة' : 'Under Review'),
               ),
               _buildFilterTab(

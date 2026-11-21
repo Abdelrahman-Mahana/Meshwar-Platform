@@ -221,15 +221,15 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
   Widget _buildEmailInputField({required bool hasError, required bool isAr}) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
-      height: 56,
+      constraints: const BoxConstraints(minHeight: 56),
       decoration: BoxDecoration(
-        color: _isFocused ? Colors.white : const Color(0xFFF8F9FA),
-        borderRadius: BorderRadius.circular(12),
+        color: _isFocused ? Colors.white : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
         border: Border.all(
           color: hasError
               ? AppColors.danger
-              : (_isFocused ? AppColors.navy : const Color(0xFFE5E5EA)),
-          width: hasError ? 1.4 : (_isFocused ? 1.8 : 0.8),
+              : (_isFocused ? AppColors.navy : AppColors.borderDisabled),
+          width: hasError ? 1.4 : (_isFocused ? 1.8 : 1.0),
         ),
         boxShadow: _isFocused && !hasError
             ? [
@@ -246,7 +246,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
         children: [
           Icon(
             Icons.mail_outline_rounded,
-            color: _isFocused ? AppColors.navy : const Color(0xFF94A3B8),
+            color: _isFocused ? AppColors.navy : AppColors.textSecondary,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -262,11 +262,9 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
-                  hintText: isAr ? 'name@example.com أو البريد الجامعي' : 'name@example.com or university email',
-                  hintStyle: const TextStyle(
-                    color: Color(0xFF94A3B8),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
+                  hintText: 'name@example.com',
+                  hintStyle: AppTypography.bodySecondary(
+                    color: AppColors.textSecondary.withValues(alpha: 0.7),
                   ),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
@@ -279,16 +277,14 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                   isDense: true,
                 ),
                 onChanged: (val) {
-                  if (_errorText != null) {
-                    setState(() => _errorText = null);
-                  }
+                  setState(() => _errorText = null);
                 },
               ),
             ),
           ),
           if (_emailController.text.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.cancel_rounded, color: Color(0xFF94A3B8), size: 20),
+              icon: const Icon(Icons.cancel_rounded, color: AppColors.textSecondary, size: 20),
               onPressed: () {
                 setState(() {
                   _emailController.clear();

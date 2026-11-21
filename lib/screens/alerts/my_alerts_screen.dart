@@ -25,18 +25,24 @@ class MyAlertsScreen extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimens.radiusBottomSheet)),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setSheetState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              left: AppDimens.space24,
-              right: AppDimens.space24,
-              top: AppDimens.space24,
-              bottom: MediaQuery.of(context).viewInsets.bottom + AppDimens.space24,
-            ),
-            child: Column(
+          return SafeArea(
+            top: false,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+              ),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: AppDimens.space24,
+                  right: AppDimens.space24,
+                  top: AppDimens.space24,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + AppDimens.space24,
+                ),
+                child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -90,7 +96,7 @@ class MyAlertsScreen extends StatelessWidget {
                   runSpacing: 8,
                   children: dates.map((d) {
                     return MashwarChip(
-                      label: context.trDate(d),
+                      label: d,
                       isSelected: dateRange == d,
                       onTap: () => setSheetState(() => dateRange = d),
                     );
@@ -150,6 +156,8 @@ class MyAlertsScreen extends StatelessWidget {
                 ),
               ],
             ),
+              ),
+            ),
           );
         },
       ),
@@ -206,25 +214,32 @@ class MyAlertsScreen extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          context.trRoute('${alert.fromCity} ← ${alert.toCity}'),
-                                          style: AppTypography.title().copyWith(fontSize: 18),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${context.trDate(alert.dateRange)} · ${context.tr(alert.category)}',
-                                          style: AppTypography.bodySecondary(
-                                            color: alert.isExpired ? AppColors.textSecondary : AppColors.navy,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            context.trRoute('${alert.fromCity} ← ${alert.toCity}'),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTypography.title().copyWith(fontSize: 18),
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${context.trDate(alert.dateRange)} · ${alert.category == "ركاب" ? (isAr ? "ركاب" : "Rides") : (alert.category == "طرد" ? (isAr ? "طرد" : "Parcel") : context.tr(alert.category))}',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTypography.bodySecondary(
+                                              color: alert.isExpired ? AppColors.textSecondary : AppColors.navy,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    Switch(
+                                    const SizedBox(width: 8),
+                                    Switch.adaptive(
                                       value: alert.isActive && !alert.isExpired,
-                                      activeThumbColor: AppColors.teal,
+                                      activeTrackColor: AppColors.teal,
                                       onChanged: alert.isExpired
                                           ? null
                                           : (_) => alertsProvider.toggleAlert(alert.id),

@@ -57,14 +57,15 @@ class SearchFiltersSheet extends StatelessWidget {
             // Sort
             Text(isAr ? 'الترتيب' : 'Sort By', style: AppTypography.label()),
             const SizedBox(height: AppDimens.space8),
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 MashwarChip(
                   label: isAr ? 'الأقرب وقتاً' : 'Earliest',
                   isSelected: rides.sortBy == SortOption.closestTime,
                   onTap: () => rides.setSortOption(SortOption.closestTime),
                 ),
-                const SizedBox(width: 8),
                 MashwarChip(
                   label: isAr ? 'الأرخص' : 'Cheapest',
                   isSelected: rides.sortBy == SortOption.cheapest,
@@ -80,11 +81,16 @@ class SearchFiltersSheet extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: ['أي وقت', 'صباحاً', 'ظهراً', 'مساءً'].map((t) {
+              children: const [
+                ('أي وقت', 'Any time'),
+                ('صباحاً', 'Morning'),
+                ('ظهراً', 'Afternoon'),
+                ('مساءً', 'Evening'),
+              ].map((slot) {
                 return MashwarChip(
-                  label: context.tr(t),
-                  isSelected: rides.timeSlot == t,
-                  onTap: () => rides.setTimeSlot(t),
+                  label: isAr ? slot.$1 : slot.$2,
+                  isSelected: rides.timeSlot == slot.$1,
+                  onTap: () => rides.setTimeSlot(slot.$1),
                 );
               }).toList(),
             ),
@@ -128,33 +134,21 @@ class SearchFiltersSheet extends StatelessWidget {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
-              ),
-              if (subtitle != null) ...[
-                Text(
-                  subtitle,
-                  style: AppTypography.label(color: AppColors.textSecondary),
-                ),
-              ],
-            ],
-          ),
-          Switch(
-            value: value,
-            activeThumbColor: AppColors.teal,
-            onChanged: onChanged,
-          ),
-        ],
+    return SwitchListTile.adaptive(
+      contentPadding: EdgeInsets.zero,
+      activeTrackColor: AppColors.teal,
+      value: value,
+      onChanged: onChanged,
+      title: Text(
+        title,
+        style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
       ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: AppTypography.label(color: AppColors.textSecondary),
+            )
+          : null,
     );
   }
 }

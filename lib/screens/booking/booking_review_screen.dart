@@ -108,7 +108,9 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
               ],
               if (_showSeatsWarning) ...[
                 AlertBanner(
-                  message: isAr ? 'فاضل كرسي واحد بس في الرحلة' : 'Only 1 seat remaining on this ride',
+                  message: isAr
+                      ? 'المتاح في الرحلة ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "كرسي فقط" : "كراسي فقط"}'
+                      : 'Only ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "seat" : "seats"} remaining on this ride',
                   type: AlertBannerType.warning,
                 ),
                 const SizedBox(height: AppDimens.space12),

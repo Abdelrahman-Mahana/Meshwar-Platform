@@ -155,8 +155,9 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
                 text: isAr ? 'إلغاء الطلب' : 'Cancel Request',
                 variant: MashwarButtonVariant.secondary,
                 onPressed: () {
+                  final messenger = ScaffoldMessenger.of(context);
                   Navigator.of(context).popUntil((route) => route.isFirst);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(content: Text(isAr ? 'تم إلغاء طلب الحجز' : 'Booking request cancelled')),
                   );
                 },
@@ -172,7 +173,7 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
   // Timeout view (Page 26)
   Widget _buildTimedOutView(bool isAr) {
     return Scaffold(
-      backgroundColor: AppColors.sand,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
@@ -206,7 +207,14 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: AppTypography.label(color: AppColors.textSecondary)),
-        Text(value, style: AppTypography.body()),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: AppTypography.body(),
+          ),
+        ),
       ],
     );
   }

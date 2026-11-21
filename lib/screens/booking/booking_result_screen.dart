@@ -9,7 +9,7 @@ import '../../data/models/ride_model.dart';
 import '../../state/rides_provider.dart';
 import '../trip/active_trip_screen.dart';
 
-class BookingResultScreen extends StatelessWidget {
+class BookingResultScreen extends StatefulWidget {
   const BookingResultScreen({
     super.key,
     required this.ride,
@@ -20,6 +20,27 @@ class BookingResultScreen extends StatelessWidget {
   final RideModel ride;
   final bool isConfirmed;
   final int totalPrice;
+
+  @override
+  State<BookingResultScreen> createState() => _BookingResultScreenState();
+}
+
+class _BookingResultScreenState extends State<BookingResultScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isConfirmed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<RidesProvider>().confirmBooking(widget.ride);
+        }
+      });
+    }
+  }
+
+  RideModel get ride => widget.ride;
+  bool get isConfirmed => widget.isConfirmed;
+  int get totalPrice => widget.totalPrice;
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +100,10 @@ class BookingResultScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildRow(isAr ? 'الموعد' : 'Schedule', '${context.trDate(ride.departureDate)}، ${ride.departureTime}'),
+                    _buildRow(
+                      isAr ? 'الموعد' : 'Schedule',
+                      '${context.trDate(ride.departureDate)}${isAr ? "، " : ", "}${context.trDate(ride.departureTime)}',
+                    ),
                     const Divider(height: 20, color: AppColors.borderDisabled),
                     _buildRow(isAr ? 'المسار' : 'Route', context.trRoute('${ride.fromCity} ← ${ride.toCity}')),
                     const Divider(height: 20, color: AppColors.borderDisabled),
@@ -207,11 +231,15 @@ class BookingResultScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: AppTypography.label(color: AppColors.textSecondary)),
-        Text(
-          value,
-          style: isBold
-              ? AppTypography.body().copyWith(fontWeight: FontWeight.w700)
-              : AppTypography.body(),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: isBold
+                ? AppTypography.body().copyWith(fontWeight: FontWeight.w700)
+                : AppTypography.body(),
+          ),
         ),
       ],
     );

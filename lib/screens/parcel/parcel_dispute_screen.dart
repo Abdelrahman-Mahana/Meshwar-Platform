@@ -157,12 +157,6 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => setState(() => _phase = DisputePhase.resolved),
-            child: Text(isAr ? 'تحديث الحالة' : 'Update Status', style: AppTypography.label(color: AppColors.teal)),
-          ),
-        ],
       ),
       body: SafeArea(
         child: Padding(
@@ -190,7 +184,14 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                   children: [
                     _buildRow(isAr ? 'رقم البلاغ' : 'Report ID', widget.reportId),
                     const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'السبب' : 'Reason', isAr ? _selectedReason : 'Damaged Goods'),
+                    _buildRow(
+                      isAr ? 'السبب' : 'Reason',
+                      isAr
+                          ? _selectedReason
+                          : (_reasonsAr.contains(_selectedReason)
+                              ? _reasonsEn[_reasonsAr.indexOf(_selectedReason)]
+                              : _selectedReason),
+                    ),
                     const Divider(height: 20, color: AppColors.borderDisabled),
                     _buildRow(isAr ? 'الحالة' : 'Status', isAr ? 'قيد المراجعة والتحقيق' : 'Under Investigation'),
                   ],
@@ -274,11 +275,15 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: AppTypography.label(color: AppColors.textSecondary)),
-        Text(
-          value,
-          style: isBold
-              ? AppTypography.body().copyWith(fontWeight: FontWeight.w700)
-              : AppTypography.body(),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.end,
+            style: isBold
+                ? AppTypography.body().copyWith(fontWeight: FontWeight.w700)
+                : AppTypography.body(),
+          ),
         ),
       ],
     );

@@ -75,8 +75,8 @@ class MashwarBadge extends StatelessWidget {
         defaultLabelEn = 'Confirmed';
         break;
       case BadgeType.ladiesOnly:
-        textColor = const Color(0xFFBE185D);
-        bgColor = const Color(0xFFFCE7F3);
+        textColor = AppColors.ladiesPink;
+        bgColor = AppColors.badgeLadiesBg;
         defaultLabelAr = 'سيدات فقط';
         defaultLabelEn = 'Ladies Only';
         break;

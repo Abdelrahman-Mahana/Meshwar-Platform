@@ -341,7 +341,7 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         const SizedBox(width: 4),
                         Icon(
-                          isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                          Icons.chevron_right_rounded,
                           color: AppColors.textSecondary,
                           size: 20,
                         ),
@@ -361,8 +361,8 @@ class SettingsScreen extends StatelessWidget {
                     iconColor: AppColors.navy,
                     title: isAr ? 'بيانات سيارتي ورخص القيادة' : 'My Vehicle & Driver Licenses',
                     subtitle: isAr ? 'سجل مركبتك لنشر الرحلات وتقديم عروض التوصيل' : 'Register your car to offer rides',
-                    trailing: Icon(
-                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
                       color: AppColors.textSecondary,
                       size: 20,
                     ),
@@ -401,7 +401,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Icon(
-                          isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                          Icons.chevron_right_rounded,
                           color: AppColors.textSecondary,
                           size: 20,
                         ),
@@ -423,8 +423,8 @@ class SettingsScreen extends StatelessWidget {
                     subtitle: user.emergencyContactName != null
                         ? '${user.emergencyContactName} (${user.emergencyContactPhone})'
                         : (isAr ? 'حدد جهات اتصال لمشاركة المسار معهم فورياً' : 'Set contacts for instant tracking share'),
-                    trailing: Icon(
-                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
                       color: AppColors.textSecondary,
                       size: 20,
                     ),
@@ -471,7 +471,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Icon(
-                          isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                          Icons.chevron_right_rounded,
                           color: AppColors.textSecondary,
                           size: 20,
                         ),
@@ -584,7 +584,7 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         const SizedBox(width: 4),
                         Icon(
-                          isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                          Icons.chevron_right_rounded,
                           color: AppColors.textSecondary,
                           size: 20,
                         ),
@@ -610,8 +610,8 @@ class SettingsScreen extends StatelessWidget {
                     iconColor: AppColors.navy,
                     title: isAr ? 'مركز المساعدة والدعم المباشر 24/7' : 'Help & Support 24/7',
                     subtitle: isAr ? 'فريق خدمة عملاء مشوار متواجد على مدار الساعة' : 'Customer support available around the clock',
-                    trailing: Icon(
-                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
                       color: AppColors.textSecondary,
                       size: 20,
                     ),
@@ -629,8 +629,8 @@ class SettingsScreen extends StatelessWidget {
                     iconColor: AppColors.navy,
                     title: isAr ? 'شروط الخدمة وسياسة الخصوصية' : 'Terms of Service & Privacy',
                     subtitle: isAr ? 'القواعد وحقوق الركاب والسائقين وحماية البيانات' : 'Rights, terms & data protection policies',
-                    trailing: Icon(
-                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
                       color: AppColors.textSecondary,
                       size: 20,
                     ),
@@ -663,8 +663,8 @@ class SettingsScreen extends StatelessWidget {
                     iconColor: AppColors.teal,
                     title: isAr ? 'جاهزية الخادم وحالة النظام' : 'Backend & System Diagnostics',
                     subtitle: isAr ? 'فحص العقود والواجهات البرمجية وحالات النظام' : 'API contracts & system state health check',
-                    trailing: Icon(
-                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
                       color: AppColors.textSecondary,
                       size: 20,
                     ),
@@ -682,8 +682,8 @@ class SettingsScreen extends StatelessWidget {
                     iconColor: AppColors.danger,
                     title: isAr ? 'حذف الحساب نهائياً' : 'Delete Account Permanently',
                     subtitle: isAr ? 'إلغاء تنشيط الحساب ومسح البيانات الخاصة بك' : 'Deactivate account & erase personal data',
-                    trailing: Icon(
-                      isAr ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
                       color: AppColors.danger,
                       size: 20,
                     ),

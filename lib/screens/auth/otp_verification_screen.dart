@@ -341,13 +341,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             ),
           ),
 
-          // 6 Pure Visual Display Cells (Zero inner borders, single crisp hairline border)
+          // 6 Pure Visual Display Cells (Responsive width so never overflows on <= 360px)
           IgnorePointer(
             child: Directionality(
               textDirection: TextDirection.ltr,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(6, (index) => _buildVisualCell(index)),
+                children: List.generate(6, (index) {
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: index < 5 ? 6 : 0),
+                      child: _buildVisualCell(index),
+                    ),
+                  );
+                }),
               ),
             ),
           ),
@@ -420,11 +426,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 140),
-      width: 48,
-      height: 56,
+      constraints: const BoxConstraints(minHeight: 56, maxWidth: 48),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
         border: Border.all(color: borderColor, width: borderWidth),
         boxShadow: isCurrentActive && !hasError
             ? [
@@ -440,12 +445,9 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       child: Text(
         char,
         textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w800,
+        style: AppTypography.title(
           color: hasError ? AppColors.danger : AppColors.navy,
-          fontFamily: 'Cairo',
-        ),
+        ).copyWith(fontSize: 22),
       ),
     );
   }

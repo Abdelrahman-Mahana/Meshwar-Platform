@@ -207,7 +207,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_left_rounded, color: AppColors.teal),
+                      const Icon(Icons.chevron_right_rounded, color: AppColors.teal),
                     ],
                   ),
                 ),
@@ -1018,14 +1018,26 @@ class _DriverInTransitScreenState extends State<DriverInTransitScreen> {
                   children: [
                     const Icon(Icons.navigation_rounded, color: AppColors.teal, size: 32),
                     const SizedBox(width: 14),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(isAr ? 'الوصول 9:40 ص تقريباً' : 'ETA 9:40 AM', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        Text(isAr ? 'باقي 45 كم على نقطة النزول' : '45 km remaining to destination', style: AppTypography.bodySecondary()),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isAr ? 'الوصول 9:40 ص تقريباً' : 'ETA 9:40 AM',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.body(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            isAr ? 'باقي 45 كم على نقطة النزول' : '45 km remaining to destination',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodySecondary(),
+                          ),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'جارية' : 'Live'),
                   ],
                 ),
@@ -1049,7 +1061,7 @@ class _DriverInTransitScreenState extends State<DriverInTransitScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(isAr ? 'طرد للتسليم: أوراق → سارة' : 'Parcel to deliver: Docs → Sara', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text(isAr ? 'طرد للتسليم: أوراق ← سارة' : 'Parcel to deliver: Docs → Sara', style: AppTypography.body().copyWith(fontWeight: FontWeight.w700)),
                           Text(isAr ? 'اطلب الكود عند الالتقاء' : 'Verify recipient code', style: AppTypography.bodySecondary()),
                         ],
                       ),

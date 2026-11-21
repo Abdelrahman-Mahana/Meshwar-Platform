@@ -216,43 +216,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 2. Two Primary Community Action Cards (اطلب مشوار أو خدمة | اعرض مشوار أو خدمة)
   Widget _buildTwoPrimaryActionButtons(BuildContext context, bool isAr) {
-    return Row(
-      children: [
-        // Card 1: اطلب مشوار أو خدمة
-        Expanded(
-          child: _buildActionCard(
-            title: isAr ? 'اطلب مشوار أو خدمة' : 'Request Service',
-            subtitle: isAr ? 'شراء طلبات، كراسي، أوراق، بضاعة' : 'Shop items, rides, errands, goods',
-            icon: Icons.add_task_rounded,
-            iconBg: AppColors.tealSurface,
-            iconColor: AppColors.teal,
-            borderColor: AppColors.teal.withValues(alpha: 0.35),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PostAdScreen(initialIntent: 0)),
-              );
-            },
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Card 1: اطلب مشوار أو خدمة
+          Expanded(
+            child: _buildActionCard(
+              title: isAr ? 'اطلب مشوار أو خدمة' : 'Request Service',
+              subtitle: isAr ? 'شراء طلبات، كراسي، أوراق، بضاعة' : 'Shop items, rides, errands, goods',
+              icon: Icons.add_task_rounded,
+              iconBg: AppColors.tealSurface,
+              iconColor: AppColors.teal,
+              borderColor: AppColors.teal.withValues(alpha: 0.35),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PostAdScreen(initialIntent: 0)),
+                );
+              },
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
+          const SizedBox(width: 10),
 
-        // Card 2: اعرض مشوارك أو خدمتك
-        Expanded(
-          child: _buildActionCard(
-            title: isAr ? 'اعرض مشوار أو خدمة' : 'Offer Service',
-            subtitle: isAr ? 'كراسي فاضية بعربيتك، توصيل بالسكة' : 'Empty seats, deliveries on your way',
-            icon: Icons.directions_car_filled_rounded,
-            iconBg: AppColors.goldSurface,
-            iconColor: AppColors.navy,
-            borderColor: const Color(0xFFE5E5EA),
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PostAdScreen(initialIntent: 1, initialIsOffer: true)),
-              );
-            },
+          // Card 2: اعرض مشوارك أو خدمتك
+          Expanded(
+            child: _buildActionCard(
+              title: isAr ? 'اعرض مشوار أو خدمة' : 'Offer Service',
+              subtitle: isAr ? 'كراسي فاضية بعربيتك، توصيل بالسكة' : 'Empty seats, deliveries on your way',
+              icon: Icons.directions_car_filled_rounded,
+              iconBg: AppColors.goldSurface,
+              iconColor: AppColors.navy,
+              borderColor: AppColors.borderDisabled,
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PostAdScreen(initialIntent: 1, initialIsOffer: true)),
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -464,7 +467,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 flex: 3,
                 child: _buildRouteField(
-                  label: isAr ? 'العدد' : 'Units',
+                  label: isAr ? 'العدد' : 'Seats',
                   value: '${rides.seatsCount}',
                   onTap: () => _showSeatsPicker(context, rides),
                 ),
@@ -503,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isAr ? 'مشاوير وخدمات حية الآن 📢' : 'Live Services & Errands 📢',
+                    isAr ? 'مشاوير وخدمات حية الآن' : 'Live Services & Errands',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppTypography.title().copyWith(fontSize: 18),
@@ -865,9 +868,23 @@ class _HomeScreenState extends State<HomeScreen> {
                           const Icon(Icons.verified_rounded, size: 13, color: AppColors.teal),
                         ],
                       ),
-                      Text(
-                        isAr ? 'موثق 🛡️ · 4.9 ⭐' : 'Verified 🛡️ · 4.9 ⭐',
-                        style: const TextStyle(fontSize: 10, color: AppColors.teal, fontWeight: FontWeight.w600, fontFamily: 'Cairo'),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.verified_user_outlined, size: 11, color: AppColors.teal),
+                          const SizedBox(width: 3),
+                          Text(
+                            isAr ? 'موثق' : 'Verified',
+                            style: AppTypography.label(color: AppColors.teal).copyWith(fontSize: 10.5),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(Icons.star_rounded, size: 12, color: AppColors.gold),
+                          const SizedBox(width: 2),
+                          Text(
+                            '4.9',
+                            style: AppTypography.label(color: AppColors.navy).copyWith(fontSize: 10.5),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -968,7 +985,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildPillarRow(
             icon: Icons.badge_outlined,
             color: AppColors.teal,
-            title: isAr ? 'توثيق الهوية والرقم القومي 🛡️' : 'Mandatory National ID Verification',
+            title: isAr ? 'توثيق الهوية والرقم القومي' : 'Mandatory National ID Verification',
             description: isAr
                 ? 'لا يمكن لأي طرف تقديم عروض أو طلبات دون مطابقة الهوية الشخصية'
                 : 'All participants must verify National ID before posting or making offers',
@@ -977,7 +994,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildPillarRow(
             icon: Icons.pin_outlined,
             color: AppColors.gold,
-            title: isAr ? 'كود التسليم الرقمي الآمن (OTP) 🔢' : '4-Digit Handover Security Code',
+            title: isAr ? 'كود التسليم الرقمي الآمن (OTP)' : '4-Digit Handover Security Code',
             description: isAr
                 ? 'لا يتم إتمام تسليم أي طرد أو بضاعة أو ورقة إلا بمطابقة كود التسليم بين الطرفين'
                 : 'No delivery is closed without mutual 4-digit code matching',
@@ -986,7 +1003,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildPillarRow(
             icon: Icons.handshake_outlined,
             color: AppColors.navy,
-            title: isAr ? 'تفاوض حر وعادل ومباشر ⚖️' : 'Direct & Fair Community Negotiation',
+            title: isAr ? 'تفاوض حر وعادل ومباشر' : 'Direct & Fair Community Negotiation',
             description: isAr
                 ? 'تحديد المقابل بالتراضي التام بين المواطنين بدون أي عمولات خفية'
                 : 'Direct fair pricing agreed upon mutually with zero hidden fees',
@@ -1230,14 +1247,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 12, color: Color(0xFF8E8E93), fontFamily: 'Cairo'),
+                    style: AppTypography.label(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.navy, fontFamily: 'Cairo'),
+                    style: AppTypography.body(color: AppColors.navy).copyWith(fontSize: 15, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),

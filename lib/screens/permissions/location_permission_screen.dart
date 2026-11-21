@@ -30,78 +30,97 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              if (_isDenied) ...[
-                const SizedBox(height: AppDimens.space12),
-                AlertBanner(
-                  message: isAr
-                      ? 'من غير الموقع هتختار نقطة الصعود بإيدك'
-                      : 'Without location, you will pick pickup spots manually',
-                  type: AlertBannerType.warning,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: AppDimens.space20),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (_isDenied) ...[
+                          AlertBanner(
+                            message: isAr
+                                ? 'من غير الموقع هتختار نقطة الصعود بإيدك'
+                                : 'Without location, you will pick pickup spots manually',
+                            type: AlertBannerType.warning,
+                          ),
+                          const SizedBox(height: AppDimens.space24),
+                        ] else
+                          const SizedBox(height: AppDimens.space32),
+                        Column(
+                          children: [
+                            Container(
+                              width: 84,
+                              height: 84,
+                              decoration: BoxDecoration(
+                                color: AppColors.tealSurface,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: AppColors.teal.withValues(alpha: 0.25)),
+                              ),
+                              child: const Icon(
+                                Icons.my_location_rounded,
+                                color: AppColors.navy,
+                                size: 38,
+                              ),
+                            ),
+                            const SizedBox(height: AppDimens.space24),
+                            Text(
+                              _isDenied
+                                  ? (isAr ? 'إذن الموقع مقفول' : 'Location Permission Denied')
+                                  : (isAr ? 'نلاقي رحلات قريبة منك' : 'Find Rides Near You'),
+                              textAlign: TextAlign.center,
+                              style: AppTypography.largeTitle(),
+                            ),
+                            const SizedBox(height: AppDimens.space12),
+                            Text(
+                              isAr
+                                  ? 'عشان نقترح نقطة صعود سهلة ونحسب المسافة بدقة.'
+                                  : 'To suggest convenient pickup spots and calculate distances accurately.',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.bodySecondary(),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            const SizedBox(height: AppDimens.space32),
+                            MashwarButton(
+                              text: _isDenied
+                                  ? (isAr ? 'المتابعة واختيار الموقع يدوياً' : 'Continue with Manual Location')
+                                  : (isAr ? 'تفعيل الموقع' : 'Enable Location'),
+                              onPressed: _proceedNext,
+                            ),
+                            const SizedBox(height: AppDimens.space12),
+                            SizedBox(
+                              width: double.infinity,
+                              height: AppDimens.minTouchTarget,
+                              child: TextButton(
+                                onPressed: () {
+                                  if (!_isDenied) {
+                                    setState(() => _isDenied = true);
+                                  } else {
+                                    _proceedNext();
+                                  }
+                                },
+                                child: Text(
+                                  isAr ? 'مش دلوقتي' : 'Not now',
+                                  style: AppTypography.bodySecondary(color: AppColors.textSecondary),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-              const Spacer(flex: 3),
-              // Pin Icon with Circle
-              Container(
-                width: 80,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.my_location_rounded,
-                  color: AppColors.navy,
-                  size: 38,
-                ),
               ),
-              const SizedBox(height: AppDimens.space24),
-              Text(
-                _isDenied
-                    ? (isAr ? 'إذن الموقع مقفول' : 'Location Permission Denied')
-                    : (isAr ? 'نلاقي رحلات قريبة منك' : 'Find Rides Near You'),
-                textAlign: TextAlign.center,
-                style: AppTypography.largeTitle(),
-              ),
-              const SizedBox(height: AppDimens.space12),
-              Text(
-                isAr
-                    ? 'عشان نقترح نقطة صعود سهلة ونحسب المسافة بدقة.'
-                    : 'To suggest convenient pickup spots and calculate distances accurately.',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
-              ),
-              const Spacer(flex: 4),
-
-              MashwarButton(
-                text: _isDenied ? (isAr ? 'افتح الإعدادات' : 'Open Settings') : (isAr ? 'تفعيل الموقع' : 'Enable Location'),
-                onPressed: () {
-                  if (_isDenied) {
-                    _proceedNext();
-                  } else {
-                    _proceedNext();
-                  }
-                },
-              ),
-              const SizedBox(height: AppDimens.space12),
-              TextButton(
-                onPressed: () {
-                  if (!_isDenied) {
-                    setState(() => _isDenied = true);
-                  } else {
-                    _proceedNext();
-                  }
-                },
-                child: Text(
-                  isAr ? 'مش دلوقتي' : 'Not now',
-                  style: AppTypography.bodySecondary(color: AppColors.textSecondary),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space24),
-            ],
+            ),
           ),
         ),
       ),

@@ -100,21 +100,24 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _isWeakSignal
-                                  ? (isAr ? 'الوصول المتوقع 9:45 ص (غير دقيق)' : 'Expected ETA 9:45 AM (approx)')
-                                  : (isAr ? 'هتوصل 9:40 ص تقريباً' : 'ETA around 9:40 AM'),
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            Text(
-                              isAr ? 'باقي 45 كم · آخر تحديث الآن' : '45 km left · Updated now',
-                              style: AppTypography.bodySecondary(),
-                            ),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _isWeakSignal
+                                    ? (isAr ? 'الوصول المتوقع 9:45 ص (غير دقيق)' : 'Expected ETA 9:45 AM (approx)')
+                                    : (isAr ? 'هتوصل 9:40 ص تقريباً' : 'ETA around 9:40 AM'),
+                                style: AppTypography.body(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                isAr ? 'باقي 45 كم · آخر تحديث الآن' : '45 km left · Updated now',
+                                style: AppTypography.bodySecondary(),
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         MashwarBadge(
                           type: _isWeakSignal ? BadgeType.pending : BadgeType.verified,
                           customLabel: _isWeakSignal ? (isAr ? 'متقطع' : 'Lagging') : (isAr ? 'جارية' : 'Live'),
@@ -174,19 +177,9 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                 variant: MashwarButtonVariant.secondary,
                 onPressed: () => showModalBottomSheet(
                   context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
                   builder: (_) => const ShareTripSheet(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: () => showModalBottomSheet(
-                  context: context,
-                  builder: (_) => const OffRouteAlertSheet(),
-                ),
-                icon: const Icon(Icons.alt_route_rounded, size: 18, color: AppColors.coral),
-                label: Text(
-                  isAr ? 'معاينة تنبيه الخروج عن المسار' : 'Preview Off-Route Alert',
-                  style: AppTypography.label(color: AppColors.coral).copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               const SizedBox(height: AppDimens.space16),
@@ -207,24 +200,49 @@ class ShareTripSheet extends StatefulWidget {
 }
 
 class _ShareTripSheetState extends State<ShareTripSheet> {
-  bool _sentToNadia = false;
+  String? _sentToNameAr;
+  String? _sentToNameEn;
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
 
-    if (_sentToNadia) {
-      return Padding(
-        padding: const EdgeInsets.all(AppDimens.space24),
-        child: Column(
+    Widget wrapSurface(Widget child) {
+      return Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Material(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.radiusBottomSheet)),
+            clipBehavior: Clip.antiAlias,
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppDimens.space24),
+                child: child,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_sentToNameAr != null) {
+      return wrapSurface(
+        Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 56),
             const SizedBox(height: 16),
-            Text(isAr ? 'اتبعت الرابط لنادية' : 'Link sent to Nadia', style: AppTypography.title()),
+            Text(
+              isAr ? 'تم إرسال رابط التتبع إلى $_sentToNameAr' : 'Link sent to $_sentToNameEn',
+              textAlign: TextAlign.center,
+              style: AppTypography.title(),
+            ),
             const SizedBox(height: 6),
             Text(
-              isAr ? 'هتشوف موقعك لحد ما تخلص الرحلة.' : 'She can track your location until trip completes.',
+              isAr ? 'يمكن متابعة موقعك المباشر حتى انتهاء الرحلة.' : 'They can track your live location until the trip completes.',
+              textAlign: TextAlign.center,
               style: AppTypography.bodySecondary(),
             ),
             const SizedBox(height: 20),
@@ -237,12 +255,22 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(AppDimens.space24),
-      child: Column(
+    return wrapSurface(
+      Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Center(
+            child: Container(
+              width: 44,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.borderDisabled,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
           Text(isAr ? 'مشاركة رحلتك' : 'Share your Trip', style: AppTypography.title()),
           const SizedBox(height: 4),
           Text(
@@ -253,30 +281,36 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
 
           // Contacts
           ListTile(
-            leading: CircleAvatar(backgroundColor: AppColors.gold, child: const Text('ن')),
-            title: Text(isAr ? 'نادية (أختي)' : 'Nadia (Sister)', style: const TextStyle(fontWeight: FontWeight.bold)),
+            leading: const CircleAvatar(backgroundColor: AppColors.gold, child: Text('ن', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold))),
+            title: Text(isAr ? 'نادية (أختي)' : 'Nadia (Sister)', style: AppTypography.body().copyWith(fontWeight: FontWeight.w700)),
             trailing: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.navy,
                 foregroundColor: Colors.white,
-                minimumSize: const Size(0, 36),
+                minimumSize: const Size(0, 38),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               ),
-              onPressed: () => setState(() => _sentToNadia = true),
+              onPressed: () => setState(() {
+                _sentToNameAr = 'نادية';
+                _sentToNameEn = 'Nadia';
+              }),
               child: Text(isAr ? 'إرسال' : 'Send'),
             ),
           ),
           ListTile(
-            leading: CircleAvatar(backgroundColor: AppColors.gold, child: const Text('أ')),
-            title: Text(isAr ? 'أحمد (أبويا)' : 'Ahmed (Father)', style: const TextStyle(fontWeight: FontWeight.bold)),
+            leading: const CircleAvatar(backgroundColor: AppColors.gold, child: Text('أ', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold))),
+            title: Text(isAr ? 'أحمد (أبويا)' : 'Ahmed (Father)', style: AppTypography.body().copyWith(fontWeight: FontWeight.w700)),
             trailing: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.navy,
                 foregroundColor: Colors.white,
-                minimumSize: const Size(0, 36),
+                minimumSize: const Size(0, 38),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               ),
-              onPressed: () => setState(() => _sentToNadia = true),
+              onPressed: () => setState(() {
+                _sentToNameAr = 'أحمد';
+                _sentToNameEn = 'Ahmed';
+              }),
               child: Text(isAr ? 'إرسال' : 'Send'),
             ),
           ),

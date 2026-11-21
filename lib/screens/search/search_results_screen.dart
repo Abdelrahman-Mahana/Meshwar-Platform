@@ -49,10 +49,14 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           children: [
             Text(
               context.trRoute('${rides.fromCity} ← ${rides.toCity}'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.title().copyWith(fontSize: 18),
             ),
             Text(
-              '${context.trDate(rides.date)} · ${rides.rideMode == RideMode.seats ? (isAr ? "كرسي واحد" : "1 Seat") : (isAr ? "طرد واحد" : "1 Parcel")}',
+              '${context.trDate(rides.date)} · ${rides.rideMode == RideMode.seats ? (isAr ? "${rides.seatsCount} ${rides.seatsCount == 1 ? "كرسي" : "كراسي"}" : "${rides.seatsCount} ${rides.seatsCount == 1 ? "Seat" : "Seats"}") : (isAr ? "طرد واحد" : "1 Parcel")}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: AppTypography.label(color: AppColors.textSecondary),
             ),
           ],
@@ -420,7 +424,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         if (ride.remainingSeats == 0)
                           MashwarBadge(type: BadgeType.rejected, customLabel: isAr ? 'مكتمل' : 'Full')
                         else if (ride.isLadiesOnly)
-                          MashwarBadge(type: BadgeType.newBadge, customLabel: isAr ? 'سيدات فقط' : 'Ladies Only')
+                          MashwarBadge(type: BadgeType.ladiesOnly, customLabel: isAr ? 'سيدات فقط' : 'Ladies Only')
                         else
                           MashwarBadge(
                             type: BadgeType.verified,
@@ -431,13 +435,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDF4),
+                              color: AppColors.tealSurface,
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: const Color(0xFFBBF7D0), width: 0.8),
+                              border: Border.all(color: AppColors.teal.withValues(alpha: 0.35), width: 0.8),
                             ),
                             child: Text(
                               isAr ? 'يقبل طرود' : 'Parcels OK',
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                              style: AppTypography.label(color: AppColors.teal).copyWith(fontSize: 10, fontWeight: FontWeight.w700),
                             ),
                           ),
                         ],
@@ -466,11 +470,12 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               Container(
                 width: 80,
                 height: 80,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceLight,
                   shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.borderDisabled),
                 ),
-                child: const Icon(Icons.directions_car_outlined, size: 40, color: AppColors.borderDisabled),
+                child: const Icon(Icons.directions_car_outlined, size: 40, color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppDimens.space16),
               Text(

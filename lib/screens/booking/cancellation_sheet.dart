@@ -74,13 +74,13 @@ class _CancellationSheetState extends State<CancellationSheet> {
             const SizedBox(height: 8),
             Text(
               isAr ? 'بلّغنا السائق بإلغاء مقعدك' : 'We notified the driver of your cancellation',
+              textAlign: TextAlign.center,
               style: AppTypography.bodySecondary(),
             ),
             const SizedBox(height: 24),
             MashwarButton(
               text: isAr ? 'تم' : 'Done',
               onPressed: () {
-                Navigator.of(context).pop();
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
             ),

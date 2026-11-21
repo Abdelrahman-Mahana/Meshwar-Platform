@@ -44,5 +44,9 @@ class AppColors {
   static const Color badgeRejectedBg = Color(0xFFFBECE9);
   static const Color badgeNewBg = Color(0xFFEAF1F8);
   static const Color badgeSuspendedBg = Color(0xFFE2E0D8);
+  static const Color ladiesPink = Color(0xFFBE185D);
+  static const Color badgeLadiesBg = Color(0xFFFCE7F3);
+  static const Color slateBg = Color(0xFFF8FAFC);
+  static const Color slateBorder = Color(0xFFE2E8F0);
 }
 

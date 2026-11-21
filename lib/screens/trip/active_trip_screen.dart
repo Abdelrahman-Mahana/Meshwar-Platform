@@ -58,26 +58,31 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => setState(() => _phase = TripTrackingPhase.inTransit),
-            child: Text(isAr ? 'بدء الرحلة' : 'Start Trip', style: AppTypography.label(color: AppColors.teal)),
-          ),
-        ],
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('${context.trDate(widget.ride.departureDate)}، ${widget.ride.departureTime}', style: AppTypography.bodySecondary()),
-                  MashwarBadge(type: BadgeType.confirmed, customLabel: isAr ? 'مؤكد' : 'Confirmed'),
-                ],
-              ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${context.trDate(widget.ride.departureDate)}${isAr ? "، " : ", "}${context.trDate(widget.ride.departureTime)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.bodySecondary(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      MashwarBadge(type: BadgeType.confirmed, customLabel: isAr ? 'مؤكد' : 'Confirmed'),
+                    ],
+                  ),
               const SizedBox(height: 16),
 
               // Big countdown block (Page 29)
@@ -123,7 +128,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 24),
 
               Row(
                 children: [
@@ -195,6 +200,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           ),
         ),
       ),
+      ),
+      ),
     );
   }
 
@@ -211,41 +218,38 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => setState(() => _phase = TripTrackingPhase.completed),
-            child: Text(isAr ? 'إنهاء الرحلة' : 'End Ride', style: AppTypography.label(color: AppColors.teal)),
-          ),
-        ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Accurate Live route map (Page 29)
-              RideRouteMapView(ride: widget.ride),
-              const SizedBox(height: 16),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Accurate Live route map (Page 29)
+                  RideRouteMapView(ride: widget.ride),
+                  const SizedBox(height: 16),
 
-              // ETA & Speed status
-              Container(
-                padding: const EdgeInsets.all(AppDimens.space16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.borderDisabled),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Column(
-                      children: [
-                        Text(isAr ? 'الوقت المتوقع للوصول' : 'Estimated Arrival', style: AppTypography.label(color: AppColors.textSecondary)),
-                        const SizedBox(height: 4),
-                        Text('8:45 ص', style: AppTypography.title().copyWith(color: AppColors.teal)),
-                      ],
+                  // ETA & Speed status
+                  Container(
+                    padding: const EdgeInsets.all(AppDimens.space16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                      border: Border.all(color: AppColors.borderDisabled),
                     ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Column(
+                          children: [
+                            Text(isAr ? 'الوقت المتوقع للوصول' : 'Estimated Arrival', style: AppTypography.label(color: AppColors.textSecondary)),
+                            const SizedBox(height: 4),
+                            Text(isAr ? '8:45 ص' : '8:45 AM', style: AppTypography.title().copyWith(color: AppColors.teal)),
+                          ],
+                        ),
                     Container(width: 1, height: 32, color: AppColors.borderDisabled),
                     Column(
                       children: [
@@ -333,6 +337,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
           ),
         ),
       ),
+      ),
+      ),
     );
   }
 
@@ -387,7 +393,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               const Spacer(flex: 4),
 
               MashwarButton(
-                text: isAr ? 'تقييم السائق والمشوار ★' : 'Rate Driver & Trip ★',
+                text: isAr ? 'تقييم السائق والمشوار' : 'Rate Driver & Trip',
                 icon: const Icon(Icons.star_rounded, color: AppColors.gold, size: 20),
                 onPressed: () {
                   Navigator.of(context).push(

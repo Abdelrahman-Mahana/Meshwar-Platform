@@ -82,31 +82,34 @@ class BrandLogo extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                'مشوار',
-                style: AppTypography.brandLogo(
-                  size: fontSize,
-                  color: textColor,
+          Directionality(
+            textDirection: TextDirection.rtl,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  'مشوار',
+                  style: AppTypography.brandLogo(
+                    size: fontSize,
+                    color: textColor,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              MashwarPinIcon(size: iconSize, isLight: isLight),
-            ],
+                const SizedBox(width: 8),
+                MashwarPinIcon(size: iconSize, isLight: isLight),
+              ],
+            ),
           ),
           if (showEnglish) ...[
             const SizedBox(height: 2),
             Text(
               'M A S H W A R',
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: fontSize * 0.32,
+              style: AppTypography.label(
+                color: isLight ? Colors.white.withValues(alpha: 0.85) : AppColors.teal,
+              ).copyWith(
+                fontSize: (fontSize * 0.32).clamp(10.0, 16.0),
                 fontWeight: FontWeight.w700,
-                letterSpacing: 4.0,
-                color: isLight ? Colors.white.withValues(alpha: 0.8) : AppColors.teal,
+                letterSpacing: 3.5,
               ),
             ),
           ],

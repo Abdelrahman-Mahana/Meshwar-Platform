@@ -35,65 +35,76 @@ class ProhibitedItemsSheet extends StatelessWidget {
     final isAr = context.isArabic;
     final items = isAr ? prohibitedItemsAr : prohibitedItemsEn;
 
-    return Material(
-      color: Colors.white,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.radiusBottomSheet)),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(AppDimens.space24),
-        child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 48,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE5E5EA),
-                borderRadius: BorderRadius.circular(2),
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 560,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+        ),
+        child: Material(
+          color: Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.radiusBottomSheet)),
+          clipBehavior: Clip.antiAlias,
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimens.space24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.borderDisabled,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+                  Text(isAr ? 'قائمة الممنوعات' : 'Prohibited Items List', style: AppTypography.title()),
+                  const SizedBox(height: 6),
+                  Text(
+                    isAr ? 'لا نقبل نقل هذه المواد في الطرود بأي حال:' : 'The following items are strictly prohibited from shipment:',
+                    style: AppTypography.bodySecondary(),
+                  ),
+                  const SizedBox(height: AppDimens.space16),
+
+                  // Items container
+                  Material(
+                    color: AppColors.surfaceLight,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                      side: const BorderSide(color: AppColors.borderDisabled, width: 0.8),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderDisabled),
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.block_rounded, color: AppColors.danger, size: 20),
+                          title: Text(items[index], style: AppTypography.body().copyWith(fontSize: 14)),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: AppDimens.space24),
+
+                  MashwarButton(
+                    text: isAr ? 'فهمت وموافق' : 'I Understand & Agree',
+                    onPressed: () => Navigator.of(context).pop(true),
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: AppDimens.space16),
-          Text(isAr ? 'قائمة الممنوعات' : 'Prohibited Items List', style: AppTypography.title()),
-          const SizedBox(height: 6),
-          Text(
-            isAr ? 'لا نقبل نقل هذه المواد في الطرود بأي حال:' : 'The following items are strictly prohibited from shipment:',
-            style: AppTypography.bodySecondary(),
-          ),
-          const SizedBox(height: AppDimens.space16),
-
-          // Items container
-          Material(
-            color: const Color(0xFFF8F9FA),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFE5E5EA)),
-              itemBuilder: (context, index) {
-                return ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.block_rounded, color: AppColors.danger, size: 20),
-                  title: Text(items[index], style: AppTypography.body().copyWith(fontSize: 14)),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: AppDimens.space24),
-
-          MashwarButton(
-            text: isAr ? 'فهمت وموافق' : 'I Understand & Agree',
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
-      ),
+        ),
       ),
     );
   }

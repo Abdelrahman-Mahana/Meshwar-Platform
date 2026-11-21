@@ -1534,11 +1534,11 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
                   style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.navy),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
-                    suffixText: 'ج',
-                    suffixStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.teal),
+                    suffixText: isAr ? 'ج' : 'EGP',
+                    suffixStyle: AppTypography.body(color: AppColors.teal).copyWith(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -1561,7 +1561,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
             children: ['40', '60', '80', '100', '120', '150'].map((preset) {
               final isSelected = _priceController.text.trim() == preset;
               return ActionChip(
-                label: Text('$preset ج'),
+                label: Text(isAr ? '$preset ج' : '$preset EGP'),
                 labelStyle: TextStyle(
                   fontSize: 11.5,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
@@ -1609,7 +1609,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
 
   // Success Screen
   Widget _buildSuccessScreen(bool isAr) {
-    final routeText = '${_fromController.text.trim()} ← ${_toController.text.trim()}';
+    final routeText = context.trRoute('${_fromController.text.trim()} ← ${_toController.text.trim()}');
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(

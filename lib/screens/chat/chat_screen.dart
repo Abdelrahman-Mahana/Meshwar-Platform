@@ -65,14 +65,13 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage([String? quickText]) {
     final text = quickText ?? _msgController.text.trim();
     if (text.isEmpty) return;
-    final isAr = context.read<SettingsProvider>().isArabic;
 
     setState(() {
       _messages.add({
         'isMe': true,
         'text': text,
         'textEn': text,
-        'time': isAr ? 'الآن' : 'Now',
+        'time': 'الآن',
       });
       _msgController.clear();
     });
@@ -90,13 +89,12 @@ class _ChatScreenState extends State<ChatScreen> {
     // Simulate driver reply
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) {
-        final currentAr = context.read<SettingsProvider>().isArabic;
         setState(() {
           _messages.add({
             'isMe': false,
             'text': 'تمام يا فندم، مرحب بيك ومستنيك بالسيارة.',
             'textEn': 'Noted! Looking forward to seeing you.',
-            'time': currentAr ? 'الآن' : 'Now',
+            'time': 'الآن',
           });
         });
         if (_scrollController.hasClients) {
@@ -128,6 +126,7 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0.5,
+        surfaceTintColor: Colors.transparent,
         leading: const BackButton(color: AppColors.navy),
         title: Row(
           children: [
@@ -140,7 +139,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
               child: Center(
                 child: Text(
-                  widget.driverName[0],
+                  widget.driverName.isNotEmpty ? widget.driverName[0] : (isAr ? 'ك' : 'D'),
                   style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 18),
                 ),
               ),
@@ -152,12 +151,24 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(widget.driverName, style: AppTypography.title().copyWith(fontSize: 15)),
+                      Flexible(
+                        child: Text(
+                          widget.driverName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTypography.title().copyWith(fontSize: 15),
+                        ),
+                      ),
                       const SizedBox(width: 6),
-                      MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'موثق' : 'Verified'),
+                      const MashwarBadge(type: BadgeType.verified, customLabel: 'موثق'),
                     ],
                   ),
-                  Text(widget.driverCar, style: AppTypography.label(color: AppColors.textSecondary)),
+                  Text(
+                    widget.driverCar,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.label(color: AppColors.textSecondary),
+                  ),
                 ],
               ),
             ),
@@ -179,157 +190,165 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Safety banner
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: AppColors.goldSurface,
-              child: Row(
-                children: [
-                  const Icon(Icons.security_rounded, color: AppColors.navy, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isAr
-                          ? 'أمان مشوار: لا تشارك بياناتك البنكية أو أرقام OTP داخل المحادثة.'
-                          : 'Safety notice: Never share bank cards or OTP codes in chat.',
-                      style: AppTypography.label(color: AppColors.navy),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Messages List
-            Expanded(
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(AppDimens.space16),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final msg = _messages[index];
-                  final isMe = msg['isMe'] as bool;
-                  return Align(
-                    alignment: isMe ? AlignmentDirectional.centerEnd : AlignmentDirectional.centerStart,
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      constraints: BoxConstraints(
-                        maxWidth: MediaQuery.of(context).size.width * 0.78,
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isMe ? AppColors.navy : Colors.white,
-                        borderRadius: BorderRadiusDirectional.only(
-                          topStart: const Radius.circular(16),
-                          topEnd: const Radius.circular(16),
-                          bottomStart: Radius.circular(isMe ? 16 : 4),
-                          bottomEnd: Radius.circular(isMe ? 4 : 16),
-                        ).resolve(Directionality.of(context)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isAr ? msg['text'] : msg['textEn'],
-                            style: TextStyle(
-                              color: isMe ? Colors.white : AppColors.textPrimary,
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            msg['time'],
-                            style: TextStyle(
-                              color: isMe ? Colors.white70 : AppColors.textSecondary,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-
-            // Quick Reply Chips
-            Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: quickChips.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  return ActionChip(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: AppColors.borderDisabled),
-                    label: Text(
-                      quickChips[index],
-                      style: AppTypography.label(color: AppColors.navy),
-                    ),
-                    onPressed: () => _sendMessage(quickChips[index]),
-                  );
-                },
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            // Chat input bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border(
-                  top: BorderSide(color: AppColors.borderDisabled.withValues(alpha: 0.5)),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _msgController,
-                      decoration: InputDecoration(
-                        hintText: isAr ? 'اكتب رسالتك للكابتن...' : 'Type message to driver...',
-                        filled: true,
-                        fillColor: AppColors.sand,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              children: [
+                // Safety banner + trip route context
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: AppColors.goldSurface,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.security_rounded, color: AppColors.navy, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isAr
+                              ? 'أمان مشوار: لا تشارك بياناتك البنكية أو أرقام OTP داخل المحادثة.'
+                              : 'Safety notice: Never share bank cards or OTP codes in chat.',
+                          style: AppTypography.label(color: AppColors.navy),
                         ),
                       ),
-                      onSubmitted: (_) => _sendMessage(),
+                    ],
+                  ),
+                ),
+
+                // Messages List
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bubbleMaxWidth = (constraints.maxWidth * 0.78).clamp(200.0, 520.0);
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(AppDimens.space16),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, index) {
+                          final msg = _messages[index];
+                          final isMe = msg['isMe'] as bool;
+                          final rawTime = msg['time'] as String;
+                          final displayTime = rawTime == 'الآن' && !isAr ? 'Now' : rawTime;
+                          return Align(
+                            alignment: isMe
+                                ? AlignmentDirectional.centerEnd
+                                : AlignmentDirectional.centerStart,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: isMe ? AppColors.navy : AppColors.surfaceLight,
+                                border: isMe
+                                    ? null
+                                    : Border.all(color: AppColors.borderDisabled, width: 0.8),
+                                borderRadius: BorderRadiusDirectional.only(
+                                  topStart: const Radius.circular(16),
+                                  topEnd: const Radius.circular(16),
+                                  bottomStart: Radius.circular(isMe ? 16 : 4),
+                                  bottomEnd: Radius.circular(isMe ? 4 : 16),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment:
+                                    isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isAr ? msg['text'] : msg['textEn'],
+                                    style: AppTypography.bodySecondary(
+                                      color: isMe ? Colors.white : AppColors.textPrimary,
+                                    ).copyWith(height: 1.4),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    displayTime,
+                                    style: AppTypography.label(
+                                      color: isMe ? Colors.white70 : AppColors.textSecondary,
+                                    ).copyWith(fontSize: 10),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+
+                // Quick Reply Chips
+                Container(
+                  height: 48,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: quickChips.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      return ActionChip(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: AppColors.borderDisabled),
+                        label: Text(
+                          quickChips[index],
+                          style: AppTypography.label(color: AppColors.navy),
+                        ),
+                        onPressed: () => _sendMessage(quickChips[index]),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Chat input bar
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(color: AppColors.borderDisabled.withValues(alpha: 0.6)),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: const BoxDecoration(
-                      color: AppColors.teal,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: Transform.flip(
-                        flipX: isAr,
-                        child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _msgController,
+                          decoration: InputDecoration(
+                            hintText: isAr ? 'اكتب رسالتك للكابتن...' : 'Type message to driver...',
+                            filled: true,
+                            fillColor: AppColors.surfaceLight,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: const BorderSide(color: AppColors.borderDisabled),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: const BorderSide(color: AppColors.borderDisabled),
+                            ),
+                          ),
+                          onSubmitted: (_) => _sendMessage(),
+                        ),
                       ),
-                      onPressed: () => _sendMessage(),
-                    ),
+                      const SizedBox(width: 8),
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.teal,
+                          shape: BoxShape.circle,
+                        ),
+                        child: IconButton(
+                          tooltip: isAr ? 'إرسال' : 'Send',
+                          icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                          onPressed: () => _sendMessage(),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

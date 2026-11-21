@@ -132,10 +132,6 @@ class AppStrings {
     'إنشاء حساب': 'Create Account',
     'شحن رصيد': 'Deposit',
     'سحب رصيد': 'Withdraw',
-    'طوال الأسبوع': 'All Week',
-    'الجمعة القادمة': 'Next Friday',
-    'الأحد القادم · صباحاً': 'Next Sunday · Morning',
-    'غداً · صباحاً': 'Tomorrow · Morning',
     'إرسال التقييم': 'Submit Review',
     'تقييم المشوار': 'Rate Trip',
     'تقييم السائق والمشوار': 'Rate Driver & Trip',
@@ -360,11 +356,6 @@ class AppStrings {
           .replaceAll(',', '،')
           .replaceAll('Today', 'اليوم')
           .replaceAll('Tomorrow', 'غداً')
-          .replaceAll('Morning', 'صباحاً')
-          .replaceAll('Evening', 'مساءً')
-          .replaceAll('Next', 'القادم')
-          .replaceAll('All Week', 'طوال الأسبوع')
-          .replaceAll('Now', 'الآن')
           .replaceAll('Fri', 'الجمعة')
           .replaceAll('Sat', 'السبت')
           .replaceAll('Sun', 'الأحد')
@@ -383,12 +374,6 @@ class AppStrings {
           .replaceAll('اليوم', 'Today')
           .replaceAll('بكرة', 'Tomorrow')
           .replaceAll('غداً', 'Tomorrow')
-          .replaceAll('صباحاً', 'Morning')
-          .replaceAll('مساءً', 'Evening')
-          .replaceAll('القادمة', 'Next')
-          .replaceAll('القادم', 'Next')
-          .replaceAll('طوال الأسبوع', 'All Week')
-          .replaceAll('الآن', 'Now')
           .replaceAll('الجمعة', 'Fri')
           .replaceAll('السبت', 'Sat')
           .replaceAll('الأحد', 'Sun')

@@ -330,7 +330,7 @@ class _UserDetailModal extends StatefulWidget {
 
 class _UserDetailModalState extends State<_UserDetailModal> {
   bool _isBanning = false;
-  final TextEditingController _banReasonController = TextEditingController(text: 'تحرش متكرر موثق في 3 بلاغات');
+  final TextEditingController _banReasonController = TextEditingController();
 
   @override
   void dispose() {

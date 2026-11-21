@@ -32,7 +32,7 @@ void main() {
     expect(find.text('هنبعتلك كود تأكيد عبر رسالة SMS'), findsOneWidget);
 
     // Verify Country Code Badge
-    expect(find.text('🇪🇬'), findsOneWidget);
+    expect(find.text('EG'), findsOneWidget);
     expect(find.text('+20'), findsOneWidget);
 
     // Verify Helper text

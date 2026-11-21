@@ -261,11 +261,14 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                     children: [
                       const Icon(Icons.lock_rounded, size: 16, color: AppColors.textSecondary),
                       const SizedBox(width: 6),
-                      Text(
-                        isAr
-                            ? 'السجل للقراءة فقط ومحمي بالتشفير وغير قابل للتعديل أو الحذف.'
-                            : 'Audit trail is append-only, tamper-proof and immutable by regulation.',
-                        style: AppTypography.label(color: AppColors.textSecondary),
+                      Flexible(
+                        child: Text(
+                          isAr
+                              ? 'السجل للقراءة فقط ومحمي بالتشفير وغير قابل للتعديل أو الحذف.'
+                              : 'Audit trail is append-only, tamper-proof and immutable by regulation.',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.label(color: AppColors.textSecondary),
+                        ),
                       ),
                     ],
                   ),

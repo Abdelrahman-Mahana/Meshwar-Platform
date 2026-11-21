@@ -450,7 +450,7 @@ class _DriverVerificationStepsScreenState extends State<DriverVerificationStepsS
             customLabel: isDone ? (isAr ? 'تم' : 'Done') : (isAr ? 'مطلوب' : 'Required'),
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
+          const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
         ],
       ),
       onTap: onTap,

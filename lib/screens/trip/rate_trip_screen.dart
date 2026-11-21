@@ -124,7 +124,7 @@ class _RateTripScreenState extends State<RateTripScreen> {
                 ),
                 child: Center(
                   child: Text(
-                    widget.driverName[0],
+                    widget.driverName.isNotEmpty ? widget.driverName[0] : (isAr ? 'ك' : 'D'),
                     style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 32),
                   ),
                 ),
@@ -133,7 +133,14 @@ class _RateTripScreenState extends State<RateTripScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(widget.driverName, style: AppTypography.title().copyWith(fontSize: 18)),
+                  Flexible(
+                    child: Text(
+                      widget.driverName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.title().copyWith(fontSize: 18),
+                    ),
+                  ),
                   const SizedBox(width: 6),
                   const MashwarBadge(type: BadgeType.verified, customLabel: 'موثق'),
                 ],
@@ -222,25 +229,38 @@ class _RateTripScreenState extends State<RateTripScreen> {
               ),
               const SizedBox(height: 10),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [0, 10, 20, 50].map((tip) {
+                children: [0, 10, 20, 50].asMap().entries.map((entry) {
+                  final idx = entry.key;
+                  final tip = entry.value;
                   final isSel = _selectedTip == tip;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedTip = tip),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      decoration: BoxDecoration(
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsetsDirectional.only(end: idx < 3 ? 8 : 0),
+                      child: Material(
                         color: isSel ? AppColors.navy : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSel ? AppColors.navy : AppColors.borderDisabled,
-                        ),
-                      ),
-                      child: Text(
-                        tip == 0 ? (isAr ? 'بدون' : 'None') : '$tip ${isAr ? 'ج.م' : 'EGP'}',
-                        style: TextStyle(
-                          color: isSel ? Colors.white : AppColors.navy,
-                          fontWeight: FontWeight.bold,
+                        borderRadius: BorderRadius.circular(AppDimens.radiusButton),
+                        child: InkWell(
+                          onTap: () => setState(() => _selectedTip = tip),
+                          borderRadius: BorderRadius.circular(AppDimens.radiusButton),
+                          child: Container(
+                            constraints: const BoxConstraints(minHeight: AppDimens.minTouchTarget),
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppDimens.radiusButton),
+                              border: Border.all(
+                                color: isSel ? AppColors.navy : AppColors.borderDisabled,
+                              ),
+                            ),
+                            child: Text(
+                              tip == 0 ? (isAr ? 'بدون' : 'None') : '$tip ${isAr ? 'ج.م' : 'EGP'}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.label(
+                                color: isSel ? Colors.white : AppColors.navy,
+                              ).copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
                         ),
                       ),
                     ),

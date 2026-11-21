@@ -2,88 +2,145 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/widgets/alert_banner.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../account/account_extra_screens.dart';
+import '../auth/welcome_screen.dart';
 
-// SYS-02: Force Update Screen
-class ForceUpdateScreen extends StatelessWidget {
-  const ForceUpdateScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              const Icon(Icons.arrow_upward_rounded, size: 54, color: AppColors.navy),
-              const SizedBox(height: 24),
-              Text('لازم تحدّث التطبيق', style: AppTypography.largeTitle()),
-              const SizedBox(height: 8),
-              Text(
-                'فيه نسخة جديدة فيها تحسينات مهمة للأمان',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
+Widget _buildSystemStateScaffold({
+  required BuildContext context,
+  required IconData icon,
+  required String title,
+  required String subtitle,
+  required List<Widget> actions,
+  Widget? topBanner,
+}) {
+  return Scaffold(
+    backgroundColor: Colors.white,
+    body: SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimens.space24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (topBanner != null) topBanner else const SizedBox(height: AppDimens.space24),
+                      Column(
+                        children: [
+                          Container(
+                            width: 84,
+                            height: 84,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceLight,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.borderDisabled),
+                            ),
+                            child: Icon(icon, size: 40, color: AppColors.navy),
+                          ),
+                          const SizedBox(height: AppDimens.space24),
+                          Text(
+                            title,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.largeTitle(),
+                          ),
+                          const SizedBox(height: AppDimens.space8),
+                          Text(
+                            subtitle,
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodySecondary(),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          const SizedBox(height: AppDimens.space32),
+                          ...actions,
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const Spacer(flex: 4),
-              MashwarButton(
-                text: 'تحديث الآن',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('جاري فتح متجر التطبيقات لتحديث مشوار...')),
-                  );
-                },
-              ),
-              const SizedBox(height: AppDimens.space24),
-            ],
+            ),
           ),
         ),
       ),
+    ),
+  );
+}
+
+// SYS-02: Force Update Screen
+class ForceUpdateScreen extends StatelessWidget {
+  const ForceUpdateScreen({super.key, this.onUpdate});
+
+  final VoidCallback? onUpdate;
+
+  @override
+  Widget build(BuildContext context) {
+    final isAr = context.isArabic;
+    return _buildSystemStateScaffold(
+      context: context,
+      icon: Icons.arrow_upward_rounded,
+      title: isAr ? 'تحديث التطبيق مطلوب' : 'App Update Required',
+      subtitle: isAr
+          ? 'تتوفر نسخة جديدة تحتوي على تحسينات مهمة للأمان والأداء.'
+          : 'A new version is available with important security and performance improvements.',
+      actions: [
+        MashwarButton(
+          text: isAr ? 'تحديث الآن' : 'Update Now',
+          onPressed: onUpdate ??
+              () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isAr
+                          ? 'جاري فتح متجر التطبيقات لتحديث مشوار...'
+                          : 'Opening app store to update MASHWAR...',
+                    ),
+                  ),
+                );
+              },
+        ),
+      ],
     );
   }
 }
 
 // SYS-03: Maintenance Screen
 class MaintenanceScreen extends StatelessWidget {
-  const MaintenanceScreen({super.key});
+  const MaintenanceScreen({super.key, this.onRetry});
+
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              const Icon(Icons.settings_outlined, size: 54, color: AppColors.navy),
-              const SizedBox(height: 24),
-              Text('بنحسّن التطبيق', style: AppTypography.largeTitle()),
-              const SizedBox(height: 8),
-              Text(
-                'هنرجع خلال وقت قصير. شكراً لصبرك',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
-              ),
-              const Spacer(flex: 4),
-              MashwarButton(
-                text: 'حاول تاني',
-                variant: MashwarButtonVariant.secondary,
-                onPressed: () {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-              const SizedBox(height: AppDimens.space24),
-            ],
-          ),
+    final isAr = context.isArabic;
+    return _buildSystemStateScaffold(
+      context: context,
+      icon: Icons.settings_outlined,
+      title: isAr ? 'نُجري تحديثات لتحسين الخدمة' : 'Scheduled Maintenance',
+      subtitle: isAr
+          ? 'سنعود خلال وقت قصير. شكراً لتفهمك وصبرك.'
+          : 'We will be back shortly. Thank you for your patience.',
+      actions: [
+        MashwarButton(
+          text: isAr ? 'إعادة المحاولة' : 'Try Again',
+          variant: MashwarButtonVariant.secondary,
+          onPressed: onRetry ??
+              () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
         ),
-      ),
+      ],
     );
   }
 }
@@ -96,42 +153,29 @@ class OfflineScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const SizedBox(height: 12),
-              const AlertBanner(
-                message: 'لا يوجد اتصال بالإنترنت',
-                type: AlertBannerType.offline,
-              ),
-              const Spacer(flex: 3),
-              const Icon(Icons.flash_off_rounded, size: 54, color: AppColors.navy),
-              const SizedBox(height: 24),
-              Text('مفيش إنترنت', style: AppTypography.largeTitle()),
-              const SizedBox(height: 8),
-              Text(
-                'تأكد من الاتصال وحاول تاني',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
-              ),
-              const Spacer(flex: 4),
-              MashwarButton(
-                text: 'حاول تاني',
-                onPressed: onRetry ?? () {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-              const SizedBox(height: AppDimens.space24),
-            ],
-          ),
-        ),
+    final isAr = context.isArabic;
+    return _buildSystemStateScaffold(
+      context: context,
+      icon: Icons.wifi_off_rounded,
+      topBanner: AlertBanner(
+        message: isAr ? 'لا يوجد اتصال بالإنترنت' : 'No internet connection',
+        type: AlertBannerType.offline,
       ),
+      title: isAr ? 'لا يوجد اتصال بالإنترنت' : 'You\'re Offline',
+      subtitle: isAr
+          ? 'تأكد من اتصالك بالشبكة ثم أعد المحاولة.'
+          : 'Check your internet connection and try again.',
+      actions: [
+        MashwarButton(
+          text: isAr ? 'إعادة المحاولة' : 'Try Again',
+          onPressed: onRetry ??
+              () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
+        ),
+      ],
     );
   }
 }
@@ -144,47 +188,35 @@ class GeneralErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              const Icon(Icons.priority_high_rounded, size: 54, color: AppColors.navy),
-              const SizedBox(height: 24),
-              Text('حصل خطأ غير متوقع', style: AppTypography.largeTitle()),
-              const SizedBox(height: 8),
-              Text(
-                'ماتقلقش، بياناتك في أمان. جرّب تاني',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
-              ),
-              const Spacer(flex: 4),
-              MashwarButton(
-                text: 'حاول تاني',
-                onPressed: onRetry ?? () {
-                  if (Navigator.of(context).canPop()) {
-                    Navigator.of(context).pop();
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-              MashwarButton(
-                text: 'تواصل مع الدعم',
-                variant: MashwarButtonVariant.secondary,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('جاري فتح محادثة الدعم الفني المباشر...')),
-                  );
-                },
-              ),
-              const SizedBox(height: AppDimens.space24),
-            ],
-          ),
+    final isAr = context.isArabic;
+    return _buildSystemStateScaffold(
+      context: context,
+      icon: Icons.priority_high_rounded,
+      title: isAr ? 'حدث خطأ غير متوقع' : 'Something Went Wrong',
+      subtitle: isAr
+          ? 'لا تقلق، بياناتك في أمان. يرجى المحاولة مرة أخرى.'
+          : 'Don\'t worry, your data is safe. Please try again.',
+      actions: [
+        MashwarButton(
+          text: isAr ? 'إعادة المحاولة' : 'Try Again',
+          onPressed: onRetry ??
+              () {
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop();
+                }
+              },
         ),
-      ),
+        const SizedBox(height: AppDimens.space12),
+        MashwarButton(
+          text: isAr ? 'تواصل مع الدعم' : 'Contact Support',
+          variant: MashwarButtonVariant.secondary,
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
+            );
+          },
+        ),
+      ],
     );
   }
 }
@@ -197,33 +229,26 @@ class SessionExpiredScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const Spacer(flex: 3),
-              const Icon(Icons.schedule_rounded, size: 54, color: AppColors.navy),
-              const SizedBox(height: 24),
-              Text('انتهت الجلسة', style: AppTypography.largeTitle()),
-              const SizedBox(height: 8),
-              Text(
-                'سجّل دخولك تاني عشان تكمّل',
-                textAlign: TextAlign.center,
-                style: AppTypography.bodySecondary(),
-              ),
-              const Spacer(flex: 4),
-              MashwarButton(
-                text: 'تسجيل الدخول',
-                onPressed: onLogin ?? () {},
-              ),
-              const SizedBox(height: AppDimens.space24),
-            ],
-          ),
+    final isAr = context.isArabic;
+    return _buildSystemStateScaffold(
+      context: context,
+      icon: Icons.schedule_rounded,
+      title: isAr ? 'انتهت جلستك' : 'Session Expired',
+      subtitle: isAr
+          ? 'يرجى تسجيل الدخول مرة أخرى للمتابعة بأمان.'
+          : 'Please sign in again to continue securely.',
+      actions: [
+        MashwarButton(
+          text: isAr ? 'تسجيل الدخول' : 'Sign In',
+          onPressed: onLogin ??
+              () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                  (route) => false,
+                );
+              },
         ),
-      ),
+      ],
     );
   }
 }

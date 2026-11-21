@@ -70,8 +70,8 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
   void didUpdateWidget(covariant MashwarTextField oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.focusNode != oldWidget.focusNode) {
+      _focusNode.removeListener(_handleFocusChange);
       if (_isInternalFocusNode) {
-        _focusNode.removeListener(_handleFocusChange);
         _focusNode.dispose();
       }
       if (widget.focusNode != null) {
@@ -111,7 +111,7 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
     double borderWidth;
 
     if (hasError) {
-      bgColor = const Color(0xFFFEF2F2);
+      bgColor = AppColors.dangerBg;
       borderColor = AppColors.danger;
       borderWidth = 1.4;
     } else if (_isFocused && widget.enabled) {
@@ -119,13 +119,13 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
       borderColor = AppColors.navy;
       borderWidth = 1.8;
     } else if (widget.enabled) {
-      bgColor = const Color(0xFFF8F9FA);
-      borderColor = const Color(0xFFE5E5EA);
-      borderWidth = 0.8;
+      bgColor = AppColors.surfaceLight;
+      borderColor = AppColors.borderDisabled;
+      borderWidth = 1.0;
     } else {
-      bgColor = const Color(0xFFF3F3F4);
-      borderColor = const Color(0xFFE5E5EA).withValues(alpha: 0.5);
-      borderWidth = 0.8;
+      bgColor = AppColors.chipInactiveBg;
+      borderColor = AppColors.borderDisabled.withValues(alpha: 0.6);
+      borderWidth = 1.0;
     }
 
     return Column(
@@ -142,13 +142,14 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
           const SizedBox(height: 6),
         ],
         GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: widget.enabled ? widget.onTap : null,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 150),
             constraints: const BoxConstraints(minHeight: 52),
             decoration: BoxDecoration(
               color: bgColor,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppDimens.radiusField),
               border: Border.all(color: borderColor, width: borderWidth),
               boxShadow: _isFocused && widget.enabled && !hasError
                   ? [
@@ -172,8 +173,9 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
                   child: TextField(
                     controller: widget.controller,
                     focusNode: _focusNode,
-                    enabled: widget.enabled && !widget.readOnly,
+                    enabled: widget.enabled,
                     readOnly: widget.readOnly,
+                    onTap: widget.enabled ? widget.onTap : null,
                     keyboardType: widget.keyboardType,
                     inputFormatters: widget.inputFormatters,
                     onChanged: widget.onChanged,
@@ -185,7 +187,7 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
                     decoration: InputDecoration(
                       hintText: widget.hint,
                       hintStyle: AppTypography.bodySecondary(
-                        color: const Color(0xFF94A3B8),
+                        color: AppColors.textSecondary.withValues(alpha: 0.72),
                       ),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
@@ -194,9 +196,11 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
                       disabledBorder: InputBorder.none,
                       focusedErrorBorder: InputBorder.none,
                       filled: false,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: widget.prefixIcon == null ? 14 : 0,
-                        vertical: 14,
+                      contentPadding: EdgeInsetsDirectional.only(
+                        start: widget.prefixIcon == null ? 14 : 0,
+                        end: widget.suffixIcon == null ? 14 : 0,
+                        top: 14,
+                        bottom: 14,
                       ),
                       isDense: true,
                     ),
