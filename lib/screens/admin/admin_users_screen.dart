@@ -98,7 +98,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                         controller: _searchController,
                         onChanged: (val) => setState(() => _searchQuery = val.trim()),
                         decoration: InputDecoration(
-                          hintText: isAr ? 'بحث بالاسم أو رقم الموبايل...' : 'Search by name or mobile number...',
+                          hintText: isAr ? 'بحث بالاسم أو رقم الجوال...' : 'Search by name or mobile number...',
                           prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
@@ -208,7 +208,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       dataRowMaxHeight: 64,
                       columns: [
                         DataColumn(label: Text(isAr ? 'الاسم' : 'Name', style: const TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(label: Text(isAr ? 'الموبايل' : 'Phone (Masked)', style: const TextStyle(fontWeight: FontWeight.bold))),
+                        DataColumn(label: Text(isAr ? 'رقم الجوال' : 'Phone (Masked)', style: const TextStyle(fontWeight: FontWeight.bold))),
                         DataColumn(label: Text(isAr ? 'الدور' : 'Role', style: const TextStyle(fontWeight: FontWeight.bold))),
                         DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
                         DataColumn(label: Text(isAr ? 'التسجيل' : 'Registration', style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -302,8 +302,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       Expanded(
                         child: Text(
                           isAr
-                              ? 'الأرقام مخفية جزئياً لحماية الخصوصية. تصدير بيانات الهوية غير متاح بموجب القانون رقم 151 لسنة 2020.'
-                              : 'Phone numbers partially masked for privacy. ID data export prohibited under Egyptian Law 151/2020.',
+                              ? 'الأرقام مخفية جزئياً لحماية الخصوصية. تصدير بيانات الهوية غير متاح بموجب القانون القطري رقم 13 لسنة 2016.'
+                              : 'Phone numbers partially masked for privacy. ID data export prohibited under Qatar Law No. 13/2016.',
                           style: AppTypography.label(color: AppColors.textSecondary),
                         ),
                       ),
@@ -395,7 +395,7 @@ class _UserDetailModalState extends State<_UserDetailModal> {
               const Divider(height: 24),
 
               // Info Grid
-              _buildRow(isAr ? 'الموبايل' : 'Phone', widget.user.maskedPhone),
+              _buildRow(isAr ? 'رقم الجوال' : 'Phone', widget.user.maskedPhone),
               const SizedBox(height: 10),
               _buildRow(isAr ? 'رحلات' : 'Rides', '${widget.user.rideCount} ${isAr ? "حجوزات" : "Bookings"}'),
               const SizedBox(height: 10),

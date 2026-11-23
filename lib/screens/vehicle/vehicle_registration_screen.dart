@@ -17,10 +17,10 @@ class VehicleRegistrationScreen extends StatefulWidget {
 }
 
 class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
-  final TextEditingController _modelController = TextEditingController(text: 'هيونداي إلنترا 2022');
+  final TextEditingController _modelController = TextEditingController(text: 'تويوتا كامري 2024');
   final TextEditingController _colorController = TextEditingController(text: 'أبيض لؤلؤي');
-  final TextEditingController _plateLettersController = TextEditingController(text: 'س ق ر');
-  final TextEditingController _plateNumbersController = TextEditingController(text: '1942');
+  final TextEditingController _plateLettersController = TextEditingController(text: 'قطر');
+  final TextEditingController _plateNumbersController = TextEditingController(text: '482910');
   
   int _seatsCount = 3;
   bool _hasAC = true;
@@ -159,9 +159,9 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
               ),
               const SizedBox(height: AppDimens.space16),
 
-              // Egyptian License Plate Layout
+              // Qatar License Plate Layout
               Text(
-                isAr ? 'اللوحة المعدنية (الحروف والأرقام)' : 'Egyptian License Plate',
+                isAr ? 'لوحة المركبة القطرية' : 'Qatar License Plate',
                 style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: AppDimens.space8),
@@ -170,22 +170,22 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: AppColors.navy, width: 2),
+                  border: Border.all(color: const Color(0xFF8A1538), width: 2),
                 ),
                 child: Column(
                   children: [
-                    // Top Egyptian Blue Band
+                    // Top Qatari Al-Adaam Maroon Band
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
                       decoration: BoxDecoration(
-                        color: AppColors.navy,
+                        color: const Color(0xFF8A1538),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: const [
-                          Text('EGYPT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 2)),
-                          Text('مـصـر', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                        children: [
+                          Text('QATAR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 2)),
+                          Text('قـطـر', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                         ],
                       ),
                     ),
@@ -193,25 +193,27 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                     Row(
                       children: [
                         Expanded(
+                          flex: 2,
                           child: TextField(
                             controller: _plateLettersController,
                             textAlign: TextAlign.center,
-                            style: AppTypography.largeTitle().copyWith(fontSize: 22, letterSpacing: 6),
+                            style: AppTypography.title(color: const Color(0xFF8A1538)).copyWith(fontSize: 18),
                             decoration: const InputDecoration(
-                              hintText: 'س ق ر',
+                              hintText: 'قطر',
                               border: InputBorder.none,
                             ),
                           ),
                         ),
-                        Container(width: 2, height: 40, color: AppColors.navy),
+                        Container(width: 2, height: 40, color: const Color(0xFF8A1538)),
                         Expanded(
+                          flex: 4,
                           child: TextField(
                             controller: _plateNumbersController,
                             textAlign: TextAlign.center,
                             keyboardType: TextInputType.number,
                             style: AppTypography.largeTitle().copyWith(fontSize: 22, letterSpacing: 4),
                             decoration: const InputDecoration(
-                              hintText: '1942',
+                              hintText: '482910',
                               border: InputBorder.none,
                             ),
                           ),

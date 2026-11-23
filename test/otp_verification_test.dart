@@ -18,7 +18,7 @@ void main() {
         ChangeNotifierProvider<SettingsProvider>.value(value: settingsProvider),
       ],
       child: const MaterialApp(
-        locale: Locale('ar', 'EG'),
+        locale: Locale('ar', 'QA'),
         home: OtpVerificationScreen(),
       ),
     );
@@ -29,8 +29,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Title & Subtitle
-    expect(find.text('أدخل الكود'), findsOneWidget);
-    expect(find.textContaining('بعتنا كود من 6 أرقام'), findsOneWidget);
+    expect(find.text('أدخل رمز التحقق'), findsOneWidget);
+    expect(find.textContaining('أرسلنا رمزاً من 6 أرقام إلى'), findsOneWidget);
 
     // Verify single transparent TextField
     final textField = find.byType(TextField);

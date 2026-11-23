@@ -24,25 +24,25 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
   bool _isPublished = false;
 
   // Step 1: Route & Schedule
-  String _fromCity = 'كفر الشيخ';
-  String _toCity = 'القاهرة';
+  String _fromCity = 'الدوحة';
+  String _toCity = 'الخور';
   String? _stopover;
   String _date = 'الجمعة 6 نوفمبر · 7:30 ص';
-  String _flexibility = '± 15 د'; // 'بالظبط', '± 15 د', '± 30 د'
+  String _flexibility = '± 15 د'; // 'في الموعد', '± 15 د', '± 30 د'
   String? _step1Error;
 
   // Step 2: Distance & Pricing
-  final int _distanceKm = 120;
-  final int _suggestedPrice = 120;
+  final int _distanceKm = 52;
+  final int _suggestedPrice = 35;
   int _seatsCount = 3;
-  final TextEditingController _priceController = TextEditingController(text: '120');
+  final TextEditingController _priceController = TextEditingController(text: '35');
   String? _priceError;
 
   // Step 3: Parcels & Preferences
   bool _acceptParcels = true;
-  final TextEditingController _smallParcelPrice = TextEditingController(text: '40');
-  final TextEditingController _medParcelPrice = TextEditingController(text: '60');
-  final TextEditingController _largeParcelPrice = TextEditingController(text: '90');
+  final TextEditingController _smallParcelPrice = TextEditingController(text: '25');
+  final TextEditingController _medParcelPrice = TextEditingController(text: '40');
+  final TextEditingController _largeParcelPrice = TextEditingController(text: '60');
   bool _instantBooking = false;
   bool _ladiesOnly = false;
 
@@ -114,12 +114,12 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
         setState(() => _priceError = isAr ? 'يرجى إدخال سعر صحيح' : 'Please enter a valid price');
         return;
       }
-      if (parsedPrice > 150) {
-        setState(() => _priceError = isAr ? 'السعر أعلى من الحد المسموح (150 ج)' : 'Price exceeds allowed ceiling (150 EGP)');
+      if (parsedPrice > 80) {
+        setState(() => _priceError = isAr ? 'السعر أعلى من الحد المسموح (80 ر.ق)' : 'Price exceeds allowed ceiling (80 QAR)');
         return;
       }
-      if (parsedPrice < 90) {
-        setState(() => _priceError = isAr ? 'السعر أقل من الحد الأدنى (90 ج)' : 'Price below minimum (90 EGP)');
+      if (parsedPrice < 20) {
+        setState(() => _priceError = isAr ? 'السعر أقل من الحد الأدنى (20 ر.ق)' : 'Price below minimum (20 QAR)');
         return;
       }
       setState(() {
@@ -131,8 +131,8 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
     } else if (_currentStep == 4) {
       final auth = context.read<AuthProvider>();
       final rides = context.read<RidesProvider>();
-      final price = int.tryParse(_priceController.text) ?? 120;
-      final pPrice = int.tryParse(_smallParcelPrice.text) ?? 40;
+      final price = int.tryParse(_priceController.text) ?? 35;
+      final pPrice = int.tryParse(_smallParcelPrice.text) ?? 25;
       final parts = _date.split('·');
       final datePart = parts.isNotEmpty ? parts.first.trim() : _date;
       final timePart = parts.length > 1 ? parts.last.trim() : '7:30 ص';
@@ -188,13 +188,13 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                       ),
                       const SizedBox(height: AppDimens.space20),
                       Text(
-                        isAr ? 'اتنشرت رحلتك' : 'Trip Published!',
+                        isAr ? 'تم نشر رحلتك' : 'Trip Published!',
                         style: AppTypography.largeTitle(),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         isAr
-                            ? 'هنبلغك لما حد يحجز. شاركها عشان تتملي أسرع.'
+                            ? 'سنبلّغك فور إتمام الحجز. شارك الرحلة لسرعة حجز المقاعد.'
                             : 'We will notify you when passengers book. Share to fill seats faster.',
                         textAlign: TextAlign.center,
                         style: AppTypography.bodySecondary(),
@@ -325,7 +325,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                 const Divider(height: 20),
                 TextButton.icon(
                   onPressed: () {
-                    setState(() => _stopover = _stopover == null ? 'طنطا' : null);
+                    setState(() => _stopover = _stopover == null ? 'لوسيل' : null);
                   },
                   icon: const Icon(Icons.add_circle_outline_rounded, size: 18, color: AppColors.teal),
                   label: Text(
@@ -403,7 +403,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(isAr ? 'السعر المقترح' : 'Suggested Price', style: AppTypography.bodySecondary()),
-                    Text('$_suggestedPrice ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.teal)),
+                    Text('$_suggestedPrice ${isAr ? "ر.ق" : "QAR"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.teal)),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -412,8 +412,8 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                   decoration: BoxDecoration(color: AppColors.sand, borderRadius: BorderRadius.circular(8)),
                   child: Text(
                     isAr
-                        ? 'تقدر تعدّل السعر من 90 إلى 150 ج. الهدف مشاركة تكلفة البنزين.'
-                        : 'You can adjust price between 90 and 150 EGP to share petrol costs.',
+                        ? 'يمكنك تعديل السعر من 20 إلى 80 ر.ق لمشاركة تكلفة الوقود.'
+                        : 'You can adjust price between 20 and 80 QAR to share fuel costs.',
                     style: AppTypography.label(color: AppColors.textSecondary),
                   ),
                 ),
@@ -428,7 +428,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(isAr ? 'عدد الكراسي' : 'Seats Count', style: AppTypography.body()),
+                    Text(isAr ? 'عدد المقاعد' : 'Seats Count', style: AppTypography.body()),
                     Row(
                       children: [
                         IconButton(
@@ -445,13 +445,13 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                   ],
                 ),
                 const Divider(height: 20),
-                Text(isAr ? 'سعر الكرسي (ج)' : 'Price per Seat (EGP)', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                Text(isAr ? 'سعر المقعد (ر.ق)' : 'Price per Seat (QAR)', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _priceController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    suffixText: isAr ? 'ج نقداً' : 'EGP',
+                    suffixText: isAr ? 'ر.ق نقداً' : 'QAR',
                     errorText: _priceError,
                     filled: true,
                     fillColor: AppColors.sand,
@@ -477,7 +477,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                   value: _acceptParcels,
                   onChanged: (val) => setState(() => _acceptParcels = val),
                   title: Text(isAr ? 'أقبل طرود' : 'Accept Parcels'),
-                  subtitle: Text(isAr ? 'صغير ومتوسط وكبير في الشنطة' : 'Small, medium and large in trunk'),
+                  subtitle: Text(isAr ? 'صغير ومتوسط وكبير في الصندوق الخلفي' : 'Small, medium and large in trunk'),
                 ),
                 if (_acceptParcels) ...[
                   const Divider(height: 16),
@@ -486,21 +486,21 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                       Expanded(
                         child: TextField(
                           controller: _smallParcelPrice,
-                          decoration: InputDecoration(labelText: isAr ? 'صغير (ج)' : 'Small', filled: true, fillColor: AppColors.sand),
+                          decoration: InputDecoration(labelText: isAr ? 'صغير (ر.ق)' : 'Small (QAR)', filled: true, fillColor: AppColors.sand),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           controller: _medParcelPrice,
-                          decoration: InputDecoration(labelText: isAr ? 'متوسط (ج)' : 'Medium', filled: true, fillColor: AppColors.sand),
+                          decoration: InputDecoration(labelText: isAr ? 'متوسط (ر.ق)' : 'Medium (QAR)', filled: true, fillColor: AppColors.sand),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextField(
                           controller: _largeParcelPrice,
-                          decoration: InputDecoration(labelText: isAr ? 'كبير (ج)' : 'Large', filled: true, fillColor: AppColors.sand),
+                          decoration: InputDecoration(labelText: isAr ? 'كبير (ر.ق)' : 'Large (QAR)', filled: true, fillColor: AppColors.sand),
                         ),
                       ),
                     ],
@@ -520,7 +520,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                   value: _instantBooking,
                   onChanged: (val) => setState(() => _instantBooking = val),
                   title: Text(isAr ? 'حجز تلقائي' : 'Instant Booking'),
-                  subtitle: Text(isAr ? 'من غير موافقتك على كل طلب يدوي' : 'Book without manual review'),
+                  subtitle: Text(isAr ? 'بدون موافقة يدوية على كل طلب' : 'Book without manual review'),
                 ),
                 const Divider(height: 16),
                 SwitchListTile.adaptive(
@@ -529,7 +529,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                   value: _ladiesOnly,
                   onChanged: (val) => setState(() => _ladiesOnly = val),
                   title: Text(isAr ? 'للسيدات فقط' : 'Ladies Only'),
-                  subtitle: Text(isAr ? 'الرحلة دي هتظهر للسيدات فقط' : 'Ride only visible to female riders'),
+                  subtitle: Text(isAr ? 'تظهر هذه الرحلة للسيدات فقط' : 'Ride only visible to female riders'),
                 ),
               ],
             ),
@@ -552,11 +552,11 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                 const Divider(height: 16),
                 _buildReviewRow(isAr ? 'الموعد' : 'Date & Time', '$_date ($_flexibility)'),
                 const Divider(height: 16),
-                _buildReviewRow(isAr ? 'الكراسي' : 'Seats', '$_seatsCount × ${_priceController.text} ${isAr ? "ج" : "EGP"}'),
+                _buildReviewRow(isAr ? 'المقاعد' : 'Seats', '$_seatsCount × ${_priceController.text} ${isAr ? "ر.ق" : "QAR"}'),
                 const Divider(height: 16),
                 _buildReviewRow(
                   isAr ? 'الطرود' : 'Parcels',
-                  _acceptParcels ? (isAr ? 'تقبل، من ${_smallParcelPrice.text} ج' : 'Accepted, from ${_smallParcelPrice.text} EGP') : (isAr ? 'لا تقبل' : 'None'),
+                  _acceptParcels ? (isAr ? 'تقبل، من ${_smallParcelPrice.text} ر.ق' : 'Accepted, from ${_smallParcelPrice.text} QAR') : (isAr ? 'لا تقبل' : 'None'),
                 ),
                 const Divider(height: 16),
                 _buildReviewRow(isAr ? 'الحجز' : 'Booking', _instantBooking ? (isAr ? 'فوري' : 'Instant') : (isAr ? 'بموافقتك' : 'Manual Approval')),

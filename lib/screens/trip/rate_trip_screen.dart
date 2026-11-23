@@ -17,8 +17,8 @@ class RateTripScreen extends StatefulWidget {
 
   const RateTripScreen({
     super.key,
-    this.driverName = 'محمد سعيد',
-    this.route = 'كفر الشيخ ← القاهرة',
+    this.driverName = 'جاسم الكواري',
+    this.route = 'الدوحة ← الخور',
     this.isParcel = false,
   });
 
@@ -270,7 +270,7 @@ class _RateTripScreenState extends State<RateTripScreen> {
                               ),
                             ),
                             child: Text(
-                              tip == 0 ? (isAr ? 'بدون' : 'None') : '$tip ${isAr ? 'ج.م' : 'EGP'}',
+                              tip == 0 ? (isAr ? 'بدون' : 'None') : '$tip ${isAr ? 'ر.ق' : 'QAR'}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.label(

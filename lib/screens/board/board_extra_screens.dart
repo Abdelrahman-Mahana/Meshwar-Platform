@@ -191,7 +191,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
           typeLabel: typeLabel,
           route: context.trRoute('${ad.fromCity} ← ${ad.toCity}'),
           details: '${ad.timeText} · ${ad.description}',
-          priceText: '${ad.priceOrBudget} ${isAr ? "ج" : "EGP"}',
+          priceText: '${ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"}',
           offersCount: index == 0 ? 3 : 2,
           isAr: isAr,
           onTap: () {
@@ -286,8 +286,8 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
                       Expanded(
                         child: Text(
                           isAr
-                              ? 'عرضك المقدم: ${ad.myOfferPrice ?? ad.priceOrBudget} ج'
-                              : 'Your Offer: ${ad.myOfferPrice ?? ad.priceOrBudget} EGP',
+                              ? 'عرضك المقدم: ${ad.myOfferPrice ?? ad.priceOrBudget} ر.ق'
+                              : 'Your Offer: ${ad.myOfferPrice ?? ad.priceOrBudget} QAR',
                           style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w800, fontSize: 14),
                         ),
                       ),
@@ -320,7 +320,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
     if (completedAds.isEmpty) {
       return Center(
         child: Text(
-          isAr ? 'مفيش إعلانات منتهية' : 'No completed ads',
+          isAr ? 'لا توجد إعلانات منتهية' : 'No completed ads',
           style: AppTypography.bodySecondary(),
         ),
       );
@@ -335,7 +335,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
           typeLabel: isAr ? 'مكتمل' : 'Completed',
           route: context.trRoute('${ad.fromCity} ← ${ad.toCity}'),
           details: '${ad.timeText} · ${ad.description}',
-          priceText: '${ad.priceOrBudget} ${isAr ? "ج" : "EGP"}',
+          priceText: '${ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"}',
           offersCount: 0,
           isAr: isAr,
           onDelete: () => boardProvider.deleteMyAd(ad.id),
@@ -448,8 +448,8 @@ class BoardAdOffersScreen extends StatefulWidget {
 
 class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
   bool _accepted = false;
-  String _selectedDriverName = 'محمد سعيد';
-  String _selectedDriverPhone = '0100 123 4567';
+  String _selectedDriverName = 'جاسم الكواري';
+  String _selectedDriverPhone = '5523 4567';
 
   void _confirmSelection(BuildContext context, String driverName, String driverPhone, int price, String time) {
     final isAr = context.read<SettingsProvider>().isArabic;
@@ -468,7 +468,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(isAr ? 'السعر المتفق عليه' : 'Agreed Price', style: AppTypography.bodySecondary()),
-                Text('$price ${isAr ? "ج نقداً" : "EGP Cash"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('$price ${isAr ? "ر.ق نقداً" : "QAR Cash"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ],
             ),
             const Divider(height: 16),
@@ -484,7 +484,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(color: AppColors.sand, borderRadius: BorderRadius.circular(8)),
               child: Text(
-                isAr ? 'باقي العروض هتتلغي، ورقم $driverName هيظهر لك للتواصل المباشر.' : 'Other offers will cancel, and $driverName\'s phone will be shared.',
+                isAr ? 'سيتم إلغاء باقي العروض، وسيظهر لك رقم $driverName للتواصل المباشر.' : 'Other offers will cancel, and $driverName\'s phone will be shared.',
                 style: const TextStyle(fontSize: 12),
               ),
             ),
@@ -519,7 +519,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final routeText = widget.ad != null
         ? context.trRoute('${widget.ad!.fromCity} ← ${widget.ad!.toCity}')
-        : (isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo');
+        : (isAr ? 'الدوحة ← الخور' : 'Doha → Al Khor');
     final budgetPrice = widget.ad?.priceOrBudget ?? 80;
 
     if (_accepted) {
@@ -663,7 +663,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              isAr ? 'ميزانيتك $budgetPrice ج' : 'Budget $budgetPrice EGP',
+                              isAr ? 'ميزانيتك $budgetPrice ر.ق' : 'Budget $budgetPrice QAR',
                               style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.teal, fontSize: 12),
                             ),
                           ),
@@ -678,16 +678,16 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                   children: [
                     _buildOfferCard(
                       context: context,
-                      driverName: 'محمد سعيد',
-                      driverPhone: '0100 123 4567',
+                      driverName: 'جاسم الكواري',
+                      driverPhone: '5523 4567',
                       stats: isAr ? 'موثق · 14 رحلة · ★ 4.9' : 'Verified · 14 rides · ★ 4.9',
                       price: (budgetPrice - 5).clamp(20, 9999),
                       time: isAr ? 'الجمعة 1:15 م' : 'Fri 1:15 PM',
                       routeText: routeText,
                       onSelect: () => _confirmSelection(
                         context,
-                        'محمد سعيد',
-                        '0100 123 4567',
+                        'جاسم الكواري',
+                        '5523 4567',
                         (budgetPrice - 5).clamp(20, 9999),
                         isAr ? 'الجمعة 1:15 م' : 'Fri 1:15 PM',
                       ),
@@ -696,16 +696,16 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                     const SizedBox(height: 10),
                     _buildOfferCard(
                       context: context,
-                      driverName: 'أحمد علي',
-                      driverPhone: '0112 345 6789',
+                      driverName: 'علي الهاجري',
+                      driverPhone: '6612 3456',
                       stats: isAr ? 'موثق · 6 رحلات · ★ 4.8' : 'Verified · 6 rides · ★ 4.8',
                       price: budgetPrice,
                       time: isAr ? 'الجمعة 2:00 م' : 'Fri 2:00 PM',
                       routeText: routeText,
                       onSelect: () => _confirmSelection(
                         context,
-                        'أحمد علي',
-                        '0112 345 6789',
+                        'علي الهاجري',
+                        '6612 3456',
                         budgetPrice,
                         isAr ? 'الجمعة 2:00 م' : 'Fri 2:00 PM',
                       ),
@@ -714,16 +714,16 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                     const SizedBox(height: 10),
                     _buildOfferCard(
                       context: context,
-                      driverName: 'منى حسن',
-                      driverPhone: '0123 456 7890',
+                      driverName: 'آمنة السويدي',
+                      driverPhone: '7710 2345',
                       stats: isAr ? 'موثقة · 9 رحلات · ★ 4.9' : 'Verified · 9 rides · ★ 4.9',
                       price: budgetPrice + 5,
                       time: isAr ? 'الجمعة 12:30 م' : 'Fri 12:30 PM',
                       routeText: routeText,
                       onSelect: () => _confirmSelection(
                         context,
-                        'منى حسن',
-                        '0123 456 7890',
+                        'آمنة السويدي',
+                        '7710 2345',
                         budgetPrice + 5,
                         isAr ? 'الجمعة 12:30 م' : 'Fri 12:30 PM',
                       ),
@@ -797,7 +797,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('$price ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.teal)),
+                Text('$price ${isAr ? "ر.ق" : "QAR"}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.teal)),
                 const SizedBox(height: 6),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -897,15 +897,15 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
                   children: [
                     const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 64),
                     const SizedBox(height: 16),
-                    Text(isAr ? 'اتلغى حجزك' : 'Booking Cancelled', style: AppTypography.largeTitle()),
+                    Text(isAr ? 'تم إلغاء حجزك' : 'Booking Cancelled', style: AppTypography.largeTitle()),
                     const SizedBox(height: 6),
                     Text(
-                      isAr ? 'مفيش أي أثر على معدل إلغائك لأن السائق هو اللي عدّل الموعد.' : 'Zero impact on cancellation rate because driver rescheduled.',
+                      isAr ? 'لا يوجد أي أثر على معدل إلغائك لأن السائق هو من عدّل الموعد.' : 'Zero impact on cancellation rate because driver rescheduled.',
                       textAlign: TextAlign.center,
                       style: AppTypography.bodySecondary(),
                     ),
                     const SizedBox(height: 24),
-                    MashwarButton(text: isAr ? 'ابحث عن رحلة تانية' : 'Search Other Rides', onPressed: () => Navigator.of(context).pop()),
+                    MashwarButton(text: isAr ? 'ابحث عن رحلة أخرى' : 'Search Other Rides', onPressed: () => Navigator.of(context).pop()),
                   ],
                 ),
               ),
@@ -941,7 +941,7 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
                         border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
                       ),
                       child: Text(
-                        isAr ? 'محمد غيّر موعد الرحلة. محتاجين موافقتك' : 'Driver changed departure time. Need your decision',
+                        isAr ? 'قام السائق بتغيير موعد الرحلة. نحتاج قرارك' : 'Driver changed departure time. Need your decision',
                         style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy),
                       ),
                     ),
@@ -950,7 +950,7 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          _buildRow(isAr ? 'الرحلة' : 'Route', 'كفر الشيخ ← القاهرة'),
+                          _buildRow(isAr ? 'الرحلة' : 'Route', 'الدوحة ← الخور'),
                           const Divider(height: 16),
                           _buildRow(isAr ? 'الموعد القديم' : 'Previous Time', 'الجمعة 7:30 ص'),
                           const Divider(height: 16),
@@ -961,7 +961,7 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
                     const SizedBox(height: 12),
                     Text(
                       isAr
-                          ? 'لو الموعد الجديد مش مناسب تقدر تلغي حجزك بدون أي أثر على معدل إلغائك. باقي 2:00 ساعة للرد.'
+                          ? 'إذا كان الموعد الجديد لا يناسبك يمكنك إلغاء حجزك بدون أي أثر على معدل إلغائك. متبقي 2:00 ساعة للرد.'
                           : 'If new time does not suit you, cancel penalty-free. 2 hours remaining.',
                       style: AppTypography.label(color: AppColors.textSecondary),
                     ),

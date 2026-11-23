@@ -22,25 +22,25 @@ class UserModel {
   final bool hasUpcomingBooking;
 
   // Key User Profile & Future Operations Data
-  final String? governorate; // المحافظة السكنية الأساسية
+  final String? governorate; // البلدية أو المنطقة السكنية الأساسية
   final String? city; // المدينة أو الحي
   final String? birthDate; // تاريخ الميلاد للتحقق القانوني (السن >= 18)
   final String? email; // البريد الإلكتروني للفواتير والإشعارات
   final String? emergencyContactName; // اسم جهة الاتصال للطوارئ
-  final String? emergencyContactPhone; // رقم هاتف الطوارئ (11 رقم)
+  final String? emergencyContactPhone; // رقم جوال الطوارئ (8 أرقام)
   final String? occupation; // المهنة أو جهة الدراسة (لزيادة الثقة والموثوقية)
   final String? smokingPreference; // تفضيل التدخين (غير مدخن / مسموح)
   final String? tripVibe; // جو الرحلة (هادئ / اجتماعي)
   final bool ladiesOnlyPreference; // تفضيل رحلات السيدات فقط
 
-  // Egyptian National ID Verification fields
+  // Qatar Personal ID (QID) Verification fields
   final IdVerificationStatus idVerificationStatus;
-  final String? nationalId; // 14-digit Egyptian National ID
+  final String? nationalId; // 11-digit Qatar Personal ID (QID)
   final String? idFrontImage;
   final String? idBackImage;
   final String? selfieImage;
   final String? idRejectionReason;
-  final double walletBalance; // EGP
+  final double walletBalance; // QAR
   final double rating;
   final int completedRides;
   final int completedParcels;
@@ -65,7 +65,7 @@ class UserModel {
     this.tripVibe,
     this.ladiesOnlyPreference = false,
     this.idVerificationStatus = IdVerificationStatus.verified,
-    this.nationalId = '29810150102934',
+    this.nationalId = '29663401842',
     this.idFrontImage,
     this.idBackImage,
     this.selfieImage,

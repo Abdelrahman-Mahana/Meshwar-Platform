@@ -60,8 +60,8 @@ class RidesRepositoryImpl implements IRidesRepository {
         id: 'bk_${DateTime.now().millisecondsSinceEpoch}',
         rideId: rideId,
         passengerId: 'usr_me_01',
-        passengerName: 'أحمد محمود',
-        passengerPhone: '01012345678',
+        passengerName: 'عبدالرحمن المهنا',
+        passengerPhone: '55123456',
         seats: seats,
         totalPrice: currentRide.pricePerSeat * seats,
         pickupLocation: pickupLocation,
@@ -80,7 +80,7 @@ class RidesRepositoryImpl implements IRidesRepository {
 
   @override
   Future<List<RideModel>> getMyDriverRides() async {
-    return _rides.where((r) => r.driverName == 'أحمد محمود').toList();
+    return _rides.where((r) => r.driverName == 'عبدالرحمن المهنا').toList();
   }
 
   @override

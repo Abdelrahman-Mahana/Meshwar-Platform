@@ -17,7 +17,7 @@ class ProhibitedItemsSheet extends StatelessWidget {
     'النقد والمجوهرات',
     'الأغذية سريعة التلف',
     'الكائنات الحية',
-    'أي شيء مخالف للقانون',
+    'أي شيء مخالف لقوانين دولة قطر',
   ];
 
   static const List<String> prohibitedItemsEn = [
@@ -28,7 +28,7 @@ class ProhibitedItemsSheet extends StatelessWidget {
     'Cash, gold & jewelry',
     'Perishable foods',
     'Live animals & pets',
-    'Anything prohibited by Egyptian law',
+    'Anything prohibited by Qatari law',
   ];
 
   @override

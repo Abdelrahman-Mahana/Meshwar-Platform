@@ -598,12 +598,12 @@ class _MainNavShellState extends State<MainNavShell> {
       cards.add(
         _buildUnifiedOrderCard(
           context: context,
-          categoryTag: isAr ? 'سفر بين المحافظات' : 'Inter-city Travel',
+          categoryTag: isAr ? 'سفر بين المناطق' : 'Inter-city Travel',
           categoryColor: AppColors.navy,
-          route: isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo',
+          route: isAr ? 'الدوحة ← الخور' : 'Doha → Al Khor',
           description: isAr
-              ? 'الجمعة 6 نوفمبر، 7:30 ص · الكابتن: محمد سعيد (سيارة خاصة إلنترا مكيفة)'
-              : 'Fri Nov 6, 7:30 AM · Captain: Mohamed Saeed (Hyundai Elantra)',
+              ? 'الجمعة 6 نوفمبر، 7:30 ص · الكابتن: جاسم الكواري (تويوتا كامري 2024 مكيفة)'
+              : 'Fri Nov 6, 7:30 AM · Captain: Jassim Al-Kuwari (Toyota Camry)',
           badgeText: isAr ? 'مؤكد' : 'Confirmed',
           badgeType: BadgeType.confirmed,
           otpCode: '5912',
@@ -627,9 +627,9 @@ class _MainNavShellState extends State<MainNavShell> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => const ChatScreen(
-                      driverName: 'محمد سعيد',
-                      driverCar: 'هيونداي إلنترا، أبيض (س ق ر 1942)',
-                      tripRoute: 'كفر الشيخ ← القاهرة',
+                      driverName: 'جاسم الكواري',
+                      driverCar: 'تويوتا كامري، أبيض لؤلؤي (قطر 482910)',
+                      tripRoute: 'الدوحة ← الخور',
                     ),
                   ),
                 );
@@ -664,10 +664,10 @@ class _MainNavShellState extends State<MainNavShell> {
           context: context,
           categoryTag: isAr ? 'شراء طلبات ومستلزمات' : 'Shopping & Errands',
           categoryColor: const Color(0xFF0D9488),
-          route: isAr ? 'التوفيقية، القاهرة ← بلطيم' : 'Tawfikiya, Cairo → Baltim',
+          route: isAr ? 'المنطقة الصناعية ← دخان' : 'Industrial Area → Dukhan',
           description: isAr
-              ? 'شراء قطع غيار وفلاتر أصلية للسيارات وجلبها مع مسافر · المنفذ: إبراهيم الدسوقي'
-              : 'Original spare parts & filters purchased from Cairo · Courier: Ibrahim El-Desouky',
+              ? 'شراء قطع غيار وفلاتر أصلية للسيارات وإحضارها مع مسافر · المنفذ: راشد الدوسري'
+              : 'Original spare parts & filters from Industrial Area · Courier: Rashed Al-Dosari',
           badgeText: isAr ? 'قيد الشراء' : 'Purchasing',
           badgeType: BadgeType.underReview,
           otpCode: '6284',
@@ -686,9 +686,9 @@ class _MainNavShellState extends State<MainNavShell> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => ChatScreen(
-                      driverName: 'إبراهيم الدسوقي',
+                      driverName: 'راشد الدوسري',
                       driverCar: isAr ? 'خدمة شراء مستلزمات وتوصيل' : 'Shopping & Errand Courier',
-                      tripRoute: isAr ? 'التوفيقية، القاهرة ← بلطيم' : 'Cairo ← Baltim',
+                      tripRoute: isAr ? 'المنطقة الصناعية ← دخان' : 'Industrial Area → Dukhan',
                     ),
                   ),
                 );
@@ -702,12 +702,12 @@ class _MainNavShellState extends State<MainNavShell> {
       cards.add(
         _buildUnifiedOrderCard(
           context: context,
-          categoryTag: isAr ? 'قضاء مصالح رسمية' : 'Official Errand',
+          categoryTag: isAr ? 'إنجاز معاملات رسمية' : 'Official Errand',
           categoryColor: const Color(0xFFD97706),
-          route: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo → Kafr El-Sheikh',
+          route: isAr ? 'المدينة التعليمية ← الخور' : 'Education City → Al Khor',
           description: isAr
-              ? 'استخراج شهادة تخرج ومستندات رسمية من جامعة القاهرة وتسليمها في كفر الشيخ'
-              : 'Official certificate & documents pickup from Cairo University',
+              ? 'استلام شهادة تخرج ومستندات رسمية من المدينة التعليمية وتسليمها في الخور'
+              : 'Official certificate & documents pickup from Education City',
           badgeText: isAr ? 'قيد التنفيذ' : 'In Progress',
           badgeType: BadgeType.underReview,
           otpCode: '4821',
@@ -726,9 +726,9 @@ class _MainNavShellState extends State<MainNavShell> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => ChatScreen(
-                      driverName: 'أحمد نبيل',
-                      driverCar: isAr ? 'خدمة قضاء مصالح وأوراق رسمية' : 'Official Documents Courier',
-                      tripRoute: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+                      driverName: 'فهد المري',
+                      driverCar: isAr ? 'خدمة إنجاز معاملات وأوراق رسمية' : 'Official Documents Courier',
+                      tripRoute: isAr ? 'المدينة التعليمية ← الخور' : 'Education City → Al Khor',
                     ),
                   ),
                 );
@@ -746,10 +746,10 @@ class _MainNavShellState extends State<MainNavShell> {
           context: context,
           categoryTag: isAr ? 'لوجستيات وتوريد بضائع' : 'Commercial Cargo',
           categoryColor: const Color(0xFF2563EB),
-          route: isAr ? 'العتبة، القاهرة ← كفر الشيخ' : 'Attaba, Cairo ← Kafr El-Sheikh',
+          route: isAr ? 'المنطقة الصناعية ← مسيعيد' : 'Industrial Area → Mesaieed',
           description: isAr
-              ? 'توريد 5 كراتين مستلزمات لمحل تجاري وسط البلد · الناقل: طارق رضوان'
-              : 'Store stock & supplies (5 cartons) · Carrier: Tarek Radwan',
+              ? 'توريد 5 كراتين مستلزمات لمحل تجاري في مسيعيد · الناقل: ناصر المهندي'
+              : 'Store stock & supplies (5 cartons) · Carrier: Nasser Al-Muhannadi',
           badgeText: isAr ? 'في الطريق' : 'In Transit',
           badgeType: BadgeType.confirmed,
           otpCode: '9314',
@@ -768,9 +768,9 @@ class _MainNavShellState extends State<MainNavShell> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => ChatScreen(
-                      driverName: 'طارق رضوان',
+                      driverName: 'ناصر المهندي',
                       driverCar: isAr ? 'نقل وتوريد بضائع تجارية' : 'Commercial Cargo Transport',
-                      tripRoute: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
+                      tripRoute: isAr ? 'المنطقة الصناعية ← مسيعيد' : 'Industrial Area → Mesaieed',
                     ),
                   ),
                 );
@@ -855,8 +855,8 @@ class _MainNavShellState extends State<MainNavShell> {
         context: context,
         categoryTag: isAr ? 'سفر تشاركي' : 'Carpooling',
         categoryColor: AppColors.navy,
-        route: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo ← Kafr El-Sheikh',
-        description: isAr ? 'الأحد 25 أكتوبر · الكابتن: منى حسن (تويوتا كورولا)' : 'Sun Oct 25 · Captain: Mona Hassan',
+        route: isAr ? 'الدوحة ← الخور' : 'Doha → Al Khor',
+        description: isAr ? 'الأحد 25 أكتوبر · الكابتن: آمنة السويدي (لكزس ES350)' : 'Sun Oct 25 · Captain: Amna Al-Suwaidi',
         badgeText: isAr ? 'مكتمل' : 'Completed',
         badgeType: BadgeType.verified,
         isAr: isAr,
@@ -872,8 +872,8 @@ class _MainNavShellState extends State<MainNavShell> {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const RateTripScreen(
-                    driverName: 'منى حسن',
-                    route: 'القاهرة ← كفر الشيخ',
+                    driverName: 'آمنة السويدي',
+                    route: 'الدوحة ← الخور',
                   ),
                 ),
               );
@@ -884,10 +884,10 @@ class _MainNavShellState extends State<MainNavShell> {
       // Completed Official Errand
       _buildUnifiedOrderCard(
         context: context,
-        categoryTag: isAr ? 'قضاء مصلحة رسمية' : 'Official Errand',
+        categoryTag: isAr ? 'إنجاز معاملة رسمية' : 'Official Errand',
         categoryColor: const Color(0xFFD97706),
-        route: isAr ? 'مجمع التحرير ← كفر الشيخ' : 'Tahrir Complex ← Kafr El-Sheikh',
-        description: isAr ? 'استخراج شهادة قيد رسمي · تم الإنجاز 20 أكتوبر' : 'Official records retrieval · Done Oct 20',
+        route: isAr ? 'مشيرب، الدوحة ← الوكرة' : 'Msheireb, Doha → Al Wakrah',
+        description: isAr ? 'تصديق مستندات رسمية في الدوحة · تم الإنجاز 20 أكتوبر' : 'Official documents attestation in Doha · Done Oct 20',
         badgeText: isAr ? 'مكتمل' : 'Completed',
         badgeType: BadgeType.verified,
         isAr: isAr,
@@ -903,8 +903,8 @@ class _MainNavShellState extends State<MainNavShell> {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const RateTripScreen(
-                    driverName: 'إسلام رجب',
-                    route: 'مجمع التحرير ← كفر الشيخ',
+                    driverName: 'تميم الهاجري',
+                    route: 'مشيرب، الدوحة ← الوكرة',
                   ),
                 ),
               );
@@ -917,7 +917,7 @@ class _MainNavShellState extends State<MainNavShell> {
         context: context,
         categoryTag: isAr ? 'شحن أمانات وطرود' : 'Parcel Delivery',
         categoryColor: AppColors.teal,
-        route: isAr ? 'الإسكندرية ← كفر الشيخ' : 'Alexandria ← Kafr El-Sheikh',
+        route: isAr ? 'لوسيل ← مطار حمد الدولي' : 'Lusail → Hamad Int\'l Airport',
         description: isAr ? 'طرد مستندات وأمانات · تم التسليم بكود OTP' : 'Parcel · Delivered via OTP confirmation',
         badgeText: isAr ? 'تم التسليم' : 'Delivered',
         badgeType: BadgeType.verified,
@@ -934,8 +934,8 @@ class _MainNavShellState extends State<MainNavShell> {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => const RateTripScreen(
-                    driverName: 'أحمد علي',
-                    route: 'الإسكندرية ← كفر الشيخ',
+                    driverName: 'أحمد العطية',
+                    route: 'لوسيل ← مطار حمد الدولي',
                     isParcel: true,
                   ),
                 ),
@@ -949,7 +949,7 @@ class _MainNavShellState extends State<MainNavShell> {
         context: context,
         categoryTag: isAr ? 'لوجستيات وتوريد' : 'Logistics',
         categoryColor: const Color(0xFF2563EB),
-        route: isAr ? 'طنطا ← القاهرة' : 'Tanta → Cairo',
+        route: isAr ? 'الريان ← أم صلال' : 'Al Rayyan → Umm Salal',
         description: isAr ? 'طلب توريد ملغى لعدم مطابقة الشروط' : 'Logistics request cancelled',
         badgeText: isAr ? 'ملغى' : 'Cancelled',
         badgeType: BadgeType.rejected,
@@ -1162,52 +1162,52 @@ class _MainNavShellState extends State<MainNavShell> {
     final List<Map<String, dynamic>> allChats = [
       {
         'id': 'chat_1',
-        'name': 'محمد سعيد',
+        'name': 'جاسم الكواري',
         'verified': true,
         'tag': isAr ? 'سفر تشاركي' : 'Carpooling',
-        'car': 'هيونداي إلنترا، أبيض (س ق ر 1942)',
-        'route': isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo',
+        'car': 'تويوتا كامري، أبيض لؤلؤي (قطر 482910)',
+        'route': isAr ? 'الدوحة ← الخور' : 'Doha → Al Khor',
         'lastMsg': isAr
-            ? 'تمام يا غالي، أنا ركنت قدام الكافيه عند مدخل المحطة. سيارة بيضاء.'
-            : 'Great! I parked near the station entrance in a white car.',
+            ? 'حياك الله، أنا واقف عند المقهى عند بوابة محطة مشيرب. سيارة بيضاء.'
+            : 'Hello! I am parked near the coffee shop at Msheireb Station entrance. White car.',
         'time': '7:22 ص',
         'unread': 1,
       },
       {
         'id': 'chat_2',
-        'name': 'أحمد نبيل',
+        'name': 'فهد المري',
         'verified': true,
-        'tag': isAr ? 'قضاء مصلحة رسمية' : 'Official Errand',
-        'car': isAr ? 'استخراج شهادة ومستندات رسمية' : 'Document Pickup Service',
-        'route': isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo → Kafr El-Sheikh',
+        'tag': isAr ? 'معاملات رسمية' : 'Official Errand',
+        'car': isAr ? 'استلام شهادة ومستندات رسمية' : 'Document Pickup Service',
+        'route': isAr ? 'المدينة التعليمية ← الخور' : 'Education City → Al Khor',
         'lastMsg': isAr
-            ? 'استلمت الظرف والمستندات الرسمية وجاري التحرك للموقف.'
-            : 'I collected the official envelope and heading to the station.',
+            ? 'استلمت الظرف والمستندات الرسمية من المدينة التعليمية ومتوجه للخور الآن.'
+            : 'I collected the official envelope from Education City and am heading to Al Khor now.',
         'time': '11:15 ص',
         'unread': 2,
       },
       {
         'id': 'chat_3',
-        'name': 'طارق رضوان',
+        'name': 'ناصر المهندي',
         'verified': true,
         'tag': isAr ? 'لوجستيات وتوريد' : 'Logistics',
         'car': isAr ? 'نقل وتوريد بضائع ومستلزمات' : 'Goods & Commercial Cargo',
-        'route': isAr ? 'العتبة، القاهرة ← كفر الشيخ' : 'Attaba, Cairo → Kafr El-Sheikh',
+        'route': isAr ? 'المنطقة الصناعية ← مسيعيد' : 'Industrial Area → Mesaieed',
         'lastMsg': isAr
-            ? 'وصلت نقطة التسليم أمام المحل التجاري في انتظار كود OTP.'
-            : 'Arrived at the shop drop-off, waiting for OTP code.',
+            ? 'وصلت نقطة التسليم أمام المحل في مسيعيد وبانتظار رمز التحقق OTP.'
+            : 'Arrived at the shop drop-off in Mesaieed, waiting for OTP code.',
         'time': '1:45 م',
         'unread': 0,
       },
       {
         'id': 'chat_4',
-        'name': 'خالد السيد',
+        'name': 'سلمان النعيمي',
         'verified': true,
         'tag': isAr ? 'شحن أمانة وطرود' : 'Parcel Delivery',
         'car': isAr ? 'طرد إلكترونيات وأمانات' : 'Parcel Delivery Service',
-        'route': isAr ? 'طنطا ← الإسكندرية' : 'Tanta → Alexandria',
+        'route': isAr ? 'الوكرة ← لوسيل' : 'Al Wakrah → Lusail',
         'lastMsg': isAr
-            ? 'تم تأكيد كود الاستلام بنجاح، شكراً لذوقك.'
+            ? 'تم تأكيد رمز الاستلام بنجاح، شكراً لك وتشرفت بخدمتك.'
             : 'Delivery OTP confirmed successfully. Thank you!',
         'time': isAr ? 'أمس' : 'Yesterday',
         'unread': 0,
@@ -1735,7 +1735,7 @@ class _MainNavShellState extends State<MainNavShell> {
                   icon: Icons.badge_outlined,
                   iconBg: AppColors.tealSurface,
                   iconColor: AppColors.teal,
-                  title: isAr ? 'توثيق بطاقة الرقم القومي' : 'National ID Verification',
+                  title: isAr ? 'توثيق البطاقة الشخصية القطرية (QID)' : 'Qatar ID (QID) Verification',
                   badge: isIdVerified
                       ? MashwarBadge(type: BadgeType.verified, customLabel: isAr ? 'موثق' : 'Verified')
                       : MashwarBadge(type: BadgeType.pending, customLabel: isAr ? 'مطلوب' : 'Action Required'),
@@ -1789,7 +1789,7 @@ class _MainNavShellState extends State<MainNavShell> {
                   iconBg: AppColors.tealSurface,
                   iconColor: AppColors.teal,
                   title: isAr ? 'محفظة مشوار وطرق الدفع' : 'Wallet & Payment Methods',
-                  trailingText: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ج.م' : 'EGP'}',
+                  trailingText: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ر.ق' : 'QAR'}',
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const WalletScreen()),
@@ -1959,7 +1959,7 @@ class _MainNavShellState extends State<MainNavShell> {
                     if (isIdVerified)
                       MashwarBadge(
                         type: BadgeType.verified,
-                        customLabel: isAr ? 'موثق بالرقم القومي' : 'National ID Verified',
+                        customLabel: isAr ? 'موثق بالبطاقة القطرية' : 'Qatar ID Verified',
                       )
                     else if (user.idVerificationStatus == IdVerificationStatus.underReview)
                       MashwarBadge(
@@ -1969,7 +1969,7 @@ class _MainNavShellState extends State<MainNavShell> {
                     else
                       MashwarBadge(
                         type: BadgeType.rejected,
-                        customLabel: isAr ? 'يرجى توثيق الهوية' : 'Verify National ID',
+                        customLabel: isAr ? 'يرجى توثيق البطاقة القطرية' : 'Verify Qatar ID',
                       ),
                   ],
                 ),
@@ -2101,7 +2101,7 @@ class _MainNavShellState extends State<MainNavShell> {
           _buildStatDivider(),
           Expanded(child: _buildStatColumn('${user.rating} ★', isAr ? 'تقييم' : 'Rating')),
           _buildStatDivider(),
-          Expanded(child: _buildStatColumn('${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ج.م' : 'EGP'}', isAr ? 'المحفظة' : 'Wallet')),
+          Expanded(child: _buildStatColumn('${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ر.ق' : 'QAR'}', isAr ? 'المحفظة' : 'Wallet')),
         ],
       );
 
@@ -2177,7 +2177,7 @@ class _MainNavShellState extends State<MainNavShell> {
                   iconBg: AppColors.tealSurface,
                   iconColor: AppColors.teal,
                   title: isAr ? 'المحفظة' : 'Wallet',
-                  subtitle: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ج.م' : 'EGP'}',
+                  subtitle: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ر.ق' : 'QAR'}',
                   subtitleColor: AppColors.teal,
                   onTap: () {
                     Navigator.of(context).push(
@@ -2263,7 +2263,7 @@ class _MainNavShellState extends State<MainNavShell> {
                     const SizedBox(height: 3),
                     Text(
                       isAr
-                          ? 'شارك مقاعد عربيتك الفاضية مع مسافرين موثّقين'
+                          ? 'شارك مقاعد سيارتك الشاغرة مع مسافرين موثّقين'
                           : 'Share empty seats with verified riders on your route',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.8),

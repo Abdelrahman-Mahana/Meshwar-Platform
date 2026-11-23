@@ -62,8 +62,8 @@ class AdminDashboardScreen extends StatelessWidget {
                       Flexible(
                         child: Text(
                           isAr
-                              ? 'شبكة السفر بين المحافظات تعمل بكامل كفاءتها عبر 27 محافظة'
-                              : 'Intercity carpooling network fully operational across 27 governorates',
+                              ? 'شبكة التنقل التشاركي تعمل بكامل كفاءتها عبر 8 بلديات في قطر'
+                              : 'Shared mobility network fully operational across 8 municipalities in Qatar',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -324,11 +324,11 @@ class AdminDashboardScreen extends StatelessWidget {
 
   Widget _buildGovernorateChart(BuildContext context, bool isAr) {
     final data = [
-      {'name': isAr ? 'القاهرة' : 'Cairo', 'val': 120, 'pct': '31%'},
-      {'name': isAr ? 'الإسكندرية' : 'Alexandria', 'val': 95, 'pct': '25%'},
-      {'name': isAr ? 'الغربية' : 'Gharbia', 'val': 70, 'pct': '18%'},
-      {'name': isAr ? 'الدقهلية' : 'Dakahlia', 'val': 55, 'pct': '14%'},
-      {'name': isAr ? 'كفر الشيخ' : 'Kafr El-Sheikh', 'val': 45, 'pct': '12%'},
+      {'name': isAr ? 'الدوحة' : 'Doha', 'val': 140, 'pct': '36%'},
+      {'name': isAr ? 'الريان' : 'Al Rayyan', 'val': 90, 'pct': '23%'},
+      {'name': isAr ? 'الوكرة' : 'Al Wakrah', 'val': 65, 'pct': '17%'},
+      {'name': isAr ? 'الخور' : 'Al Khor', 'val': 50, 'pct': '13%'},
+      {'name': isAr ? 'لوسيل' : 'Lusail', 'val': 42, 'pct': '11%'},
     ];
 
     return Container(
@@ -353,7 +353,7 @@ class AdminDashboardScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  isAr ? 'رحلات حسب المحافظة' : 'Rides by Governorate',
+                  isAr ? 'رحلات حسب البلدية / المنطقة' : 'Rides by Municipality',
                   style: AppTypography.title().copyWith(fontSize: 16, fontWeight: FontWeight.w800),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -366,7 +366,7 @@ class AdminDashboardScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  isAr ? 'أعلى 5 محافظات' : 'Top 5 Regions',
+                  isAr ? 'أعلى 5 مناطق' : 'Top 5 Areas',
                   style: const TextStyle(fontSize: 11, color: AppColors.navy, fontWeight: FontWeight.w700),
                 ),
               ),
@@ -435,21 +435,21 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget _buildCorridorsTable(BuildContext context, bool isAr) {
     final rows = [
       {
-        'corridor': isAr ? 'القاهرة ↔ الإسكندرية' : 'Cairo ↔ Alexandria',
+        'corridor': isAr ? 'الدوحة ↔ الخور' : 'Doha ↔ Al Khor',
         'rides': 94,
         'bookings': 71,
         'rate': '48%',
         'status': isAr ? 'ذروة' : 'Peak',
       },
       {
-        'corridor': isAr ? 'القاهرة ↔ طنطا' : 'Cairo ↔ Tanta',
+        'corridor': isAr ? 'الدوحة ↔ الوكرة' : 'Doha ↔ Al Wakrah',
         'rides': 61,
         'bookings': 40,
         'rate': '39%',
         'status': isAr ? 'مستقر' : 'Stable',
       },
       {
-        'corridor': isAr ? 'القاهرة ↔ كفر الشيخ' : 'Cairo ↔ Kafr El-Sheikh',
+        'corridor': isAr ? 'الدوحة ↔ دخان' : 'Doha ↔ Dukhan',
         'rides': 38,
         'bookings': 22,
         'rate': '36%',

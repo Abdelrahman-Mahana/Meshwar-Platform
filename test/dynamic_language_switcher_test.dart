@@ -168,7 +168,7 @@ void main() {
 
       // Verify Modal has System Default, Arabic, and English
       expect(find.text('لغة الهاتف الافتراضية'), findsOneWidget);
-      expect(find.text('العربية (مصر)'), findsOneWidget);
+      expect(find.text('العربية (قطر)'), findsOneWidget);
       expect(find.text('English (United States)'), findsOneWidget);
 
       // Select English
@@ -185,7 +185,7 @@ void main() {
       await tester.tap(find.text('App Language'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('العربية (مصر)'));
+      await tester.tap(find.text('العربية (قطر)'));
       await tester.pumpAndSettle();
 
       expect(settings.isArabic, true);

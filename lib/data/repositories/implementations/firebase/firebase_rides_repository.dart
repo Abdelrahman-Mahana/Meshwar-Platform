@@ -95,7 +95,7 @@ class FirebaseRidesRepository implements IRidesRepository {
         rideId: rideId,
         passengerId: 'usr_me_01',
         passengerName: 'مستخدم مشوار',
-        passengerPhone: '01012345678',
+        passengerPhone: '55123456',
         seats: seats,
         totalPrice: pricePerSeat * seats,
         pickupLocation: pickupLocation,

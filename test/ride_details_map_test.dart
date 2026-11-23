@@ -11,19 +11,19 @@ import 'package:mashwar/state/settings_provider.dart';
 void main() {
   const testRide = RideModel(
     id: 'test_ride_01',
-    driverName: 'محمد سعيد',
-    driverCar: 'هيونداي إلنترا، أبيض',
-    driverPhone: '0100 123 4567',
-    fromCity: 'كفر الشيخ',
-    toCity: 'القاهرة',
-    pickupPoint: 'محطة وقود، مدخل كفر الشيخ',
-    dropoffPoint: 'محطة المترو، القاهرة',
+    driverName: 'جاسم الكواري',
+    driverCar: 'تويوتا كامري، أبيض لؤلؤي',
+    driverPhone: '5523 4567',
+    fromCity: 'الدوحة',
+    toCity: 'الخور',
+    pickupPoint: 'محطة وقود، مدخل الدوحة الشمالي',
+    dropoffPoint: 'محطة الخور، طريق الشمال',
     departureTime: '7:30 ص',
     departureDate: 'الجمعة 6 نوفمبر',
     remainingSeats: 3,
-    pricePerSeat: 65,
+    pricePerSeat: 35,
     acceptsParcels: true,
-    parcelPrice: 40,
+    parcelPrice: 25,
   );
 
   Widget createTestWidget() {
@@ -56,7 +56,7 @@ void main() {
 
     // Initial state is Passenger perspective
     expect(find.text('إرشادات الراكب للوصول لمكان التجمع'), findsOneWidget);
-    expect(find.textContaining('محطة وقود، مدخل كفر الشيخ'), findsWidgets);
+    expect(find.textContaining('محطة وقود، مدخل الدوحة الشمالي'), findsWidgets);
 
     // Switch to Driver perspective
     await tester.tap(find.text('منظور السائق'));
@@ -64,7 +64,7 @@ void main() {
 
     // Verify Driver guidance card is displayed
     expect(find.text('إرشادات القيادة ومسار السائق'), findsOneWidget);
-    expect(find.textContaining('الطريق الزراعي السريع'), findsWidgets);
+    expect(find.textContaining('طريق الخور الساحلي'), findsWidgets);
 
     // Toggle back to Passenger perspective
     await tester.tap(find.text('منظور الراكب'));
@@ -88,8 +88,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify intermediate highway milestones are now shown
-    expect(find.text('محور العبور / الطريق الزراعي السريع'), findsOneWidget);
-    expect(find.text('مدخل العاصمة والمحور الإقليمي'), findsOneWidget);
+    expect(find.text('محور لوسيل / بوابة الشمال'), findsOneWidget);
+    expect(find.text('طريق الخور الساحلي السريع'), findsOneWidget);
 
     // Tap "طي" to collapse
     final collapseBtn = find.text('طي');
@@ -99,7 +99,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify collapsed
-    expect(find.text('محور العبور / الطريق الزراعي السريع'), findsNothing);
+    expect(find.text('محور لوسيل / بوابة الشمال'), findsNothing);
   });
 
   testWidgets('Fullscreen route map modal opens, allows zooming, and closes cleanly', (tester) async {

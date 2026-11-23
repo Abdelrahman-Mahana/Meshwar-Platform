@@ -13,12 +13,12 @@ class MyAlertsScreen extends StatelessWidget {
   const MyAlertsScreen({super.key});
 
   void _showAddAlertSheet(BuildContext context, bool isAr) {
-    String fromCity = 'كفر الشيخ';
-    String toCity = 'القاهرة';
+    String fromCity = 'الدوحة';
+    String toCity = 'الخور';
     String dateRange = 'الأحد القادم · صباحاً';
     String category = 'ركاب';
 
-    final cities = ['كفر الشيخ', 'القاهرة', 'طنطا', 'الإسكندرية', 'المنصورة', 'دمنهور'];
+    final cities = ['الدوحة', 'الريان', 'الوكرة', 'الخور', 'لوسيل', 'دخان', 'مسيعيد', 'أم صلال'];
     final dates = ['غداً · صباحاً', 'الجمعة القادمة', 'الأحد القادم · صباحاً', 'طوال الأسبوع'];
 
     showModalBottomSheet(
@@ -297,10 +297,10 @@ class MyAlertsScreen extends StatelessWidget {
                 child: const Icon(Icons.notifications_none_rounded, size: 52, color: AppColors.navy),
               ),
               const SizedBox(height: 16),
-              Text(isAr ? 'مفيش تنبيهات مسجلة' : 'No Active Alerts', style: AppTypography.title()),
+              Text(isAr ? 'لا توجد تنبيهات مسجلة' : 'No Active Alerts', style: AppTypography.title()),
               const SizedBox(height: 8),
               Text(
-                isAr ? 'لما تبحث عن رحلة ومش تلاقي، تقدر تعمل تنبيه وهنبلغك فور توفرها' : 'When you search for a ride with no matches, create an alert and we will notify you',
+                isAr ? 'عند البحث عن رحلة وعدم توفرها حالياً، يمكنك إنشاء تنبيه وسنبلّغك فور إضافتها' : 'When you search for a ride with no matches, create an alert and we will notify you',
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySecondary(),
               ),

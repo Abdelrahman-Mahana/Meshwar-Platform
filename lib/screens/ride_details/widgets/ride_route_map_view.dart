@@ -1,8 +1,10 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/localization/app_strings.dart';
+import '../../../core/widgets/mashwar_animations.dart';
 import '../../../data/models/ride_model.dart';
 import '../../../data/repositories/app_repositories.dart';
 import '../../../data/repositories/contracts/i_maps_repository.dart';
@@ -28,17 +30,34 @@ class RideRouteMapView extends StatefulWidget {
   State<RideRouteMapView> createState() => _RideRouteMapViewState();
 }
 
-class _RideRouteMapViewState extends State<RideRouteMapView> {
+class _RideRouteMapViewState extends State<RideRouteMapView>
+    with SingleTickerProviderStateMixin {
   late RoutePerspective _perspective;
   bool _showSatellite = false;
   bool _isRouteExpanded = false;
   RouteDetails? _routeDetails;
+  late final AnimationController _routeAnimController;
 
   @override
   void initState() {
     super.initState();
     _perspective = widget.initialPerspective;
+    _routeAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 9),
+    );
+    if (mashwarShouldAnimateContinuous()) {
+      _routeAnimController.repeat();
+    } else {
+      _routeAnimController.value = 0.42;
+    }
     _loadRouteDetails();
+  }
+
+  @override
+  void dispose() {
+    _routeAnimController.dispose();
+    super.dispose();
   }
 
   void _loadRouteDetails() {
@@ -53,12 +72,12 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
     }).catchError((_) {});
   }
 
-  // Route metrics dynamically derived via Google Maps & Egyptian Highway calculations
+  // Route metrics dynamically derived via Google Maps & Qatar Expressway calculations
   String get _distanceKm {
     if (_routeDetails != null) {
       return '${_routeDetails!.distanceKm.round()} كم';
     }
-    return '135 كم';
+    return '52 كم';
   }
 
   String get _durationFormatted {
@@ -73,10 +92,10 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
         return '$mins دقيقة';
       }
     }
-    return 'ساعتان و 15 دقيقة';
+    return '45 دقيقة';
   }
 
-  String get _highwayName => 'طريق مصر - الإسكندرية الزراعي (طريق 75)';
+  String get _highwayName => 'طريق الخور الساحلي / طريق الشمال (طريق 1)';
 
   void _openFullScreenMap(BuildContext context, bool isAr) {
     Navigator.of(context).push(
@@ -153,18 +172,24 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
             borderRadius: BorderRadius.circular(AppDimens.radiusCard),
             child: Stack(
               children: [
-                // Vector Map Drawing
+                // Animated Vector Map Drawing
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: _AccurateRouteMapPainter(
-                      perspective: _perspective,
-                      isSatellite: _showSatellite,
-                      fromCity: widget.ride.fromCity,
-                      toCity: widget.ride.toCity,
-                      pickupPoint: widget.ride.pickupPoint,
-                      dropoffPoint: widget.ride.dropoffPoint,
-                      isAr: isAr,
-                    ),
+                  child: AnimatedBuilder(
+                    animation: _routeAnimController,
+                    builder: (context, _) {
+                      return CustomPaint(
+                        painter: _AccurateRouteMapPainter(
+                          perspective: _perspective,
+                          isSatellite: _showSatellite,
+                          fromCity: widget.ride.fromCity,
+                          toCity: widget.ride.toCity,
+                          pickupPoint: widget.ride.pickupPoint,
+                          dropoffPoint: widget.ride.dropoffPoint,
+                          isAr: isAr,
+                          animationProgress: _routeAnimController.value,
+                        ),
+                      );
+                    },
                   ),
                 ),
 
@@ -342,7 +367,7 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            isAr ? 'المسار ومحطات التوقف بدقة' : 'Precise Route & Waypoints',
+                            isAr ? 'المسار ومحطات التوقف' : 'Route & Waypoints',
                             style: AppTypography.title().copyWith(fontSize: 14),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -399,16 +424,16 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
 
               if (_isRouteExpanded) ...[
                 _buildMilestoneItem(
-                  time: isAr ? '+45 دقيقة' : '+45 mins',
-                  title: isAr ? 'محور العبور / الطريق الزراعي السريع' : 'Agricultural Highway Corridor',
-                  location: isAr ? 'محور طنطا الحر وبوابات التحصيل' : 'Tanta Bypass & Toll Station',
+                  time: isAr ? '+15 دقيقة' : '+15 mins',
+                  title: isAr ? 'محور لوسيل / بوابة الشمال' : 'Lusail Expressway / North Gate',
+                  location: isAr ? 'مخرج لوسيل واستاد البيت السريع' : 'Lusail & Al Bayt Express Exit',
                   icon: Icons.alt_route_rounded,
                   iconColor: const Color(0xFF64748B),
                 ),
                 _buildMilestoneItem(
-                  time: isAr ? '+1 ساعة و 30 د' : '+1h 30m',
-                  title: isAr ? 'مدخل العاصمة والمحور الإقليمي' : 'Capital Gateway & Regional Ring',
-                  location: isAr ? 'محور بنها الحر - مخرج قليوب' : 'Banha Highway - Qalyub Exit',
+                  time: isAr ? '+30 دقيقة' : '+30 mins',
+                  title: isAr ? 'طريق الخور الساحلي السريع' : 'Al Khor Coastal Highway',
+                  location: isAr ? 'تقاطع سميسمة - مخرج الخور الجنوبي' : 'Simaisma Interchange - South Al Khor Exit',
                   icon: Icons.toll_rounded,
                   iconColor: const Color(0xFF64748B),
                 ),
@@ -420,7 +445,7 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
                 location: widget.ride.dropoffPoint,
                 isHighlighted: true,
                 roleTag: isAr ? 'وجهة الوصول' : 'Destination',
-                note: isAr ? 'بجوار مخرج المترو الرئيسي لتسهيل استكمال طريقك' : 'Close to main metro exit for connection',
+                note: isAr ? 'بجوار محطة المترو أو الدوار الرئيسي لتسهيل استكمال مشوارك' : 'Close to main Metro exit for connection',
                 icon: Icons.location_on_rounded,
                 iconColor: AppColors.danger,
                 isLast: true,
@@ -603,8 +628,8 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
                   const SizedBox(height: 2),
                   Text(
                     isAr
-                        ? 'المسار الموصى به: الطريق الزراعي السريع. نقطة التوقف المحددة لالتقاط الراكب بمساحة ركن سهلة وآمنة.'
-                        : 'Recommended corridor: Hwy 75. Clear pull-over bay for safe passenger boarding.',
+                        ? 'المسار الموصى به: طريق الخور الساحلي / طريق الشمال (طريق 1). نقطة التوقف المحددة لالتقاط الراكب بمساحة ركن سهلة وآمنة.'
+                        : 'Recommended corridor: Al Khor Coastal / Al Shamal Rd (Route 1). Clear pull-over bay for safe passenger boarding.',
                     style: const TextStyle(fontSize: 11, color: Color(0xFF0C4A6E)),
                   ),
                 ],
@@ -750,7 +775,7 @@ class _RideRouteMapViewState extends State<RideRouteMapView> {
   }
 }
 
-/// Accurate Vector Egyptian Route Painter
+/// Accurate Vector Qatar Route Painter with animated cruising vehicle & bay coastline
 class _AccurateRouteMapPainter extends CustomPainter {
   final RoutePerspective perspective;
   final bool isSatellite;
@@ -759,6 +784,7 @@ class _AccurateRouteMapPainter extends CustomPainter {
   final String pickupPoint;
   final String dropoffPoint;
   final bool isAr;
+  final double animationProgress;
 
   _AccurateRouteMapPainter({
     required this.perspective,
@@ -768,6 +794,7 @@ class _AccurateRouteMapPainter extends CustomPainter {
     required this.pickupPoint,
     required this.dropoffPoint,
     required this.isAr,
+    this.animationProgress = 0.42,
   });
 
   @override
@@ -775,181 +802,331 @@ class _AccurateRouteMapPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    // 1. Background Grid & Land Color
-    final bgPaint = Paint()..color = isSatellite ? const Color(0xFF1E2833) : const Color(0xFFF4F6F8);
-    canvas.drawRect(Rect.fromLTWH(0, 0, w, h), bgPaint);
+    // 1. Background Land & Subtle Street Blocks
+    final canvasRect = Rect.fromLTWH(0, 0, w, h);
+    final bgPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: isSatellite
+            ? const [Color(0xFF0E2133), Color(0xFF162F47)]
+            : const [Color(0xFFFBF8F1), Color(0xFFF3EFE4)],
+      ).createShader(canvasRect);
+    canvas.drawRect(canvasRect, bgPaint);
 
-    // Subtle Road Grid (Street network realism)
+    // Subtle urban city blocks
     final gridPaint = Paint()
-      ..color = isSatellite ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFE2E8F0)
-      ..strokeWidth = 1;
+      ..color = isSatellite ? Colors.white.withValues(alpha: 0.045) : const Color(0xFFE4DED0)
+      ..strokeWidth = 0.9;
 
-    for (double x = 20; x < w; x += 35) {
+    for (double x = 22; x < w; x += 36) {
       canvas.drawLine(Offset(x, 0), Offset(x, h), gridPaint);
     }
-    for (double y = 20; y < h; y += 35) {
+    for (double y = 22; y < h; y += 36) {
       canvas.drawLine(Offset(0, y), Offset(w, y), gridPaint);
     }
 
-    // 2. Nile Delta Geographic Water River Curve (Realistic Egyptian Geography)
-    final riverPaint = Paint()
-      ..color = isSatellite ? const Color(0xFF0F3B5F).withValues(alpha: 0.4) : const Color(0xFFD6EEF8)
-      ..strokeWidth = 14
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
+    // Lush Qatar urban greenery & park patches
+    final parkPaint = Paint()
+      ..color = isSatellite
+          ? AppColors.teal.withValues(alpha: 0.14)
+          : const Color(0xFFDDF0E2);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.10, h * 0.58, w * 0.14, h * 0.18), const Radius.circular(14)),
+      parkPaint,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(w * 0.46, h * 0.25), width: w * 0.12, height: h * 0.12),
+      parkPaint,
+    );
 
-    final riverPath = Path();
-    riverPath.moveTo(w * 0.1, h * 0.95);
-    riverPath.cubicTo(w * 0.35, h * 0.65, w * 0.55, h * 0.50, w * 0.85, h * 0.1);
-    canvas.drawPath(riverPath, riverPaint);
+    // 2. Arabian Gulf Coastline & Doha Corniche Bay Filled Polygon
+    final gulfWater = Path()
+      ..moveTo(w * 0.56, 0)
+      ..lineTo(w, 0)
+      ..lineTo(w, h * 0.62)
+      ..quadraticBezierTo(w * 0.84, h * 0.56, w * 0.78, h * 0.40)
+      ..quadraticBezierTo(w * 0.72, h * 0.24, w * 0.56, 0)
+      ..close();
+    canvas.drawPath(
+      gulfWater,
+      Paint()
+        ..color = isSatellite
+            ? const Color(0xFF072238)
+            : const Color(0xFFD0E8F6),
+    );
+    canvas.drawPath(
+      gulfWater,
+      Paint()
+        ..color = isSatellite
+            ? AppColors.teal.withValues(alpha: 0.4)
+            : const Color(0xFF9AC5DC)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4,
+    );
 
-    // 3. Secondary Egyptian Road Connectors
-    final secondaryRoadPaint = Paint()
-      ..color = isSatellite ? Colors.white.withValues(alpha: 0.12) : const Color(0xFFCBD5E1)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke;
-
+    // 3. Secondary Qatari Road Connectors (Dual casing)
     final secPath1 = Path()
-      ..moveTo(0, h * 0.4)
-      ..cubicTo(w * 0.3, h * 0.35, w * 0.7, h * 0.65, w, h * 0.6);
-    canvas.drawPath(secPath1, secondaryRoadPaint);
+      ..moveTo(0, h * 0.42)
+      ..cubicTo(w * 0.28, h * 0.36, w * 0.68, h * 0.66, w, h * 0.62);
+    canvas.drawPath(
+      secPath1,
+      Paint()
+        ..color = isSatellite ? Colors.white.withValues(alpha: 0.14) : const Color(0xFFD4DCE6)
+        ..strokeWidth = 5
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
+    canvas.drawPath(
+      secPath1,
+      Paint()
+        ..color = isSatellite ? const Color(0xFF1F3B57) : Colors.white
+        ..strokeWidth = 3
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke,
+    );
 
-    // 4. Main Highway Route Polyline (Accurate Cairo - Delta corridor)
-    final startOffset = Offset(w * 0.18, h * 0.28);  // e.g. Kafr El-Sheikh
-    final pickupOffset = Offset(w * 0.32, h * 0.38); // Passenger pickup spot
-    final waypoint1 = Offset(w * 0.50, h * 0.50);    // Tanta junction
-    final waypoint2 = Offset(w * 0.68, h * 0.64);    // Banha corridor
-    final dropoffOffset = Offset(w * 0.82, h * 0.76); // Cairo entrance / Dropoff
+    // 4. Main Highway Route Polyline (Qatar Coastal & Expressway corridor)
+    final startOffset = Offset(w * 0.16, h * 0.28);  // e.g. Doha / Msheireb
+    final pickupOffset = Offset(w * 0.32, h * 0.39); // Passenger pickup spot
+    final waypoint1 = Offset(w * 0.51, h * 0.52);    // Lusail junction
+    final waypoint2 = Offset(w * 0.69, h * 0.65);    // Simaisma corridor
+    final dropoffOffset = Offset(w * 0.84, h * 0.78); // Destination entrance / Dropoff
 
     final routePath = Path();
     routePath.moveTo(startOffset.dx, startOffset.dy);
     routePath.lineTo(pickupOffset.dx, pickupOffset.dy);
-    routePath.cubicTo(w * 0.42, h * 0.45, waypoint1.dx, waypoint1.dy, waypoint1.dx, waypoint1.dy);
-    routePath.cubicTo(w * 0.58, h * 0.56, waypoint2.dx, waypoint2.dy, waypoint2.dx, waypoint2.dy);
+    routePath.cubicTo(w * 0.42, h * 0.46, waypoint1.dx, waypoint1.dy, waypoint1.dx, waypoint1.dy);
+    routePath.cubicTo(w * 0.59, h * 0.58, waypoint2.dx, waypoint2.dy, waypoint2.dx, waypoint2.dy);
     routePath.lineTo(dropoffOffset.dx, dropoffOffset.dy);
 
-    // Outer casing (Dark border for highway contrast)
-    final outerCasingPaint = Paint()
-      ..color = AppColors.navy.withValues(alpha: 0.3)
-      ..strokeWidth = 7
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawPath(routePath, outerCasingPaint);
+    final activeColor = perspective == RoutePerspective.passenger ? AppColors.teal : AppColors.navy;
+
+    // Soft glowing halo around active route
+    canvas.drawPath(
+      routePath,
+      Paint()
+        ..color = activeColor.withValues(alpha: isSatellite ? 0.38 : 0.20)
+        ..strokeWidth = 12
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+
+    // Outer casing
+    canvas.drawPath(
+      routePath,
+      Paint()
+        ..color = AppColors.navy.withValues(alpha: 0.45)
+        ..strokeWidth = 7.5
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
 
     // Inner route polyline
-    final innerRoutePaint = Paint()
-      ..color = perspective == RoutePerspective.passenger ? AppColors.teal : AppColors.navy
-      ..strokeWidth = 4
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    canvas.drawPath(routePath, innerRoutePaint);
+    canvas.drawPath(
+      routePath,
+      Paint()
+        ..color = activeColor
+        ..strokeWidth = 4.6
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
 
-    // Directional chevron arrows along the highway
-    _drawRouteArrow(canvas, Offset(w * 0.42, h * 0.45), 0.7, innerRoutePaint.color);
-    _drawRouteArrow(canvas, Offset(w * 0.60, h * 0.58), 0.65, innerRoutePaint.color);
+    // Animated white directional flow dashes along route
+    final metrics = routePath.computeMetrics().toList();
+    if (metrics.isNotEmpty) {
+      final metric = metrics.first;
+      final totalLen = metric.length;
+      const double dash = 9.0;
+      const double gap = 15.0;
+      final double phaseOffset = (animationProgress * (dash + gap) * 6) % (dash + gap);
+      final dashPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.85)
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round
+        ..style = PaintingStyle.stroke;
+      for (double d = phaseOffset; d < totalLen; d += dash + gap) {
+        final end = math.min(d + dash, totalLen);
+        canvas.drawPath(metric.extractPath(d, end), dashPaint);
+      }
+
+      // Smoothly Gliding Driver Vehicle along active corridor
+      final carT = perspective == RoutePerspective.passenger
+          ? (0.14 + (animationProgress * 0.55) % 0.72)
+          : (animationProgress % 1.0);
+      final carDist = (totalLen * carT).clamp(0.0, totalLen);
+      final tangent = metric.getTangentForOffset(carDist);
+      if (tangent != null) {
+        final angle = math.atan2(-tangent.vector.dy, tangent.vector.dx);
+        _drawCruisingCar(canvas, tangent.position, angle, isSatellite);
+      }
+    }
 
     // 5. Drawing Specific Pins based on Perspective
+    final pulse = (math.sin(animationProgress * math.pi * 2) + 1) / 2;
     if (perspective == RoutePerspective.passenger) {
       // Walking dashed line to pickup spot
-      final walkStart = Offset(pickupOffset.dx - 22, pickupOffset.dy + 18);
+      final walkStart = Offset(pickupOffset.dx - 24, pickupOffset.dy + 20);
       final walkPaint = Paint()
         ..color = const Color(0xFF10B981)
-        ..strokeWidth = 2
+        ..strokeWidth = 2.2
         ..style = PaintingStyle.stroke;
-
       canvas.drawLine(walkStart, pickupOffset, walkPaint);
 
       // Walking dot (user standing)
-      canvas.drawCircle(walkStart, 4.5, Paint()..color = const Color(0xFF10B981));
-      canvas.drawCircle(walkStart, 2, Paint()..color = Colors.white);
+      canvas.drawCircle(walkStart, 5, Paint()..color = const Color(0xFF10B981));
+      canvas.drawCircle(walkStart, 2.2, Paint()..color = Colors.white);
 
-      // Concentric Radar Halo on Passenger Pickup Spot
-      canvas.drawCircle(pickupOffset, 16, Paint()..color = AppColors.teal.withValues(alpha: 0.15));
-      canvas.drawCircle(pickupOffset, 10, Paint()..color = AppColors.teal.withValues(alpha: 0.35));
-      canvas.drawCircle(pickupOffset, 6, Paint()..color = AppColors.teal);
-      canvas.drawCircle(pickupOffset, 2.5, Paint()..color = Colors.white);
+      // Animated Concentric Radar Halo on Passenger Pickup Spot
+      canvas.drawCircle(
+        pickupOffset,
+        11 + pulse * 10,
+        Paint()..color = AppColors.teal.withValues(alpha: (1 - pulse) * 0.35),
+      );
+      canvas.drawCircle(pickupOffset, 10, Paint()..color = Colors.white);
+      canvas.drawCircle(pickupOffset, 7, Paint()..color = AppColors.teal);
+      canvas.drawCircle(pickupOffset, 2.8, Paint()..color = Colors.white);
 
-      // Dropoff Spot (Red Pin)
-      canvas.drawCircle(dropoffOffset, 14, Paint()..color = AppColors.danger.withValues(alpha: 0.2));
-      canvas.drawCircle(dropoffOffset, 7, Paint()..color = AppColors.danger);
-      canvas.drawCircle(dropoffOffset, 3, Paint()..color = Colors.white);
-
-      // Approaching Driver Vehicle Icon representation
-      final carPos = Offset(startOffset.dx + (pickupOffset.dx - startOffset.dx) * 0.6,
-          startOffset.dy + (pickupOffset.dy - startOffset.dy) * 0.6);
-      canvas.drawCircle(carPos, 9, Paint()..color = AppColors.navy);
-      canvas.drawCircle(carPos, 4, Paint()..color = AppColors.gold);
+      // Dropoff Spot (Red / Navy Pin)
+      canvas.drawCircle(dropoffOffset, 13, Paint()..color = AppColors.danger.withValues(alpha: 0.22));
+      canvas.drawCircle(dropoffOffset, 7.5, Paint()..color = AppColors.danger);
+      canvas.drawCircle(dropoffOffset, 3.2, Paint()..color = Colors.white);
     } else {
       // DRIVER PERSPECTIVE:
       // Driver starting pin
-      canvas.drawCircle(startOffset, 8, Paint()..color = AppColors.navy);
-      canvas.drawCircle(startOffset, 4, Paint()..color = Colors.white);
+      canvas.drawCircle(startOffset, 9, Paint()..color = Colors.white);
+      canvas.drawCircle(startOffset, 7, Paint()..color = AppColors.navy);
+      canvas.drawCircle(startOffset, 3, Paint()..color = AppColors.gold);
 
       // Designated stopping bay rect around pickup spot
-      final bayRect = Rect.fromCenter(center: pickupOffset, width: 28, height: 18);
+      final bayRect = Rect.fromCenter(center: pickupOffset, width: 30, height: 19);
       canvas.drawRRect(
-        RRect.fromRectAndRadius(bayRect, const Radius.circular(4)),
+        RRect.fromRectAndRadius(bayRect, const Radius.circular(5)),
         Paint()
-          ..color = AppColors.teal.withValues(alpha: 0.2)
+          ..color = AppColors.teal.withValues(alpha: 0.22)
           ..style = PaintingStyle.fill,
       );
       canvas.drawRRect(
-        RRect.fromRectAndRadius(bayRect, const Radius.circular(4)),
+        RRect.fromRectAndRadius(bayRect, const Radius.circular(5)),
         Paint()
           ..color = AppColors.teal
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2,
+          ..strokeWidth = 1.4,
       );
-      canvas.drawCircle(pickupOffset, 4, Paint()..color = AppColors.teal);
+      canvas.drawCircle(pickupOffset, 4.2, Paint()..color = AppColors.teal);
 
-      // Waypoint 1 (Tanta stop)
-      canvas.drawCircle(waypoint1, 5, Paint()..color = const Color(0xFF64748B));
-      canvas.drawCircle(waypoint1, 2, Paint()..color = Colors.white);
+      // Waypoint 1 (Lusail stop)
+      canvas.drawCircle(waypoint1, 5.5, Paint()..color = const Color(0xFF64748B));
+      canvas.drawCircle(waypoint1, 2.2, Paint()..color = Colors.white);
 
       // Dropoff & Destination pin
-      canvas.drawCircle(dropoffOffset, 8, Paint()..color = AppColors.danger);
-      canvas.drawCircle(dropoffOffset, 4, Paint()..color = Colors.white);
+      canvas.drawCircle(dropoffOffset, 9, Paint()..color = Colors.white);
+      canvas.drawCircle(dropoffOffset, 7.5, Paint()..color = AppColors.danger);
+      canvas.drawCircle(dropoffOffset, 3.2, Paint()..color = Colors.white);
     }
 
-    // 6. City Geographic Labels on Canvas
-    _drawCityLabel(canvas, fromCity, Offset(startOffset.dx - 12, startOffset.dy - 16), isSatellite);
-    _drawCityLabel(canvas, isAr ? 'طنطا' : 'Tanta', Offset(waypoint1.dx + 6, waypoint1.dy - 12), isSatellite);
-    _drawCityLabel(canvas, toCity, Offset(dropoffOffset.dx - 18, dropoffOffset.dy + 12), isSatellite);
+    // 6. Clean Pill-Framed City Geographic Labels on Canvas
+    _drawCityLabel(canvas, fromCity, Offset(startOffset.dx, startOffset.dy - 19), isSatellite, isOrigin: true);
+    _drawCityLabel(canvas, isAr ? 'لوسيل' : 'Lusail', Offset(waypoint1.dx + 12, waypoint1.dy - 14), isSatellite);
+    _drawCityLabel(canvas, toCity, Offset(dropoffOffset.dx - 16, dropoffOffset.dy - 20), isSatellite, isDest: true);
   }
 
-  void _drawRouteArrow(Canvas canvas, Offset center, double angleRad, Color color) {
+  void _drawCruisingCar(Canvas canvas, Offset pos, double angleRad, bool isDark) {
     canvas.save();
-    canvas.translate(center.dx, center.dy);
+    canvas.translate(pos.dx, pos.dy);
     canvas.rotate(angleRad);
-    final arrowPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
 
-    final path = Path()
-      ..moveTo(-3, -3)
-      ..lineTo(3, 0)
-      ..lineTo(-3, 3);
-    canvas.drawPath(path, arrowPaint);
+    // Subtle headlight cone
+    final beam = Path()
+      ..moveTo(8, -2.5)
+      ..lineTo(22, -7)
+      ..lineTo(22, 7)
+      ..lineTo(8, 2.5)
+      ..close();
+    canvas.drawPath(
+      beam,
+      Paint()..color = AppColors.gold.withValues(alpha: isDark ? 0.34 : 0.22),
+    );
+
+    // Shadow
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(const Rect.fromLTWH(-10, -5, 21, 12), const Radius.circular(4.5)),
+      Paint()..color = Colors.black.withValues(alpha: 0.26),
+    );
+
+    // Sleek vehicle body
+    const body = Rect.fromLTWH(-10, -5.8, 20, 11.6);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(body, const Radius.circular(4.5)),
+      Paint()..color = isDark ? Colors.white : AppColors.navy,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(body, const Radius.circular(4.5)),
+      Paint()
+        ..color = isDark ? AppColors.gold : Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2,
+    );
+
+    // Cabin windshield + MASHWAR gold roof badge
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(const Rect.fromLTWH(-4.5, -3.8, 10, 7.6), const Radius.circular(2.5)),
+      Paint()..color = isDark ? AppColors.navy : const Color(0xFF284D70),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(const Rect.fromLTWH(-1.5, -2.0, 4, 4), const Radius.circular(1.2)),
+      Paint()..color = AppColors.gold,
+    );
+
     canvas.restore();
   }
 
-  void _drawCityLabel(Canvas canvas, String text, Offset offset, bool isDark) {
+  void _drawCityLabel(
+    Canvas canvas,
+    String text,
+    Offset center,
+    bool isDark, {
+    bool isOrigin = false,
+    bool isDest = false,
+  }) {
     final tp = TextPainter(
       text: TextSpan(
         text: text,
         style: TextStyle(
-          color: isDark ? Colors.white : AppColors.navy,
+          color: (isOrigin || isDest)
+              ? Colors.white
+              : (isDark ? Colors.white : AppColors.navy),
           fontSize: 10,
           fontWeight: FontWeight.w800,
+          fontFamily: 'Cairo',
         ),
       ),
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
     )..layout();
-    tp.paint(canvas, offset);
+
+    final pillW = tp.width + 14;
+    final pillH = tp.height + 6;
+    final rect = RRect.fromRectAndRadius(
+      Rect.fromCenter(center: center, width: pillW, height: pillH),
+      const Radius.circular(8),
+    );
+    final fillColor = isOrigin
+        ? AppColors.teal
+        : (isDest
+            ? AppColors.navy
+            : (isDark ? const Color(0xFF0B1F33).withValues(alpha: 0.92) : Colors.white.withValues(alpha: 0.95)));
+    canvas.drawRRect(rect, Paint()..color = fillColor);
+    canvas.drawRRect(
+      rect,
+      Paint()
+        ..color = (isOrigin || isDest) ? Colors.white.withValues(alpha: 0.85) : const Color(0xFFDDE3EC)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.8,
+    );
+    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - tp.height / 2));
   }
 
   @override
@@ -958,7 +1135,8 @@ class _AccurateRouteMapPainter extends CustomPainter {
         oldDelegate.isSatellite != isSatellite ||
         oldDelegate.fromCity != fromCity ||
         oldDelegate.toCity != toCity ||
-        oldDelegate.isAr != isAr;
+        oldDelegate.isAr != isAr ||
+        oldDelegate.animationProgress != animationProgress;
   }
 }
 
@@ -982,19 +1160,31 @@ class _FullScreenRouteMapModal extends StatefulWidget {
   State<_FullScreenRouteMapModal> createState() => _FullScreenRouteMapModalState();
 }
 
-class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal> {
+class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
+    with SingleTickerProviderStateMixin {
   late RoutePerspective _currentPerspective;
   bool _isSat = false;
   final TransformationController _transformController = TransformationController();
+  late final AnimationController _modalAnimController;
 
   @override
   void initState() {
     super.initState();
     _currentPerspective = widget.perspective;
+    _modalAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 9),
+    );
+    if (mashwarShouldAnimateContinuous()) {
+      _modalAnimController.repeat();
+    } else {
+      _modalAnimController.value = 0.42;
+    }
   }
 
   @override
   void dispose() {
+    _modalAnimController.dispose();
     _transformController.dispose();
     super.dispose();
   }
@@ -1111,16 +1301,22 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal> {
                 child: Center(
                   child: AspectRatio(
                     aspectRatio: 1.1,
-                    child: CustomPaint(
-                      painter: _AccurateRouteMapPainter(
-                        perspective: _currentPerspective,
-                        isSatellite: _isSat,
-                        fromCity: widget.ride.fromCity,
-                        toCity: widget.ride.toCity,
-                        pickupPoint: widget.ride.pickupPoint,
-                        dropoffPoint: widget.ride.dropoffPoint,
-                        isAr: isAr,
-                      ),
+                    child: AnimatedBuilder(
+                      animation: _modalAnimController,
+                      builder: (context, _) {
+                        return CustomPaint(
+                          painter: _AccurateRouteMapPainter(
+                            perspective: _currentPerspective,
+                            isSatellite: _isSat,
+                            fromCity: widget.ride.fromCity,
+                            toCity: widget.ride.toCity,
+                            pickupPoint: widget.ride.pickupPoint,
+                            dropoffPoint: widget.ride.dropoffPoint,
+                            isAr: isAr,
+                            animationProgress: _modalAnimController.value,
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),

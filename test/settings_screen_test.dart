@@ -22,7 +22,7 @@ void main() {
       ],
       child: MaterialApp(
         title: 'مشوار',
-        locale: const Locale('ar', 'EG'),
+        locale: const Locale('ar', 'QA'),
         home: const SettingsScreen(),
       ),
     );
@@ -41,8 +41,8 @@ void main() {
     expect(find.text('الإعدادات'), findsOneWidget);
 
     // Verify User Profile Card
-    expect(find.text('عبدالرحمن أحمد'), findsOneWidget);
-    expect(find.text('01012345678'), findsOneWidget);
+    expect(find.text('عبدالرحمن المهنا'), findsOneWidget);
+    expect(find.text('55123456'), findsOneWidget);
     expect(find.text('تعديل'), findsOneWidget);
 
     // Verify Section Headers
@@ -52,12 +52,12 @@ void main() {
     expect(find.text('الدعم والشروط القانونية'), findsOneWidget);
 
     // Verify Key Tiles
-    expect(find.text('توثيق بطاقة الرقم القومي'), findsOneWidget);
+    expect(find.text('توثيق البطاقة الشخصية القطرية (QID)'), findsOneWidget);
     expect(find.text('بيانات سيارتي ورخص القيادة'), findsOneWidget);
     expect(find.text('محفظة مشوار وطرق الدفع'), findsOneWidget);
     expect(find.text('جهات الاتصال في حالات الطوارئ'), findsOneWidget);
     expect(find.text('لغة التطبيق'), findsOneWidget);
-    expect(find.text('الترخيص والامتثال لوزارة النقل'), findsOneWidget);
+    expect(find.text('الترخيص والامتثال لوزارة المواصلات (قطر)'), findsOneWidget);
     expect(find.text('حذف الحساب نهائياً'), findsOneWidget);
 
     // Verify Version Info & Logout Button
@@ -82,11 +82,11 @@ void main() {
 
     // Verify Modal contents
     expect(find.text('اختر لغة التطبيق'), findsOneWidget);
-    expect(find.text('العربية (مصر)'), findsOneWidget);
+    expect(find.text('العربية (قطر)'), findsOneWidget);
     expect(find.text('English (United States)'), findsOneWidget);
 
     // Dismiss bottom sheet
-    await tester.tap(find.text('العربية (مصر)'));
+    await tester.tap(find.text('العربية (قطر)'));
     await tester.pumpAndSettle();
     expect(find.text('اختر لغة التطبيق'), findsNothing);
   });

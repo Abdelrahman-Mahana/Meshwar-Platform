@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/widgets/mashwar_animations.dart';
+import '../../core/widgets/mashwar_onboarding_shell.dart';
 import '../../data/models/user_model.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
@@ -19,11 +20,11 @@ class ProfileSetupScreen extends StatefulWidget {
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final TextEditingController _firstNameController = TextEditingController(text: 'عبدالرحمن');
-  final TextEditingController _lastNameController = TextEditingController(text: 'أحمد');
-  final TextEditingController _emailController = TextEditingController(text: 'abdelrahman@mashwar.example');
+  final TextEditingController _lastNameController = TextEditingController(text: 'المهنا');
+  final TextEditingController _emailController = TextEditingController(text: 'abdelrahman@mashwar.qa');
 
   UserGender _selectedGender = UserGender.male;
-  String _selectedGovernorate = 'كفر الشيخ';
+  String _selectedGovernorate = 'بلدية الدوحة';
 
   String? _firstNameError;
   String? _lastNameError;
@@ -31,63 +32,25 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   bool _isSaving = false;
 
   final List<String> _governoratesAr = const [
-    'كفر الشيخ',
-    'القاهرة',
-    'الجيزة',
-    'الإسكندرية',
-    'الغربية',
-    'الدقهلية',
-    'القليوبية',
-    'الشرقية',
-    'المنوفية',
-    'البحيرة',
-    'دمياط',
-    'بورسعيد',
-    'الإسماعيلية',
-    'السويس',
-    'الفيوم',
-    'بني سويف',
-    'المنيا',
-    'أسيوط',
-    'سوهاج',
-    'قنا',
-    'الأقصر',
-    'أسوان',
-    'البحر الأحمر',
-    'شمال سيناء',
-    'جنوب سيناء',
-    'مطروح',
-    'الوادي الجديد',
+    'بلدية الدوحة',
+    'بلدية الريان',
+    'بلدية الوكرة',
+    'بلدية الخور والذخيرة',
+    'بلدية أم صلال',
+    'بلدية الضعاين (لوسيل)',
+    'بلدية الشمال',
+    'بلدية الشيحانية (دخان)',
   ];
 
   final List<String> _governoratesEn = const [
-    'Kafr El-Sheikh',
-    'Cairo',
-    'Giza',
-    'Alexandria',
-    'Gharbia',
-    'Dakahlia',
-    'Qalyubia',
-    'Sharqia',
-    'Monufia',
-    'Beheira',
-    'Damietta',
-    'Port Said',
-    'Ismailia',
-    'Suez',
-    'Fayoum',
-    'Beni Suef',
-    'Minya',
-    'Asyut',
-    'Sohag',
-    'Qena',
-    'Luxor',
-    'Aswan',
-    'Red Sea',
-    'North Sinai',
-    'South Sinai',
-    'Matrouh',
-    'New Valley',
+    'Doha Municipality',
+    'Al Rayyan Municipality',
+    'Al Wakrah Municipality',
+    'Al Khor & Al Thakhira',
+    'Umm Salal Municipality',
+    'Al Daayen (Lusail)',
+    'Al Shamal Municipality',
+    'Al Shahaniya (Dukhan)',
   ];
 
   @override
@@ -165,7 +128,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           );
 
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LocationPermissionScreen()),
+        MashwarPageRoute(builder: (_) => const LocationPermissionScreen()),
         (route) => false,
       );
     }
@@ -199,43 +162,29 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 760;
-            return Container(
-              color: isWide ? AppColors.sand : const Color(0xFFFCFCFD),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: AppDimens.space24,
-                        vertical: isWide ? AppDimens.space24 : 0,
-                      ),
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 640),
-                          child: Container(
-                            padding: isWide
-                                ? const EdgeInsets.all(AppDimens.space24)
-                                : EdgeInsets.zero,
-                            decoration: isWide
-                                ? BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.04),
-                                        blurRadius: 16,
-                                        offset: const Offset(0, 6),
-                                      ),
-                                    ],
-                                  )
-                                : null,
-                            child: MashwarFadeSlideIn(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const SizedBox(height: 8),
+            final isWide = constraints.maxWidth >= 840;
+            final formBody = Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppDimens.space24,
+                      vertical: isWide ? AppDimens.space16 : 0,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 640),
+                        child: MashwarFadeSlideIn(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              MashwarOnboardingStepBar(
+                                currentStep: 2,
+                                totalSteps: 4,
+                                isAr: isAr,
+                                stepTitle: isAr ? 'إعداد الملف الشخصي' : 'Profile Setup',
+                              ),
+                              const SizedBox(height: 14),
 
                                   // Title
                                   Text(
@@ -312,7 +261,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                       child: _buildUberInputField(
                                         label: isAr ? 'الاسم الأول' : 'First name',
                                         controller: _firstNameController,
-                                        hint: isAr ? 'مثال: أحمد' : 'e.g. Ahmed',
+                                        hint: isAr ? 'مثال: حمد' : 'e.g. Hamad',
                                         errorText: _firstNameError,
                                         onChanged: (val) {
                                           setState(() {
@@ -326,7 +275,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                       child: _buildUberInputField(
                                         label: isAr ? 'اسم العائلة' : 'Last name',
                                         controller: _lastNameController,
-                                        hint: isAr ? 'مثال: محمود' : 'e.g. Mahmoud',
+                                        hint: isAr ? 'مثال: الكواري' : 'e.g. Al-Kuwari',
                                         errorText: _lastNameError,
                                         onChanged: (val) {
                                           setState(() {
@@ -357,9 +306,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                                 const SizedBox(height: 20),
 
-                                // Governorate Selector
+                                // Municipality Selector
                                 Text(
-                                  isAr ? 'المحافظة' : 'Governorate',
+                                  isAr ? 'البلدية / المنطقة' : 'Municipality / Area',
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -442,7 +391,6 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                 const SizedBox(height: 24),
                               ],
                             ),
-                            ),
                           ),
                         ),
                       ),
@@ -518,7 +466,18 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                     ),
                   ),
                 ],
-              ),
+              );
+
+            return MashwarOnboardingShell(
+              isAr: isAr,
+              maxFormWidth: 640,
+              scrollable: false,
+              showcaseBadge: isAr ? 'ملفك الشخصي' : 'Your Profile',
+              showcaseTitle: isAr ? 'هوية موثوقة ومصممة للرحلات في قطر' : 'Verified profile tailored for Qatar travel',
+              showcaseSubtitle: isAr
+                  ? 'اختر بلديتك واسمك ليظهر لك أقرب الكباتن والخدمات في الدوحة والخور والوكرة.'
+                  : 'Select your municipality so captains & services match you faster.',
+              child: formBody,
             );
           },
         ),

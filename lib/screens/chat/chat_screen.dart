@@ -15,9 +15,9 @@ class ChatScreen extends StatefulWidget {
 
   const ChatScreen({
     super.key,
-    this.driverName = 'محمد سعيد',
-    this.driverCar = 'هيونداي إلنترا، أبيض (س ق ر 1942)',
-    this.tripRoute = 'كفر الشيخ ← القاهرة',
+    this.driverName = 'جاسم الكواري',
+    this.driverCar = 'تويوتا كامري، أبيض لؤلؤي (قطر 482910)',
+    this.tripRoute = 'الدوحة ← الخور',
   });
 
   @override
@@ -31,29 +31,29 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<Map<String, dynamic>> _messages = [
     {
       'isMe': false,
-      'text': 'صباح الخير يا فندم، أنا جاهز وهتحرك في الميعاد المحدد 7:30 ص إن شاء الله.',
+      'text': 'السلام عليكم، أنا جاهز وبإذن الله نتحرك في الموعد المحدد 7:30 ص.',
       'textEn': 'Good morning! I am ready and will depart on schedule at 7:30 AM.',
       'time': '7:15 ص',
     },
     {
       'isMe': true,
-      'text': 'صباح النور يا كابتن، تمام أنا في طريقي لنقطة الصعود عند محطة الوقود.',
-      'textEn': 'Good morning Captain! I am on my way to the pickup gas station.',
+      'text': 'وعليكم السلام كابتن، أنا في طريقي لنقطة الانطلاق عند محطة وقود (WOQOD).',
+      'textEn': 'Good morning Captain! I am on my way to the pickup WOQOD station.',
       'time': '7:18 ص',
     },
     {
       'isMe': false,
-      'text': 'تمام يا غالي، أنا ركنت قدام الكافيه عند مدخل المحطة. سيارة بيضاء.',
-      'textEn': 'Great! I parked in front of the cafe at the station entrance. White car.',
+      'text': 'حياك الله، أنا واقف عند المقهى عند مدخل المحطة. سيارة بيضاء.',
+      'textEn': 'Hello! I parked in front of the cafe at the station entrance. White car.',
       'time': '7:22 ص',
     },
   ];
 
   final List<String> _quickChipsAr = [
-    'أنا عند نقطة الصعود الآن',
-    'الطريق زحمة 5 دقائق وأوصل',
-    'معايا شنطة سفر متوسطة',
-    'أنا لابس قميص كحلي',
+    'أنا عند نقطة الركوب الآن',
+    'الطريق مزدحم 5 دقائق وأصل',
+    'معي حقيبة سفر متوسطة',
+    'أرتدي قميصاً كحلياً',
   ];
 
   final List<String> _quickChipsEn = [
@@ -93,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() {
           _messages.add({
             'isMe': false,
-            'text': 'تمام يا فندم، مرحب بيك ومستنيك بالسيارة.',
+            'text': 'أبشر، حياك الله ومستعد لك بالسيارة.',
             'textEn': 'Noted! Looking forward to seeing you.',
             'time': 'الآن',
           });
@@ -190,7 +190,7 @@ class _ChatScreenState extends State<ChatScreen> {
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(isAr ? 'جاري الاتصال بالسائق على 0100 123 4567...' : 'Calling driver at 0100 123 4567...'),
+                  content: Text(isAr ? 'جاري الاتصال بالسائق على 5523 4567...' : 'Calling driver at +974 5523 4567...'),
                   backgroundColor: AppColors.teal,
                 ),
               );

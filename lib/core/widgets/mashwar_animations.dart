@@ -2,6 +2,193 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
 
+/// Returns `true` during live runtime (Web, Android, iOS, Desktop) and `false`
+/// inside widget tests (`TestWidgetsFlutterBinding`) unless [forceAnimate] is `true`,
+/// allowing smooth 60fps continuous map animations without stalling `pumpAndSettle()`.
+bool mashwarShouldAnimateContinuous([bool forceAnimate = false]) {
+  if (forceAnimate) return true;
+  final bindingName = WidgetsBinding.instance.runtimeType.toString();
+  return !bindingName.contains('Test');
+}
+
+/// Smooth Uber-grade page transition (subtle vertical slide + fade).
+class MashwarPageRoute<T> extends PageRouteBuilder<T> {
+  MashwarPageRoute({
+    required WidgetBuilder builder,
+    super.settings,
+  }) : super(
+          transitionDuration: const Duration(milliseconds: 240),
+          reverseTransitionDuration: const Duration(milliseconds: 200),
+          pageBuilder: (context, animation, secondaryAnimation) => builder(context),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final curved = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            );
+            return FadeTransition(
+              opacity: curved,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0, 0.03),
+                  end: Offset.zero,
+                ).animate(curved),
+                child: child,
+              ),
+            );
+          },
+        );
+}
+
+/// Live pulsing radar dot indicating active captains, rides, or courier status.
+class MashwarLivePulseDot extends StatefulWidget {
+  const MashwarLivePulseDot({
+    super.key,
+    this.color = AppColors.teal,
+    this.size = 9.0,
+    this.forceAnimate = false,
+  });
+
+  final Color color;
+  final double size;
+  final bool forceAnimate;
+
+  @override
+  State<MashwarLivePulseDot> createState() => _MashwarLivePulseDotState();
+}
+
+class _MashwarLivePulseDotState extends State<MashwarLivePulseDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    if (mashwarShouldAnimateContinuous(widget.forceAnimate)) {
+      _controller.repeat(reverse: true);
+    } else {
+      _controller.value = 0.5;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final halo = widget.size + (4.0 * _controller.value);
+        return SizedBox(
+          width: widget.size + 6,
+          height: widget.size + 6,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: halo,
+                height: halo,
+                decoration: BoxDecoration(
+                  color: widget.color.withValues(alpha: 0.25 - (_controller.value * 0.14)),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Container(
+                width: widget.size,
+                height: widget.size,
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Consistent segmented progress indicator across Auth & Permissions onboarding flow.
+class MashwarOnboardingStepBar extends StatelessWidget {
+  const MashwarOnboardingStepBar({
+    super.key,
+    required this.currentStep,
+    required this.totalSteps,
+    required this.isAr,
+    this.stepTitle,
+  });
+
+  final int currentStep;
+  final int totalSteps;
+  final bool isAr;
+  final String? stepTitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: List.generate(totalSteps, (index) {
+            final stepNum = index + 1;
+            final isDone = stepNum < currentStep;
+            final isCurrent = stepNum == currentStep;
+            return Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                height: 4.5,
+                margin: EdgeInsetsDirectional.only(end: index < totalSteps - 1 ? 6 : 0),
+                decoration: BoxDecoration(
+                  color: isDone
+                      ? AppColors.teal
+                      : (isCurrent ? AppColors.navy : const Color(0xFFE5E7EB)),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            );
+          }),
+        ),
+        if (stepTitle != null && stepTitle!.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  stepTitle!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(color: AppColors.teal).copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              Text(
+                isAr ? '$currentStep/$totalSteps' : '$currentStep/$totalSteps',
+                style: AppTypography.label(color: AppColors.textSecondary).copyWith(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 /// Smooth finite fade-and-slide entrance wrapper.
 ///
 /// Uses a single bounded [TweenAnimationBuilder] so widget tests using

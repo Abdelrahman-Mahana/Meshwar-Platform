@@ -117,7 +117,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isAr ? 'الرحلة هتبدأ بعد' : 'Trip starts in',
+                                  isAr ? 'تبدأ الرحلة خلال' : 'Trip starts in',
                                   style: AppTypography.label(color: AppColors.gold).copyWith(fontWeight: FontWeight.w800),
                                 ),
                                 const SizedBox(height: 4),
@@ -397,7 +397,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                   children: [
                     _buildRow(isAr ? 'المسار' : 'Route', context.trRoute('${widget.ride.fromCity} ← ${widget.ride.toCity}')),
                     const Divider(height: 20, color: AppColors.borderDisabled),
-                    _buildRow(isAr ? 'الإجمالي' : 'Total', '${widget.ride.pricePerSeat} ${isAr ? "ج نقداً" : "EGP Cash"}', isBold: true),
+                    _buildRow(isAr ? 'الإجمالي' : 'Total', '${widget.ride.pricePerSeat} ${isAr ? "ر.ق نقداً" : "QAR Cash"}', isBold: true),
                   ],
                 ),
               ),
@@ -419,7 +419,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               ),
               const SizedBox(height: 12),
               MashwarButton(
-                text: isAr ? 'احجز رحلة تانية' : 'Book Another Ride',
+                text: isAr ? 'احجز رحلة أخرى' : 'Book Another Ride',
                 variant: MashwarButtonVariant.secondary,
                 onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
               ),

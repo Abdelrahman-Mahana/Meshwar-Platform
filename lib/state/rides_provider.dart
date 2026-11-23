@@ -4,7 +4,7 @@ import '../data/models/ride_model.dart';
 import '../data/repositories/app_repositories.dart';
 
 enum RideMode {
-  seats,   // كراسي
+  seats,   // مقاعد
   parcels, // طرود
 }
 
@@ -15,8 +15,8 @@ enum SortOption {
 
 class RidesProvider extends ChangeNotifier {
   RideMode _rideMode = RideMode.seats;
-  String _fromCity = 'كفر الشيخ';
-  String _toCity = 'القاهرة';
+  String _fromCity = 'الدوحة';
+  String _toCity = 'الخور';
   String _date = 'الجمعة 6 نوفمبر';
   int _seatsCount = 1;
 

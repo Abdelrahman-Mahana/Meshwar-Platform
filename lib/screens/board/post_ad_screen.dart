@@ -37,11 +37,11 @@ class _PostAdScreenState extends State<PostAdScreen> {
   String? _formError;
 
   // Form Controllers
-  final TextEditingController _fromController = TextEditingController(text: 'طنطا');
-  final TextEditingController _toController = TextEditingController(text: 'القاهرة');
+  final TextEditingController _fromController = TextEditingController(text: 'الدوحة');
+  final TextEditingController _toController = TextEditingController(text: 'الخور');
   final TextEditingController _timeController = TextEditingController(text: 'الجمعة بعد الظهر');
   final TextEditingController _seatsController = TextEditingController(text: '3');
-  final TextEditingController _priceController = TextEditingController(text: '80');
+  final TextEditingController _priceController = TextEditingController(text: '35');
   final TextEditingController _parcelDescController = TextEditingController(text: 'أوراق ومستندات رسمية');
   final TextEditingController _weightController = TextEditingController(text: '2');
   final TextEditingController _errandDescController = TextEditingController();
@@ -151,45 +151,45 @@ class _PostAdScreenState extends State<PostAdScreen> {
           ? '$timeText · ${_weightController.text.trim()} كجم'
           : '$timeText · ${_weightController.text.trim()} kg';
       computedDesc = isAr
-          ? 'طرد: ${_parcelDescController.text.trim()} · المكافأة: $price ج'
-          : 'Parcel: ${_parcelDescController.text.trim()} · Reward: $price EGP';
+          ? 'طرد: ${_parcelDescController.text.trim()} · المكافأة: $price ر.ق'
+          : 'Parcel: ${_parcelDescController.text.trim()} · Reward: $price QAR';
     } else if (type == BoardAdType.rideOffer) {
       computedTimeText = isAr
           ? '$timeText · $seats مقاعد شاغرة'
           : '$timeText · $seats empty seats';
       computedDesc = _acceptsParcels
           ? (isAr ? 'متاح سفر وتوصيل أمانات أو أوراق على الطريق' : 'Accepts seats & parcels along route')
-          : (isAr ? 'رحلة سفر تشاركي مباشرة · السعر للمقعد $price ج' : 'Direct ride · $price EGP per seat');
+          : (isAr ? 'رحلة سفر تشاركي مباشرة · السعر للمقعد $price ر.ق' : 'Direct ride · $price QAR per seat');
     } else if (type == BoardAdType.localTrip) {
       computedTimeText = isAr ? '$timeText · مشوار محلي فوري' : '$timeText · Local mobility';
       computedDesc = _notesController.text.trim().isNotEmpty
           ? _notesController.text.trim()
           : (isAr
-              ? 'طلب انتقال ومشوار محلي مباشر · الأجرة المقترحة: $price ج'
-              : 'Local mobility and direct transit · Proposed fare: $price EGP');
+              ? 'طلب توصيل ومشوار محلي مباشر · الأجرة المقترحة: $price ر.ق'
+              : 'Local mobility and direct transit · Proposed fare: $price QAR');
     } else if (type == BoardAdType.errandService) {
-      computedTimeText = isAr ? '$timeText · قضاء مصلحة رسمية' : '$timeText · Official errand';
+      computedTimeText = isAr ? '$timeText · إنجاز معاملة رسمية' : '$timeText · Official errand';
       final errandText = _errandDescController.text.trim().isNotEmpty
           ? _errandDescController.text.trim()
           : (isAr ? 'استخراج أوراق ومستندات رسمية' : 'Official documents retrieval');
       computedDesc = isAr
-          ? '$errandText · أتعاب الخدمة: $price ج'
-          : '$errandText · Service fee: $price EGP';
+          ? '$errandText · أتعاب الخدمة: $price ر.ق'
+          : '$errandText · Service fee: $price QAR';
     } else if (type == BoardAdType.goodsDelivery) {
       computedTimeText = isAr ? '$timeText · لوجستيات وتوريد بضائع' : '$timeText · Logistics delivery';
       final goodsText = _goodsDescController.text.trim().isNotEmpty
           ? _goodsDescController.text.trim()
           : (isAr ? 'توريد مستلزمات وبضائع تجارية' : 'Store stock & goods supplies');
       computedDesc = isAr
-          ? '$goodsText · الأجرة: $price ج'
-          : '$goodsText · Fare: $price EGP';
+          ? '$goodsText · الأجرة: $price ر.ق'
+          : '$goodsText · Fare: $price QAR';
     } else {
       computedTimeText = isAr
           ? '$timeText · ${seats == 1 ? "مقعد واحد" : "$seats مقاعد"}'
           : '$timeText · $seats seat(s)';
       computedDesc = isAr
-          ? 'طلب سفر تشاركي · الميزانية: حتى $price ج للكرسي'
-          : 'Ride request · Budget: up to $price EGP per seat';
+          ? 'طلب سفر تشاركي · الميزانية: حتى $price ر.ق للمقعد'
+          : 'Ride request · Budget: up to $price QAR per seat';
     }
 
     board.postAd(
@@ -545,8 +545,8 @@ class _PostAdScreenState extends State<PostAdScreen> {
         },
         {
           'type': BoardAdType.errandService,
-          'title': isAr ? 'قضاء مصالح رسمية' : 'Official Errand',
-          'subtitle': isAr ? 'شراء طلبات، جلب حاجة، أو تخليص أوراق' : 'Buying items, errands or papers',
+          'title': isAr ? 'إنجاز معاملات رسمية' : 'Official Errand',
+          'subtitle': isAr ? 'شراء طلبات، إحضار أغراض، أو تخليص أوراق' : 'Buying items, errands or papers',
           'icon': Icons.description_rounded,
           'asset': 'assets/images/service_errand.jpg',
           'color': const Color(0xFFD97706),
@@ -574,15 +574,15 @@ class _PostAdScreenState extends State<PostAdScreen> {
         {
           'type': BoardAdType.rideOffer,
           'title': isAr ? 'عرض سفر تشاركي' : 'Offer Seats',
-          'subtitle': isAr ? 'مسافر ومعايا كراسي فاضية بعربيتي بالكرسي' : 'Empty seats in my private car',
+          'subtitle': isAr ? 'مسافر ولديّ مقاعد شاغرة في سيارتي' : 'Empty seats in my private car',
           'icon': Icons.directions_car_rounded,
           'asset': 'assets/images/service_ride.jpg',
           'color': AppColors.navy,
         },
         {
           'type': BoardAdType.errandService,
-          'title': isAr ? 'قضاء مصالح بالسكة' : 'Errand & Shopping',
-          'subtitle': isAr ? 'مسافر ومستعد أشتري طلبات أو أخلص ورق بطريقي' : 'Traveler ready to buy or deliver papers',
+          'title': isAr ? 'إنجاز معاملات في الطريق' : 'Errand & Shopping',
+          'subtitle': isAr ? 'مسافر ومستعد لشراء طلبات أو تخليص أوراق في طريقي' : 'Traveler ready to buy or deliver papers',
           'icon': Icons.description_rounded,
           'asset': 'assets/images/service_errand.jpg',
           'color': const Color(0xFFD97706),
@@ -598,14 +598,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
         {
           'type': BoardAdType.localTrip,
           'title': isAr ? 'عرض مشاوير محلية' : 'Offer Local Rides',
-          'subtitle': isAr ? 'سائق متاح لتوصيل المشاوير بالقرى والمدن' : 'Driver available for local on-demand trips',
+          'subtitle': isAr ? 'سائق متاح لتوصيل المشاوير في المناطق والمدن' : 'Driver available for local on-demand trips',
           'icon': Icons.near_me_rounded,
           'color': const Color(0xFF0D9488),
         },
         {
           'type': BoardAdType.parcelRequest,
-          'title': isAr ? 'استقبال أمانات بالسكة' : 'Accept Parcels',
-          'subtitle': isAr ? 'مسافر ومستعد أخد أمانات خفيفة بطريقي' : 'Traveler ready to take light parcels',
+          'title': isAr ? 'استقبال أمانات في الطريق' : 'Accept Parcels',
+          'subtitle': isAr ? 'مسافر ومستعد لاستلام أمانات خفيفة في طريقي' : 'Traveler ready to take light parcels',
           'icon': Icons.inventory_2_rounded,
           'asset': 'assets/images/service_parcel.jpg',
           'color': const Color(0xFF10B981),
@@ -902,7 +902,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                         focusedBorder: InputBorder.none,
                         errorBorder: InputBorder.none,
                         focusedErrorBorder: InputBorder.none,
-                        hintText: isAr ? 'اكتب المحافظة، المركز أو العنوان' : 'City or address',
+                        hintText: isAr ? 'اكتب المنطقة، المدينة أو العنوان' : 'Area, city or address',
                         hintStyle: const TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.normal,
@@ -922,7 +922,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            isAr ? 'وجهة الوصول (على فين؟)' : 'Destination / Drop-off',
+                            isAr ? 'وجهة الوصول (إلى أين؟)' : 'Destination / Drop-off',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -975,7 +975,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                         focusedBorder: InputBorder.none,
                         errorBorder: InputBorder.none,
                         focusedErrorBorder: InputBorder.none,
-                        hintText: isAr ? 'المحافظة، المدينة أو العنوان' : 'City or address',
+                        hintText: isAr ? 'المنطقة، المدينة أو العنوان' : 'Area, city or address',
                         hintStyle: const TextStyle(
                           fontSize: 13.5,
                           fontWeight: FontWeight.normal,
@@ -1145,13 +1145,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
       final quickErrands = isAr
           ? [
               'شراء قطع غيار ومستلزمات',
-              'شراء طلبات وجلبها من القاهرة',
+              'شراء طلبات وإحضارها من الدوحة',
               'تخليص شهادات وأوراق رسمية',
-              'روشتة وأدوية ضرورية',
+              'وصفة طبية وأدوية ضرورية',
             ]
           : [
               'Buy parts & supplies',
-              'Shop items from Cairo',
+              'Shop items from Doha',
               'Official certificates & papers',
               'Pharmacy prescription',
             ];
@@ -1160,7 +1160,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isAr ? 'تفاصيل المصلحة والأوراق الرسمية' : 'Official Errand Details',
+            isAr ? 'تفاصيل المعاملة والأوراق الرسمية' : 'Official Errand Details',
             style: AppTypography.title().copyWith(fontSize: 15),
           ),
           const SizedBox(height: 8),
@@ -1189,10 +1189,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
           const SizedBox(height: 8),
           MashwarTextField(
             controller: _errandDescController,
-            label: isAr ? 'نوع المصلحة أو طلب الشراء' : 'Errand / Shopping Description',
+            label: isAr ? 'نوع المعاملة أو طلب الشراء' : 'Errand / Shopping Description',
             hint: isAr
-                ? 'مثال: شراء قطع غيار من التوفيقية، أو استخراج شهادة تخرج من الجامعة'
-                : 'e.g. Buying parts from Cairo, or official university certificate',
+                ? 'مثال: شراء قطع غيار من المنطقة الصناعية، أو استلام شهادة من المدينة التعليمية'
+                : 'e.g. Buying parts from Industrial Area, or certificate from Education City',
           ),
         ],
       );
@@ -1254,13 +1254,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
     if (_selectedCategory == BoardAdType.localTrip) {
       final quickTrips = isAr
           ? [
-              'مشوار فوري (مفيش مواصلات بالمنطقة)',
-              'انتقال بين القرى والمراكز',
+              'مشوار فوري (لا تتوفر مواصلات بالمنطقة)',
+              'تنقّل بين المناطق والضواحي',
               'مشوار طوارئ أو مستشفى',
             ]
           : [
               'Instant trip (no local transit)',
-              'Village / center commute',
+              'Inter-area / district commute',
               'Hospital or clinic trip',
             ];
 
@@ -1432,8 +1432,8 @@ class _PostAdScreenState extends State<PostAdScreen> {
           children: [
             {'label': isAr ? '1 مقعد' : '1 seat', 'val': '1'},
             {'label': isAr ? '2 مقاعد' : '2 seats', 'val': '2'},
-            {'label': isAr ? '3 كراسي (شائع)' : '3 seats (common)', 'val': '3'},
-            {'label': isAr ? '4 كراسي' : '4 seats', 'val': '4'},
+            {'label': isAr ? '3 مقاعد (شائع)' : '3 seats (common)', 'val': '3'},
+            {'label': isAr ? '4 مقاعد' : '4 seats', 'val': '4'},
           ].map((item) {
             final isSelected = _seatsController.text.trim() == item['val'];
             return ActionChip(
@@ -1514,17 +1514,17 @@ class _PostAdScreenState extends State<PostAdScreen> {
   Widget _buildPriceSection(bool isAr) {
     String label;
     if (_selectedCategory == BoardAdType.parcelRequest) {
-      label = isAr ? 'أجرة / مكافأة شحن الأمانة (ج)' : 'Offered Parcel Reward (EGP)';
+      label = isAr ? 'أجرة / مكافأة شحن الأمانة (ر.ق)' : 'Offered Parcel Reward (QAR)';
     } else if (_selectedCategory == BoardAdType.rideOffer) {
-      label = isAr ? 'سعر المقعد الواحد بالسيارة (ج)' : 'Price per Seat (EGP)';
+      label = isAr ? 'سعر المقعد الواحد بالسيارة (ر.ق)' : 'Price per Seat (QAR)';
     } else if (_selectedCategory == BoardAdType.localTrip) {
-      label = isAr ? 'أجرة الانتقال المقترحة (ج)' : 'Proposed Local Fare (EGP)';
+      label = isAr ? 'أجرة الانتقال المقترحة (ر.ق)' : 'Proposed Local Fare (QAR)';
     } else if (_selectedCategory == BoardAdType.errandService) {
-      label = isAr ? 'أتعاب إنجاز المصلحة أو إحضار الأوراق (ج)' : 'Errand Service Fee (EGP)';
+      label = isAr ? 'أتعاب إنجاز المعاملة أو إحضار الأوراق (ر.ق)' : 'Errand Service Fee (QAR)';
     } else if (_selectedCategory == BoardAdType.goodsDelivery) {
-      label = isAr ? 'أجرة نقل وتوريد البضاعة (ج)' : 'Cargo Transport Fee (EGP)';
+      label = isAr ? 'أجرة نقل وتوريد البضاعة (ر.ق)' : 'Cargo Transport Fee (QAR)';
     } else {
-      label = isAr ? 'ميزانيتك المقترحة للكرسي (ج)' : 'Offered Budget per Seat (EGP)';
+      label = isAr ? 'ميزانيتك المقترحة للمقعد (ر.ق)' : 'Offered Budget per Seat (QAR)';
     }
 
     return Container(
@@ -1552,13 +1552,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton.filledTonal(
-                onPressed: () => _adjustPrice(-10),
+                onPressed: () => _adjustPrice(-5),
                 icon: const Icon(Icons.remove_rounded),
                 color: AppColors.navy,
               ),
               const SizedBox(width: 12),
               Container(
-                width: 100,
+                width: 108,
                 alignment: Alignment.center,
                 child: TextField(
                   controller: _priceController,
@@ -1568,14 +1568,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
-                    suffixText: isAr ? 'ج' : 'EGP',
+                    suffixText: isAr ? 'ر.ق' : 'QAR',
                     suffixStyle: AppTypography.body(color: AppColors.teal).copyWith(fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
               IconButton.filledTonal(
-                onPressed: () => _adjustPrice(10),
+                onPressed: () => _adjustPrice(5),
                 icon: const Icon(Icons.add_rounded),
                 color: AppColors.navy,
               ),
@@ -1589,10 +1589,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
             spacing: 8,
             runSpacing: 6,
             alignment: WrapAlignment.center,
-            children: ['40', '60', '80', '100', '120', '150'].map((preset) {
+            children: ['20', '35', '50', '75', '100', '150'].map((preset) {
               final isSelected = _priceController.text.trim() == preset;
               return ActionChip(
-                label: Text(isAr ? '$preset ج' : '$preset EGP'),
+                label: Text(isAr ? '$preset ر.ق' : '$preset QAR'),
                 labelStyle: TextStyle(
                   fontSize: 11.5,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
@@ -1617,20 +1617,20 @@ class _PostAdScreenState extends State<PostAdScreen> {
     switch (_selectedCategory) {
       case BoardAdType.errandService:
         return isAr
-            ? 'مثال: الأوراق جاهزة للاستلام من مجمع التحرير، يرجى التواصل فور الاستلام...'
-            : 'e.g. Papers ready for pickup at Tahrir complex...';
+            ? 'مثال: الأوراق جاهزة للاستلام من مركز الخدمات الحكومية بالدفنة، يرجى التواصل فور الاستلام...'
+            : 'e.g. Papers ready for pickup at Al Dafna Services Complex...';
       case BoardAdType.goodsDelivery:
         return isAr
-            ? 'مثال: البضاعة في كراتين محكمة، التسليم عند المحل التجاري في شارع الجيش...'
-            : 'e.g. Stock packaged in sealed cartons, deliver to commercial store...';
+            ? 'مثال: البضاعة في كراتين محكمة، التسليم عند المحل التجاري في المنطقة الصناعية...'
+            : 'e.g. Stock packaged in sealed cartons, deliver to store in Industrial Area...';
       case BoardAdType.parcelRequest:
         return isAr
-            ? 'مثال: ظرف أوراق مغلق بإحكام، التسليم بكود OTP للمستلم...'
+            ? 'مثال: ظرف أوراق مغلق بإحكام، التسليم برمز التحقق (OTP) للمستلم...'
             : 'e.g. Sealed documents envelope, deliver via OTP...';
       case BoardAdType.localTrip:
         return isAr
-            ? 'مثال: المشوار مباشر من قرية كذا إلى المستشفى العام...'
-            : 'e.g. Direct trip from village to central hospital...';
+            ? 'مثال: المشوار مباشر من الوكرة إلى مؤسسة حمد الطبية...'
+            : 'e.g. Direct trip from Al Wakrah to Hamad Medical City...';
       default:
         return isAr
             ? 'مثال: التجمع عند محطة الوقود بمدخل المدينة، حقيبة سفر متوسطة...'

@@ -26,7 +26,7 @@ class IdVerificationScreen extends StatefulWidget {
 }
 
 class _IdVerificationScreenState extends State<IdVerificationScreen> {
-  final TextEditingController _idController = TextEditingController(text: '29810150102934');
+  final TextEditingController _idController = TextEditingController(text: '29663401842');
   
   bool _hasFrontPhoto = true;
   bool _hasBackPhoto = true;
@@ -49,14 +49,13 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
     super.dispose();
   }
 
-  // Egyptian National ID decoder: 14 digits
+  // Qatar Personal ID (QID) decoder: 11 digits
   // Digit 1: Century (2: 1900-1999, 3: 2000-2099)
-  // Digits 2-3: Year
-  // Digits 4-5: Month
-  // Digits 6-7: Day
-  // Digits 8-9: Governorate Code (01 Cairo, 02 Alex, 16 Gharbia, etc.)
+  // Digits 2-3: Birth Year
+  // Digits 4-6: ISO-3166 Nationality Code (634 Qatar, 818 Egypt, 682 Saudi Arabia, etc.)
+  // Digits 7-11: Serial sequence
   void _analyzeNationalId(String id) {
-    if (id.length != 14 || !RegExp(r'^[0-9]{14}$').hasMatch(id)) {
+    if (id.length != 11 || !RegExp(r'^[0-9]{11}$').hasMatch(id)) {
       setState(() {
         _detectedBirthDate = null;
         _detectedGovNameAr = null;
@@ -77,40 +76,28 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
 
     final yearPrefix = centuryDigit == 2 ? '19' : '20';
     final year = '$yearPrefix${id.substring(1, 3)}';
-    final month = id.substring(3, 5);
-    final day = id.substring(5, 7);
-    final govCode = id.substring(7, 9);
+    final countryCode = id.substring(3, 6);
 
-    final Map<String, List<String>> governorates = {
-      '01': ['القاهرة', 'Cairo'],
-      '02': ['الإسكندرية', 'Alexandria'],
-      '03': ['بورسعيد', 'Port Said'],
-      '04': ['السويس', 'Suez'],
-      '11': ['دمياط', 'Damietta'],
-      '12': ['الدقهلية', 'Dakahlia'],
-      '13': ['الشرقية', 'Sharqia'],
-      '14': ['القليوبية', 'Qalyubia'],
-      '15': ['كفر الشيخ', 'Kafr El-Sheikh'],
-      '16': ['الغربية (طنطا)', 'Gharbia (Tanta)'],
-      '17': ['المنوفية', 'Menoufia'],
-      '18': ['البحيرة', 'Beheira'],
-      '19': ['الإسماعيلية', 'Ismailia'],
-      '21': ['الجيزة', 'Giza'],
-      '22': ['بني سويف', 'Beni Suef'],
-      '23': ['الفيوم', 'Fayoum'],
-      '24': ['المنيا', 'Minya'],
-      '25': ['أسيوط', 'Asyut'],
-      '26': ['سوهاج', 'Sohag'],
-      '27': ['قنا', 'Qena'],
-      '28': ['أسوان', 'Aswan'],
-      '29': ['الأقصر', 'Luxor'],
+    const Map<String, List<String>> nationalities = {
+      '634': ['دولة قطر', 'Qatar'],
+      '682': ['المملكة العربية السعودية', 'Saudi Arabia'],
+      '784': ['الإمارات العربية المتحدة', 'UAE'],
+      '414': ['دولة الكويت', 'Kuwait'],
+      '512': ['سلطنة عُمان', 'Oman'],
+      '048': ['مملكة البحرين', 'Bahrain'],
+      '818': ['مصر', 'Egypt'],
+      '400': ['الأردن', 'Jordan'],
+      '422': ['لبنان', 'Lebanon'],
+      '356': ['الهند', 'India'],
+      '608': ['الفلبين', 'Philippines'],
+      '586': ['باكستان', 'Pakistan'],
     };
 
-    final gov = governorates[govCode] ?? ['محافظة مصرية', 'Egyptian Governorate'];
+    final nat = nationalities[countryCode] ?? ['مقيم في دولة قطر', 'Qatar Resident'];
     setState(() {
-      _detectedBirthDate = '$day/$month/$year';
-      _detectedGovNameAr = gov[0];
-      _detectedGovNameEn = gov[1];
+      _detectedBirthDate = year;
+      _detectedGovNameAr = nat[0];
+      _detectedGovNameEn = nat[1];
       _idError = null;
     });
   }
@@ -118,11 +105,11 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
   void _handleSubmit() async {
     final isAr = context.read<SettingsProvider>().isArabic;
     final idText = _idController.text.trim();
-    if (idText.length != 14 || !RegExp(r'^[23][0-9]{13}$').hasMatch(idText)) {
+    if (idText.length != 11 || !RegExp(r'^[23][0-9]{10}$').hasMatch(idText)) {
       setState(() {
         _idError = isAr
-            ? 'يرجى إدخال 14 رقم صحيح لبطاقة الرقم القومي المصرية تبدأ بـ 2 أو 3'
-            : 'Please enter a valid 14-digit Egyptian National ID starting with 2 or 3';
+            ? 'يرجى إدخال الرقم الشخصي القطري (QID) المكون من 11 رقم ويبدأ بـ 2 أو 3'
+            : 'Please enter a valid 11-digit Qatar ID (QID) starting with 2 or 3';
       });
       return;
     }
@@ -193,8 +180,8 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
         ),
         content: Text(
           isArabic
-              ? 'تم استلام بطاقة الرقم القومي بنجاح، جاري مراجعة البيانات بواسطة فريق الأمان في مشوار خلال 24 ساعة. يمكنك استخدام التطبيق الآن!'
-              : 'Your National ID documents have been submitted. Our safety team will review them within 24 hours. You can start exploring MASHWAR now!',
+              ? 'تم استلام البطاقة الشخصية القطرية (QID) بنجاح، وتتم مراجعة البيانات بواسطة فريق الأمان في مشوار خلال 24 ساعة. يمكنك استخدام التطبيق الآن!'
+              : 'Your Qatar ID (QID) documents have been submitted. Our safety team will review them within 24 hours. You can start exploring MASHWAR now!',
           style: AppTypography.bodySecondary(),
         ),
         actions: [
@@ -232,7 +219,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         title: Text(
-          isAr ? 'توثيق الهوية بالرقم القومي' : 'National ID Verification',
+          isAr ? 'توثيق البطاقة الشخصية القطرية (QID)' : 'Qatar ID (QID) Verification',
           style: AppTypography.title(),
         ),
         leading: widget.isOnboarding
@@ -279,7 +266,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                         children: [
                           Text(
                             isAlreadyVerified
-                                ? (isAr ? 'حساب موثق بالرقم القومي' : 'National ID Verified')
+                                ? (isAr ? 'حساب موثق بالبطاقة القطرية' : 'QID Verified Account')
                                 : (isAr ? 'توثيق الهوية إلزامي للأمان' : 'Mandatory Safety ID Verification'),
                             style: AppTypography.title(
                               color: isAlreadyVerified ? const Color(0xFF15803D) : AppColors.navy,
@@ -288,10 +275,10 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                           const SizedBox(height: 3),
                           Text(
                             isAlreadyVerified
-                                ? (isAr ? 'تم التحقق من بياناتك وبطاقتك الشخصية ومطابقتها.' : 'Your identity has been verified.')
+                                ? (isAr ? 'تم التحقق من بياناتك وبطاقتك القطرية ومطابقتها.' : 'Your Qatar ID has been verified.')
                                 : (isAr
-                                    ? 'لحماية الركاب والطرود، يجب على جميع المشتركين رفع بطاقة الرقم القومي.'
-                                    : 'To protect riders and parcels, all users must verify their Egyptian National ID.'),
+                                    ? 'لحماية الركاب والطرود، يجب على جميع المشتركين رفع البطاقة الشخصية القطرية (QID).'
+                                    : 'To protect riders and parcels, all users must verify their Qatar ID (QID).'),
                             style: AppTypography.bodySecondary().copyWith(fontSize: 12),
                           ),
                         ],
@@ -303,19 +290,19 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
 
               const SizedBox(height: AppDimens.space24),
 
-              // 14-digit Egyptian National ID Input
+              // 11-digit Qatar Personal ID (QID) Input
               Text(
-                isAr ? 'الرقم القومي المصري (14 رقم)' : 'Egyptian National ID (14 digits)',
+                isAr ? 'الرقم الشخصي القطري - QID (11 رقم)' : 'Qatar Personal ID - QID (11 digits)',
                 style: AppTypography.label().copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 6),
               TextField(
                 controller: _idController,
                 keyboardType: TextInputType.number,
-                maxLength: 14,
+                maxLength: 11,
                 inputFormatters: [
                   FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(14),
+                  LengthLimitingTextInputFormatter(11),
                 ],
                 onChanged: _analyzeNationalId,
                 style: AppTypography.body().copyWith(
@@ -323,7 +310,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                   letterSpacing: 2.0,
                 ),
                 decoration: InputDecoration(
-                  hintText: '29810150102934',
+                  hintText: '29663401842',
                   filled: true,
                   fillColor: const Color(0xFFF3F3F4),
                   counterText: '',
@@ -360,8 +347,8 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                       Expanded(
                         child: Text(
                           isAr
-                              ? 'تاريخ الميلاد: $_detectedBirthDate · محل الميلاد: $_detectedGovNameAr'
-                              : 'Date of Birth: $_detectedBirthDate · Birth Place: $_detectedGovNameEn',
+                              ? 'سنة الميلاد: $_detectedBirthDate · الجنسية: $_detectedGovNameAr'
+                              : 'Birth Year: $_detectedBirthDate · Nationality: $_detectedGovNameEn',
                           style: AppTypography.label(color: AppColors.navy).copyWith(fontSize: 12),
                         ),
                       ),
@@ -372,17 +359,17 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
 
               const SizedBox(height: AppDimens.space24),
 
-              // Upload Cards: Front and Back of Egyptian ID
+              // Upload Cards: Front and Back of Qatar ID
               Text(
-                isAr ? 'صور بطاقة الرقم القومي' : 'National ID Card Photos',
+                isAr ? 'صور البطاقة الشخصية القطرية (QID)' : 'Qatar ID (QID) Card Photos',
                 style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: AppDimens.space12),
 
               // Front of ID
               _buildDocumentCard(
-                title: isAr ? 'وجه البطاقة الشخصية' : 'Front of National ID',
-                subtitle: isAr ? 'صورة واضحة بالاسم والصورة والرقم القومي' : 'Clear photo showing name, photo & ID number',
+                title: isAr ? 'وجه البطاقة الشخصية (QID)' : 'Front of Qatar ID',
+                subtitle: isAr ? 'صورة واضحة بالاسم والصورة والرقم الشخصي' : 'Clear photo showing name, photo & QID number',
                 hasPhoto: _hasFrontPhoto,
                 icon: Icons.credit_card_rounded,
                 onTap: () {
@@ -421,7 +408,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
 
               const SizedBox(height: AppDimens.space24),
 
-              // Egyptian Privacy Law Notice
+              // Qatar Privacy Law Notice
               Container(
                 padding: const EdgeInsets.all(AppDimens.space12),
                 decoration: BoxDecoration(
@@ -437,8 +424,8 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                     Expanded(
                       child: Text(
                         isAr
-                            ? 'بياناتك مشفرة ومحمية بالكامل بموجب قانون حماية البيانات الشخصية المصري رقم 151 لسنة 2020. لا يتم مشاركة بطاقتك مع أي طرف ثالث.'
-                            : 'Your data is strictly encrypted and protected under Egyptian Personal Data Protection Law No. 151 of 2020. Never shared with third parties.',
+                            ? 'بياناتك مشفرة ومحمية بالكامل بموجب قانون حماية خصوصية البيانات الشخصية القطري رقم 13 لسنة 2016. لا يتم مشاركة بطاقتك مع أي طرف ثالث.'
+                            : 'Your data is strictly encrypted and protected under Qatar Personal Data Privacy Protection Law No. 13 of 2016. Never shared with third parties.',
                         style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
                       ),
                     ),

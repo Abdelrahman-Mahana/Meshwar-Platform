@@ -23,7 +23,10 @@ class _WalletScreenState extends State<WalletScreen> {
     final isAr = settings.isArabic;
     final TextEditingController amountController = TextEditingController(text: '100');
     final TextEditingController targetController = TextEditingController(text: auth.user.phone);
-    String selectedChannel = 'InstaPay (IPN)';
+    final channels = isAr
+        ? ['فوراً (Fawran)', 'كيوباي (QPay)', 'سكيب كاش (SkipCash)']
+        : ['Fawran (QCB)', 'QPay', 'SkipCash'];
+    String selectedChannel = channels.first;
 
     showModalBottomSheet(
       context: context,
@@ -52,14 +55,14 @@ class _WalletScreenState extends State<WalletScreen> {
                   const SizedBox(height: AppDimens.space8),
                   Text(
                     isAr
-                        ? 'الرصيد المتاح للسحب: ${auth.user.walletBalance.toStringAsFixed(0)} ج.م'
-                        : 'Available: ${auth.user.walletBalance.toStringAsFixed(0)} EGP',
+                        ? 'الرصيد المتاح للسحب: ${auth.user.walletBalance.toStringAsFixed(0)} ر.ق'
+                        : 'Available: ${auth.user.walletBalance.toStringAsFixed(0)} QAR',
                     style: AppTypography.bodySecondary(),
                   ),
                   const SizedBox(height: AppDimens.space16),
                   Wrap(
                     spacing: 8,
-                    children: ['InstaPay (IPN)', 'Vodafone Cash'].map((channel) {
+                    children: channels.map((channel) {
                       final isSel = selectedChannel == channel;
                       return ChoiceChip(
                         label: Text(channel),
@@ -74,7 +77,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     controller: amountController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: isAr ? 'المبلغ (ج.م)' : 'Amount (EGP)',
+                      labelText: isAr ? 'المبلغ (ر.ق)' : 'Amount (QAR)',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -82,7 +85,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   TextField(
                     controller: targetController,
                     decoration: InputDecoration(
-                      labelText: isAr ? 'رقم المحفظة أو عنوان InstaPay' : 'Wallet Number or IPA',
+                      labelText: isAr ? 'رقم الجوال المرتبط بـ فوراً أو IBAN' : 'Fawran Alias, Mobile or IBAN',
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                   ),
@@ -101,7 +104,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         SnackBar(
                           content: Text(
                             ok
-                                ? (isAr ? 'تم تحويل $amount ج.م بنجاح عبر $selectedChannel' : 'Withdrawn $amount EGP')
+                                ? (isAr ? 'تم تحويل $amount ر.ق بنجاح عبر $selectedChannel' : 'Withdrawn $amount QAR via $selectedChannel')
                                 : (isAr ? 'الرصيد غير كافٍ لإتمام عملية السحب' : 'Insufficient wallet balance'),
                           ),
                           backgroundColor: ok ? AppColors.teal : AppColors.danger,
@@ -145,7 +148,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     ),
                     const SizedBox(height: AppDimens.space8),
                     Text(
-                      isAr ? 'اختر المبلغ للشحن الفوري عبر إنستاباي أو المحفظة الذكية' : 'Select amount to top-up via InstaPay or Mobile Wallet',
+                      isAr ? 'اختر المبلغ للشحن الفوري عبر خدمة فوراً أو البطاقة' : 'Select amount to top-up via Fawran or QPay',
                       style: AppTypography.bodySecondary(),
                     ),
                     const SizedBox(height: AppDimens.space16),
@@ -172,7 +175,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    '$amount ${isAr ? 'ج.م' : 'EGP'}',
+                                    '$amount ${isAr ? 'ر.ق' : 'QAR'}',
                                     style: TextStyle(
                                       color: isSel ? Colors.white : AppColors.navy,
                                       fontWeight: FontWeight.bold,
@@ -207,7 +210,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              isAr ? 'إنستاباي InstaPay (تحويل لحظي مباشر)' : 'InstaPay (Instant Bank Transfer)',
+                              isAr ? 'فوراً Fawran (تحويل لحظي عبر مصرف قطر المركزي)' : 'Fawran (Instant QCB Transfer)',
                               style: AppTypography.body().copyWith(fontWeight: FontWeight.w600),
                             ),
                           ),
@@ -219,18 +222,18 @@ class _WalletScreenState extends State<WalletScreen> {
                     const SizedBox(height: AppDimens.space24),
 
                     MashwarButton(
-                      text: isAr ? 'تأكيد الشحن بمبلغ $selectedAmount ج.م' : 'Confirm Deposit of $selectedAmount EGP',
+                      text: isAr ? 'تأكيد الشحن بمبلغ $selectedAmount ر.ق' : 'Confirm Deposit of $selectedAmount QAR',
                       onPressed: () {
                         final auth = context.read<AuthProvider>();
                         auth.depositWalletFunds(
                           amount: selectedAmount.toDouble(),
-                          methodAr: 'إنستاباي InstaPay',
-                          methodEn: 'InstaPay IPN',
+                          methodAr: 'فوراً Fawran',
+                          methodEn: 'Fawran Instant',
                         );
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(isAr ? 'تم شحن المحفظة بنجاح بمبلغ $selectedAmount ج.م' : 'Wallet topped up with $selectedAmount EGP'),
+                            content: Text(isAr ? 'تم شحن المحفظة بنجاح بمبلغ $selectedAmount ر.ق' : 'Wallet topped up with $selectedAmount QAR'),
                             backgroundColor: AppColors.teal,
                           ),
                         );
@@ -349,7 +352,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          isAr ? 'جنيه مصري' : 'EGP',
+                          isAr ? 'ريال قطري' : 'QAR',
                           style: AppTypography.title(color: AppColors.gold).copyWith(fontSize: 18),
                         ),
                       ],
@@ -406,7 +409,7 @@ class _WalletScreenState extends State<WalletScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isAr ? 'طرق الدفع المدعومة في مصر' : 'Egyptian Payment Methods',
+                  isAr ? 'طرق الدفع المدعومة في قطر' : 'Qatar Payment Methods',
                   style: AppTypography.title().copyWith(fontSize: 16),
                 ),
                 const SizedBox(height: AppDimens.space12),
@@ -421,35 +424,35 @@ class _WalletScreenState extends State<WalletScreen> {
                     children: [
                       _buildPaymentTile(
                         icon: Icons.flash_on_rounded,
-                        iconColor: const Color(0xFF6A1B9A),
-                        title: isAr ? 'إنستاباي InstaPay (IPN)' : 'InstaPay (IPN)',
-                        subtitle: isAr ? 'تحويل بنكي فوري بدون مصاريف إضافية' : 'Instant free bank transfer',
-                        isDefault: auth.selectedPaymentMethod == 'instapay',
-                        onTap: () => auth.setSelectedPaymentMethod('instapay'),
-                      ),
-                      const Divider(height: 1, color: AppColors.borderDisabled),
-                      _buildPaymentTile(
-                        icon: Icons.phone_android_rounded,
-                        iconColor: const Color(0xFFE53935),
-                        title: isAr ? 'فودافون كاش والمحافظ الذكية' : 'Vodafone Cash & Mobile Wallets',
-                        subtitle: isAr ? 'فودافون، أورنج، اتصالات، وي باي' : 'Vodafone, Orange, Etisalat, WE Pay',
-                        isDefault: auth.selectedPaymentMethod == 'vodafone_cash',
-                        onTap: () => auth.setSelectedPaymentMethod('vodafone_cash'),
+                        iconColor: const Color(0xFF8A1538),
+                        title: isAr ? 'فوراً Fawran (التحويل اللحظي)' : 'Fawran (QCB Instant Transfer)',
+                        subtitle: isAr ? 'تحويل بنكي فوري في قطر بدون رسوم إضافية' : 'Instant zero-fee bank transfer in Qatar',
+                        isDefault: auth.selectedPaymentMethod == 'fawran',
+                        onTap: () => auth.setSelectedPaymentMethod('fawran'),
                       ),
                       const Divider(height: 1, color: AppColors.borderDisabled),
                       _buildPaymentTile(
                         icon: Icons.credit_card_rounded,
                         iconColor: AppColors.teal,
-                        title: isAr ? 'بطاقات ميزة والفيزا والماستركارد' : 'Meeza & Bank Cards',
-                        subtitle: isAr ? 'دفع آمن بالبطاقات الائتمانية والخصم المباشر' : 'Debit/Credit & Meeza cards',
-                        isDefault: auth.selectedPaymentMethod == 'meeza_card',
-                        onTap: () => auth.setSelectedPaymentMethod('meeza_card'),
+                        title: isAr ? 'كيوباي QPay وبطاقات البنوك القطرية' : 'QPay Debit & Qatari Bank Cards',
+                        subtitle: isAr ? 'بطاقة هميان الوطنية، QPay، فيزا وماستركارد' : 'Himyan National Card, QPay, Visa & Mastercard',
+                        isDefault: auth.selectedPaymentMethod == 'qpay',
+                        onTap: () => auth.setSelectedPaymentMethod('qpay'),
+                      ),
+                      const Divider(height: 1, color: AppColors.borderDisabled),
+                      _buildPaymentTile(
+                        icon: Icons.phone_android_rounded,
+                        iconColor: const Color(0xFF1D4ED8),
+                        title: isAr ? 'سكيب كاش SkipCash و Apple Pay' : 'SkipCash & Apple Pay',
+                        subtitle: isAr ? 'دفع رقمي فوري عبر الهاتف في قطر' : 'Instant mobile digital payment in Qatar',
+                        isDefault: auth.selectedPaymentMethod == 'skipcash',
+                        onTap: () => auth.setSelectedPaymentMethod('skipcash'),
                       ),
                       const Divider(height: 1, color: AppColors.borderDisabled),
                       _buildPaymentTile(
                         icon: Icons.payments_outlined,
                         iconColor: AppColors.gold,
-                        title: isAr ? 'الدفع كاش نقداً' : 'Cash upon meeting',
+                        title: isAr ? 'الدفع نقداً' : 'Cash upon meeting',
                         subtitle: isAr ? 'دفع قيمة المقعد أو شحن الطرد باليد للسائق' : 'Pay in cash directly to the driver',
                         isDefault: auth.selectedPaymentMethod == 'cash',
                         onTap: () => auth.setSelectedPaymentMethod('cash'),
@@ -500,18 +503,18 @@ class _WalletScreenState extends State<WalletScreen> {
                         final formatted = val == val.roundToDouble()
                             ? val.toStringAsFixed(0)
                             : val.toStringAsFixed(2);
-                        amountLabel = '${isPositive ? '+' : '-'}$formatted ${isAr ? 'ج.م' : 'EGP'}';
+                        amountLabel = '${isPositive ? '+' : '-'}$formatted ${isAr ? 'ر.ق' : 'QAR'}';
                       } else if (rawAmount is num) {
                         final val = rawAmount.abs();
                         final formatted = val == val.roundToDouble()
                             ? val.toStringAsFixed(0)
                             : val.toStringAsFixed(2);
-                        amountLabel = '${isPositive ? '+' : '-'}$formatted ${isAr ? 'ج.م' : 'EGP'}';
+                        amountLabel = '${isPositive ? '+' : '-'}$formatted ${isAr ? 'ر.ق' : 'QAR'}';
                       } else {
                         final str = rawAmount?.toString() ?? '0';
                         amountLabel = isAr
-                            ? (str.contains('ج.م') ? str : '$str ج.م')
-                            : str.replaceAll('ج.م', 'EGP');
+                            ? (str.contains('ر.ق') ? str : '${str.replaceAll('ج.م', '').trim()} ر.ق')
+                            : str.replaceAll('ر.ق', 'QAR').replaceAll('ج.م', 'QAR');
                       }
                       return ListTile(
                         leading: Container(

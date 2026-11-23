@@ -17,29 +17,29 @@ void main() {
         ChangeNotifierProvider<SettingsProvider>.value(value: settingsProvider),
       ],
       child: const MaterialApp(
-        locale: Locale('ar', 'EG'),
+        locale: Locale('ar', 'QA'),
         home: PhoneInputScreen(),
       ),
     );
   }
 
-  testWidgets('PhoneInputScreen mounts with Egyptian country badge (+20) and clean layout', (WidgetTester tester) async {
+  testWidgets('PhoneInputScreen mounts with Qatari country badge (+974) and clean layout', (WidgetTester tester) async {
     await tester.pumpWidget(buildPhoneWidget());
     await tester.pumpAndSettle();
 
     // Verify Title & Subtitle
-    expect(find.text('أدخل رقم موبايلك'), findsOneWidget);
-    expect(find.text('هنبعتلك كود تأكيد عبر رسالة SMS'), findsOneWidget);
+    expect(find.text('أدخل رقم جوالك'), findsOneWidget);
+    expect(find.text('سنرسل لك رمز تحقق عبر رسالة SMS'), findsOneWidget);
 
     // Verify Country Code Badge
-    expect(find.text('EG'), findsOneWidget);
-    expect(find.text('+20'), findsOneWidget);
+    expect(find.text('QA'), findsOneWidget);
+    expect(find.text('+974'), findsOneWidget);
 
     // Verify Helper text
-    expect(find.text('رقم مصري يبدأ بـ 010 أو 011 أو 012 أو 015'), findsOneWidget);
+    expect(find.text('رقم جوال قطري (Ooredoo / Vodafone) يبدأ بـ 3 أو 5 أو 6 أو 7'), findsOneWidget);
 
     // Verify Button
-    expect(find.text('إرسال الكود'), findsOneWidget);
+    expect(find.text('إرسال الرمز'), findsOneWidget);
   });
 
   testWidgets('Normalizes Arabic numerals to standard digits in phone field', (WidgetTester tester) async {
@@ -49,25 +49,25 @@ void main() {
     final textField = find.byType(TextField);
 
     // Clear existing text and enter Arabic numerals
-    await tester.enterText(textField, '٠١٠٩٨٧٦٥٤٣٢');
+    await tester.enterText(textField, '٥٥٩٨٧٦٥٤');
     await tester.pumpAndSettle();
 
-    expect(tester.widget<TextField>(textField).controller?.text, '01098765432');
+    expect(tester.widget<TextField>(textField).controller?.text, '55987654');
   });
 
-  testWidgets('Validation error triggers on invalid Egyptian phone', (WidgetTester tester) async {
+  testWidgets('Validation error triggers on invalid Qatari phone', (WidgetTester tester) async {
     await tester.pumpWidget(buildPhoneWidget());
     await tester.pumpAndSettle();
 
     final textField = find.byType(TextField);
 
-    // Enter invalid number (less than 11 digits or invalid prefix)
-    await tester.enterText(textField, '01999999999');
+    // Enter invalid number (invalid prefix for Qatar)
+    await tester.enterText(textField, '41234567');
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('إرسال الكود'));
+    await tester.tap(find.text('إرسال الرمز'));
     await tester.pumpAndSettle();
 
-    expect(find.text('الرقم لازم يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015'), findsOneWidget);
+    expect(find.text('الرقم يجب أن يتكون من 8 أرقام ويبدأ بـ 3 أو 5 أو 6 أو 7'), findsOneWidget);
   });
 }

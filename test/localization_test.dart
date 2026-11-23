@@ -11,16 +11,16 @@ import 'package:mashwar/state/auth_provider.dart';
 void main() {
   group('MASHWAR Bidirectional Localization & DB Data Preservation Tests', () {
     test('UI strings translate between Arabic and English accurately', () {
-      // 1. Egyptian Cities translation
-      expect(AppStrings.translateCity('القاهرة', isArabic: false), 'Cairo');
-      expect(AppStrings.translateCity('Cairo', isArabic: true), 'القاهرة');
-      expect(AppStrings.translateCity('الإسكندرية', isArabic: false), 'Alexandria');
-      expect(AppStrings.translateCity('كفر الشيخ', isArabic: false), 'Kafr El-Sheikh');
-      expect(AppStrings.translateCity('طنطا', isArabic: false), 'Tanta');
+      // 1. Qatari Cities translation
+      expect(AppStrings.translateCity('الدوحة', isArabic: false), 'Doha');
+      expect(AppStrings.translateCity('Doha', isArabic: true), 'الدوحة');
+      expect(AppStrings.translateCity('الوكرة', isArabic: false), 'Al Wakrah');
+      expect(AppStrings.translateCity('الخور', isArabic: false), 'Al Khor');
+      expect(AppStrings.translateCity('لوسيل', isArabic: false), 'Lusail');
 
-      // 2. Egyptian Routes translation
-      expect(AppStrings.translateRoute('كفر الشيخ ← القاهرة', isArabic: false), 'Kafr El-Sheikh → Cairo');
-      expect(AppStrings.translateRoute('Kafr El-Sheikh → Cairo', isArabic: true), 'كفر الشيخ ← القاهرة');
+      // 2. Qatari Routes translation
+      expect(AppStrings.translateRoute('الدوحة ← الخور', isArabic: false), 'Doha → Al Khor');
+      expect(AppStrings.translateRoute('Doha → Al Khor', isArabic: true), 'الدوحة ← الخور');
 
       // 3. Statuses and Badges translation
       expect(AppStrings.translateStatus('موثق', isArabic: false), 'Verified');
@@ -38,16 +38,16 @@ void main() {
       expect(AppStrings.translate('Confirm Booking', isArabic: true), 'تأكيد الحجز');
       expect(AppStrings.translate('تسجيل الخروج', isArabic: false), 'Log Out');
       expect(AppStrings.translate('إعدادات التطبيق', isArabic: false), 'App Settings');
-      expect(AppStrings.translate('توثيق بطاقة الرقم القومي', isArabic: false), 'National ID Verification');
+      expect(AppStrings.translate('توثيق البطاقة الشخصية القطرية (QID)', isArabic: false), 'Qatar ID (QID) Verification');
     });
 
     test('Primary customer data from DB is NEVER translated or corrupted', () {
-      const customerFullName = 'محمد سعيد';
-      const customerPhone = '01012345678';
-      const nationalId = '29810150102934';
-      const licensePlate = 'س ق ر 1942';
-      const driverName = 'عبدالرحمن أحمد';
-      const customPickupPoint = 'أمام محطة قطار طنطا، بجوار بنك مصر';
+      const customerFullName = 'جاسم الكواري';
+      const customerPhone = '55123456';
+      const nationalId = '29663401842';
+      const licensePlate = 'قطر 482910';
+      const driverName = 'عبدالرحمن المهنا';
+      const customPickupPoint = 'أمام مترو مشيرب، بجوار محطة وقود';
 
       // Verify that translation lookups return customer data strictly as-is
       expect(AppStrings.translate(customerFullName, isArabic: false), customerFullName);
@@ -103,9 +103,9 @@ void main() {
       expect(find.text('تأكيد الحجز'), findsOneWidget);
       expect(find.text('موثق'), findsOneWidget);
       expect(find.text('سيدات فقط'), findsOneWidget);
-      expect(find.text('Customer: عبدالرحمن أحمد'), findsOneWidget);
-      expect(find.text('Phone: 01012345678'), findsOneWidget);
-      expect(find.text('ID: 29810150102934'), findsOneWidget);
+      expect(find.text('Customer: عبدالرحمن المهنا'), findsOneWidget);
+      expect(find.text('Phone: 55123456'), findsOneWidget);
+      expect(find.text('ID: 29663401842'), findsOneWidget);
 
       // 2. Switch Language to English
       settings.setLocale(const Locale('en', 'US'));
@@ -117,12 +117,12 @@ void main() {
       expect(find.text('Ladies Only'), findsOneWidget);
 
       // Customer DB fields MUST stay 100% intact!
-      expect(find.text('Customer: عبدالرحمن أحمد'), findsOneWidget);
-      expect(find.text('Phone: 01012345678'), findsOneWidget);
-      expect(find.text('ID: 29810150102934'), findsOneWidget);
+      expect(find.text('Customer: عبدالرحمن المهنا'), findsOneWidget);
+      expect(find.text('Phone: 55123456'), findsOneWidget);
+      expect(find.text('ID: 29663401842'), findsOneWidget);
 
       // 3. Switch Language back to Arabic
-      settings.setLocale(const Locale('ar', 'EG'));
+      settings.setLocale(const Locale('ar', 'QA'));
       await tester.pumpAndSettle();
 
       // UI labels should flip back to Arabic
@@ -131,9 +131,9 @@ void main() {
       expect(find.text('سيدات فقط'), findsOneWidget);
 
       // Customer DB fields continue to be intact
-      expect(find.text('Customer: عبدالرحمن أحمد'), findsOneWidget);
-      expect(find.text('Phone: 01012345678'), findsOneWidget);
-      expect(find.text('ID: 29810150102934'), findsOneWidget);
+      expect(find.text('Customer: عبدالرحمن المهنا'), findsOneWidget);
+      expect(find.text('Phone: 55123456'), findsOneWidget);
+      expect(find.text('ID: 29663401842'), findsOneWidget);
     });
   });
 }

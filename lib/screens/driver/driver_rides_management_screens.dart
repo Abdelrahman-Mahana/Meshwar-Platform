@@ -70,7 +70,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      isAr ? '4,850 ج.م' : '4,850 EGP',
+                      isAr ? '1,850 ر.ق' : '1,850 QAR',
                       style: AppTypography.largeTitle(color: AppColors.navy).copyWith(fontSize: 28),
                     ),
                     const SizedBox(height: 8),
@@ -206,7 +206,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isAr ? 'أرباحك هذا الشهر: 4,850 ج.م' : 'Monthly Earnings: 4,850 EGP',
+                                isAr ? 'أرباحك هذا الشهر: 1,850 ر.ق' : 'Monthly Earnings: 1,850 QAR',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.body().copyWith(fontWeight: FontWeight.w800, color: AppColors.navy),
@@ -291,8 +291,8 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                               route: '${ride.fromCity} ← ${ride.toCity}',
                               date: '${ride.departureDate}، ${ride.departureTime}',
                               stats: isAr
-                                  ? '${ride.remainingSeats} مقاعد متاحة · ${ride.pricePerSeat} ج/مقعد'
-                                  : '${ride.remainingSeats} seats left · ${ride.pricePerSeat} EGP/seat',
+                                  ? '${ride.remainingSeats} مقاعد متاحة · ${ride.pricePerSeat} ر.ق/مقعد'
+                                  : '${ride.remainingSeats} seats left · ${ride.pricePerSeat} QAR/seat',
                               badge: isAr ? 'منشورة' : 'Active',
                               badgeType: BadgeType.verified,
                               onTap: () {
@@ -310,7 +310,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                             const SizedBox(height: 12),
                           ],
                           _buildTripCard(
-                            route: isAr ? 'طنطا ← الإسكندرية' : 'Tanta → Alexandria',
+                            route: isAr ? 'الوكرة ← لوسيل' : 'Al Wakrah → Lusail',
                             date: isAr ? 'السبت 7 نوفمبر، 9:00 ص' : 'Sat Nov 7, 9:00 AM',
                             stats: isAr ? 'لا حجوزات بعد' : 'No bookings yet',
                             badge: isAr ? 'منشورة' : 'Active',
@@ -332,16 +332,16 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
                     : ListView(
                         children: [
                           _buildTripCard(
-                            route: isAr ? 'القاهرة ← كفر الشيخ' : 'Cairo → Kafr El-Sheikh',
+                            route: isAr ? 'الخور ← الدوحة' : 'Al Khor → Doha',
                             date: isAr ? 'الأحد 25 أكتوبر' : 'Sun Oct 25',
-                            stats: isAr ? '3 ركاب · طردين' : '3 passengers · 2 parcels',
+                            stats: isAr ? '3 ركاب · طردان' : '3 passengers · 2 parcels',
                             badge: isAr ? 'مكتملة' : 'Completed',
                             badgeType: BadgeType.verified,
                             isAr: isAr,
                           ),
                           const SizedBox(height: 12),
                           _buildTripCard(
-                            route: isAr ? 'طنطا ← القاهرة' : 'Tanta → Cairo',
+                            route: isAr ? 'الريان ← دخان' : 'Al Rayyan → Dukhan',
                             date: isAr ? 'الخميس 22 أكتوبر' : 'Thu Oct 22',
                             stats: isAr ? 'أُلغيت' : 'Cancelled',
                             badge: isAr ? 'ملغاة' : 'Cancelled',
@@ -452,33 +452,33 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
   final List<Map<String, dynamic>> _rideRequests = [
     {
       'id': 'req_r1',
-      'passenger': 'ياسمين',
-      'route': 'طنطا ← القاهرة',
-      'pickup': 'محطة طنطا',
-      'dropoff': 'محطة المترو',
+      'passenger': 'نورة العطية',
+      'route': 'الوكرة ← الدوحة',
+      'pickup': 'محطة مترو الوكرة',
+      'dropoff': 'مترو مشيرب',
       'seats': 1,
       'timeLeft': '24 د',
-      'price': 120,
+      'price': 25,
     },
     {
       'id': 'req_r2',
-      'passenger': 'كريم',
-      'route': 'كفر الشيخ ← القاهرة',
-      'pickup': 'مدخل كفر الشيخ',
-      'dropoff': 'ميدان رمسيس',
+      'passenger': 'تميم الهاجري',
+      'route': 'الخور ← الدوحة',
+      'pickup': 'مدخل الخور الرئيسي',
+      'dropoff': 'برج الدفنة',
       'seats': 2,
       'timeLeft': '11 د',
-      'price': 240,
+      'price': 70,
     },
   ];
 
   final List<Map<String, dynamic>> _parcelRequests = [
     {
       'id': 'req_p1',
-      'sender': 'كريم · موثق',
+      'sender': 'حمد الكواري · موثق',
       'desc': 'صغير · 2 كجم · أوراق',
       'val': 300,
-      'fee': 40,
+      'fee': 25,
     },
   ];
 
@@ -510,8 +510,8 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
             _buildDetailRow(isAr ? 'الراكب' : 'Passenger', item['passenger'] as String),
             _buildDetailRow(isAr ? 'الصعود' : 'Pickup', item['pickup'] as String),
             _buildDetailRow(isAr ? 'النزول' : 'Dropoff', item['dropoff'] as String),
-            _buildDetailRow(isAr ? 'الكراسي' : 'Seats', '${item['seats']}'),
-            _buildDetailRow(isAr ? 'السعر' : 'Price', '${item['price']} ${isAr ? "ج نقداً" : "EGP Cash"}'),
+            _buildDetailRow(isAr ? 'المقاعد' : 'Seats', '${item['seats']}'),
+            _buildDetailRow(isAr ? 'السعر' : 'Price', '${item['price']} ${isAr ? "ر.ق نقداً" : "QAR Cash"}'),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -703,7 +703,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                            '${r['seats']} ${isAr ? "كرسي" : "seat"} · ${isAr ? "باقي" : "expires in"} ${r['timeLeft']}',
+                                            '${r['seats']} ${isAr ? "مقعد" : "seat"} · ${isAr ? "متبقي" : "expires in"} ${r['timeLeft']}',
                                             style: AppTypography.bodySecondary(),
                                           ),
                                           const SizedBox(height: 12),
@@ -711,7 +711,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
                                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
-                                                '${r['price']} ${isAr ? "ج" : "EGP"}',
+                                                '${r['price']} ${isAr ? "ر.ق" : "QAR"}',
                                                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal),
                                               ),
                                               Wrap(
@@ -772,7 +772,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
                                       Row(
                                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text('${p['fee']} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal)),
+                                          Text('${p['fee']} ${isAr ? "ر.ق" : "QAR"}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.teal)),
                                           Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
@@ -842,14 +842,14 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(isAr ? '$name ما حضرش؟' : '$name did not show up?', style: AppTypography.title()),
+            Text(isAr ? '$name لم يحضر؟' : '$name did not show up?', style: AppTypography.title()),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(color: AppColors.sand, borderRadius: BorderRadius.circular(8)),
               child: Text(
                 isAr
-                    ? 'متاح بعد 15 دقيقة من موعد الالتقاء. هيتسجل عليه ويتفضى الكرسي.'
+                    ? 'متاح بعد 15 دقيقة من موعد الالتقاء. سيتم تسجيل عدم الحضور وإتاحة المقعد.'
                     : 'Available after 15 mins past meetup. Will record penalty on rider and free up seat.',
                 style: const TextStyle(fontSize: 12),
               ),
@@ -902,7 +902,7 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(isAr ? 'قبل ما تتحرك' : 'Pre-Trip Manifest', style: AppTypography.title()),
+        title: Text(isAr ? 'قائمة الرحلة' : 'Pre-Trip Manifest', style: AppTypography.title()),
       ),
       body: SafeArea(
         child: Padding(
@@ -914,20 +914,20 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
               Text(isAr ? 'الركاب (2)' : 'Passengers (2)', style: AppTypography.title().copyWith(fontSize: 16)),
               const SizedBox(height: 8),
               _buildManifestItem(
-                title: 'ياسمين',
-                subtitle: isAr ? 'محطة طنطا' : 'Tanta Station',
+                title: 'نورة العطية',
+                subtitle: isAr ? 'محطة مترو الوكرة' : 'Al Wakrah Metro Station',
                 icon: Icons.person_rounded,
-                onCall: () => _callPassenger(context, 'ياسمين', isAr),
-                onNoShow: () => _reportNoShow(context, 'ياسمين'),
+                onCall: () => _callPassenger(context, 'نورة العطية', isAr),
+                onNoShow: () => _reportNoShow(context, 'نورة العطية'),
                 isAr: isAr,
               ),
               const SizedBox(height: 8),
               _buildManifestItem(
-                title: 'كريم',
-                subtitle: isAr ? 'مدخل كفر الشيخ' : 'Kafr El-Sheikh Entrance',
+                title: 'تميم الهاجري',
+                subtitle: isAr ? 'مدخل الخور الرئيسي' : 'Al Khor Main Entrance',
                 icon: Icons.person_rounded,
-                onCall: () => _callPassenger(context, 'كريم', isAr),
-                onNoShow: () => _reportNoShow(context, 'كريم'),
+                onCall: () => _callPassenger(context, 'تميم الهاجري', isAr),
+                onNoShow: () => _reportNoShow(context, 'تميم الهاجري'),
                 isAr: isAr,
               ),
 
@@ -952,7 +952,7 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(isAr ? 'أوراق · صغير' : 'Documents · Small', style: const TextStyle(fontWeight: FontWeight.bold)),
-                          Text(isAr ? 'تسليم إلى سارة أحمد' : 'Deliver to Sara Ahmed', style: AppTypography.bodySecondary()),
+                          Text(isAr ? 'تسليم إلى نورة الكواري' : 'Deliver to Noura Al-Kuwari', style: AppTypography.bodySecondary()),
                         ],
                       ),
                     ),

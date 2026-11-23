@@ -4,8 +4,8 @@ import '../contracts/i_auth_repository.dart';
 class AuthRepositoryImpl implements IAuthRepository {
   UserModel _currentUser = const UserModel(
     id: 'usr_me_01',
-    fullName: 'أحمد محمود',
-    phone: '01012345678',
+    fullName: 'عبدالرحمن المهنا',
+    phone: '55123456',
     gender: UserGender.male,
     isVerified: true,
     walletBalance: 450.0,

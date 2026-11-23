@@ -131,15 +131,15 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                       children: [
                         CircleAvatar(
                           backgroundColor: AppColors.gold,
-                          child: const Text('م', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold)),
+                          child: const Text('ج', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold)),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(isAr ? 'محمد سعيد' : 'Mohamed Saeed', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-                              Text(isAr ? 'هيونداي إلنترا · أ ب ج 1234' : 'Hyundai Elantra · ABC 1234', style: AppTypography.bodySecondary()),
+                              Text(isAr ? 'جاسم الكواري' : 'Jassim Al-Kuwari', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                              Text(isAr ? 'تويوتا كامري · قطر 482910' : 'Toyota Camry · QAT 482910', style: AppTypography.bodySecondary()),
                             ],
                           ),
                         ),
@@ -148,7 +148,7 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text(isAr ? 'جاري الاتصال بالسائق محمد سعيد (01012345678)...' : 'Calling Driver Mohamed Saeed...'),
+                                content: Text(isAr ? 'جاري الاتصال بالسائق جاسم الكواري (5523 4567)...' : 'Calling Driver Jassim Al-Kuwari (+974 5523 4567)...'),
                                 backgroundColor: AppColors.teal,
                               ),
                             );
@@ -354,7 +354,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
             Text(isAr ? 'بلّغنا نادية وأحمد' : 'Notified Nadia & Ahmed', textAlign: TextAlign.center, style: AppTypography.title()),
             const SizedBox(height: 6),
             Text(
-              isAr ? 'وصلهم موقعك وبيانات الرحلة. لو لسه في خطر اتصل بالطوارئ.' : 'They received your location and trip details. If in danger, call 122.',
+              isAr ? 'وصلهم موقعك وبيانات الرحلة. إذا كنت في خطر اتصل بالطوارئ فوراً.' : 'They received your location and trip details. If in danger, call 999.',
               textAlign: TextAlign.center,
               style: AppTypography.bodySecondary(),
             ),
@@ -365,12 +365,12 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(isAr ? 'جاري الاتصال بشرطة النجدة 122...' : 'Calling Police Emergency 122...'),
+                    content: Text(isAr ? 'جاري الاتصال بطوارئ الداخلية القطرية 999...' : 'Calling Qatar MOI Emergency 999...'),
                     backgroundColor: AppColors.danger,
                   ),
                 );
               },
-              child: Text(isAr ? 'اتصل بـ الشرطة · 122' : 'Call Police · 122'),
+              child: Text(isAr ? 'اتصل بالطوارئ والشرطة · 999' : 'Call Police / MOI · 999'),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
@@ -379,12 +379,12 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(isAr ? 'جاري الاتصال بالإسعاف 123...' : 'Calling Ambulance 123...'),
+                    content: Text(isAr ? 'جاري الاتصال بالإسعاف (999)...' : 'Calling Emergency Ambulance (999)...'),
                     backgroundColor: AppColors.danger,
                   ),
                 );
               },
-              child: Text(isAr ? 'اتصل بـ الإسعاف · 123' : 'Call Ambulance · 123'),
+              child: Text(isAr ? 'اتصل بالإسعاف والطوارئ · 999' : 'Call Ambulance · 999'),
             ),
             const SizedBox(height: 12),
             MashwarButton(
@@ -403,9 +403,9 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(isAr ? 'محتاج مساعدة؟' : 'Need emergency help?', style: AppTypography.largeTitle()),
+          Text(isAr ? 'هل تحتاج مساعدة طارئة؟' : 'Need emergency help?', style: AppTypography.largeTitle()),
           const SizedBox(height: 4),
-          Text(isAr ? 'لو في خطر اتصل بالطوارئ الأول.' : 'If in immediate danger, call emergency services first.', style: AppTypography.bodySecondary()),
+          Text(isAr ? 'إذا كنت في خطر اتصل بالطوارئ القطرية فوراً.' : 'If in immediate danger, call Qatar emergency 999 first.', style: AppTypography.bodySecondary()),
           const SizedBox(height: 20),
 
           ElevatedButton(
@@ -418,12 +418,12 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(isAr ? 'جاري الاتصال بشرطة النجدة 122...' : 'Calling Police Emergency 122...'),
+                  content: Text(isAr ? 'جاري الاتصال بطوارئ الداخلية القطرية 999...' : 'Calling Qatar MOI Emergency 999...'),
                   backgroundColor: AppColors.danger,
                 ),
               );
             },
-            child: Text(isAr ? 'اتصل بـ الشرطة · 122' : 'Call Police · 122', style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(isAr ? 'اتصل بالطوارئ والشرطة · 999' : 'Call Police / MOI · 999', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 10),
           ElevatedButton(
@@ -436,12 +436,12 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(isAr ? 'جاري الاتصال بالإسعاف 123...' : 'Calling Ambulance 123...'),
+                  content: Text(isAr ? 'جاري الاتصال بالإسعاف (999)...' : 'Calling Emergency Ambulance (999)...'),
                   backgroundColor: AppColors.danger,
                 ),
               );
             },
-            child: Text(isAr ? 'اتصل بـ الإسعاف · 123' : 'Call Ambulance · 123', style: const TextStyle(fontWeight: FontWeight.bold)),
+            child: Text(isAr ? 'اتصل بالإسعاف والطوارئ · 999' : 'Call Ambulance · 999', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 10),
 
@@ -466,7 +466,7 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
   }
 }
 
-// Page 54: العربية ابتعدت عن المسار (Off-Route Detection Alert)
+// Page 54: المركبة ابتعدت عن المسار (Off-Route Detection Alert)
 class OffRouteAlertSheet extends StatelessWidget {
   const OffRouteAlertSheet({super.key});
 
@@ -483,14 +483,14 @@ class OffRouteAlertSheet extends StatelessWidget {
           const Icon(Icons.warning_amber_rounded, color: AppColors.coral, size: 52),
           const SizedBox(height: 12),
           Text(
-            isAr ? 'العربية ابتعدت عن المسار' : 'Vehicle has deviated from route',
+            isAr ? 'السيارة ابتعدت عن المسار' : 'Vehicle has deviated from route',
             textAlign: TextAlign.center,
             style: AppTypography.title(),
           ),
           const SizedBox(height: 6),
           Text(
             isAr
-                ? 'ملاحظين إن السائق خرج عن الطريق المتوقع. أنت بخير؟'
+                ? 'نلاحظ خروج السائق عن المسار المتوقع. هل أنت بخير؟'
                 : 'We detected the vehicle left the planned corridor. Are you okay?',
             textAlign: TextAlign.center,
             style: AppTypography.bodySecondary(),
@@ -502,7 +502,7 @@ class OffRouteAlertSheet extends StatelessWidget {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(isAr ? 'تمام. هنكمل نتابع الرحلة معاك' : 'Glad you are okay. We will continue tracking.'),
+                  content: Text(isAr ? 'حسناً، سنواصل متابعة رحلتك معك' : 'Glad you are okay. We will continue tracking.'),
                   backgroundColor: AppColors.teal,
                 ),
               );
@@ -510,7 +510,7 @@ class OffRouteAlertSheet extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           MashwarButton(
-            text: isAr ? 'محتاج مساعدة' : 'Need Help',
+            text: isAr ? 'بحاجة إلى مساعدة' : 'Need Help',
             variant: MashwarButtonVariant.danger,
             onPressed: () {
               Navigator.of(context).pop();
@@ -613,7 +613,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(isAr ? 'إيه المشكلة؟' : 'What went wrong?', style: AppTypography.title().copyWith(fontSize: 16)),
+              Text(isAr ? 'ما المشكلة؟' : 'What went wrong?', style: AppTypography.title().copyWith(fontSize: 16)),
               const SizedBox(height: 12),
               Expanded(
                 child: ListView(
@@ -635,7 +635,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                       const Divider(height: 1),
                     ],
                     const SizedBox(height: 16),
-                    Text(isAr ? 'اشرح اللي حصل:' : 'Describe what happened:', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                    Text(isAr ? 'اشرح ما حدث:' : 'Describe what happened:', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: _detailsController,
@@ -672,8 +672,8 @@ class EmergencyContactsScreen extends StatefulWidget {
 
 class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   final List<Map<String, String>> _contacts = [
-    {'name': 'نادية (أختي)', 'phone': '0101 111 2222'},
-    {'name': 'أحمد (أبويا)', 'phone': '0122 333 4444'},
+    {'name': 'نورة (أختي)', 'phone': '5511 2233'},
+    {'name': 'راشد (والدي)', 'phone': '6622 3344'},
   ];
 
   void _addContactDialog(BuildContext context) {
@@ -704,7 +704,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFF3F3F4),
-                hintText: isAr ? 'مثال: أحمد (أخي)' : 'e.g. Ahmed (Brother)',
+                hintText: isAr ? 'مثال: حمد (أخي)' : 'e.g. Hamad (Brother)',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
@@ -727,7 +727,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFF3F3F4),
-                hintText: '010xxxxxxxx',
+                hintText: '55XXXXXX',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),

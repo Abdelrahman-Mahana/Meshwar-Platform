@@ -124,7 +124,7 @@ void main() {
       expect(admin.auditLogs.first.action, 'إسناد بلاغ لموظف');
 
       // Resolve dispute
-      admin.resolveDispute(dispute.id, 'حل وتعويض', 'تم تعويض المتضرر 300 جنيه');
+      admin.resolveDispute(dispute.id, 'حل وتعويض', 'تم تعويض المتضرر 300 ر.ق');
       expect(dispute.status, 'محلول');
       expect(dispute.resolutionDecision, 'حل وتعويض');
       expect(admin.auditLogs.first.action, 'حل نزاع وبلاغ');
@@ -134,10 +134,10 @@ void main() {
       final initialCount = admin.staff.length;
 
       // Add new staff
-      admin.addStaff('سارة محمد', 'sara@mashwar.example', AdminRole.supportAdmin);
+      admin.addStaff('نورة الكواري', 'noura@mashwar.qa', AdminRole.supportAdmin);
       expect(admin.staff.length, initialCount + 1);
       final newMember = admin.staff.last;
-      expect(newMember.name, 'سارة محمد');
+      expect(newMember.name, 'نورة الكواري');
       expect(newMember.role, AdminRole.supportAdmin);
       expect(admin.auditLogs.first.action, 'إضافة موظف جديد');
 

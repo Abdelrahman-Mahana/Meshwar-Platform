@@ -69,7 +69,7 @@ class MashwarApiClient {
     ApiRequestLog(
       method: 'GET',
       path: ApiEndpoints.searchRides,
-      body: {'fromCity': 'كفر الشيخ', 'toCity': 'القاهرة'},
+      body: {'fromCity': 'الدوحة', 'toCity': 'الخور'},
       timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
       statusCode: 200,
     ),

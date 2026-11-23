@@ -18,14 +18,16 @@ class SearchFiltersSheet extends StatelessWidget {
     final count = rides.filteredRides.length;
     final isAr = context.isArabic;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimens.radiusBottomSheet)),
+    return Material(
+      color: Colors.white,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppDimens.radiusBottomSheet),
       ),
-      padding: const EdgeInsets.all(AppDimens.space24),
-      child: SingleChildScrollView(
-        child: Column(
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(AppDimens.space24),
+        child: SingleChildScrollView(
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -117,6 +119,7 @@ class SearchFiltersSheet extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 

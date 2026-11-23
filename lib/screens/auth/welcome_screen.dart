@@ -6,6 +6,8 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
+import '../../core/widgets/mashwar_onboarding_shell.dart';
+import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 import 'email_input_screen.dart';
@@ -83,16 +85,16 @@ class WelcomeScreen extends StatelessWidget {
                       _buildGoogleAccountTile(
                         sheetContext: sheetContext,
                         context: context,
-                        displayName: isAr ? 'أحمد مصطفى' : 'Ahmed Mostafa',
-                        email: 'ahmed.mostafa@gmail.com',
-                        initial: isAr ? 'أ' : 'A',
+                        displayName: isAr ? 'حمد الكواري' : 'Hamad Al-Kuwari',
+                        email: 'hamad.alkuwari@gmail.com',
+                        initial: isAr ? 'ح' : 'H',
                         color: const Color(0xFF4285F4),
                       ),
                       _buildGoogleAccountTile(
                         sheetContext: sheetContext,
                         context: context,
-                        displayName: isAr ? 'عبدالرحمن أحمد' : 'Abdelrahman Ahmed',
-                        email: 'abdelrahman@mashwar.eg',
+                        displayName: isAr ? 'عبدالرحمن المهنا' : 'Abdelrahman Al-Mahana',
+                        email: 'abdelrahman@mashwar.qa',
                         initial: isAr ? 'ع' : 'A',
                         color: const Color(0xFF0F9D58),
                       ),
@@ -114,7 +116,7 @@ class WelcomeScreen extends StatelessWidget {
                         onTap: () {
                           Navigator.of(sheetContext).pop();
                           Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const EmailInputScreen()),
+                            MashwarPageRoute(builder: (_) => const EmailInputScreen()),
                           );
                         },
                       ),
@@ -182,7 +184,7 @@ class WelcomeScreen extends StatelessWidget {
         }
         if (context.mounted) {
           Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
+            MashwarPageRoute(builder: (_) => const ProfileSetupScreen()),
           );
         }
       },
@@ -195,17 +197,22 @@ class WelcomeScreen extends StatelessWidget {
     final isAr = settings.isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: _buildSingleLayout(context, settings, isAr, constraints),
-              ),
-            );
-          },
+        child: MashwarOnboardingShell(
+          isAr: isAr,
+          showcaseBadge: isAr ? 'قطر · شبكة حية الآن' : 'Qatar Live Mobility',
+          showcaseTitle: isAr
+              ? 'مشوار يجمع رحلتك وطردك وخدماتك في مسار واحد'
+              : 'MASHWAR connects rides, parcels & errands along one route',
+          showcaseSubtitle: isAr
+              ? 'تنقّل بثقة بين الدوحة ولوسيل والخور والوكرة ودخان ومسيعيد مع كباتن ومنفذين موثقين بالـ QID.'
+              : 'Commute and ship seamlessly between Doha, Lusail, Al Khor, Al Wakrah, Dukhan & Mesaieed with QID-verified captains.',
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return _buildSingleLayout(context, settings, isAr, constraints);
+            },
+          ),
         ),
       ),
     );
@@ -218,6 +225,7 @@ class WelcomeScreen extends StatelessWidget {
     BoxConstraints constraints,
   ) {
     final isCompact = constraints.maxHeight <= 640;
+    final showMobileMapCard = MediaQuery.sizeOf(context).width < 840;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
@@ -232,65 +240,82 @@ class WelcomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top Row: Language Switch
+            // Top Row: Language Switch (exact single ActionChip tested)
             Align(
               alignment: AlignmentDirectional.centerEnd,
               child: _buildLanguageButton(settings, isAr),
             ),
 
-            // Center Hero Brand Identity + Framed 3D Illustration
+            // Center Hero Brand Identity + Live Animated Qatar Map Card (Mobile)
             MashwarFadeSlideIn(
               duration: const Duration(milliseconds: 340),
               offsetY: 12,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  BrandLogo(fontSize: isCompact ? 34 : 44),
-                  const SizedBox(height: 8),
+                  BrandLogo(fontSize: isCompact ? 32 : 42),
+                  const SizedBox(height: 6),
                   Text(
                     isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
                     textAlign: TextAlign.center,
                     style: AppTypography.title(color: AppColors.navy).copyWith(
                       fontWeight: FontWeight.w800,
-                      fontSize: isCompact ? 15 : 17.5,
+                      fontSize: isCompact ? 14.5 : 17,
                     ),
                   ),
-                  SizedBox(height: isCompact ? 12 : 18),
-                  Container(
-                    height: isCompact ? 116 : 156,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.navy,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.navy.withValues(alpha: 0.14),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
+                  SizedBox(height: isCompact ? 10 : 16),
+                  if (showMobileMapCard) ...[
+                    Container(
+                      height: isCompact ? 114 : 168,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.navy,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppColors.teal.withValues(alpha: 0.35),
+                          width: 1.2,
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.navy.withValues(alpha: 0.16),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          MashwarAssetArt(
-                            assetPath: 'assets/images/hero_banner.jpg',
-                            fit: BoxFit.cover,
-                            flipX: isAr,
-                            fallbackIcon: Icons.directions_car_filled_rounded,
-                            fallbackBg: AppColors.navy,
-                            fallbackColor: AppColors.gold,
+                          const QatarLiveMapCanvas(
+                            style: QatarMapStyle.darkExecutive,
+                            activeFromCity: 'الدوحة',
+                            activeToCity: 'لوسيل',
+                            borderRadius: 19,
                           ),
-                          DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                                colors: [
-                                  AppColors.navy.withValues(alpha: 0.45),
-                                  Colors.transparent,
+                          PositionedDirectional(
+                            top: 10,
+                            start: 10,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.navy.withValues(alpha: 0.88),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const MashwarLivePulseDot(color: AppColors.gold, size: 7),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isAr ? 'مسارات نشطة في قطر' : 'Live Qatar Corridors',
+                                    style: AppTypography.label(color: Colors.white).copyWith(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -298,10 +323,54 @@ class WelcomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: AppColors.sand,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.navy,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.verified_user_rounded, color: AppColors.gold, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isAr ? 'دخول سريع وآمن خلال ثوانٍ' : 'Fast, verified sign-in in seconds',
+                                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 13.5,
+                                  ),
+                                ),
+                                Text(
+                                  isAr
+                                      ? 'اختر رقم الجوال أو Google أو البريد للمتابعة'
+                                      : 'Choose mobile, Google, or email to begin',
+                                  style: AppTypography.bodySmall(color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
+
+            SizedBox(height: isCompact ? 10 : 16),
 
             // Bottom Authentication Choices
             _buildAuthActions(context, isAr),
@@ -337,7 +406,7 @@ class WelcomeScreen extends StatelessWidget {
             label: FittedBox(
               fit: BoxFit.scaleDown,
               child: Text(
-                isAr ? 'المتابعة برقم الموبايل' : 'Continue with Mobile Number',
+                isAr ? 'المتابعة برقم الجوال' : 'Continue with Mobile Number',
                 style: AppTypography.button(color: Colors.white).copyWith(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
@@ -354,7 +423,7 @@ class WelcomeScreen extends StatelessWidget {
             ),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
+                MashwarPageRoute(builder: (_) => const PhoneInputScreen()),
               );
             },
           ),
@@ -435,7 +504,7 @@ class WelcomeScreen extends StatelessWidget {
             ),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const EmailInputScreen()),
+                MashwarPageRoute(builder: (_) => const EmailInputScreen()),
               );
             },
             child: Row(

@@ -56,11 +56,11 @@ class _DateTimePickerSheetState extends State<DateTimePickerSheet> {
     final day2 = now.add(const Duration(days: 2));
     final day3 = now.add(const Duration(days: 3));
     _daysAr = [
-      'النهارده',
-      'بكرة',
+      'اليوم',
+      'غداً',
       '${_weekdaysAr[day2.weekday - 1]} ${day2.day}',
       '${_weekdaysAr[day3.weekday - 1]} ${day3.day}',
-      'تاريخ تاني',
+      'تاريخ آخر',
     ];
     _daysEn = [
       'Today',

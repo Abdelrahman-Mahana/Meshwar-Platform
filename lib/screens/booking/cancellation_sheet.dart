@@ -23,14 +23,14 @@ class CancellationSheet extends StatefulWidget {
 }
 
 class _CancellationSheetState extends State<CancellationSheet> {
-  String _selectedReason = 'غيّرت خطتي';
+  String _selectedReason = 'تغيّرت خطتي';
   bool _isCancelled = false;
 
   final List<String> _reasonsAr = [
-    'غيّرت خطتي',
-    'لقيت رحلة تانية',
-    'السائق اتأخر',
-    'سبب تاني',
+    'تغيّرت خطتي',
+    'وجدت رحلة أخرى',
+    'تأخر السائق',
+    'سبب آخر',
   ];
 
   final List<String> _reasonsEn = [
@@ -74,7 +74,7 @@ class _CancellationSheetState extends State<CancellationSheet> {
             Text(isAr ? 'تم إلغاء حجزك' : 'Booking Cancelled', style: AppTypography.title()),
             const SizedBox(height: 8),
             Text(
-              isAr ? 'بلّغنا السائق بإلغاء مقعدك' : 'We notified the driver of your cancellation',
+              isAr ? 'تم إشعار السائق بإلغاء مقعدك' : 'We notified the driver of your cancellation',
               textAlign: TextAlign.center,
               style: AppTypography.bodySecondary(),
             ),
@@ -110,20 +110,20 @@ class _CancellationSheetState extends State<CancellationSheet> {
           if (widget.isLateCancellation) ...[
             AlertBanner(
               message: isAr
-                  ? 'باقي أقل من ساعة على الرحلة. الإلغاء المتأخر ممكن يأثر على تقييمك'
+                  ? 'بقي أقل من ساعة على الرحلة. الإلغاء المتأخر قد يؤثر على تقييمك'
                   : 'Less than 1 hour until departure. Late cancellation may affect your rating',
               type: AlertBannerType.warning,
             ),
             const SizedBox(height: AppDimens.space16),
           ] else ...[
             Text(
-              isAr ? 'الإلغاء مجاني طالما قبل الرحلة بوقت كافي' : 'Free cancellation when done ahead of time',
+              isAr ? 'الإلغاء مجاني طالما تم قبل الرحلة بوقت كافٍ' : 'Free cancellation when done ahead of time',
               style: AppTypography.bodySecondary(),
             ),
             const SizedBox(height: AppDimens.space16),
           ],
 
-          Text(isAr ? 'ليه عايز تلغي؟' : 'Why do you want to cancel?', style: AppTypography.label()),
+          Text(isAr ? 'ما سبب الإلغاء؟' : 'Why do you want to cancel?', style: AppTypography.label()),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,

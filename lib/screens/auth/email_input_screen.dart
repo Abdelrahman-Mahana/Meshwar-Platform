@@ -8,6 +8,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_onboarding_shell.dart';
 import '../../state/auth_provider.dart';
 import 'otp_verification_screen.dart';
 import 'phone_input_screen.dart';
@@ -24,7 +25,7 @@ class EmailInputScreen extends StatefulWidget {
 }
 
 class _EmailInputScreenState extends State<EmailInputScreen> {
-  final TextEditingController _emailController = TextEditingController(text: 'student@mashwar.eg');
+  final TextEditingController _emailController = TextEditingController(text: 'user@mashwar.qa');
   final FocusNode _focusNode = FocusNode();
   String? _errorText;
   bool _isFocused = false;
@@ -60,7 +61,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     final success = await auth.sendEmailOtp(email);
     if (success && mounted) {
       Navigator.of(context).push(
-        MaterialPageRoute(
+        MashwarPageRoute(
           builder: (_) => OtpVerificationScreen(email: email),
         ),
       );
@@ -85,15 +86,18 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
         ),
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: _buildSingleLayout(context, auth, isAr, hasError, constraints),
-              ),
-            );
-          },
+        child: MashwarOnboardingShell(
+          isAr: isAr,
+          showcaseBadge: isAr ? 'تحقق آمن' : 'Secure Auth',
+          showcaseTitle: isAr ? 'دخول موثوق بالبريد الإلكتروني' : 'Reliable email sign-in',
+          showcaseSubtitle: isAr
+              ? 'مثالي للشركات والأفراد مع إرسال إيصالات الرحلات والطرود مباشرة.'
+              : 'Ideal for individuals & businesses with direct trip receipts.',
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return _buildSingleLayout(context, auth, isAr, hasError, constraints);
+            },
+          ),
         ),
       ),
     );
@@ -123,11 +127,18 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top: Brand Identity Header with Step Indicator
+                  // Top: Onboarding Progress + Brand Identity Header with Step Indicator
+                  MashwarOnboardingStepBar(
+                    currentStep: 1,
+                    totalSteps: 4,
+                    isAr: isAr,
+                    stepTitle: isAr ? 'تأكيد البريد' : 'Email Verification',
+                  ),
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const BrandLogo(fontSize: 28),
+                      const BrandLogo(fontSize: 26),
                       _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
                     ],
                   ),
@@ -141,7 +152,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                   const SizedBox(height: 6),
                   Text(
                     isAr
-                        ? 'هنبعتلك كود تأكيد لتسجيل الدخول أو إنشاء حساب'
+                        ? 'سنرسل لك رمز تحقق لتسجيل الدخول أو إنشاء حساب'
                         : 'We will send you a verification code to log in or create an account',
                     style: AppTypography.bodySecondary(),
                   ),
@@ -172,7 +183,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
               children: [
                 // Bottom Actions: Submit Button
                 MashwarButton(
-                  text: isAr ? 'إرسال الكود' : 'Send Code',
+                  text: isAr ? 'إرسال الرمز' : 'Send Code',
                   isLoading: auth.isLoading,
                   onPressed: () => _handleSubmit(isAr),
                 ),
@@ -188,7 +199,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                       );
                     },
                     label: Text(
-                      isAr ? 'المتابعة برقم الموبايل بدلاً من ذلك' : 'Continue with phone instead',
+                      isAr ? 'المتابعة برقم الجوال بدلاً من ذلك' : 'Continue with phone instead',
                       style: AppTypography.body(color: AppColors.navy).copyWith(
                         fontWeight: FontWeight.w700,
                         decoration: TextDecoration.underline,

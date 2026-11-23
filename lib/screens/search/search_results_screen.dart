@@ -8,6 +8,7 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
+import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/ride_model.dart';
 import '../../state/rides_provider.dart';
@@ -56,7 +57,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               style: AppTypography.title().copyWith(fontSize: 18),
             ),
             Text(
-              '${context.trDate(rides.date)} · ${rides.rideMode == RideMode.seats ? (isAr ? "${rides.seatsCount} ${rides.seatsCount == 1 ? "كرسي" : "كراسي"}" : "${rides.seatsCount} ${rides.seatsCount == 1 ? "Seat" : "Seats"}") : (isAr ? "طرد واحد" : "1 Parcel")}',
+              '${context.trDate(rides.date)} · ${rides.rideMode == RideMode.seats ? (isAr ? "${rides.seatsCount} ${rides.seatsCount == 1 ? "مقعد" : "مقاعد"}" : "${rides.seatsCount} ${rides.seatsCount == 1 ? "Seat" : "Seats"}") : (isAr ? "طرد واحد" : "1 Parcel")}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.label(color: AppColors.textSecondary),
@@ -143,48 +144,79 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       ),
                     ),
 
-                    // Google Maps Route calculation pill
+                    // Live Qatar Route Corridor Mini-Map Preview + Metrics
                     if (rides.fromCity.isNotEmpty && rides.toCity.isNotEmpty)
-                      FutureBuilder<RouteDetails>(
-                        future: AppRepositories.instance.maps.getRouteDetails(rides.fromCity, rides.toCity),
-                        builder: (context, snapshot) {
-                          if (!snapshot.hasData) return const SizedBox.shrink();
-                          final details = snapshot.data!;
-                          final hours = details.durationMinutes ~/ 60;
-                          final mins = details.durationMinutes % 60;
-                          final timeStr = hours > 0
-                              ? (isAr ? '$hours س و $mins د' : '${hours}h ${mins}m')
-                              : (isAr ? '$mins دقيقة' : '${mins}m');
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: AppDimens.space20, vertical: 2),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: AppColors.teal.withValues(alpha: 0.07),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.teal.withValues(alpha: 0.2)),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(AppDimens.space20, 0, AppDimens.space20, 8),
+                        child: Container(
+                          height: 112,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.navy.withValues(alpha: 0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
                               ),
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.alt_route_rounded, color: AppColors.teal, size: 16),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      isAr
-                                          ? 'المسافة المقدرة: ${details.distanceKm.round()} كم · زمن القيادة: $timeStr تقريباً'
-                                          : 'Est. Distance: ${details.distanceKm.round()} km · Drive Time: ~$timeStr',
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.navy,
-                                        fontWeight: FontWeight.w600,
+                            ],
+                          ),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              QatarLiveMapCanvas(
+                                style: QatarMapStyle.routeFocused,
+                                activeFromCity: rides.fromCity,
+                                activeToCity: rides.toCity,
+                                showWaterLabels: false,
+                                borderRadius: 15,
+                              ),
+                              PositionedDirectional(
+                                top: 8,
+                                start: 8,
+                                child: FutureBuilder<RouteDetails>(
+                                  future: AppRepositories.instance.maps.getRouteDetails(rides.fromCity, rides.toCity),
+                                  builder: (context, snapshot) {
+                                    final details = snapshot.data;
+                                    final distLabel = details != null
+                                        ? '${details.distanceKm.round()} ${isAr ? "كم" : "km"}'
+                                        : (isAr ? 'مسار مباشر' : 'Direct route');
+                                    final mins = details?.durationMinutes ?? 40;
+                                    final hours = mins ~/ 60;
+                                    final rem = mins % 60;
+                                    final timeStr = hours > 0
+                                        ? (isAr ? '$hours س و $rem د' : '${hours}h ${rem}m')
+                                        : (isAr ? '$rem د' : '${rem}m');
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(alpha: 0.94),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
                                       ),
-                                    ),
-                                  ),
-                                ],
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.alt_route_rounded, color: AppColors.teal, size: 14),
+                                          const SizedBox(width: 5),
+                                          Text(
+                                            '$distLabel · ~$timeStr',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: AppColors.navy,
+                                              fontWeight: FontWeight.w800,
+                                              fontFamily: 'Cairo',
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                          );
-                        },
+                            ],
+                          ),
+                        ),
                       ),
 
                     // Offline Banner State (Page 18)
@@ -340,7 +372,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         ),
                         const SizedBox(width: 2),
                         Text(
-                          isAr ? 'ج' : 'EGP',
+                          isAr ? 'ر.ق' : 'QAR',
                           style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w800),
                         ),
                       ],
@@ -524,7 +556,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               ),
               const SizedBox(height: AppDimens.space16),
               Text(
-                isAr ? 'مفيش رحلات مطابقة دلوقتي' : 'No matching rides right now',
+                isAr ? 'لا توجد رحلات مطابقة حالياً' : 'No matching rides right now',
                 style: AppTypography.title(),
               ),
               const SizedBox(height: 8),
@@ -538,7 +570,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               const SizedBox(height: AppDimens.space24),
 
               MashwarButton(
-                text: isAr ? 'نبّهني لما تنزل رحلة' : 'Alert me when rides are added',
+                text: isAr ? 'نبّهني عند توفر رحلة' : 'Alert me when rides are added',
                 onPressed: () {
                   alerts.addAlert(
                     fromCity: rides.fromCity,
@@ -572,7 +604,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             children: [
               const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.danger),
               const SizedBox(height: 16),
-              Text(isAr ? 'حصل خطأ في تحميل النتائج' : 'Error loading search results', style: AppTypography.title()),
+              Text(isAr ? 'حدث خطأ أثناء تحميل النتائج' : 'Error loading search results', style: AppTypography.title()),
               const SizedBox(height: 8),
               Text(isAr ? 'يرجى التحقق من اتصال الإنترنت' : 'Please check your internet connection', style: AppTypography.bodySecondary()),
               const SizedBox(height: 16),

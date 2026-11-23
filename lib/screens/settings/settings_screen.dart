@@ -133,7 +133,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        'العربية (مصر)',
+                        'العربية (قطر)',
                         style: AppTypography.body().copyWith(
                           fontWeight: (!settings.isFollowingSystem && isAr) ? FontWeight.w800 : FontWeight.w600,
                           color: (!settings.isFollowingSystem && isAr) ? AppColors.navy : AppColors.textPrimary,
@@ -150,7 +150,7 @@ class SettingsScreen extends StatelessWidget {
                         ),
                       ),
                       onTap: () {
-                        settings.setLocale(const Locale('ar', 'EG'));
+                        settings.setLocale(const Locale('ar', 'QA'));
                         Navigator.of(ctx).pop();
                       },
                     ),
@@ -318,9 +318,9 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsTile(
                     icon: Icons.badge_outlined,
                     iconColor: AppColors.navy,
-                    title: isAr ? 'توثيق بطاقة الرقم القومي' : 'Egyptian National ID Verification',
+                    title: isAr ? 'توثيق البطاقة الشخصية القطرية (QID)' : 'Qatar ID (QID) Verification',
                     subtitle: user.nationalId != null
-                        ? (isAr ? 'الرقم القومي: ${user.nationalId}' : 'ID: ${user.nationalId}')
+                        ? (isAr ? 'البطاقة القطرية: ${user.nationalId}' : 'QID: ${user.nationalId}')
                         : (isAr ? 'إلزامي للأمان ومطابقة بيانات الهوية' : 'Mandatory for safety compliance'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -380,7 +380,7 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.account_balance_wallet_outlined,
                     iconColor: AppColors.teal,
                     title: isAr ? 'محفظة مشوار وطرق الدفع' : 'Wallet & Payment Methods',
-                    subtitle: isAr ? 'إنستاباي، فودافون كاش، الدفع نقداً' : 'InstaPay, Vodafone Cash, Cash',
+                    subtitle: isAr ? 'فوراً، كيوباي، سكيب كاش، الدفع نقداً' : 'Fawran, QPay, SkipCash, Cash',
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -392,7 +392,7 @@ class SettingsScreen extends StatelessWidget {
                             border: Border.all(color: const Color(0xFFBBF7D0), width: 0.8),
                           ),
                           child: Text(
-                            '${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ج.م' : 'EGP'}',
+                            '${user.walletBalance.toStringAsFixed(0)} ${isAr ? 'ر.ق' : 'QAR'}',
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -452,7 +452,7 @@ class SettingsScreen extends StatelessWidget {
                     title: isAr ? 'لغة التطبيق' : 'App Language',
                     subtitle: settings.isFollowingSystem
                         ? (isAr ? 'لغة الهاتف الافتراضية' : 'System Default (Phone)')
-                        : (isAr ? 'العربية (جمهورية مصر العربية)' : 'English (United States)'),
+                        : (isAr ? 'العربية (دولة قطر)' : 'English (United States)'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -647,8 +647,8 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsTile(
                     icon: Icons.verified_outlined,
                     iconColor: AppColors.teal,
-                    title: isAr ? 'الترخيص والامتثال لوزارة النقل' : 'MoT Egypt Compliance & License',
-                    subtitle: isAr ? 'سجل تجاري رقم 849201 · ترخيص نقل تشاركي ذكي' : 'Commercial Reg. #849201 · MoT Licensed',
+                    title: isAr ? 'الترخيص والامتثال لوزارة المواصلات (قطر)' : 'MOT Qatar Compliance & License',
+                    subtitle: isAr ? 'سجل تجاري رقم 849201 · ترخيص نقل تشاركي ذكي' : 'Commercial Reg. #849201 · MOT Licensed',
                     trailing: const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 18),
                     onTap: () {
                       Navigator.of(context).push(
@@ -756,7 +756,7 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              isAr ? 'جمهورية مصر العربية · جميع الحقوق محفوظة' : 'Arab Republic of Egypt · All Rights Reserved',
+                              isAr ? 'دولة قطر · جميع الحقوق محفوظة' : 'State of Qatar · All Rights Reserved',
                               style: AppTypography.label(color: const Color(0xFF94A3B8)).copyWith(fontSize: 10),
                             ),
                           ],

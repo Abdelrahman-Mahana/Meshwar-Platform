@@ -1,0 +1,3 @@
+@echo off
+echo Starting MASHWAR Qatar Investor Landing Page on http://localhost:8088 ...
+npx serve -l tcp://127.0.0.1:8088 -l tcp://[::1]:8088 --no-port-switching -n landing_page

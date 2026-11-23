@@ -118,7 +118,7 @@ class _BookingResultScreenState extends State<BookingResultScreen> {
                           const Divider(height: 20, color: AppColors.borderDisabled),
                           _buildRow(isAr ? 'نقطة الصعود' : 'Pickup Point', ride.pickupPoint),
                           const Divider(height: 20, color: AppColors.borderDisabled),
-                          _buildRow(isAr ? 'الإجمالي' : 'Total Price', '$totalPrice ${isAr ? "ج نقداً" : "EGP Cash"}', isBold: true),
+                          _buildRow(isAr ? 'الإجمالي' : 'Total Price', '$totalPrice ${isAr ? "ر.ق نقداً" : "QAR Cash"}', isBold: true),
                         ],
                       ),
                     ),
@@ -209,7 +209,7 @@ class _BookingResultScreenState extends State<BookingResultScreen> {
               const SizedBox(height: 4),
               Text(
                 isAr
-                    ? '${ride.driverName.split(" ").first} مش هيقدر ياخدك المرة دي.'
+                    ? 'نعتذر، لن يتمكن ${ride.driverName.split(" ").first} من قبول الحجز هذه المرة.'
                     : '${ride.driverName.split(" ").first} cannot take you this time.',
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySecondary(),
@@ -228,10 +228,10 @@ class _BookingResultScreenState extends State<BookingResultScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(isAr ? 'لقينا رحلات تانية قريبة من نفس الوقت:' : 'Found other rides close to the same time:', style: AppTypography.label()),
+                    Text(isAr ? 'تتوفر رحلات أخرى في وقت قريب:' : 'Found other rides close to the same time:', style: AppTypography.label()),
                     const SizedBox(height: 8),
                     Text(
-                      isAr ? 'رحلة 8:00 ص · أحمد علي · 60 ج' : '8:00 AM Ride · Ahmed Ali · 60 EGP',
+                      isAr ? 'رحلة 8:00 ص · علي الهاجري · 35 ر.ق' : '8:00 AM Ride · Ali Al-Hajri · 35 QAR',
                       style: AppTypography.body().copyWith(fontWeight: FontWeight.w600),
                     ),
                   ],
@@ -240,7 +240,7 @@ class _BookingResultScreenState extends State<BookingResultScreen> {
               const Spacer(),
 
               MashwarButton(
-                text: isAr ? 'ابحث عن رحلة تانية' : 'Search Other Rides',
+                text: isAr ? 'ابحث عن رحلة أخرى' : 'Search Other Rides',
                 onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
               ),
               const SizedBox(height: 12),

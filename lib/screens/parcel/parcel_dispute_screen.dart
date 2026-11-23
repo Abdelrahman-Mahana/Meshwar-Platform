@@ -27,13 +27,13 @@ class ParcelDisputeScreen extends StatefulWidget {
 class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
   DisputePhase _phase = DisputePhase.open;
   String _selectedReason = 'وصل تالف';
-  final TextEditingController _descController = TextEditingController(text: 'الكيس وصل مفتوح');
+  final TextEditingController _descController = TextEditingController(text: 'الطرد وصل مفتوحاً');
 
   final List<String> _reasonsAr = [
     'وصل تالف',
-    'ما وصلش',
-    'المستلم ما استلمش',
-    'سبب تاني',
+    'لم يصل',
+    'المستلم لم يستلم',
+    'سبب آخر',
   ];
 
   final List<String> _reasonsEn = [
@@ -93,7 +93,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(isAr ? 'إيه المشكلة اللي حصلت؟' : 'What issue occurred?', style: AppTypography.title().copyWith(fontSize: 18)),
+                          Text(isAr ? 'ما المشكلة التي حدثت؟' : 'What issue occurred?', style: AppTypography.title().copyWith(fontSize: 18)),
                           const SizedBox(height: 12),
 
                           Wrap(
@@ -114,7 +114,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                           MashwarTextField(
                             controller: _descController,
                             label: isAr ? 'تفاصيل المشكلة' : 'Issue Details',
-                            hint: isAr ? 'احكي بالتفصيل إيه اللي حصل' : 'Describe in detail what happened',
+                            hint: isAr ? 'اشرح بالتفصيل ما حدث' : 'Describe in detail what happened',
                             maxLines: 4,
                           ),
                         ],
@@ -262,8 +262,8 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                     const SizedBox(height: 24),
                     AlertBanner(
                       message: isAr
-                          ? 'تم تعويضك بـ 300 ج في محفظتك'
-                          : 'You have been compensated with 300 EGP in your wallet',
+                          ? 'تم تعويضك بمبلغ 300 ر.ق في محفظتك'
+                          : 'You have been compensated with 300 QAR in your wallet',
                       type: AlertBannerType.success,
                     ),
                     const SizedBox(height: 24),
@@ -276,7 +276,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                           children: [
                             _buildRow(isAr ? 'القرار' : 'Resolution', isAr ? 'تمت الموافقة على التعويض' : 'Compensation Approved'),
                             const Divider(height: 20, color: AppColors.borderDisabled),
-                            _buildRow(isAr ? 'المبلغ المودع' : 'Deposited Amount', '300 ${isAr ? "ج.م" : "EGP"}', isBold: true),
+                            _buildRow(isAr ? 'المبلغ المودع' : 'Deposited Amount', '300 ${isAr ? "ر.ق" : "QAR"}', isBold: true),
                           ],
                         ),
                       ),

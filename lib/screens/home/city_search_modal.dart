@@ -27,7 +27,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
   final TextEditingController _searchController = TextEditingController();
   List<LocationItem> _filtered = MockData.locations;
   bool _showCustomMeetingPoint = false;
-  final TextEditingController _customPointController = TextEditingController(text: 'موقف الجامعة، كفر الشيخ');
+  final TextEditingController _customPointController = TextEditingController(text: 'مترو مشيرب، بوابة الدخول الرئيسية');
 
   @override
   void initState() {
@@ -50,7 +50,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
               AppStrings.translateCity(loc.name, isArabic: false).toLowerCase().contains(q);
         }).toList();
 
-        // Query Google Maps & Egyptian Catalog for matches
+        // Query Google Maps & Qatar Catalog for matches
         AppRepositories.instance.maps.searchLocations(query).then((results) {
           if (!mounted) return;
           final extraItems = <LocationItem>[];
@@ -97,7 +97,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
             icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
             onPressed: () => setState(() => _showCustomMeetingPoint = false),
           ),
-          title: Text(isAr ? 'مكان مقابلة مخصص' : 'Custom Meeting Point', style: AppTypography.title()),
+          title: Text(isAr ? 'نقطة التقاء مخصصة' : 'Custom Meeting Point', style: AppTypography.title()),
         ),
         body: SafeArea(
           child: Padding(
@@ -113,7 +113,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
                 MashwarTextField(
                   controller: _customPointController,
                   label: isAr ? 'نقطة الالتقاء' : 'Meeting Spot',
-                  hint: isAr ? 'مثال: محطة القطار، بنزينة مدخل المدينة' : 'e.g. Train station, City entrance gas station',
+                  hint: isAr ? 'مثال: محطة المترو، محطة وقود، مجمع تجاري' : 'e.g. Metro station, WOQOD station, Mall gate',
                 ),
                 const Spacer(),
                 MashwarButton(
@@ -152,7 +152,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
               padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
               child: MashwarTextField(
                 controller: _searchController,
-                hint: isAr ? 'ابحث عن محافظة أو مدينة' : 'Search governorate or city',
+                hint: isAr ? 'ابحث عن بلدية أو منطقة' : 'Search municipality or district',
                 prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -167,22 +167,22 @@ class _CitySearchModalState extends State<CitySearchModal> {
               ),
             ),
 
-            // Smart Egyptian Highway & City Landmark Chips
+            // Smart Qatar Metro, Expressway & Logistics Hub Chips
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildLandmarkChip(isAr ? 'بوابات الرسوم (الكارتة)' : 'Toll Gates (Karta)', Icons.toll_rounded),
+                    _buildLandmarkChip(isAr ? 'محطة وقود وقود (WOQOD)' : 'WOQOD Petrol Station', Icons.local_gas_station_outlined),
                     const SizedBox(width: 8),
-                    _buildLandmarkChip(isAr ? 'محطة مصر / القطار' : 'Central Station', Icons.train_outlined),
+                    _buildLandmarkChip(isAr ? 'محطة مترو الدوحة (الريل)' : 'Doha Metro (Qatar Rail)', Icons.directions_subway_outlined),
                     const SizedBox(width: 8),
-                    _buildLandmarkChip(isAr ? 'بنزينة وطنية / المدخل' : 'Wataniya Gas / Entrance', Icons.local_gas_station_outlined),
+                    _buildLandmarkChip(isAr ? 'مطار حمد الدولي' : 'Hamad Int\'l Airport', Icons.flight_takeoff_rounded),
                     const SizedBox(width: 8),
-                    _buildLandmarkChip(isAr ? 'موقف الأقاليم' : 'Intercity Terminal', Icons.directions_bus_outlined),
+                    _buildLandmarkChip(isAr ? 'بوابة المدينة التعليمية' : 'Education City Gate', Icons.school_outlined),
                     const SizedBox(width: 8),
-                    _buildLandmarkChip(isAr ? 'بوابة الجامعة' : 'University Gate', Icons.school_outlined),
+                    _buildLandmarkChip(isAr ? 'شارع 10 · الصناعية' : 'Industrial Area St 10', Icons.precision_manufacturing_outlined),
                   ],
                 ),
               ),
@@ -204,11 +204,11 @@ class _CitySearchModalState extends State<CitySearchModal> {
                 style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
               ),
               subtitle: Text(
-                isAr ? 'كفر الشيخ (بالقرب منك)' : 'Kafr El-Sheikh (Near you)',
+                isAr ? 'الدوحة (بالقرب منك)' : 'Doha (Near you)',
                 style: AppTypography.label(color: AppColors.teal),
               ),
               onTap: () {
-                Navigator.of(context).pop('كفر الشيخ');
+                Navigator.of(context).pop('الدوحة');
               },
             ),
             const Divider(height: 1, color: AppColors.borderDisabled),
@@ -224,11 +224,11 @@ class _CitySearchModalState extends State<CitySearchModal> {
                 child: const Icon(Icons.add_location_alt_outlined, color: AppColors.navy, size: 20),
               ),
               title: Text(
-                isAr ? 'مكان مقابلة مخصص' : 'Custom Meeting Point',
+                isAr ? 'نقطة التقاء مخصصة' : 'Custom Meeting Point',
                 style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
               ),
               subtitle: Text(
-                isAr ? 'حدد شارع أو علامة مميزة أو محطة' : 'Specify landmark, street, or station',
+                isAr ? 'حدد شارعاً أو معلماً مميزاً أو محطة مترو' : 'Specify landmark, street, or metro station',
                 style: AppTypography.label(),
               ),
               trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.navy),
@@ -245,7 +245,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
                 alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
                 child: Text(
                   _searchController.text.isEmpty
-                      ? (isAr ? 'المحافظات والمدن' : 'Governorates & Cities')
+                      ? (isAr ? 'البلديات والمناطق في قطر' : 'Qatar Municipalities & Districts')
                       : (isAr ? 'نتائج البحث' : 'Search Results'),
                   style: AppTypography.label(color: AppColors.textSecondary),
                 ),

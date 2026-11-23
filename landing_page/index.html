@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>مشوار قطر | منصة التنقل التشاركي والخدمات اللوجستية الفورية</title>
+  <meta name="description" content="MASHWAR Qatar — QID-verified carpooling, same-day OTP parcel shipping, dual-intent board, and SME corridor logistics. Startup Qatar Investor Landing Page." />
+  <meta property="og:title" content="MASHWAR Qatar | مشوار قطر" />
+  <meta property="og:description" content="منصة اقتصاد التشارك والخدمات اللوجستية الفورية في قطر — موثقة بالبطاقة القطرية QID ورمز OTP." />
+  <meta property="og:image" content="./assets/posters/poster_ai_intercity_qatar_wide.jpg" />
+  <link rel="icon" type="image/png" href="./assets/logos/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Outfit:wght@500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <div class="scroll-progress" aria-hidden="true">
+    <div id="scroll-progress-bar" class="scroll-progress__bar"></div>
+  </div>
+
+  <!-- 1. Sticky Glassmorphic Header -->
+  <header id="site-header" class="site-header">
+    <div class="container nav-wrap">
+      <a href="#hero" class="brand-link" aria-label="MASHWAR Home">
+        <img src="./assets/logos/mashwar_logo_light_transparent.png" alt="MASHWAR Logo" />
+      </a>
+
+      <nav aria-label="Primary Navigation">
+        <ul class="nav-links">
+          <li><a href="#corridors" data-i18n="nav_corridors">المحاور والخدمات</a></li>
+          <li><a href="#showcase" data-i18n="nav_app">التجربة الحية</a></li>
+          <li><a href="#advantage" data-i18n="nav_advantage">الميزة والتقنية</a></li>
+          <li><a href="#investors" data-i18n="nav_investors">أرقام المستثمرين</a></li>
+          <li><a href="#download" data-i18n="nav_download">المؤسس والتحميل</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="lang-toggle-btn" class="lang-toggle" type="button" aria-label="Switch Language">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="2" y1="12" x2="22" y2="12" />
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+          </svg>
+          <span data-i18n="lang_btn">EN</span>
+        </button>
+
+        <a href="#investors" class="btn btn--gold btn--sm header-cta-desktop" data-i18n="nav_cta">غرفة المستثمرين</a>
+
+        <button id="mobile-menu-open" class="mobile-menu-btn" type="button" aria-label="Open Navigation Menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Drawer -->
+  <div id="mobile-drawer" class="mobile-drawer" aria-hidden="true">
+    <div class="mobile-drawer__head">
+      <img src="./assets/logos/mashwar_logo_light_transparent.png" alt="MASHWAR" style="height:36px" />
+      <button id="mobile-menu-close" class="mobile-drawer__close" type="button" aria-label="Close Menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+    <div class="mobile-drawer__links">
+      <a href="#corridors" data-i18n="nav_corridors">المحاور والخدمات</a>
+      <a href="#showcase" data-i18n="nav_app">التجربة الحية</a>
+      <a href="#advantage" data-i18n="nav_advantage">الميزة والتقنية</a>
+      <a href="#investors" data-i18n="nav_investors">أرقام المستثمرين</a>
+      <a href="#download" data-i18n="nav_download">المؤسس والتحميل</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- 2. Hero Section + Animated Qatar Corridor Graph -->
+    <section id="hero" class="hero">
+      <div class="hero__grid-bg" aria-hidden="true"></div>
+
+      <svg class="hero-corridor-svg" viewBox="0 0 1440 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="corGold" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#F5A524" stop-opacity="0.1" />
+            <stop offset="50%" stop-color="#F5A524" stop-opacity="0.85" />
+            <stop offset="100%" stop-color="#22A89F" stop-opacity="0.7" />
+          </linearGradient>
+          <linearGradient id="corTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#22A89F" stop-opacity="0.75" />
+            <stop offset="100%" stop-color="#8A1538" stop-opacity="0.65" />
+          </linearGradient>
+        </defs>
+        <path d="M120,620 Q420,420 740,460 T1320,210" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" />
+        <path class="corridor-flow" d="M120,620 Q420,420 740,460 T1320,210" fill="none" stroke="url(#corGold)" stroke-width="2.5" />
+        <path d="M220,180 Q580,290 880,190 T1360,520" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.8" />
+        <path class="corridor-flow--slow" d="M220,180 Q580,290 880,190 T1360,520" fill="none" stroke="url(#corTeal)" stroke-width="2.2" />
+        <g fill="#F5A524">
+          <circle cx="445" cy="485" r="5" />
+          <circle class="corridor-node-pulse" cx="445" cy="485" r="14" fill="none" stroke="#F5A524" stroke-width="1.5" />
+          <circle cx="740" cy="460" r="6" />
+          <circle class="corridor-node-pulse" cx="740" cy="460" r="18" fill="none" stroke="#22A89F" stroke-width="1.5" />
+          <circle cx="1055" cy="310" r="5" />
+          <circle class="corridor-node-pulse" cx="1055" cy="310" r="14" fill="none" stroke="#F5A524" stroke-width="1.5" />
+        </g>
+      </svg>
+
+      <div class="container">
+        <div class="hero__layout">
+          <div>
+            <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="hero_badge_program">Startup Qatar — مسار START · مهيأة لـ 8 بلديات في قطر</span></span>
+
+            <h1 class="hero__title">
+              <span data-i18n="hero_title_1">رحلتك، طردك، ومعاملتك</span><br />
+              <span class="highlight-gold" data-i18n="hero_title_2">على نفس الطريق في قطر.</span>
+            </h1>
+
+            <p class="hero__desc" data-i18n="hero_desc">
+              سوق قطري موثق بالبطاقة الشخصية (QID)، يحوّل المقاعد الشاغرة وحقائب السيارات المتنقلة يومياً بين مناطق قطر إلى شبكة تنقل وتوصيل فوري محمية برمز OTP والدفع الفوري عبر فوري (Fawran) وكيوباي (QPay).
+            </p>
+
+            <div class="hero__cta-row">
+              <a href="#download" class="btn btn--gold">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span data-i18n="hero_cta_download">حمّل التطبيق أو عاينه الآن</span>
+              </a>
+              <a href="#investors" class="btn btn--glass">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                <span data-i18n="hero_cta_investors">استكشف أرقام المستثمرين</span>
+              </a>
+            </div>
+
+            <div class="hero__trust-strip">
+              <div class="hero__trust-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                <span data-i18n="hero_trust_1">توثيق 11 رقماً (QID) ورخصة المركبة</span>
+              </div>
+              <div class="hero__trust-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span data-i18n="hero_trust_2">تسليم مؤمّن برمز OTP وحفظ الحقوق</span>
+              </div>
+              <div class="hero__trust-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span data-i18n="hero_trust_3">جاهزية إنتاجية بـ 71 اختباراً ناجحاً</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="hero__visual">
+            <div class="phone-halo" aria-hidden="true"></div>
+
+            <div class="float-chip float-chip--top">
+              <div class="float-chip__icon float-chip__icon--teal">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              </div>
+              <div>
+                <div class="float-chip__title" data-i18n="chip_qid_title">موثق بالبطاقة القطرية QID</div>
+                <div class="float-chip__sub" data-i18n="chip_qid_sub">فحص يدوي + رقم +974</div>
+              </div>
+            </div>
+
+            <div class="phone-frame">
+              <div class="phone-frame__notch" aria-hidden="true"></div>
+              <div class="phone-frame__screen">
+                <img src="./assets/mobile/10_tab_home_screen.png" alt="MASHWAR Super-App Home Screen in Qatar" />
+              </div>
+            </div>
+
+            <div class="float-chip float-chip--bottom">
+              <div class="float-chip__icon float-chip__icon--gold">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              </div>
+              <div>
+                <div class="float-chip__title" data-i18n="chip_otp_title">رمز التسليم السري OTP</div>
+                <div class="float-chip__sub" data-i18n="chip_otp_sub">الدوحة ← الخور · 2–3 ساعات</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Business-First Proof Strip -->
+        <div class="proof-strip reveal">
+          <div class="proof-card">
+            <div class="proof-card__num num" data-i18n="proof_1_num">4 في 1</div>
+            <div class="proof-card__label" data-i18n="proof_1_lbl">تنقل تشاركي، طرود سريعة، مصالح، وإمدادات تجارية</div>
+          </div>
+          <div class="proof-card">
+            <div class="proof-card__num num" data-i18n="proof_2_num">2–3 ساعات</div>
+            <div class="proof-card__label" data-i18n="proof_2_lbl">توصيل نفس اليوم بين مناطق قطر مقابل 24–72 ساعة تقليدياً</div>
+          </div>
+          <div class="proof-card">
+            <div class="proof-card__num num" data-i18n="proof_3_num">حتى 75%</div>
+            <div class="proof-card__label" data-i18n="proof_3_lbl">توفير في تكلفة التنقل بين البلديات مقابل التاكسي الخاص</div>
+          </div>
+          <div class="proof-card">
+            <div class="proof-card__num num" data-i18n="proof_4_num">الشهر 21</div>
+            <div class="proof-card__label" data-i18n="proof_4_lbl">نقطة التعادل التشغيلي (EBITDA) بدون أسطول سيارات مملوك</div>
+          </div>
+          <div class="proof-card">
+            <div class="proof-card__num num" data-i18n="proof_5_num">100%</div>
+            <div class="proof-card__label" data-i18n="proof_5_lbl">بناء هندسي داخلي بالكامل مع 71/71 اختبار جودة وأمان</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Interactive Qatar Corridor Route Economics Visualizer -->
+    <section id="corridors" class="section section--canvas">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="cor_eyebrow">اقتصاديات الممرات القطرية التفاعلية</span></span>
+          <h2 class="section-title" data-i18n="cor_title">مقارنة حية للوقت والتكلفة عبر أهم محاور قطر</h2>
+          <p class="section-subtitle" data-i18n="cor_sub">اختر خط السير لمعاينة الفارق الاقتصادي الفعلي للمسافر والتاجر والكابتن مقارنةً بالرحلات الخاصة وشركات الشحن التقليدية.</p>
+        </div>
+
+        <div class="corridor-stage reveal">
+          <div class="corridor-stage__banner">
+            <img src="./assets/posters/poster_ai_intercity_qatar_wide.jpg" alt="Qatar Coastal Highway Network" />
+          </div>
+
+          <div class="corridor-stage__inner">
+            <div class="corridor-tabs" role="tablist" aria-label="Qatar Corridors">
+              <button class="corridor-tab is-active" type="button" data-corridor="al_khor" data-cor-ar="الدوحة ↔ الخور" data-cor-en="Doha ↔ Al Khor">الدوحة ↔ الخور</button>
+              <button class="corridor-tab" type="button" data-corridor="mesaieed" data-cor-ar="الدوحة ↔ مسيعيد" data-cor-en="Doha ↔ Mesaieed">الدوحة ↔ مسيعيد</button>
+              <button class="corridor-tab" type="button" data-corridor="industrial" data-cor-ar="الصناعية ↔ الوكرة" data-cor-en="Industrial Area ↔ Al Wakrah">الصناعية ↔ الوكرة</button>
+              <button class="corridor-tab" type="button" data-corridor="dukhan" data-cor-ar="الدوحة ↔ دخان" data-cor-en="Doha ↔ Dukhan">الدوحة ↔ دخان</button>
+            </div>
+
+            <div class="corridor-route-bar">
+              <div class="route-endpoint">
+                <span class="route-endpoint__tag" data-i18n="cor_origin_tag">نقطة الانطلاق</span>
+                <span id="cor-origin-name" class="route-endpoint__name">الدوحة (الخليج الغربي / لوسيل)</span>
+              </div>
+              <div class="route-track">
+                <div class="route-track__fill"></div>
+                <span id="cor-dist-badge" class="route-track__badge num">56 كم · ~45 دقيقة</span>
+              </div>
+              <div class="route-endpoint">
+                <span class="route-endpoint__tag" data-i18n="cor_dest_tag">الوجهة</span>
+                <span id="cor-dest-name" class="route-endpoint__name">الخور (وسط المدينة / رأس لفان)</span>
+              </div>
+            </div>
+
+            <div class="corridor-kpis">
+              <div class="corridor-kpi-box">
+                <div class="corridor-kpi-box__label" data-i18n="cor_k1_lbl">المقعد التشاركي في مشوار</div>
+                <div id="cor-k1-val" class="corridor-kpi-box__val num">25 ر.ق / مقعد</div>
+                <div id="cor-k1-vs" class="corridor-kpi-box__vs">توفير 75% مقابل 105 ر.ق تاكسي خاص</div>
+              </div>
+              <div class="corridor-kpi-box">
+                <div class="corridor-kpi-box__label" data-i18n="cor_k2_lbl">طرد نفس اليوم برمز OTP</div>
+                <div id="cor-k2-val" class="corridor-kpi-box__val num">35 ر.ق · خلال ساعتين</div>
+                <div id="cor-k2-vs" class="corridor-kpi-box__vs">مقابل 24–48 ساعة شحن مستودعات</div>
+              </div>
+              <div class="corridor-kpi-box">
+                <div class="corridor-kpi-box__label" data-i18n="cor_k3_lbl">إجمالي عائد الكابتن للرحلة</div>
+                <div id="cor-k3-val" class="corridor-kpi-box__val num">110 – 160 ر.ق / رحلة ذهاب</div>
+                <div id="cor-k3-vs" class="corridor-kpi-box__vs">3 مقاعد + طردان على نفس الطريق</div>
+              </div>
+            </div>
+
+            <div class="corridor-steps">
+              <div class="corridor-step"><span class="corridor-step__num num">1</span><span data-i18n="cor_s1">توثيق QID والمطابقة على المسار (3 كم)</span></div>
+              <div class="corridor-step"><span class="corridor-step__num num">2</span><span data-i18n="cor_s2">تسليم آمن بمطابقة رمز OTP وصورة</span></div>
+              <div class="corridor-step"><span class="corridor-step__num num">3</span><span data-i18n="cor_s3">تحصيل رقمي عبر Fawran أو QPay أو النقد</span></div>
+              <div class="corridor-step"><span class="corridor-step__num num">4</span><span data-i18n="cor_s4">حسم تلقائي للعمولة ورقابة إدارية 24/7</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 4-in-1 Asset-Light Services Grid -->
+    <section id="services" class="section section--sand">
+      <div class="container">
+        <div class="section-header section-header--center reveal">
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="services_eyebrow">منظومة الخدمات 4 في 1</span></span>
+          <h2 class="section-title" data-i18n="services_title">أربعة تدفقات إيرادية على نفس الشبكة بدون أصول ثقيلة</h2>
+          <p class="section-subtitle" data-i18n="services_sub">توحيد الطلب بين الركاب والطرود والمعاملات وإمدادات التجار يرفع إشغال المركبة وعائد الكابتن في كل كيلومتر.</p>
+        </div>
+
+        <div class="services-grid reveal">
+          <article class="service-card">
+            <div class="service-card__media">
+              <img src="./assets/services/service_ride.jpg" alt="Shared Corridor Carpooling" loading="lazy" />
+              <span class="service-card__rate" data-i18n="srv_1_rate">عمولة 11%</span>
+            </div>
+            <div class="service-card__body">
+              <h3 data-i18n="srv_1_t">التنقل التشاركي بين المناطق</h3>
+              <p data-i18n="srv_1_d">حجز مقعد مريح على خطوط السير النشطة داخل قطر بتكلفة تشاركية شفافة وتفضيلات أمان واضحة.</p>
+              <div class="service-card__control">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span data-i18n="srv_1_c">نطاق تطابق 3,000م · حدود تسعير ±25% · خيار رحلات سيدات فقط</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="service-card">
+            <div class="service-card__media">
+              <img src="./assets/services/service_parcel.jpg" alt="Same-Day OTP Parcel Shipping" loading="lazy" />
+              <span class="service-card__rate" data-i18n="srv_2_rate">عمولة 18%</span>
+            </div>
+            <div class="service-card__body">
+              <h3 data-i18n="srv_2_t">شحن الطرود السريع في نفس اليوم</h3>
+              <p data-i18n="srv_2_d">توصيل المستندات والأمانات خلال 2–6 ساعات مع مسافرين موثقين ومتابعين على الخريطة.</p>
+              <div class="service-card__control">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span data-i18n="srv_2_c">وزن حتى 15 كجم · تحقق مزدوج برمز OTP · توثيق بالصور عند التسليم</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="service-card">
+            <div class="service-card__media">
+              <img src="./assets/services/service_errand.jpg" alt="Dual-Intent Community Board" loading="lazy" />
+              <span class="service-card__rate" data-i18n="srv_3_rate">عمولة 18%</span>
+            </div>
+            <div class="service-card__body">
+              <h3 data-i18n="srv_3_t">اللوحة التفاعلية (المعاملات والمشتريات)</h3>
+              <p data-i18n="srv_3_d">نشر طلب معاملة أو إحضار مستلزمات لتلقي عروض أسعار تنافسية فورية من السائقين على نفس الخط.</p>
+              <div class="service-card__control">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span data-i18n="srv_3_c">تحويل فوري بين «أطلب خدمة» و«أقدم خدمة» · مقارنة العروض والتقييم</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="service-card">
+            <div class="service-card__media">
+              <img src="./assets/services/service_cargo.jpg" alt="SME and Workshop Logistics" loading="lazy" />
+              <span class="service-card__rate" data-i18n="srv_4_rate">اشتراك 79$ / شهر</span>
+            </div>
+            <div class="service-card__body">
+              <h3 data-i18n="srv_4_t">لوجستيات التجار والورش (B2B SaaS)</h3>
+              <p data-i18n="srv_4_d">توريد سريع لقطع الغيار، عينات المختبرات، ومخزون المتاجر بين المناطق الصناعية والفروع.</p>
+              <div class="service-card__control">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
+                <span data-i18n="srv_4_c">أولوية مطابقة · تقارير شهرية · سجل مالي واضح بدون تعقيد المستودعات</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Interactive Mobile App & RBAC Admin Console Showcase -->
+    <section id="showcase" class="section section--canvas">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="showcase_eyebrow">معاينة المنتج الحيّة</span></span>
+          <h2 class="section-title" data-i18n="showcase_title">تطبيق عميل متكامل ولوحة عمليات إدارة مستقلة (RBAC)</h2>
+          <p class="section-subtitle" data-i18n="showcase_sub">هندسة تطبيقات موحدة على أندرويد وiOS والويب، متصلة بلوحة تحكم إدارية منفصلة لمراجعة الوثائق، فض النزاعات، وتتبع بلديات قطر.</p>
+        </div>
+
+        <div class="showcase-split reveal">
+          <div class="screen-tabs" role="tablist" aria-label="Mobile Screen Features">
+            <button class="screen-tab is-active" type="button" data-screen-idx="0">
+              <div>
+                <div class="screen-tab__title" data-i18n="mob_tab_1_t">الشاشة الرئيسية السوبر أب</div>
+                <div class="screen-tab__desc" data-i18n="mob_tab_1_d">اختيار سريع بين الركاب والطرود والمصالح وشريط البحث الذكي في قطر.</div>
+              </div>
+              <span class="screen-tab__badge" data-i18n="mob_tab_1_b">الرئيسية</span>
+            </button>
+            <button class="screen-tab" type="button" data-screen-idx="1">
+              <div>
+                <div class="screen-tab__title" data-i18n="mob_tab_2_t">اللوحة التفاعلية ثنائية النية</div>
+                <div class="screen-tab__desc" data-i18n="mob_tab_2_d">تبادل فوري بين عروض السائقين وطلبات العملاء على نفس المسار.</div>
+              </div>
+              <span class="screen-tab__badge" data-i18n="mob_tab_2_b">اللوحة</span>
+            </button>
+            <button class="screen-tab" type="button" data-screen-idx="2">
+              <div>
+                <div class="screen-tab__title" data-i18n="mob_tab_3_t">تفاصيل الرحلة والخريطة المباشرة</div>
+                <div class="screen-tab__desc" data-i18n="mob_tab_3_d">محطات الوقوف، تقييم الكابتن الموثق بالـ QID، والمقاعد المتاحة.</div>
+              </div>
+              <span class="screen-tab__badge" data-i18n="mob_tab_3_b">تفاصيل</span>
+            </button>
+            <button class="screen-tab" type="button" data-screen-idx="3">
+              <div>
+                <div class="screen-tab__title" data-i18n="mob_tab_4_t">تتبع الطرود ورمز التسليم OTP</div>
+                <div class="screen-tab__desc" data-i18n="mob_tab_4_d">تحديث مراحل الاستلام والتسليم لحظياً مع رمز تحقق رقمي مزدوج.</div>
+              </div>
+              <span class="screen-tab__badge" data-i18n="mob_tab_4_b">طرود OTP</span>
+            </button>
+            <button class="screen-tab" type="button" data-screen-idx="4">
+              <div>
+                <div class="screen-tab__title" data-i18n="mob_tab_5_t">محفظة مشوار وبوابات الدفع في قطر</div>
+                <div class="screen-tab__desc" data-i18n="mob_tab_5_d">دعم فوري (Fawran) وكيوباي (QPay) وسكيب كاش (SkipCash) بدقة الوحدات الصغرى.</div>
+              </div>
+              <span class="screen-tab__badge" data-i18n="mob_tab_5_b">المحفظة</span>
+            </button>
+          </div>
+
+          <div class="showcase-phone-stage">
+            <div class="phone-device-stage">
+              <div class="phone-device-stage__inner">
+                <img id="mobile-screen-img" src="./assets/mobile/10_tab_home_screen.png" alt="Interactive Mobile App Screen Preview" />
+              </div>
+            </div>
+            <div class="quick-kyc-pills">
+              <button class="quick-kyc-pill" type="button" data-screen-idx="5" data-i18n="pill_vehicle_kyc">توثيق اللوحة القطرية والاستمارة</button>
+              <button class="quick-kyc-pill" type="button" data-screen-idx="6" data-i18n="pill_sos_999">مركز طوارئ قطر 999</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Standalone RBAC Admin & Web Console -->
+        <div class="admin-showcase-card reveal">
+          <div class="admin-showcase__head">
+            <div>
+              <h3 data-i18n="admin_head_t">واجهة الويب للعملاء ولوحة إدارة العمليات والصلاحيات</h3>
+              <p data-i18n="admin_head_d">نظام تحكم إداري مستقل بـ 5 مستويات صلاحيات RBAC، ومراقبة لمحاور قطر الثمانية، وطابور اعتماد QID خلال 24 ساعة.</p>
+            </div>
+            <div class="pill-switch">
+              <button class="is-active" type="button" data-web-tab="kpis" data-i18n="web_tab_kpis">لوحة مؤشرات الأداء</button>
+              <button type="button" data-web-tab="kyc" data-i18n="web_tab_kyc">مراجعة توثيق القطرية QID</button>
+              <button type="button" data-web-tab="home" data-i18n="web_tab_home">نسخة الويب للعملاء</button>
+            </div>
+          </div>
+          <div class="browser-frame">
+            <div class="browser-frame__bar">
+              <div class="browser-dots"><span></span><span></span><span></span></div>
+              <div id="web-stage-url" class="browser-url">https://admin.mashwar.qa/dashboard-kpis</div>
+              <div></div>
+            </div>
+            <img id="web-stage-img" src="./assets/web/06_admin_dashboard_kpis.png" alt="MASHWAR Admin RBAC Operations Dashboard" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Competitive Advantage Matrix & Technical Due-Diligence -->
+    <section id="advantage" class="section section--dark">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="adv_eyebrow">الميزة التنافسية والجاهزية الهندسية</span></span>
+          <h2 class="section-title" data-i18n="adv_title">لماذا يتفوق مشوار على البدائل الحالية في سوق قطر؟</h2>
+          <p class="section-subtitle" data-i18n="adv_sub">لا ينافس مشوار خدمات التاكسي الحضري القصير؛ بل يسد فجوة السفر بين المناطق والطرود العاجلة خلال ساعات بتوثيق قانوني ومالي كامل.</p>
+        </div>
+
+        <div class="matrix-wrap reveal">
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th data-i18n="mtx_h_feat">المعيار التشغيلي والتقني</th>
+                <th class="col-mashwar" data-i18n="mtx_h_m">مشوار (MASHWAR)</th>
+                <th data-i18n="mtx_h_u">تطبيقات التاكسي (Uber / Karwa)</th>
+                <th data-i18n="mtx_h_c">شركات الشحن (Aramex / Q-Post)</th>
+                <th data-i18n="mtx_h_w">مجموعات التواصل والواتساب</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-i18n="mtx_r1">تقاسم تكلفة الرحلة بين البلديات</td>
+                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r1_m">متاح (-75% توفير)</span></span></td>
+                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r1_u">رحلة خاصة كاملة</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r1_c">غير متاح</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r1_w">غير منظم</span></td>
+              </tr>
+              <tr>
+                <td data-i18n="mtx_r2">توصيل الطرود في نفس اليوم (2–6 ساعات)</td>
+                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r2_m">مباشر نقطة لنقطة</span></span></td>
+                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r2_u">مكلف للمسافات</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r2_c">24–72 ساعة عبر الفرز</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r2_w">دون ضمان</span></td>
+              </tr>
+              <tr>
+                <td data-i18n="mtx_r3">توثيق القطرية QID (11 رقماً) والاستمارة</td>
+                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r3_m">إلزامي قبل التفعيل</span></span></td>
+                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r3_u">خاص بالمركبات الأجرة</span></td>
+                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r3_c">مؤسسي فقط</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r3_w">منعدم تماماً</span></td>
+              </tr>
+              <tr>
+                <td data-i18n="mtx_r4">رمز تسليم سري OTP + إثبات بالصور</td>
+                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r4_m">مدمج في كل طرد</span></span></td>
+                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r4_u">تطبيقات محدودة</span></td>
+                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r4_c">توقيع تقليدي</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r4_w">غير متاح</span></td>
+              </tr>
+              <tr>
+                <td data-i18n="mtx_r5">اللوحة التفاعلية + باقات B2B للورش</td>
+                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r5_m">عروض فورية + اشتراك SaaS</span></span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r5_u">غير متاح</span></td>
+                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r5_c">عقود شحن فقط</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r5_w">رسائل عشوائية</span></td>
+              </tr>
+              <tr>
+                <td data-i18n="mtx_r6">إخفاء الأرقام + طوارئ قطر 999</td>
+                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r6_m">دردشة مشفرة + 999 SOS</span></span></td>
+                <td><span class="status-pill status-pill--yes" data-i18n="mtx_r6_u">متاح</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r6_c">لا ينطبق</span></td>
+                <td><span class="status-pill status-pill--no" data-i18n="mtx_r6_w">أرقام مكشوفة</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="trust-pillars-grid reveal">
+          <article class="spotlight-card">
+            <div class="trust-pillar__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2"/><path d="M15 12h2"/><path d="M7 16h10"/></svg>
+            </div>
+            <h3 data-i18n="tp_1_t">امتثال قطري وطابور توثيق QID</h3>
+            <p data-i18n="tp_1_d">فحص إلزامي للبطاقة القطرية (11 رقماً)، رخصة القيادة، الاستمارة، وزر طوارئ قطر 999 ومشاركة المسار الحي.</p>
+          </article>
+          <article class="spotlight-card">
+            <div class="trust-pillar__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3 data-i18n="tp_2_t">سلسلة عهدة OTP وسجل مالي دقيق</h3>
+            <p data-i18n="tp_2_d">إغلاق الطرود برمز سري ثنائي مع تخزين الأرصدة بالوحدات الصغرى ومنع أي تعديل مالي من جهة العميل.</p>
+          </article>
+          <article class="spotlight-card">
+            <div class="trust-pillar__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 data-i18n="tp_3_t">معمارية نظيفة + 1,098 سطر قواعد أمان</h3>
+            <p data-i18n="tp_3_d">فصل 7 عقود بيانات، معاملات حجز ذرية، وبديل جغرافي قطري (8 بلديات / 22 محوراً) مع خرائط جوجل.</p>
+          </article>
+          <article class="spotlight-card">
+            <div class="trust-pillar__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h3 data-i18n="tp_4_t">71 / 71 اختبار آلي وموثوقية الكود</h3>
+            <p data-i18n="tp_4_d">فحص ساكن خالٍ من الأخطاء واختبارات شاملة تغطي المنطق، الشاشات، التجاوب، وصلاحيات الإدارة.</p>
+          </article>
+        </div>
+
+        <div class="driver-promo-card reveal">
+          <div class="driver-promo-card__media">
+            <img src="./assets/posters/driver_promo.jpg" alt="Qatar Driver Partner Network" loading="lazy" />
+          </div>
+          <div class="driver-promo-card__body">
+            <h3 data-i18n="driver_promo_t">شبكة الكباتن والشركاء في دولة قطر</h3>
+            <p data-i18n="driver_promo_d">اربح من مقاعدك الشاغرة وغطّ مصاريف التنقل بين الدوحة والخور والوكرة ودخان عبر بوابات الدفع المعتمدة محلياً.</p>
+            <div class="rail-badges">
+              <span class="rail-badge">Fawran · فوراً</span>
+              <span class="rail-badge">QPay / Himyan</span>
+              <span class="rail-badge">SkipCash</span>
+              <span class="rail-badge">Apple Pay</span>
+              <span class="rail-badge">QAR · ر.ق</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Investor Data Room & Interactive 3-Year Financial Projections -->
+    <section id="investors" class="section section--sand">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="fin_eyebrow">غرفة بيانات المستثمرين — Startup Qatar</span></span>
+          <h2 class="section-title" data-i18n="fin_title">الفرصة السوقية والتوقعات المالية التفاعلية لـ 36 شهراً</h2>
+          <p class="section-subtitle" data-i18n="fin_sub">نموذج مالي قابل للتدقيق مبني تصاعدياً (Bottom-Up) ومتوافق مع دفعات قُطر للتنمية (QDB) مع حماية دائمة للسيولة.</p>
+        </div>
+
+        <div class="market-cards reveal">
+          <article class="market-card">
+            <div class="market-card__tier" data-i18n="tam_tier">السوق الكلي القابل للاستحواذ (TAM)</div>
+            <div id="kpi-tam-val" class="market-card__val num">$272.50M</div>
+            <p class="market-card__sub" data-i18n="tam_sub">18 مليون رحلة تنقل ($7.50) + 12.5 مليون طرد ومعاملة تجارية ($11.00) في قطر ودول الخليج.</p>
+          </article>
+          <article class="market-card market-card--teal">
+            <div class="market-card__tier" data-i18n="sam_tier">السوق المستهدف في الممرات الأولى (SAM)</div>
+            <div id="kpi-sam-val" class="market-card__val num">$59.95M</div>
+            <p class="market-card__sub" data-i18n="sam_sub">22% اختراق رقمي فوري في المحاور القطرية والمنطقة الصناعية والتوسع الخليجي من الفئة الأولى.</p>
+          </article>
+          <article class="market-card market-card--gold">
+            <div class="market-card__tier" data-i18n="som_tier">الحصة المستهدفة في السنة الثالثة (SOM)</div>
+            <div id="kpi-som-val" class="market-card__val num">$3.02M GMV</div>
+            <p id="kpi-som-sub" class="market-card__sub">14 ممراً تنفذ 330,162 معاملة + 348 اشتراك B2B (صافي إيراد $695.8K).</p>
+          </article>
+        </div>
+
+        <div class="finance-controls-bar reveal">
+          <div class="finance-controls-group">
+            <span class="control-label" data-i18n="ctrl_scenario">السيناريو التشغيلي:</span>
+            <div class="pill-switch">
+              <button class="is-active" type="button" data-scenario="base" data-i18n="scen_base">السيناريو الأساسي (Base)</button>
+              <button type="button" data-scenario="stress" data-i18n="scen_stress">اختبار الضغط (-30% حجم)</button>
+            </div>
+          </div>
+          <div class="finance-controls-group">
+            <span class="control-label" data-i18n="ctrl_currency">عملة العرض:</span>
+            <div class="pill-switch">
+              <button class="is-active" type="button" data-currency="USD" data-i18n="curr_usd">دولار أمريكي ($)</button>
+              <button type="button" data-currency="QAR" data-i18n="curr_qar">ريال قطري (ر.ق @ 3.64)</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-grid reveal">
+          <div class="chart-card">
+            <div class="chart-card__head">
+              <div>
+                <h3 data-i18n="ch1_title">تطور قيمة التعاملات (GMV) وصافي الإيرادات ربع السنوي (Q1–Q12)</h3>
+                <p data-i18n="ch1_sub">مرّر المؤشر فوق أي ربع سنة لاستعراض عدد الممرات والعمليات والإيراد بدقة.</p>
+              </div>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-swatch" style="background:#0F2A43"></span><span data-i18n="ch1_leg_gmv">إجمالي التعاملات (GMV)</span></span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#F5A524"></span><span data-i18n="ch1_leg_rev">صافي إيرادات المنصة</span></span>
+              </div>
+            </div>
+            <div class="svg-chart-scroll">
+              <div id="chart-gmv-revenue" class="svg-chart-wrap"></div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-card__head">
+              <div>
+                <h3 data-i18n="ch2_title">مزيج إيرادات السنة الثالثة</h3>
+                <p data-i18n="ch2_sub">تنويع الإيراد نحو اشتراكات الشركات والطرود.</p>
+              </div>
+            </div>
+            <div class="donut-layout">
+              <div id="chart-rev-donut" class="svg-chart-wrap" style="display:flex;justify-content:center"></div>
+              <div id="chart-rev-bars" class="donut-bars"></div>
+            </div>
+          </div>
+
+          <div class="chart-card chart-card--full">
+            <div class="chart-card__head">
+              <div>
+                <h3 data-i18n="ch3_title">الرصيد النقدي التراكمي، نقطة التعادل ودفعات QDB</h3>
+                <p data-i18n="ch3_sub">تدفق السيولة الشهري يوضح حماية رصيد نقدي أدنى $72K والوصول للتعادل التشغيلي دون عجز.</p>
+              </div>
+              <div class="chart-legend">
+                <span class="legend-item"><span class="legend-swatch" style="background:#1B7F79"></span><span data-i18n="ch3_leg_cash">الرصيد النقدي الختامي</span></span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#0F2A43"></span><span data-i18n="ch3_leg_ebitda">الربح التشغيلي الشهري (EBITDA)</span></span>
+                <span class="legend-item"><span class="legend-swatch" style="background:#F5A524"></span><span data-i18n="ch3_leg_tranches">دفعات التمويل (QDB $450K)</span></span>
+              </div>
+            </div>
+            <div class="svg-chart-scroll">
+              <div id="chart-cash-runway" class="svg-chart-wrap"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="simulator-card reveal">
+          <div>
+            <h3 style="margin:0 0 6px;color:var(--gold);font-size:1.25rem;font-weight:800" data-i18n="sim_title">محاكي اقتصاديات الممرات التفاعلي</h3>
+            <p style="margin:0 0 20px;color:#CBD5E1;font-size:0.9rem" data-i18n="sim_sub">حرّك المؤشرات لاختبار حساسية الإيرادات والطلب عبر الممرات النشطة.</p>
+            <div class="simulator-sliders">
+              <div class="slider-group">
+                <div class="slider-group__head">
+                  <label for="sim-corridors" data-i18n="sim_s1">عدد الممرات النشطة (قطر والخليج)</label>
+                  <span id="sim-corridors-val" class="slider-group__val num">14</span>
+                </div>
+                <input id="sim-corridors" type="range" min="1" max="24" value="14" />
+              </div>
+              <div class="slider-group">
+                <div class="slider-group__head">
+                  <label for="sim-orders" data-i18n="sim_s2">متوسط الطلبات اليومية لكل ممر</label>
+                  <span id="sim-orders-val" class="slider-group__val num">65</span>
+                </div>
+                <input id="sim-orders" type="range" min="15" max="150" value="65" />
+              </div>
+              <div class="slider-group">
+                <div class="slider-group__head">
+                  <label for="sim-b2b" data-i18n="sim_s3">حسابات التجار المشتركين (B2B SaaS)</label>
+                  <span id="sim-b2b-val" class="slider-group__val num">348</span>
+                </div>
+                <input id="sim-b2b" type="range" min="0" max="600" step="12" value="348" />
+              </div>
+            </div>
+          </div>
+
+          <div class="simulator-outputs">
+            <div class="sim-kpi">
+              <div class="sim-kpi__label" data-i18n="sim_o1">إجمالي التعاملات السنوي (GMV)</div>
+              <div id="sim-gmv-out" class="sim-kpi__val num">$3.04M</div>
+            </div>
+            <div class="sim-kpi">
+              <div class="sim-kpi__label" data-i18n="sim_o2">إجمالي إيرادات المنصة السنوية</div>
+              <div id="sim-rev-out" class="sim-kpi__val num">$761.8K</div>
+            </div>
+            <div class="sim-kpi">
+              <div class="sim-kpi__label" data-i18n="sim_o3">متوسط عائد السائقين الموزع سنوياً</div>
+              <div id="sim-driver-out" class="sim-kpi__val num" style="color:#5EEAD4">$2.61M</div>
+            </div>
+            <div class="sim-kpi">
+              <div class="sim-kpi__label" data-i18n="sim_o4">نسبة إيرادات B2B المتكررة</div>
+              <div id="sim-b2b-pct-out" class="sim-kpi__val num" style="color:#FFFFFF">43.3%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap reveal">
+          <table class="fin-table">
+            <thead id="fin-table-head"></thead>
+            <tbody id="fin-table-body"></tbody>
+          </table>
+        </div>
+
+        <div class="tranches-grid reveal">
+          <article class="tranche-card">
+            <span class="tranche-card__tag" data-i18n="tr1_t">الدفعة الأولى · الشهر 1 (30%)</span>
+            <div id="tranche-amt-1" class="tranche-card__amt num">$135,000 (30%)</div>
+            <p class="tranche-card__desc" data-i18n="tr1_d">تأسيس الكيان في QFC/QSTP، مفاتيح الإنتاج Firebase/Maps، اختبار الاختراق وتوظيف المهندس الرئيسي.</p>
+          </article>
+          <article class="tranche-card">
+            <span class="tranche-card__tag" data-i18n="tr2_t">الدفعة الثانية · الشهر 7 (35%)</span>
+            <div id="tranche-amt-2" class="tranche-card__amt num">$157,500 (35%)</div>
+            <p class="tranche-card__desc" data-i18n="tr2_d">تعيين مسؤول العمليات وQID/KYC، تفعيل بوابة QPay/Fawran، الوصول إلى 500+ سائق موثق و2,500 عملية.</p>
+          </article>
+          <article class="tranche-card">
+            <span class="tranche-card__tag" data-i18n="tr3_t">الدفعة الثالثة · الشهر 13 (35%)</span>
+            <div id="tranche-amt-3" class="tranche-card__amt num">$157,500 (35%)</div>
+            <p class="tranche-card__desc" data-i18n="tr3_d">إطلاق باقات Mashwar Business (B2B)، التوسع من 6 إلى 14 ممراً، وتحقيق نقطة التعادل في الشهر 21.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Founder Spotlight, App Download & Investor Inquiry -->
+    <section id="download" class="section section--dark">
+      <div class="container">
+        <div class="founder-spotlight reveal">
+          <div>
+            <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="fnd_eyebrow">القيادة الهندسية وخطة التوظيف بالدوحة</span></span>
+            <h2 class="section-title" style="font-size:1.7rem;margin-bottom:6px" data-i18n="fnd_name">عبدالرحمن مهنا — المؤسس والمعماري الرئيسي</h2>
+            <p style="margin:0 0 12px;color:var(--gold);font-weight:700;font-size:0.96rem" data-i18n="fnd_role">مهندس برمجيات وذكاء اصطناعي (AI, NLP, FastAPI, Flutter & Cloud Security)</p>
+            <p style="margin:0 0 16px;color:#CBD5E1;font-size:0.94rem" data-i18n="fnd_bio">قام بتصميم وبناء واختبار كامل منصة مشوار (تطبيق الموبايل والويب، لوحة الإدارة RBAC، قواعد الأمان، وخطط التوسع القطرية) بالكامل بمفرده قبل جولة التمويل، مع التزام بتفرغ كامل 100% والانتقال الدائم إلى الدوحة فور القبول.</p>
+            <div class="founder-badges">
+              <span class="founder-badge" data-i18n="fnd_b1">تفرغ كامل لمدة عامين+</span>
+              <span class="founder-badge" data-i18n="fnd_b2">انتقال دائم إلى الدوحة (QFC / QSTP)</span>
+              <span class="founder-badge" data-i18n="fnd_b3">خبرة سابقة: PyTorch, RAG, FastAPI, n8n</span>
+            </div>
+          </div>
+
+          <div class="doha-hires-grid">
+            <div class="hire-role-card">
+              <span class="hire-role-card__title" data-i18n="hire_1_t">مهندس Backend وأمن سحابي أول (Senior Engineer)</span>
+              <span class="hire-role-card__phase" data-i18n="hire_1_p">الدفعة 1 · الشهر 2</span>
+            </div>
+            <div class="hire-role-card">
+              <span class="hire-role-card__title" data-i18n="hire_2_t">مسؤول العمليات ومراجعة QID / KYC</span>
+              <span class="hire-role-card__phase" data-i18n="hire_2_p">الدفعة 2 · الشهر 7</span>
+            </div>
+            <div class="hire-role-card">
+              <span class="hire-role-card__title" data-i18n="hire_3_t">قائد نمو قطاع الشركات والورش (B2B Lead)</span>
+              <span class="hire-role-card__phase" data-i18n="hire_3_p">الدفعة 3 · الشهر 13</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="download-grid reveal">
+          <div class="download-panel">
+            <div>
+              <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="dl_eyebrow">الوصول الفوري والمعاينة للمستثمرين</span></span>
+              <h2 class="section-title" data-i18n="dl_title">حمّل تطبيق مشوار أو اطلب نسخة التقييم المباشر</h2>
+              <p class="section-subtitle" data-i18n="dl_sub">منظومة التطبيقات جاهزة للمراجعة العملية الآن على أندرويد وiOS ونسخة الويب المستجيبة.</p>
+            </div>
+
+            <div class="store-buttons">
+              <button class="store-btn" type="button" data-open-download>
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.96 6.32c.68-.82 1.14-1.97 1.01-3.12-.98.04-2.16.65-2.86 1.47-.63.73-1.18 1.9-1.03 3.02 1.09.08 2.2-.55 2.88-1.37z"/></svg>
+                <span>
+                  <span class="store-btn__sub" data-i18n="dl_ios_sub">دعوة معاينة عبر TestFlight</span>
+                  <span class="store-btn__title" data-i18n="dl_ios_t">نسخة App Store (iOS)</span>
+                </span>
+              </button>
+
+              <button class="store-btn" type="button" data-open-download>
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5v-17c0-.59.34-1.11.84-1.35L13.69 12l-9.85 9.85c-.5-.24-.84-.76-.84-1.35m13.81-5.38L6.05 21.34l8.49-8.49 2.27 2.27m3.35-4.31c.34.27.54.68.54 1.19 0 .5-.2.91-.54 1.19l-2.06 1.22-2.5-2.5 2.5-2.5 2.06 1.4M6.05 2.66l10.76 6.22-2.27 2.27-8.49-8.49z"/></svg>
+                <span>
+                  <span class="store-btn__sub" data-i18n="dl_and_sub">حزمة Android APK للمراجعين</span>
+                  <span class="store-btn__title" data-i18n="dl_and_t">نسخة Google Play</span>
+                </span>
+              </button>
+
+              <a class="store-btn store-btn--web" href="http://localhost:8080/" target="_blank" rel="noopener" data-live-web-btn>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>
+                  <span class="store-btn__sub" data-i18n="dl_web_sub">تجربة تفاعلية مباشرة</span>
+                  <span class="store-btn__title" data-i18n="dl_web_t">معاينة الويب أو طلب العرض</span>
+                </span>
+              </a>
+            </div>
+
+            <div class="build-matrix">
+              <div class="build-pill">
+                <div class="build-pill__plat" data-i18n="b_ios_p">iOS (TestFlight)</div>
+                <div class="build-pill__state" data-i18n="b_ios_s">جاهز لدعوة المراجعين والمستثمرين</div>
+              </div>
+              <div class="build-pill">
+                <div class="build-pill__plat" data-i18n="b_and_p">Android APK</div>
+                <div class="build-pill__state" data-i18n="b_and_s">بناء موحّد مع لوحة الشاشات كاملة</div>
+              </div>
+              <div class="build-pill">
+                <div class="build-pill__plat" data-i18n="b_web_p">Web & Admin RBAC</div>
+                <div class="build-pill__state" data-i18n="b_web_s">نسخة عميل + لوحة إدارة مستقلة</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="investor-form-card">
+            <h3 data-i18n="form_title">طلب غرفة البيانات وجدولة عرض استثماري</h3>
+            <p data-i18n="form_sub">احصل على المرفقات المالية الكاملة وروابط تثبيت التطبيق على جوالك مباشرةً.</p>
+
+            <div class="founder-mini-strip">
+              <strong>Abdelrahman Mahana</strong>
+              <a href="mailto:abdelrahmanmahana01@gmail.com">abdelrahmanmahana01@gmail.com</a>
+              <span class="num">+201007938491</span>
+              <a href="https://www.linkedin.com/in/abdelrahman-mahana/" target="_blank" rel="noopener">LinkedIn</a>
+              <a href="https://github.com/Abdelrahman-Mahana" target="_blank" rel="noopener">GitHub</a>
+            </div>
+
+            <form id="investor-form">
+              <div class="form-grid">
+                <div class="form-field">
+                  <label for="inv-name" data-i18n="f_name">الاسم الكامل</label>
+                  <input id="inv-name" type="text" required placeholder="Tariq Al-Mansoor" />
+                </div>
+                <div class="form-field">
+                  <label for="inv-org" data-i18n="f_org">الجهة / الصندوق الاستثماري</label>
+                  <input id="inv-org" type="text" required placeholder="QDB / VC / Enterprise" />
+                </div>
+                <div class="form-field">
+                  <label for="inv-email" data-i18n="f_email">البريد الإلكتروني المهني</label>
+                  <input id="inv-email" type="email" required placeholder="name@fund.qa" />
+                </div>
+                <div class="form-field">
+                  <label for="inv-interest" data-i18n="f_interest">نوع الطلب</label>
+                  <select id="inv-interest">
+                    <option data-i18n="f_opt_1">جلسة عرض ومراجعة النموذج المالي (Startup Qatar / VC)</option>
+                    <option data-i18n="f_opt_2">الحصول على رابط TestFlight / Android APK للمعاينة</option>
+                    <option data-i18n="f_opt_3">شراكة تجارية في قطر (B2B Logistics Pilot)</option>
+                  </select>
+                </div>
+                <div class="form-field form-field--full">
+                  <label for="inv-notes" data-i18n="f_notes">ملاحظات إضافية</label>
+                  <textarea id="inv-notes" placeholder="..."></textarea>
+                </div>
+              </div>
+              <div style="margin-top:16px">
+                <button class="btn btn--teal" type="submit" style="width:100%" data-i18n="f_submit">إرسال طلب التواصل</button>
+              </div>
+              <div id="investor-form-status" class="form-status" role="status" data-i18n="f_success">
+                تم تسجيل طلبك بنجاح! يمكنك أيضاً التواصل مباشرة عبر البريد abdelrahmanmahana01@gmail.com أو الهاتف +201007938491.
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-wrap">
+      <div style="display:flex;align-items:center;gap:14px">
+        <img src="./assets/logos/mashwar_logo_light_transparent.png" alt="MASHWAR" style="height:34px" />
+        <span style="font-size:0.86rem" data-i18n="footer_note">مشوار (MASHWAR) — منصة التنقل التشاركي والخدمات اللوجستية في قطر · Startup Qatar.</span>
+      </div>
+      <div class="footer-links">
+        <a href="#corridors" data-i18n="nav_corridors">المحاور والخدمات</a>
+        <a href="#showcase" data-i18n="nav_app">التجربة الحية</a>
+        <a href="#advantage" data-i18n="nav_advantage">الميزة والتقنية</a>
+        <a href="#investors" data-i18n="nav_investors">أرقام المستثمرين</a>
+        <a href="#download" data-i18n="nav_download">المؤسس والتحميل</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Chart Tooltip -->
+  <div id="chart-tooltip" class="chart-tooltip" role="tooltip"></div>
+
+  <!-- App Store / Play Store / Evaluation Build Modal -->
+  <div id="download-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-label="Download MASHWAR">
+    <div class="modal-dialog">
+      <button id="download-modal-close" class="modal-close" type="button" aria-label="Close Download Dialog">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <img src="./assets/logos/mashwar_app_icon_1024.png" alt="MASHWAR Icon" style="width:56px;height:56px;border-radius:14px" />
+        <div>
+          <h3 style="margin:0;color:var(--navy);font-size:1.2rem;font-weight:900" data-i18n="modal_dl_t">معاينة تطبيق مشوار للمستثمرين والمراجعين</h3>
+        </div>
+      </div>
+      <p style="margin:0 0 20px;color:var(--text-muted);font-size:0.94rem" data-i18n="modal_dl_d">
+        تتوفر النسخة القطرية للتقييم العملي عبر دعوة TestFlight لنظام iOS أو حزمة APK موقّعة لنظام Android، كما تتاح نسخة الويب التفاعلية أثناء العروض الحية.
+      </p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <a id="modal-local-launch" href="http://localhost:8080/" target="_blank" rel="noopener" class="btn btn--gold" data-i18n="modal_dl_launch">تشغيل المعاينة المحلية</a>
+        <button id="modal-request-build" class="btn btn--teal" type="button" data-i18n="modal_dl_req">طلب رابط TestFlight / APK الآن</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/financial-data.js"></script>
+  <script src="./js/i18n.js"></script>
+  <script src="./js/charts.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>

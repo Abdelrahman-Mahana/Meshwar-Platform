@@ -77,17 +77,17 @@ class LegalComplianceScreen extends StatelessWidget {
         _buildInfoCard(
           icon: Icons.gavel_outlined,
           title: isAr ? 'اتفاقية الاستخدام لمنصة مشوار (MASHWAR)' : 'MASHWAR Platform Terms of Use',
-          subtitle: isAr ? 'آخر تحديث: يونيو 2026 - ساري في جمهورية مصر العربية' : 'Last Updated: June 2026 - Valid in Egypt',
+          subtitle: isAr ? 'آخر تحديث: يونيو 2026 - ساري في دولة قطر' : 'Last Updated: June 2026 - Valid in State of Qatar',
           points: isAr
               ? const [
-                  'منصة مشوار هي منصة تقنية لتنظيم تشارك الركوب (Carpooling) وتوصيل الطرود الخفيفة بين المسافرين على نفس المسار بين المحافظات.',
-                  'يلتزم جميع السائقين والركاب بتقديم بيانات هوية صحيحة ومطابقة للرقم القومي المصري الساري.',
-                  'يُحظر تماماً استخدام التطبيق في نقل المواد المحظورة قانوناً أو تجاوز عدد المقاعد المحدد في رخصة تسيير المركبة.',
+                  'منصة مشوار هي منصة تقنية لتنظيم تشارك الركوب (Carpooling) وتوصيل الطرود الخفيفة بين المسافرين على نفس المسار بين مناطق ومدن دولة قطر.',
+                  'يلتزم جميع السائقين والركاب بتقديم بيانات هوية صحيحة ومطابقة للبطاقة الشخصية القطرية (QID) السارية.',
+                  'يُحظر تماماً استخدام التطبيق في نقل المواد المحظورة قانوناً أو تجاوز عدد المقاعد المحدد في استمارة المركبة.',
                   'تخضع سياسة الإلغاء واسترداد المبالغ في المحفظة لضوابط الوقت المعلن قبل انطلاق الرحلة (مجاني قبل 24 ساعة من الانطلاق).',
                 ]
               : const [
-                  'MASHWAR is a technology platform connecting intercity travelers for shared rides (Carpooling) and light parcel delivery along the same corridor.',
-                  'All drivers and passengers must provide valid Egyptian National ID details.',
+                  'MASHWAR is a technology platform connecting inter-area travelers in Qatar for shared rides (Carpooling) and light parcel delivery along the same corridor.',
+                  'All drivers and passengers must provide valid Qatar ID (QID) details.',
                   'Transporting prohibited items or exceeding the licensed seat capacity is strictly forbidden.',
                   'Cancellations and wallet refunds follow the published schedule (free up to 24 hours before departure).',
                 ],
@@ -96,14 +96,14 @@ class LegalComplianceScreen extends StatelessWidget {
         _buildInfoCard(
           icon: Icons.account_balance_wallet_outlined,
           title: isAr ? 'الرسوم والمدفوعات الرقمية' : 'Fees & Digital Payments',
-          subtitle: isAr ? 'تكامل المحفظة مع InstaPay وVodafone Cash وFawry' : 'Integrated with InstaPay, Vodafone Cash & Fawry',
+          subtitle: isAr ? 'تكامل المحفظة مع فوراً (Fawran) وQPay وSkipCash وApple Pay' : 'Integrated with Fawran, QPay, SkipCash & Apple Pay',
           points: isAr
               ? const [
-                  'رسوم الخدمة والمنصة محددة بشفافية كاملة قبل تأكيد الحجز (10% شاملة ضريبة القيمة المضافة).',
+                  'رسوم الخدمة والمنصة محددة بشفافية كاملة بالريال القطري (ر.ق) قبل تأكيد الحجز.',
                   'تُحفظ مبالغ الحجز الإلكتروني في حساب ضامن (Escrow) ولا يتم تحويلها للسائق إلا بعد تأكيد إتمام الرحلة أو تسليم الطرد برمز OTP.',
                 ]
               : const [
-                  'Platform service fees are transparently displayed prior to booking confirmation (10% VAT inclusive).',
+                  'Platform service fees are transparently displayed in QAR prior to booking confirmation.',
                   'Digital payments are held in escrow and released to the driver only after trip completion or 4-digit OTP parcel handover.',
                 ],
         ),
@@ -117,19 +117,19 @@ class LegalComplianceScreen extends StatelessWidget {
       children: [
         _buildInfoCard(
           icon: Icons.privacy_tip_outlined,
-          title: isAr ? 'قانون حماية البيانات الشخصية رقم 151 لسنة 2020' : 'Egyptian Data Protection Law No. 151 of 2020',
-          subtitle: isAr ? 'التزام كامل بمعايير التشفير والخصوصية في مصر' : 'Full compliance with encryption & KYC privacy standards',
+          title: isAr ? 'قانون حماية خصوصية البيانات الشخصية رقم 13 لسنة 2016' : 'Qatar Personal Data Privacy Law No. 13 of 2016',
+          subtitle: isAr ? 'التزام كامل بمعايير التشفير والخصوصية في دولة قطر' : 'Full compliance with Qatar NCSA encryption & KYC privacy standards',
           points: isAr
               ? const [
-                  'تُشفر صور البطاقات الشخصية ورخص القيادة بتقنية AES-256 وتُستخدم حصرياً للتحقق من الهوية والأمان (KYC).',
-                  'لا تتم مشاركة رقم الهاتف الكامل بين الأطراف إلا بعد تأكيد الحجز الفعلي للرحلة أو الطرد.',
-                  'بيانات الموقع الجغرافي الحي (Live GPS) تُفعل فقط أثناء الرحلة النشطة أو عند استخدام زر استغاثة الطوارئ SOS.',
+                  'تُشفر صور البطاقات الشخصية القطرية (QID) ورخص القيادة بتقنية AES-256 وتُستخدم حصرياً للتحقق من الهوية والأمان (KYC).',
+                  'لا تتم مشاركة رقم الجوال الكامل بين الأطراف إلا بعد تأكيد الحجز الفعلي للرحلة أو الطرد.',
+                  'بيانات الموقع الجغرافي الحي (Live GPS) تُفعل فقط أثناء الرحلة النشطة أو عند استخدام زر استغاثة الطوارئ SOS (999).',
                   'يحق للمستخدم طلب تصدير بياناته أو حذف حسابه نهائياً من الخوادم بشرط عدم وجود رحلات أو التزامات مالية معلقة.',
                 ]
               : const [
-                  'National ID and driver license images are AES-256 encrypted and used exclusively for KYC verification.',
-                  'Phone numbers are masked until a ride or parcel booking is officially confirmed.',
-                  'Live GPS location sharing is active only during an ongoing trip or when Emergency SOS is triggered.',
+                  'Qatar ID (QID) and driver license images are AES-256 encrypted and used exclusively for KYC verification.',
+                  'Mobile numbers are masked until a ride or parcel booking is officially confirmed.',
+                  'Live GPS location sharing is active only during an ongoing trip or when Emergency SOS (999) is triggered.',
                   'Users may export their data or permanently delete their account when no active rides or balances are pending.',
                 ],
         ),
@@ -163,8 +163,8 @@ class LegalComplianceScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       isAr
-                          ? 'مرخص لتنظيم تشارك تكلفة السفر بين المحافظات (Peer-to-Peer Cost Sharing)'
-                          : 'Licensed for intercity peer-to-peer travel cost sharing in Egypt',
+                          ? 'مرخص لتنظيم تشارك تكلفة التنقل بين مناطق قطر (Peer-to-Peer Cost Sharing)'
+                          : 'Licensed for inter-area peer-to-peer travel cost sharing in Qatar',
                       style: AppTypography.bodySecondary(color: AppColors.textPrimary),
                     ),
                   ],
@@ -177,7 +177,7 @@ class LegalComplianceScreen extends StatelessWidget {
         _buildInfoCard(
           icon: Icons.directions_car_filled_outlined,
           title: isAr ? 'ضوابط السائقين والمركبات المسجلة' : 'Registered Driver & Vehicle Controls',
-          subtitle: isAr ? 'معايير الفحص والتحقق الدوري' : 'Periodic inspection & verification standards',
+          subtitle: isAr ? 'معايير وزارة المواصلات وإدارة المرور في قطر' : 'MOT Qatar & General Directorate of Traffic standards',
           points: isAr
               ? const [
                   'التحقق الآلي واليدوي من سريان رخصة القيادة الخاصة ورخصة تسيير المركبة.',

@@ -107,8 +107,8 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                         if (widget.hasPriceChanged) ...[
                           AlertBanner(
                             message: isAr
-                                ? 'السعر اتغير من ${widget.ride.pricePerSeat} إلى $_unitPrice ج. راجع قبل ما تكمل'
-                                : 'Price changed from ${widget.ride.pricePerSeat} to $_unitPrice EGP. Review before confirming',
+                                ? 'تم تعديل السعر من ${widget.ride.pricePerSeat} إلى $_unitPrice ر.ق. يرجى المراجعة قبل المتابعة'
+                                : 'Price changed from ${widget.ride.pricePerSeat} to $_unitPrice QAR. Review before confirming',
                             type: AlertBannerType.warning,
                           ),
                           const SizedBox(height: AppDimens.space12),
@@ -116,7 +116,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                         if (_showSeatsWarning) ...[
                           AlertBanner(
                             message: isAr
-                                ? 'المتاح في الرحلة ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "كرسي فقط" : "كراسي فقط"}'
+                                ? 'المتاح في الرحلة ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "مقعد فقط" : "مقاعد فقط"}'
                                 : 'Only ${widget.ride.remainingSeats} ${widget.ride.remainingSeats == 1 ? "seat" : "seats"} remaining on this ride',
                             type: AlertBannerType.warning,
                           ),
@@ -186,7 +186,7 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(isAr ? 'عدد الكراسي' : 'Number of Seats', style: AppTypography.body().copyWith(fontWeight: FontWeight.w800)),
+                                Text(isAr ? 'عدد المقاعد' : 'Number of Seats', style: AppTypography.body().copyWith(fontWeight: FontWeight.w800)),
                                 Row(
                                   children: [
                                     _buildCounterButton(
@@ -216,9 +216,9 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                           child: MashwarSectionCard(
                             child: Column(
                               children: [
-                                _buildRow(isAr ? 'الدفع' : 'Payment Method', isAr ? 'نقداً للسائق' : 'Cash to driver'),
+                                _buildRow(isAr ? 'الدفع' : 'Payment Method', isAr ? 'نقداً للسائق أو المحفظة' : 'Cash to driver or Wallet'),
                                 const Divider(height: 20, color: AppColors.borderDisabled),
-                                _buildRow(isAr ? 'الإجمالي' : 'Total', '$total ${isAr ? "ج" : "EGP"}', isBold: true),
+                                _buildRow(isAr ? 'الإجمالي' : 'Total', '$total ${isAr ? "ر.ق" : "QAR"}', isBold: true),
                               ],
                             ),
                           ),
@@ -269,13 +269,13 @@ class _BookingReviewScreenState extends State<BookingReviewScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       MashwarButton(
-                        text: isAr ? 'تأكيد الحجز · $total ج' : 'Confirm Booking · $total EGP',
+                        text: isAr ? 'تأكيد الحجز · $total ر.ق' : 'Confirm Booking · $total QAR',
                         isLoading: _isLoading,
                         onPressed: _submitBooking,
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        isAr ? 'الدفع كاش مع السائق بعد الصعود' : 'Payment in cash to driver after boarding',
+                        isAr ? 'الدفع نقداً للسائق بعد الركوب' : 'Payment in cash to driver after boarding',
                         style: AppTypography.label(color: AppColors.textSecondary),
                       ),
                     ],

@@ -9,7 +9,7 @@ import '../../core/widgets/mashwar_badge.dart';
 import '../../state/settings_provider.dart';
 import 'publish_ride_screen.dart';
 
-// Page 37: اكسب من كراسيك الفاضية (Driver Onboarding Landing)
+// Page 37: اربح من مقاعدك الشاغرة (Driver Onboarding Landing)
 class DriverOnboardingScreen extends StatelessWidget {
   const DriverOnboardingScreen({super.key});
 
@@ -78,15 +78,15 @@ class DriverOnboardingScreen extends StatelessWidget {
 
                             // Title & Subtitle (Page 37)
                             Text(
-                              isAr ? 'اكسب من كراسيك الفاضية' : 'Earn from your empty seats',
+                              isAr ? 'اربح من مقاعدك الشاغرة' : 'Earn from your empty seats',
                               textAlign: TextAlign.center,
                               style: AppTypography.largeTitle(),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               isAr
-                                  ? 'انشر رحلاتك بين المحافظات وخد ركاب وطرود في طريقك.'
-                                  : 'Publish intercity trips and take riders and parcels along your way.',
+                                  ? 'انشر رحلاتك بين مناطق قطر واستقبل ركاباً وطروداً في طريقك.'
+                                  : 'Publish trips across Qatar and take riders and parcels along your way.',
                               textAlign: TextAlign.center,
                               style: AppTypography.bodySecondary(),
                             ),
@@ -108,7 +108,7 @@ class DriverOnboardingScreen extends StatelessWidget {
 
                             const SizedBox(height: 12),
                             Text(
-                              isAr ? 'المراجعة بتاخد لحد 24 ساعة.' : 'Verification review takes up to 24 hours.',
+                              isAr ? 'تستغرق المراجعة حتى 24 ساعة.' : 'Verification review takes up to 24 hours.',
                               textAlign: TextAlign.center,
                               style: AppTypography.label(color: AppColors.textSecondary),
                             ),
@@ -133,7 +133,7 @@ class DriverOnboardingScreen extends StatelessWidget {
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
-                      isAr ? 'مش دلوقتي' : 'Not now',
+                      isAr ? 'ليس الآن' : 'Not now',
                       style: AppTypography.bodySecondary(color: AppColors.navy),
                     ),
                   ),
@@ -363,7 +363,7 @@ class _DriverVerificationStepsScreenState extends State<DriverVerificationStepsS
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              isAr ? 'هنراجع بياناتك خلال 24 ساعة بعد الإرسال' : 'We review your documents within 24 hours',
+                              isAr ? 'سنراجع بياناتك خلال 24 ساعة بعد الإرسال' : 'We review your documents within 24 hours',
                               style: AppTypography.label(color: AppColors.textSecondary),
                             ),
                             const SizedBox(height: AppDimens.space20),
@@ -374,7 +374,7 @@ class _DriverVerificationStepsScreenState extends State<DriverVerificationStepsS
                               child: Column(
                                 children: [
                                   _buildStepTile(
-                                    isAr ? 'بطاقة الرقم القومي' : 'Egyptian National ID',
+                                    isAr ? 'البطاقة الشخصية القطرية (QID)' : 'Qatar ID (QID)',
                                     isDone: true,
                                     isAr: isAr,
                                   ),
@@ -480,9 +480,9 @@ class DriverCarDetailsScreen extends StatefulWidget {
 }
 
 class _DriverCarDetailsScreenState extends State<DriverCarDetailsScreen> {
-  final TextEditingController _modelController = TextEditingController(text: 'هيونداي إلنترا 2019');
-  final TextEditingController _colorController = TextEditingController(text: 'أبيض');
-  final TextEditingController _plateController = TextEditingController(text: 'أ ب ج 1234');
+  final TextEditingController _modelController = TextEditingController(text: 'تويوتا كامري 2024');
+  final TextEditingController _colorController = TextEditingController(text: 'أبيض لؤلؤي');
+  final TextEditingController _plateController = TextEditingController(text: 'قطر 482910');
   int _seatsCount = 3;
   String? _plateError;
 
@@ -591,7 +591,7 @@ class _DriverCarDetailsScreenState extends State<DriverCarDetailsScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            child: Text(isAr ? 'عدد الكراسي للركاب' : 'Passenger Seats', style: AppTypography.body()),
+                            child: Text(isAr ? 'عدد المقاعد للركاب' : 'Passenger Seats', style: AppTypography.body()),
                           ),
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -612,7 +612,7 @@ class _DriverCarDetailsScreenState extends State<DriverCarDetailsScreen> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isAr ? 'من غير السائق. الحد الأقصى 4 كراسي.' : 'Excluding driver. Maximum 4 seats.',
+                      isAr ? 'بدون السائق. الحد الأقصى 4 مقاعد.' : 'Excluding driver. Maximum 4 seats.',
                       style: AppTypography.label(color: AppColors.textSecondary),
                     ),
 
@@ -661,17 +661,17 @@ class DriverStatusScreen extends StatelessWidget {
 
     switch (statusType) {
       case DriverStatusType.underReview:
-        title = isAr ? 'بنراجع بياناتك' : 'Reviewing your data';
-        subtitle = isAr ? 'بنخلص خلال 24 ساعة، وهنبلغك بالنتيجة.' : 'Completed within 24 hours, you will receive an alert.';
+        title = isAr ? 'نراجع بياناتك حالياً' : 'Reviewing your data';
+        subtitle = isAr ? 'تكتمل المراجعة خلال 24 ساعة، وسنبلّغك بالنتيجة.' : 'Completed within 24 hours, you will receive an alert.';
         icon = Icons.hourglass_top_rounded;
         iconColor = AppColors.navy;
         bgColor = AppColors.sand;
-        primaryBtnText = isAr ? 'تمام' : 'Got it';
+        primaryBtnText = isAr ? 'حسناً' : 'Got it';
         onPrimary = () => Navigator.of(context).pop();
         break;
       case DriverStatusType.approved:
-        title = isAr ? 'تم توثيقك' : 'You are Verified!';
-        subtitle = isAr ? 'تقدر تنشر رحلاتك وتستقبل ركاب وطرود دلوقتي.' : 'You can publish rides and accept passengers now.';
+        title = isAr ? 'تم توثيقك بنجاح' : 'You are Verified!';
+        subtitle = isAr ? 'يمكنك الآن نشر رحلاتك واستقبال الركاب والطرود.' : 'You can publish rides and accept passengers now.';
         icon = Icons.check_circle_rounded;
         iconColor = AppColors.teal;
         bgColor = AppColors.tealSurface;
@@ -683,9 +683,9 @@ class DriverStatusScreen extends StatelessWidget {
         };
         break;
       case DriverStatusType.rejected:
-        title = isAr ? 'ما قدرناش نوثّق حسابك' : 'Could not verify account';
+        title = isAr ? 'لم نتمكن من توثيق حسابك' : 'Could not verify account';
         subtitle = isAr ? 'عدّل البيانات وأعد الإرسال.' : 'Please update your documents and resubmit.';
-        reason = isAr ? 'السبب: صورة الرخصة مش واضحة' : 'Reason: Driving license photo was blurry';
+        reason = isAr ? 'السبب: صورة الرخصة غير واضحة' : 'Reason: Driving license photo was blurry';
         icon = Icons.cancel_rounded;
         iconColor = AppColors.coral;
         bgColor = AppColors.dangerBg;
@@ -698,7 +698,7 @@ class DriverStatusScreen extends StatelessWidget {
         break;
       case DriverStatusType.suspended:
         title = isAr ? 'حسابك موقوف مؤقتاً' : 'Account Temporarily Suspended';
-        subtitle = isAr ? 'بيراجعها فريق الدعم لحل البلاغات.' : 'Our safety team is currently investigating open reports.';
+        subtitle = isAr ? 'يراجعها فريق الدعم لحل البلاغات.' : 'Our safety team is currently investigating open reports.';
         reason = isAr ? 'السبب: بلاغات متكررة من ركاب' : 'Reason: Multiple reports from passengers';
         icon = Icons.warning_amber_rounded;
         iconColor = AppColors.coral;
@@ -707,8 +707,8 @@ class DriverStatusScreen extends StatelessWidget {
         onPrimary = () => Navigator.of(context).pop();
         break;
       case DriverStatusType.expired:
-        title = isAr ? 'رخصتك انتهت' : 'License Expired';
-        subtitle = isAr ? 'ارفع رخصة جديدة عشان تقدر تنشر رحلات.' : 'Please upload a renewed valid license to continue offering rides.';
+        title = isAr ? 'انتهت صلاحية رخصتك' : 'License Expired';
+        subtitle = isAr ? 'ارفع رخصة سارية لتتمكن من نشر الرحلات.' : 'Please upload a renewed valid license to continue offering rides.';
         reason = isAr ? 'انتهت في: 1 أكتوبر 2026' : 'Expired on: Oct 1, 2026';
         icon = Icons.event_busy_rounded;
         iconColor = AppColors.coral;

@@ -9,6 +9,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_onboarding_shell.dart';
 import '../../state/auth_provider.dart';
 import 'email_input_screen.dart';
 import 'otp_verification_screen.dart';
@@ -26,7 +27,7 @@ class PhoneInputScreen extends StatefulWidget {
 }
 
 class _PhoneInputScreenState extends State<PhoneInputScreen> {
-  final TextEditingController _phoneController = TextEditingController(text: '01012345678');
+  final TextEditingController _phoneController = TextEditingController(text: '55123456');
   final FocusNode _focusNode = FocusNode();
   String? _errorText;
   bool _isFocused = false;
@@ -59,10 +60,10 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
 
   void _handleSubmit(bool isAr) async {
     final phone = _phoneController.text.trim();
-    final validationError = AuthProvider.validateEgyptianPhone(phone);
+    final validationError = AuthProvider.validateQatarPhone(phone);
     if (validationError != null) {
       setState(() {
-        _errorText = isAr ? validationError : 'Phone must be 11 digits starting with 010, 011, 012, or 015';
+        _errorText = isAr ? validationError : 'Phone must be 8 digits starting with 3, 5, 6, or 7';
       });
       return;
     }
@@ -75,7 +76,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     final success = await auth.sendOtp(phone);
     if (success && mounted) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const OtpVerificationScreen()),
+        MashwarPageRoute(builder: (_) => const OtpVerificationScreen()),
       );
     }
   }
@@ -98,15 +99,18 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
         ),
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: _buildSingleLayout(context, auth, isAr, hasError, constraints),
-              ),
-            );
-          },
+        child: MashwarOnboardingShell(
+          isAr: isAr,
+          showcaseBadge: isAr ? 'التحقق الفوري' : 'Instant SMS',
+          showcaseTitle: isAr ? 'توثيق سريع برقمك القطري +974' : 'Fast +974 Qatar phone verification',
+          showcaseSubtitle: isAr
+              ? 'يدعم جميع شبكات Ooredoo و Vodafone Qatar لإرسال رمز التحقق خلال ثوانٍ.'
+              : 'Instant OTP delivery across Ooredoo & Vodafone Qatar networks.',
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return _buildSingleLayout(context, auth, isAr, hasError, constraints);
+            },
+          ),
         ),
       ),
     );
@@ -136,11 +140,18 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top: Brand Identity Header with Step Indicator
+                  // Top: Onboarding Progress + Brand Identity Header with Step Indicator
+                  MashwarOnboardingStepBar(
+                    currentStep: 1,
+                    totalSteps: 4,
+                    isAr: isAr,
+                    stepTitle: isAr ? 'تأكيد الجوال' : 'Phone Verification',
+                  ),
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const BrandLogo(fontSize: 28),
+                      const BrandLogo(fontSize: 26),
                       _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
                     ],
                   ),
@@ -148,19 +159,19 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
 
                   // Title & Subtitle
                   Text(
-                    isAr ? 'أدخل رقم موبايلك' : 'Enter your mobile number',
+                    isAr ? 'أدخل رقم جوالك' : 'Enter your mobile number',
                     style: AppTypography.largeTitle().copyWith(fontSize: 24),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    isAr ? 'هنبعتلك كود تأكيد عبر رسالة SMS' : 'We will send you a verification code via SMS',
+                    isAr ? 'سنرسل لك رمز تحقق عبر رسالة SMS' : 'We will send you a verification code via SMS',
                     style: AppTypography.bodySecondary().copyWith(fontSize: 13),
                   ),
                   const SizedBox(height: 16),
 
                   // Input Label
                   Text(
-                    isAr ? 'رقم الهاتف المحمول' : 'Mobile Phone Number',
+                    isAr ? 'رقم الجوال' : 'Mobile Phone Number',
                     style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 8),
@@ -183,7 +194,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
               children: [
                 // Bottom Actions: Submit Button
                 MashwarButton(
-                  text: isAr ? 'إرسال الكود' : 'Send Code',
+                  text: isAr ? 'إرسال الرمز' : 'Send Code',
                   isLoading: auth.isLoading,
                   onPressed: () => _handleSubmit(isAr),
                 ),
@@ -260,7 +271,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
         textDirection: TextDirection.ltr,
         child: Row(
           children: [
-            // Clean Egyptian Country Code Badge (+20 EG) always on left in LTR phone format
+            // Clean Qatari Country Code Badge (+974 QA) always on left in LTR phone format
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
@@ -272,7 +283,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'EG',
+                    'QA',
                     style: AppTypography.label(color: AppColors.teal).copyWith(
                       fontWeight: FontWeight.w800,
                       fontSize: 12,
@@ -280,7 +291,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   ),
                   const SizedBox(width: 5),
                   Text(
-                    '+20',
+                    '+974',
                     style: AppTypography.body(color: AppColors.navy).copyWith(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -304,7 +315,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                 controller: _phoneController,
                 focusNode: _focusNode,
                 keyboardType: TextInputType.phone,
-                maxLength: 11,
+                maxLength: 8,
                 style: AppTypography.body(color: AppColors.navy).copyWith(
                   fontSize: 17,
                   fontWeight: FontWeight.w700,
@@ -312,7 +323,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                 ),
                 decoration: InputDecoration(
                   counterText: '',
-                  hintText: '01XXXXXXXXX',
+                  hintText: '55XXXXXX',
                   hintStyle: AppTypography.bodySecondary(
                     color: AppColors.textSecondary.withValues(alpha: 0.7),
                   ).copyWith(fontSize: 15, letterSpacing: 1.0),
@@ -381,8 +392,8 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
         Expanded(
           child: Text(
             isAr
-                ? 'رقم مصري يبدأ بـ 010 أو 011 أو 012 أو 015'
-                : 'Egyptian phone starting with 010, 011, 012, or 015',
+                ? 'رقم جوال قطري (Ooredoo / Vodafone) يبدأ بـ 3 أو 5 أو 6 أو 7'
+                : 'Qatar mobile (Ooredoo / Vodafone) starting with 3, 5, 6, or 7',
             style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 12),
           ),
         ),

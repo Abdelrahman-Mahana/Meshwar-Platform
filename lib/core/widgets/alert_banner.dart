@@ -68,10 +68,10 @@ class AlertBanner extends StatelessWidget {
     }
 
     String displayMessage = message;
-    if (displayMessage.contains('لقينا رحلة مطابقة لتنبيهك')) {
+    if (displayMessage.contains('لقينا رحلة مطابقة لتنبيهك') || displayMessage.contains('توفرت رحلة مطابقة لتنبيهك')) {
       displayMessage = isAr
-          ? 'لقينا رحلة مطابقة لتنبيهك: كفر الشيخ ← القاهرة\n7:30 ص'
-          : 'Found a matching ride for your alert: Kafr El-Sheikh → Cairo\n7:30 AM';
+          ? 'توفرت رحلة مطابقة لتنبيهك: الدوحة ← الخور\n7:30 ص'
+          : 'Found a matching ride for your alert: Doha → Al Khor\n7:30 AM';
     } else if (displayMessage.contains('أنت في وضع غير متصل')) {
       displayMessage = isAr
           ? 'أنت في وضع غير متصل. النتائج المعروضة من آخر تحديث'

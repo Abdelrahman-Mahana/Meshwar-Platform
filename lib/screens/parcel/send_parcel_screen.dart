@@ -25,11 +25,11 @@ class SendParcelScreen extends StatefulWidget {
 }
 
 class _SendParcelScreenState extends State<SendParcelScreen> {
-  final TextEditingController _descController = TextEditingController(text: 'هدوم في كيس');
+  final TextEditingController _descController = TextEditingController(text: 'ملابس وأغراض شخصية');
   final TextEditingController _weightController = TextEditingController(text: '5');
   final TextEditingController _valController = TextEditingController(text: '300');
-  final TextEditingController _receiverNameController = TextEditingController(text: 'سارة أحمد');
-  final TextEditingController _receiverPhoneController = TextEditingController(text: '01155512345');
+  final TextEditingController _receiverNameController = TextEditingController(text: 'نورة الكواري');
+  final TextEditingController _receiverPhoneController = TextEditingController(text: '66123456');
   ParcelSize _selectedSize = ParcelSize.small;
   bool _agreedProhibited = true;
   String? _descError;
@@ -55,7 +55,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
     final receiverName = _receiverNameController.text.trim();
     final receiverPhone = _receiverPhoneController.text.trim();
 
-    final phoneError = AuthProvider.validateEgyptianPhone(receiverPhone);
+    final phoneError = AuthProvider.validateQatarPhone(receiverPhone);
 
     setState(() {
       _descError = desc.isEmpty ? (isAr ? 'يرجى كتابة وصف أو محتوى الطرد' : 'Please enter parcel description') : null;
@@ -67,13 +67,13 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
       _valueError = value <= 0
           ? (isAr ? 'يرجى إدخال القيمة التقديرية' : 'Please enter estimated value')
           : value > 2000
-              ? (isAr ? 'القيمة القصوى المصرّح بها 2000 ج' : 'Maximum allowed value is 2000 EGP')
+              ? (isAr ? 'القيمة القصوى المصرّح بها 2000 ر.ق' : 'Maximum allowed value is 2000 QAR')
               : null;
       _receiverNameError = receiverName.length < 2
           ? (isAr ? 'يرجى إدخال اسم المستلم' : 'Please enter receiver name')
           : null;
       _receiverPhoneError = phoneError != null
-          ? (isAr ? phoneError : 'Phone must be 11 digits starting with 010, 011, 012, or 015')
+          ? (isAr ? phoneError : 'Phone must be 8 digits starting with 3, 5, 6, or 7')
           : null;
     });
 
@@ -185,8 +185,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                             const SizedBox(height: 8),
                             Text(
                               isAr
-                                  ? 'لا يُسلّم الطرد للمستلم النهائي إلا بعد مطابقة كود الاستلام السري (OTP). طردك مؤمن حتى 2000 ج.م.'
-                                  : 'Parcels are only handed over upon matching the secret OTP. Insured up to 2000 EGP.',
+                                  ? 'لا يُسلّم الطرد للمستلم النهائي إلا بعد مطابقة رمز الاستلام السري (OTP). طردك مؤمن حتى 2000 ر.ق.'
+                                  : 'Parcels are only handed over upon matching the secret OTP. Insured up to 2000 QAR.',
                               style: AppTypography.bodySecondary().copyWith(fontSize: 12),
                             ),
                           ],
@@ -312,7 +312,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    '${widget.ride.parcelPrice} ${isAr ? "ج" : "EGP"}',
+                    '${widget.ride.parcelPrice} ${isAr ? "ر.ق" : "QAR"}',
                     style: AppTypography.title().copyWith(color: AppColors.teal, fontSize: 16),
                   ),
                 ),
@@ -409,7 +409,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
             Expanded(
               child: MashwarTextField(
                 controller: _valController,
-                label: isAr ? 'القيمة التقديرية (ج)' : 'Value (EGP)',
+                label: isAr ? 'القيمة التقديرية (ر.ق)' : 'Value (QAR)',
                 hint: '300',
                 keyboardType: TextInputType.number,
                 errorText: _valueError,
@@ -436,8 +436,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
         const SizedBox(height: AppDimens.space12),
         MashwarTextField(
           controller: _receiverPhoneController,
-          label: isAr ? 'رقم موبايل المستلم' : 'Receiver Phone',
-          hint: '01XXXXXXXXX',
+          label: isAr ? 'رقم جوال المستلم' : 'Receiver Phone',
+          hint: '66XXXXXX',
           keyboardType: TextInputType.phone,
           errorText: _receiverPhoneError,
         ),

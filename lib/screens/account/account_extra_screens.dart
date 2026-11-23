@@ -108,7 +108,7 @@ class UserProfileScreen extends StatelessWidget {
                       MashwarBadge(
                         type: isIdVerified ? BadgeType.verified : BadgeType.pending,
                         customLabel: isIdVerified
-                            ? (isAr ? 'موثق بالرقم القومي' : 'National ID Verified')
+                            ? (isAr ? 'موثق بالبطاقة القطرية' : 'Qatar ID Verified')
                             : (isAr ? 'غير موثق' : 'Unverified'),
                       ),
                       if (user.governorate != null)
@@ -227,7 +227,7 @@ class UserProfileScreen extends StatelessWidget {
                       const Divider(height: 1, color: Color(0xFFF1F1F4)),
                       _buildActionTile(
                         icon: Icons.badge_outlined,
-                        title: isAr ? 'توثيق بطاقة الرقم القومي' : 'National ID Verification',
+                        title: isAr ? 'توثيق البطاقة الشخصية القطرية (QID)' : 'Qatar ID (QID) Verification',
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const IdVerificationScreen(isOnboarding: false)),
@@ -248,7 +248,7 @@ class UserProfileScreen extends StatelessWidget {
                       _buildActionTile(
                         icon: Icons.account_balance_wallet_outlined,
                         title: isAr ? 'محفظة مشوار' : 'Wallet',
-                        trailingText: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
+                        trailingText: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}',
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const WalletScreen()),
@@ -416,8 +416,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthProvider>().user;
     _nameController = TextEditingController(text: user.fullName);
     _phoneController = TextEditingController(text: user.phone);
-    _govController = TextEditingController(text: user.governorate ?? 'كفر الشيخ');
-    _cityController = TextEditingController(text: user.city ?? 'كفر الشيخ');
+    _govController = TextEditingController(text: user.governorate ?? 'بلدية الدوحة');
+    _cityController = TextEditingController(text: user.city ?? 'الدوحة');
     _occupationController = TextEditingController(text: user.occupation ?? 'مهندس برمجيات');
   }
 
@@ -522,7 +522,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: AppDimens.space16),
 
-              Text(isAr ? 'رقم الموبايل' : 'Mobile Number', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+              Text(isAr ? 'رقم الجوال' : 'Mobile Number', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               TextField(
                 controller: _phoneController,
@@ -536,7 +536,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 6),
               Text(
-                isAr ? 'تغيير الرقم محتاج كود تأكيد جديد.' : 'Changing mobile number requires SMS OTP verification.',
+                isAr ? 'يتطلب تغيير رقم الجوال رمز تأكيد جديد.' : 'Changing mobile number requires SMS OTP verification.',
                 style: AppTypography.label(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppDimens.space16),
@@ -547,7 +547,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(isAr ? 'المحافظة' : 'Governorate', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                        Text(isAr ? 'البلدية / المنطقة' : 'Municipality', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 6),
                         TextField(
                           controller: _govController,
@@ -621,16 +621,16 @@ class HelpSupportScreen extends StatelessWidget {
 
     final faqs = isAr
         ? [
-            {'q': 'إزاي أحجز كرسي؟', 'a': 'ابحث عن خط سيرك، اختار السائق الأنسب، واضغط احجز كرسي. السائق عنده 30 دقيقة للموافقة.'},
-            {'q': 'إزاي أبعت طرد؟', 'a': 'اختار خيار طرود، حدد الحجم والوزن وموقع الاستلام والتسليم، وادفع للمسافر عند التسليم.'},
-            {'q': 'لو السائق ما حضرش؟', 'a': 'تقدر تسجل "لم يحضر" بعد 15 دقيقة من الموعد، وهيتم إلغاء الحجز واسترداد حقك فوراً.'},
-            {'q': 'إزاي أوثق حسابي كسائق؟', 'a': 'ادخل على حسابك واضغط توثيق السائق، ارفع بطاقة الرقم القومي ورخص القيادة والسيارة.'},
+            {'q': 'كيف أحجز مقعداً؟', 'a': 'ابحث عن خط سيرك، اختر السائق الأنسب، واضغط حجز مقعد. لدى السائق 30 دقيقة للموافقة.'},
+            {'q': 'كيف أرسل طرداً؟', 'a': 'اختر خدمة الطرود، حدد الحجم والوزن وموقع الاستلام والتسليم، وأتمم التسليم برمز التحقق OTP.'},
+            {'q': 'ماذا لو لم يحضر السائق؟', 'a': 'يمكنك تسجيل "لم يحضر" بعد 15 دقيقة من الموعد، وسيتم إلغاء الحجز واسترداد المبلغ فوراً.'},
+            {'q': 'كيف أوثق حسابي كسائق؟', 'a': 'ادخل إلى حسابك واضغط توثيق السائق، ثم ارفع البطاقة الشخصية القطرية (QID) ورخص القيادة والمركبة.'},
           ]
         : [
             {'q': 'How do I book a seat?', 'a': 'Search your corridor, pick a verified driver, and request seat. Driver has 30 mins to confirm.'},
             {'q': 'How do I send a parcel?', 'a': 'Toggle parcels mode, select package size & weight, and hand over to verified driver with OTP.'},
             {'q': 'What if the driver does not show up?', 'a': 'Mark as "No Show" 15 mins past schedule. Booking is cancelled with zero penalty.'},
-            {'q': 'How do I verify as a driver?', 'a': 'Go to account, select driver verification, and upload Egyptian ID and valid licenses.'},
+            {'q': 'How do I verify as a driver?', 'a': 'Go to account, select driver verification, and upload your Qatar ID (QID) and valid licenses.'},
           ];
 
     return Scaffold(
@@ -686,7 +686,7 @@ class HelpSupportScreen extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              isAr ? 'جاري فتح دعم مشوار عبر واتساب (+201000019999)...' : 'Opening MASHWAR WhatsApp Support...',
+                              isAr ? 'جاري فتح دعم مشوار عبر واتساب (+974 4400 9999)...' : 'Opening MASHWAR Qatar WhatsApp Support...',
                             ),
                             backgroundColor: AppColors.teal,
                           ),
@@ -802,7 +802,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(isAr ? 'الرحلة' : 'Trip', style: AppTypography.bodySecondary()),
-                        const Text('كفر الشيخ ← القاهرة', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text('الدوحة ← الخور', style: TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const Divider(height: 20, color: Color(0xFFF1F1F4)),
@@ -871,8 +871,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                   const SizedBox(height: 16),
                   Text(
                     isAr
-                        ? 'سيتم حذف اسمك، صورة حسابك، وبياناتك الشخصية نهائياً. يتم الاحتفاظ بسجلات المعاملات القانونية وفقاً للقانون المصري رقم 151 لسنة 2020.'
-                        : 'Your personal data, name, and profile will be permanently deleted. Transaction audit records are retained per Egyptian Law #151/2020.',
+                        ? 'سيتم حذف اسمك، صورة حسابك، وبياناتك الشخصية نهائياً. يتم الاحتفاظ بسجلات المعاملات القانونية وفقاً للقانون القطري لحماية خصوصية البيانات رقم 13 لسنة 2016.'
+                        : 'Your personal data, name, and profile will be permanently deleted. Transaction audit records are retained per Qatar Personal Data Privacy Law No. 13 of 2016.',
                     style: AppTypography.bodySecondary().copyWith(fontSize: 13),
                   ),
                   const SizedBox(height: 24),
@@ -944,14 +944,14 @@ class NotificationsCenterScreen extends StatelessWidget {
 
     final notifications = [
       {
-        'title': isAr ? 'وافق محمد على حجزك' : 'Mohamed accepted your booking',
+        'title': isAr ? 'وافق جاسم على حجزك' : 'Jassim accepted your booking',
         'sub': isAr ? 'الجمعة 6 نوفمبر، 7:30 ص' : 'Fri Nov 6, 7:30 AM',
-        'time': isAr ? 'دلوقتي' : 'Just now',
+        'time': isAr ? 'الآن' : 'Just now',
         'isNew': true,
       },
       {
         'title': isAr ? 'طردك وصل' : 'Your parcel has arrived',
-        'sub': isAr ? 'تم التسليم لسارة' : 'Delivered safely to Sara',
+        'sub': isAr ? 'تم التسليم إلى نورة' : 'Delivered safely to Noura',
         'time': isAr ? 'أمس' : 'Yesterday',
         'isNew': false,
       },

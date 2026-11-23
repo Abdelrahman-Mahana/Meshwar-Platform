@@ -180,7 +180,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                                   style: AppTypography.title().copyWith(fontSize: 16),
                                 ),
                                 Text(
-                                  '${widget.ride.pricePerSeat} ${isAr ? "ج.م" : "EGP"}',
+                                  '${widget.ride.pricePerSeat} ${isAr ? "ر.ق" : "QAR"}',
                                   style: AppTypography.title(color: AppColors.teal).copyWith(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 22,
@@ -296,7 +296,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
       return Padding(
         padding: const EdgeInsets.only(bottom: AppDimens.space12),
         child: AlertBanner(
-          message: isAr ? 'الرحلة اكتملت. مفيش كراسي فاضية' : 'This ride is full. No available seats',
+          message: isAr ? 'الرحلة مكتملة. لا توجد مقاعد شاغرة' : 'This ride is full. No available seats',
           type: AlertBannerType.warning,
         ),
       );
@@ -304,7 +304,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
       return Padding(
         padding: const EdgeInsets.only(bottom: AppDimens.space12),
         child: AlertBanner(
-          message: isAr ? 'السائق لغى الرحلة' : 'The driver cancelled this ride',
+          message: isAr ? 'قام السائق بإلغاء الرحلة' : 'The driver cancelled this ride',
           type: AlertBannerType.danger,
         ),
       );
@@ -312,7 +312,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
       return Padding(
         padding: const EdgeInsets.only(bottom: AppDimens.space12),
         child: AlertBanner(
-          message: isAr ? 'الرحلة دي للسيدات فقط' : 'This ride is for female passengers only',
+          message: isAr ? 'هذه الرحلة مخصصة للسيدات فقط' : 'This ride is for female passengers only',
           type: AlertBannerType.info,
         ),
       );
@@ -494,7 +494,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                       children: [
                         Text(isAr ? 'الطرود' : 'Parcels', style: AppTypography.label(color: AppColors.textSecondary)),
                         Text(
-                          isAr ? 'تقبل: صغير ${widget.ride.parcelPrice} ج' : 'Accepts: Small ${widget.ride.parcelPrice} EGP',
+                          isAr ? 'تقبل: صغير ${widget.ride.parcelPrice} ر.ق' : 'Accepts: Small ${widget.ride.parcelPrice} QAR',
                           style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
                         ),
                       ],
@@ -511,7 +511,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                       );
                     },
                     child: Text(
-                      isAr ? 'ابعت طرد' : 'Send Parcel',
+                      isAr ? 'إرسال طرد' : 'Send Parcel',
                       style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w800),
                     ),
                   ),
@@ -537,10 +537,10 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           TextButton(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(isAr ? 'تم تفعيل التنبيه لو اتفضى كرسي' : 'Alert enabled for freed seats')),
+                SnackBar(content: Text(isAr ? 'تم تفعيل التنبيه عند توفر مقعد' : 'Alert enabled for freed seats')),
               );
             },
-            child: Text(isAr ? 'نبهني لو اتفضى كرسي' : 'Alert me if a seat opens', style: AppTypography.bodySecondary(color: AppColors.teal)),
+            child: Text(isAr ? 'نبّهني عند توفر مقعد' : 'Alert me if a seat opens', style: AppTypography.bodySecondary(color: AppColors.teal)),
           ),
         ],
       );
@@ -548,7 +548,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
 
     if (_state == RideDetailsState.cancelled) {
       return MashwarButton(
-        text: isAr ? 'ابحث عن رحلة تانية' : 'Find another ride',
+        text: isAr ? 'ابحث عن رحلة أخرى' : 'Find another ride',
         onPressed: () => Navigator.of(context).pop(),
       );
     }
@@ -564,7 +564,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(isAr ? 'شوف رحلات تانية' : 'Browse other rides', style: AppTypography.bodySecondary(color: AppColors.navy)),
+            child: Text(isAr ? 'تصفح رحلات أخرى' : 'Browse other rides', style: AppTypography.bodySecondary(color: AppColors.navy)),
           ),
         ],
       );
@@ -573,7 +573,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     // Default Available state -> opens BookingReviewScreen (Page 25)
     return rides.rideMode == RideMode.seats
         ? MashwarButton(
-            text: isAr ? 'احجز كرسي · ${widget.ride.pricePerSeat} ج' : 'Book Seat · ${widget.ride.pricePerSeat} EGP',
+            text: isAr ? 'احجز مقعداً · ${widget.ride.pricePerSeat} ر.ق' : 'Book Seat · ${widget.ride.pricePerSeat} QAR',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => BookingReviewScreen(ride: widget.ride)),
@@ -581,7 +581,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
             },
           )
         : MashwarButton(
-            text: isAr ? 'ابعت طرد · ${widget.ride.parcelPrice} ج' : 'Send Parcel · ${widget.ride.parcelPrice} EGP',
+            text: isAr ? 'أرسل طرداً · ${widget.ride.parcelPrice} ر.ق' : 'Send Parcel · ${widget.ride.parcelPrice} QAR',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => SendParcelScreen(ride: widget.ride)),
@@ -619,7 +619,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               Text(isAr ? 'تعذر تحميل الرحلة' : 'Could not load ride', style: AppTypography.largeTitle()),
               const SizedBox(height: AppDimens.space8),
               Text(
-                isAr ? 'الرحلة دي ممكن تكون اتمسحت أو اتلغت من السائق' : 'This ride may have been deleted or cancelled by driver',
+                isAr ? 'قد تكون هذه الرحلة محذوفة أو ملغاة من قِبل الكابتن' : 'This ride may have been deleted or cancelled by driver',
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySecondary(),
               ),
@@ -703,7 +703,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               Expanded(
                 child: _buildSeatPill(
                   title: bookedSeats >= 1
-                      ? (isAr ? 'سارة م.' : 'Sara M.')
+                      ? (isAr ? 'نورة م.' : 'Noura M.')
                       : (isAr ? 'مقعد متاح' : 'Open Seat'),
                   subtitle: bookedSeats >= 1
                       ? (isAr ? 'طالبة · موثقة' : 'Student · Verified')
@@ -716,7 +716,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               Expanded(
                 child: _buildSeatPill(
                   title: bookedSeats >= 2
-                      ? (isLadies ? (isAr ? 'منى ح.' : 'Mona H.') : (isAr ? 'أحمد ك.' : 'Ahmed K.'))
+                      ? (isLadies ? (isAr ? 'آمنة ح.' : 'Amna H.') : (isAr ? 'حمد ك.' : 'Hamad K.'))
                       : (isAr ? 'مقعد متاح' : 'Open Seat'),
                   subtitle: bookedSeats >= 2
                       ? (isLadies

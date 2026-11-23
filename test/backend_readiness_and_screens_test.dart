@@ -204,8 +204,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('Demo'), findsNothing);
       expect(find.textContaining('ديمو'), findsNothing);
-      expect(find.text('موثق بالرقم القومي'), findsNothing);
-      expect(find.text('تشارك مقاعد المحافظات'), findsNothing);
+      expect(find.text('موثق بالبطاقة القطرية'), findsNothing);
+      expect(find.text('تشارك مقاعد مناطق قطر'), findsNothing);
       expect(find.text('شحن طرود بالكود'), findsNothing);
 
       // 2. BoardScreen has single plus icon + 'انشر إعلان' label (not '+ انشر إعلان')
@@ -246,14 +246,14 @@ void main() {
       await tester.pumpWidget(wrapWithProviders(const WalletScreen(), settings: settings));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.text('+200 ج.م'), findsOneWidget);
-      expect(find.text('-65 ج.م'), findsOneWidget);
+      expect(find.text('+200 ر.ق'), findsOneWidget);
+      expect(find.text('-35 ر.ق'), findsOneWidget);
 
       settings.setLocale(const Locale('en', 'US'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.text('+200 EGP'), findsOneWidget);
-      expect(find.text('-65 EGP'), findsOneWidget);
+      expect(find.text('+200 QAR'), findsOneWidget);
+      expect(find.text('-35 QAR'), findsOneWidget);
 
       // 4. DriverOnboardingScreen, DriverVerificationStepsScreen, UserProfileScreen, ProhibitedItemsSheet, ShareTripSheet
       await tester.pumpWidget(wrapWithProviders(const DriverOnboardingScreen(), settings: settings));
@@ -315,10 +315,10 @@ void main() {
       expect(tester.takeException(), isNull);
 
       // Select errand service category
-      await tester.tap(find.text('قضاء مصالح رسمية'));
+      await tester.tap(find.text('إنجاز معاملات رسمية'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      expect(find.text('تفاصيل المصلحة والأوراق الرسمية'), findsOneWidget);
+      expect(find.text('تفاصيل المعاملة والأوراق الرسمية'), findsOneWidget);
 
       // Select logistics & cargo category
       await tester.tap(find.text('لوجستيات وتوريد'));

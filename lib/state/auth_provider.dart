@@ -16,7 +16,7 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.authenticated; // Default to authenticated for instant prototype exploration
   UserModel _user = MockData.currentUser;
   
-  String _phoneNumber = '01012345678';
+  String _phoneNumber = '55123456';
   String? _email;
   String _authMethod = 'phone'; // 'phone', 'email', 'google'
   final String _enteredOtp = '';
@@ -49,14 +49,14 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Egyptian phone number validator: 11 digits starting with 010, 011, 012, or 015
-  static String? validateEgyptianPhone(String? value) {
+  // Qatar mobile number validator: 8 digits starting with 3, 5, 6, or 7 (Ooredoo & Vodafone Qatar)
+  static String? validateQatarPhone(String? value) {
     if (value == null || value.isEmpty) {
-      return 'أدخل رقم موبايلك';
+      return 'أدخل رقم الجوال';
     }
-    final regex = RegExp(r'^(010|011|012|015)[0-9]{8}$');
+    final regex = RegExp(r'^[3567][0-9]{7}$');
     if (!regex.hasMatch(value)) {
-      return 'الرقم لازم يكون 11 رقم ويبدأ بـ 010 أو 011 أو 012 أو 015';
+      return 'الرقم يجب أن يتكون من 8 أرقام ويبدأ بـ 3 أو 5 أو 6 أو 7';
     }
     return null;
   }
@@ -275,21 +275,21 @@ class AuthProvider extends ChangeNotifier {
 
   final List<Map<String, dynamic>> _walletTransactions = [
     {
-      'titleAr': 'شحن رصيد - فودافون كاش',
-      'titleEn': 'Top-up - Vodafone Cash',
+      'titleAr': 'شحن رصيد - خدمة فوراً (Fawran)',
+      'titleEn': 'Top-up - Fawran Instant Transfer',
       'date': 'أمس، 4:30 م',
       'dateEn': 'Yesterday, 4:30 PM',
-      'amount': '+200 ج.م',
+      'amount': '+200 ر.ق',
       'amountValue': 200.0,
       'isPositive': true,
     },
     {
-      'titleAr': 'رحلة كفر الشيخ ← القاهرة',
-      'titleEn': 'Ride Kafr El-Sheikh -> Cairo',
+      'titleAr': 'رحلة الدوحة ← الخور',
+      'titleEn': 'Ride Doha → Al Khor',
       'date': '2 نوفمبر، 7:30 ص',
       'dateEn': 'Nov 2, 7:30 AM',
-      'amount': '-65 ج.م',
-      'amountValue': -65.0,
+      'amount': '-35 ر.ق',
+      'amountValue': -35.0,
       'isPositive': false,
     },
     {
@@ -297,17 +297,17 @@ class AuthProvider extends ChangeNotifier {
       'titleEn': 'Parcel Insurance Refund #4810',
       'date': '28 أكتوبر',
       'dateEn': 'Oct 28',
-      'amount': '+300 ج.م',
-      'amountValue': 300.0,
+      'amount': '+150 ر.ق',
+      'amountValue': 150.0,
       'isPositive': true,
     },
     {
-      'titleAr': 'إرسال طرد طنطا ← الإسكندرية',
-      'titleEn': 'Parcel Tanta -> Alexandria',
+      'titleAr': 'إرسال طرد الدوحة ← الوكرة',
+      'titleEn': 'Parcel Doha → Al Wakrah',
       'date': '22 أكتوبر',
       'dateEn': 'Oct 22',
-      'amount': '-45 ج.م',
-      'amountValue': -45.0,
+      'amount': '-25 ر.ق',
+      'amountValue': -25.0,
       'isPositive': false,
     },
   ];
@@ -325,7 +325,7 @@ class AuthProvider extends ChangeNotifier {
       'titleEn': 'Top-up - $methodEn',
       'date': 'الآن',
       'dateEn': 'Just now',
-      'amount': '+${amount.toStringAsFixed(0)} ج.م',
+      'amount': '+${amount.toStringAsFixed(0)} ر.ق',
       'amountValue': amount,
       'isPositive': true,
     });
@@ -346,7 +346,7 @@ class AuthProvider extends ChangeNotifier {
       'titleEn': 'Withdrawal to $destinationEn',
       'date': 'الآن',
       'dateEn': 'Just now',
-      'amount': '-${amount.toStringAsFixed(0)} ج.م',
+      'amount': '-${amount.toStringAsFixed(0)} ر.ق',
       'amountValue': -amount,
       'isPositive': false,
     });
@@ -355,10 +355,10 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Driver Vehicle State
-  String _driverCarModel = 'هيونداي إلنترا 2022';
+  String _driverCarModel = 'تويوتا كامري 2024';
   String _driverCarColor = 'أبيض لؤلؤي';
-  String _driverPlateLetters = 'س ق ر';
-  String _driverPlateNumbers = '1942';
+  String _driverPlateLetters = 'قطر';
+  String _driverPlateNumbers = '482910';
   int _driverSeatsCount = 3;
   bool _driverHasAC = true;
   bool _driverLargeTrunk = true;

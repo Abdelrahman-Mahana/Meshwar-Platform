@@ -63,7 +63,7 @@ class _BoardScreenState extends State<BoardScreen> {
                 ...options.map((km) {
                   final isSelected = board.radiusKm == km;
                   final label = km >= 500
-                      ? (isAr ? 'كل المحافظات (مصر بالكامل)' : 'All Governorates (All Egypt)')
+                      ? (isAr ? 'كل المناطق (قطر بالكامل)' : 'All Areas (All Qatar)')
                       : (isAr ? 'في نطاق $km كم من موقعك' : 'Within $km km from your location');
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8),
@@ -115,14 +115,14 @@ class _BoardScreenState extends State<BoardScreen> {
         ),
         _CategoryFilterOption(
           type: BoardAdType.rideOffer,
-          label: isAr ? 'سفر بين المحافظات' : 'Inter-city Rides',
+          label: isAr ? 'سفر بين المناطق' : 'Inter-city Rides',
           assetPath: 'assets/images/service_ride.jpg',
           icon: Icons.directions_car_rounded,
           accentColor: AppColors.navy,
         ),
         _CategoryFilterOption(
           type: BoardAdType.errandService,
-          label: isAr ? 'قضاء مصالح' : 'Errands',
+          label: isAr ? 'إنجاز معاملات' : 'Errands',
           assetPath: 'assets/images/service_errand.jpg',
           icon: Icons.shopping_bag_rounded,
           accentColor: const Color(0xFF6A1B9A),
@@ -228,7 +228,7 @@ class _BoardScreenState extends State<BoardScreen> {
               ],
             ),
             Text(
-              isAr ? 'سوق المشاوير، الخدمات اليومية، والسفر التشاركي' : 'Marketplace for errands, services & rides',
+              isAr ? 'سوق المشاوير والخدمات اليومية' : 'Marketplace for rides & services',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: AppTypography.label(color: AppColors.textSecondary),
@@ -340,7 +340,7 @@ class _BoardScreenState extends State<BoardScreen> {
                                 onChanged: board.setSearchQuery,
                                 decoration: InputDecoration(
                                   hintText: isAr
-                                      ? 'ابحث بالمحافظة أو المدينة (مثال: القاهرة، طنطا)...'
+                                      ? 'ابحث بالمنطقة أو المدينة (مثال: الدوحة، الخور، لوسيل)...'
                                       : 'Search by city or route...',
                                   prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.navy),
                                   suffixIcon: board.searchQuery.isNotEmpty
@@ -375,6 +375,56 @@ class _BoardScreenState extends State<BoardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // Live Requester <-> Provider Matchmaking Strip
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(horizontalPad, 8, horizontalPad, 2),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: AppColors.sand,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+                              ),
+                              child: Row(
+                                children: [
+                                  const MashwarLivePulseDot(color: AppColors.teal, size: 7.5),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      isAr
+                                          ? 'توصيل فوري بين صاحب الخدمة والمنفّذ في كل بلديات قطر'
+                                          : 'Direct matchmaking between requesters & Qatar captains',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.navy,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      '${ads.length}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.teal,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                           if (isWide)
                             Padding(
                               padding: EdgeInsets.fromLTRB(horizontalPad, 10, horizontalPad, 8),
@@ -472,7 +522,7 @@ class _BoardScreenState extends State<BoardScreen> {
                                     const SizedBox(height: 14),
                                     Text(
                                       isAr
-                                          ? 'مفيش إعلانات مطابقة حالياً في هذا القسم'
+                                          ? 'لا توجد إعلانات مطابقة حالياً في هذا القسم'
                                           : 'No matching ads currently in this category',
                                       style: AppTypography.bodySecondary(),
                                       textAlign: TextAlign.center,
@@ -688,7 +738,7 @@ class _BoardScreenState extends State<BoardScreen> {
             Flexible(
               child: Text(
                 board.radiusKm >= 500
-                    ? (isAr ? 'معروض في كل المحافظات' : 'Displayed across all governorates')
+                    ? (isAr ? 'معروض في كل المناطق' : 'Displayed across all areas')
                     : (isAr
                         ? 'معروض في نطاق ${board.radiusKm} كم من موقعك'
                         : 'Displayed within ${board.radiusKm} km from your location'),
@@ -743,7 +793,7 @@ class _BoardScreenState extends State<BoardScreen> {
         break;
       case BoardAdType.rideOffer:
         typeColor = AppColors.navy;
-        typeLabel = isAr ? 'عرض سفر (كراسي)' : 'Ride Offer';
+        typeLabel = isAr ? 'عرض سفر (مقاعد)' : 'Ride Offer';
         typeIcon = Icons.directions_car_outlined;
         break;
       case BoardAdType.localTrip:
@@ -753,7 +803,7 @@ class _BoardScreenState extends State<BoardScreen> {
         break;
       case BoardAdType.errandService:
         typeColor = const Color(0xFF6A1B9A);
-        typeLabel = isAr ? 'قضاء مصلحة وأوراق' : 'Inter-city Errand';
+        typeLabel = isAr ? 'إنجاز معاملة وأوراق' : 'Inter-city Errand';
         typeIcon = Icons.description_outlined;
         break;
       case BoardAdType.goodsDelivery:
@@ -790,13 +840,13 @@ class _BoardScreenState extends State<BoardScreen> {
     if (isMyOwnAd) {
       buttonText = isAr ? 'عرض العروض' : 'View Offers';
     } else if (isOfferSent) {
-      buttonText = isAr ? 'عرضك (${ad.myOfferPrice ?? ad.priceOrBudget} ج)' : 'Your Offer (${ad.myOfferPrice ?? ad.priceOrBudget})';
+      buttonText = isAr ? 'عرضك (${ad.myOfferPrice ?? ad.priceOrBudget} ر.ق)' : 'Your Offer (${ad.myOfferPrice ?? ad.priceOrBudget} QAR)';
     } else if (ad.type == BoardAdType.rideOffer) {
-      buttonText = isAr ? 'احجز كرسي / تفاوض' : 'Book Seat / Offer';
+      buttonText = isAr ? 'احجز مقعداً / تفاوض' : 'Book Seat / Offer';
     } else if (ad.type == BoardAdType.localTrip) {
       buttonText = isAr ? 'أقدر أوصلك' : 'I can take it';
     } else if (ad.type == BoardAdType.errandService) {
-      buttonText = isAr ? 'أقضي المصلحة' : 'I can do errand';
+      buttonText = isAr ? 'أنجز المعاملة' : 'I can do errand';
     } else if (ad.type == BoardAdType.goodsDelivery) {
       buttonText = isAr ? 'أنقل البضاعة' : 'I can transport';
     } else if (ad.type == BoardAdType.parcelRequest) {
@@ -977,7 +1027,7 @@ class _BoardScreenState extends State<BoardScreen> {
                       children: [
                         Text(
                           ad.type == BoardAdType.rideOffer
-                              ? (isAr ? 'سعر الكرسي' : 'Seat Price')
+                              ? (isAr ? 'سعر المقعد' : 'Seat Price')
                               : (isAr ? 'السعر المقترح' : 'Suggested Price'),
                           style: AppTypography.label(color: AppColors.textSecondary),
                         ),
@@ -992,7 +1042,7 @@ class _BoardScreenState extends State<BoardScreen> {
                             ),
                             const SizedBox(width: 3),
                             Text(
-                              isAr ? 'ج.م' : 'EGP',
+                              isAr ? 'ر.ق' : 'QAR',
                               style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w800),
                             ),
                           ],

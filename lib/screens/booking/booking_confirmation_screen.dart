@@ -98,7 +98,7 @@ class BookingConfirmationScreen extends StatelessWidget {
                           const Divider(height: 20, color: AppColors.borderDisabled),
                           _buildRow(
                             isAr ? 'الإجمالي' : 'Total Price',
-                            '${ride.pricePerSeat} ${isAr ? "ج نقداً" : "EGP Cash"}',
+                            '${ride.pricePerSeat} ${isAr ? "ر.ق نقداً" : "QAR Cash"}',
                             isBold: true,
                           ),
                         ],

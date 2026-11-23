@@ -52,9 +52,9 @@ class SettingsProvider extends ChangeNotifier with WidgetsBindingObserver {
       final systemLocale = WidgetsBinding.instance.platformDispatcher.locale;
       return systemLocale.languageCode == 'en'
           ? const Locale('en', 'US')
-          : const Locale('ar', 'EG');
+          : const Locale('ar', 'QA');
     } catch (_) {
-      return const Locale('ar', 'EG');
+      return const Locale('ar', 'QA');
     }
   }
 
@@ -62,13 +62,13 @@ class SettingsProvider extends ChangeNotifier with WidgetsBindingObserver {
     try {
       final binding = WidgetsBinding.instance;
       // In Flutter test runners where platformDispatcher defaults to en_US,
-      // maintain Arabic as the default test harness baseline matching MASHWAR Egyptian market
+      // maintain Arabic as the default test harness baseline matching MASHWAR Qatar market
       if (binding.runtimeType.toString().contains('Test')) {
-        return const Locale('ar', 'EG');
+        return const Locale('ar', 'QA');
       }
       return _detectSystemLocaleFromDispatcher();
     } catch (_) {
-      return const Locale('ar', 'EG');
+      return const Locale('ar', 'QA');
     }
   }
 
@@ -110,7 +110,7 @@ class SettingsProvider extends ChangeNotifier with WidgetsBindingObserver {
         MashwarApiClient.instance.setLocale(_locale.languageCode);
       } else if (langCode == 'ar' || langCode == 'en') {
         _isFollowingSystem = false;
-        _locale = Locale(langCode, countryCode ?? (langCode == 'ar' ? 'EG' : 'US'));
+        _locale = Locale(langCode, countryCode ?? (langCode == 'ar' ? 'QA' : 'US'));
         MashwarApiClient.instance.setLocale(_locale.languageCode);
       }
 
@@ -171,7 +171,7 @@ class SettingsProvider extends ChangeNotifier with WidgetsBindingObserver {
     if (isArabic) {
       setLocale(const Locale('en', 'US'));
     } else {
-      setLocale(const Locale('ar', 'EG'));
+      setLocale(const Locale('ar', 'QA'));
     }
   }
 

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512" fill="none">
+  <!-- Top Loop Ring (Crisp White #FFFFFF for Dark/Navy backgrounds) -->
+  <circle cx="50" cy="38" r="24" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <!-- Golden Drop Tail (#F5A524) -->
+  <path d="M 44 55 Q 48 88 36 98 Q 60 90 58 55 Z" fill="#F5A524"/>
+</svg>

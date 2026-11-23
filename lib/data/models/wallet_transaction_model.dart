@@ -10,10 +10,10 @@ enum TransactionType {
 }
 
 enum PaymentMethodType {
-  vodafoneCash,
-  instapay,
-  fawry,
-  creditCard,
+  fawran,
+  qpay,
+  skipCash,
+  applePay,
   cash,
 }
 

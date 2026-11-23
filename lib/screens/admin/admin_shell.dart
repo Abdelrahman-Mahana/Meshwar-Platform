@@ -104,7 +104,7 @@ class _AdminShellState extends State<AdminShell> {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               subtitle: Text(
-                isAr ? 'بحاجة لمراجعة بطاقة الرقم القومي ورخص القيادة' : 'Requires National ID & License checks',
+                isAr ? 'بحاجة لمراجعة البطاقة الشخصية القطرية (QID) ورخص القيادة' : 'Requires Qatar ID (QID) & License checks',
                 style: const TextStyle(fontSize: 11),
               ),
               trailing: const Icon(Icons.chevron_right_rounded),
@@ -519,11 +519,11 @@ class _AdminShellState extends State<AdminShell> {
                     dense: true,
                     leading: const Icon(Icons.language_rounded, color: AppColors.teal, size: 20),
                     title: Text(
-                      isAr ? 'English (US)' : 'العربية (مصر)',
+                      isAr ? 'English (US)' : 'العربية (قطر)',
                       style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                     onTap: () {
-                      settings.setLocale(isAr ? const Locale('en', 'US') : const Locale('ar', 'EG'));
+                      settings.setLocale(isAr ? const Locale('en', 'US') : const Locale('ar', 'QA'));
                     },
                   ),
                   ListTile(
@@ -543,7 +543,7 @@ class _AdminShellState extends State<AdminShell> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'مشوار v2.4.0 · مصر 🇪🇬',
+                    'مشوار v2.4.0 · قطر 🇶🇦',
                     style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10),
                   ),
                 ],

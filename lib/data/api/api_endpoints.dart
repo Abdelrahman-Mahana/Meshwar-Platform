@@ -4,12 +4,12 @@ class ApiEndpoints {
   /// Base URL configured via `--dart-define=API_BASE_URL=...` or defaults to local/staging server.
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.mashwar.eg/api/v1',
+    defaultValue: 'https://api.mashwar.qa/api/v1',
   );
 
   static const String wsBaseUrl = String.fromEnvironment(
     'WS_BASE_URL',
-    defaultValue: 'wss://api.mashwar.eg/ws',
+    defaultValue: 'wss://api.mashwar.qa/ws',
   );
 
   // 1. Auth & Identity Verification
@@ -67,7 +67,7 @@ class ApiEndpoints {
   static const String routeAlerts = '/alerts/routes';
   static String routeAlertItem(String alertId) => '/alerts/routes/$alertId';
 
-  // 7. Wallet & Payments (Vodafone Cash / InstaPay / Fawry / Cards)
+  // 7. Wallet & Payments (Fawran / QPay / SkipCash / Apple Pay / Cash)
   static const String walletOverview = '/wallet';
   static const String walletTransactions = '/wallet/transactions';
   static const String walletDeposit = '/wallet/deposit';

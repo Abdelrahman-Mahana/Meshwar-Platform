@@ -10,6 +10,7 @@ import '../../core/widgets/alert_banner.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_onboarding_shell.dart';
 import '../../state/auth_provider.dart';
 import 'profile_setup_screen.dart';
 
@@ -103,7 +104,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         : await auth.verifyOtp(code);
     if (success && mounted) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
+        MashwarPageRoute(builder: (_) => const ProfileSetupScreen()),
       );
     } else if (mounted) {
       setState(() {
@@ -115,8 +116,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   String _formatMaskedPhone(String? raw) {
-    if (raw == null || raw.isEmpty) return '0101 *** 5678';
+    if (raw == null || raw.isEmpty) return '+974 5512 ****';
     final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length == 8) {
+      final prefix = digits.substring(0, 4);
+      return '+974 $prefix ****';
+    }
     if (digits.length >= 10) {
       final prefix = digits.substring(0, 4);
       final suffix = digits.substring(digits.length - 4);
@@ -144,15 +149,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ),
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 480),
-                child: _buildSingleLayout(context, auth, isAr, targetDestination, isEmailMode, constraints),
-              ),
-            );
-          },
+        child: MashwarOnboardingShell(
+          isAr: isAr,
+          showcaseBadge: isAr ? 'حماية مزدوجة' : 'OTP Protected',
+          showcaseTitle: isAr ? 'تأكيد فوري وآمن لهويتك' : 'Instant & secure verification',
+          showcaseSubtitle: isAr
+              ? 'نحمي كل حساب برمز تحقق لمرة واحدة لضمان موثوقية مجتمع مشوار في قطر.'
+              : 'Every account is secured with one-time OTP verification across Qatar.',
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return _buildSingleLayout(context, auth, isAr, targetDestination, isEmailMode, constraints);
+            },
+          ),
         ),
       ),
     );
@@ -183,11 +191,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top: Brand Identity Header with Step Indicator
+                  // Top: Step Progress + Brand Identity Header with Step Indicator
+                  MashwarOnboardingStepBar(
+                    currentStep: 1,
+                    totalSteps: 4,
+                    isAr: isAr,
+                    stepTitle: isAr ? 'رمز التحقق الآمن' : 'Security Code',
+                  ),
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const BrandLogo(fontSize: 28),
+                      const BrandLogo(fontSize: 26),
                       _buildStepBadge(isAr: isAr, currentStep: 2, totalSteps: 2),
                     ],
                   ),
@@ -195,7 +210,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
                   // Title
                   Text(
-                    isAr ? 'أدخل الكود' : 'Enter Code',
+                    isAr ? 'أدخل رمز التحقق' : 'Enter Code',
                     style: AppTypography.largeTitle().copyWith(fontSize: 26),
                   ),
                   const SizedBox(height: 6),
@@ -273,7 +288,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          isAr ? 'بعتنا كود من 6 أرقام على ' : 'We sent a 6-digit code to ',
+          isAr ? 'أرسلنا رمزاً من 6 أرقام إلى ' : 'We sent a 6-digit code to ',
           style: AppTypography.bodySecondary(),
         ),
         Directionality(
@@ -305,47 +320,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   Widget _buildOtpInputStack(bool isAr) {
-    return GestureDetector(
-      onTap: () => _focusNode.requestFocus(),
-      behavior: HitTestBehavior.opaque,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Invisible native input capturing all keyboard, paste, and backspace events
-          Opacity(
-            opacity: 0.0,
-            child: SizedBox(
-              height: 56,
-              child: TextField(
-                controller: _otpController,
-                focusNode: _focusNode,
-                keyboardType: TextInputType.number,
-                maxLength: 6,
-                cursorColor: Colors.transparent,
-                showCursor: false,
-                style: const TextStyle(color: Colors.transparent, fontSize: 1),
-                enableInteractiveSelection: true,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩۰-۹]')),
-                ],
-                decoration: const InputDecoration(
-                  counterText: '',
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  filled: false,
-                  contentPadding: EdgeInsets.zero,
-                ),
-                onChanged: (val) => _onCodeChanged(val, isAr),
-              ),
-            ),
-          ),
-
-          // 6 Pure Visual Display Cells (Responsive width so never overflows on <= 360px)
-          IgnorePointer(
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // 6 Pure Visual Display Cells (Responsive width so never overflows on <= 360px)
+        IgnorePointer(
+          child: ExcludeSemantics(
             child: Directionality(
               textDirection: TextDirection.ltr,
               child: Row(
@@ -360,8 +340,40 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ),
             ),
           ),
-        ],
-      ),
+        ),
+
+        // Native input capturing taps, accessibility focus, keyboard, paste, and backspace events directly
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.01,
+            child: TextField(
+              controller: _otpController,
+              focusNode: _focusNode,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              cursorColor: Colors.transparent,
+              showCursor: false,
+              style: const TextStyle(color: Colors.transparent, fontSize: 16),
+              enableInteractiveSelection: true,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩۰-۹]')),
+              ],
+              decoration: const InputDecoration(
+                counterText: '',
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                filled: false,
+                contentPadding: EdgeInsets.zero,
+              ),
+              onChanged: (val) => _onCodeChanged(val, isAr),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -375,7 +387,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 const SizedBox(width: 6),
                 Text(
                   isAr
-                      ? 'إعادة إرسال الكود بعد 00:${auth.resendCountdown.toString().padLeft(2, "0")}'
+                      ? 'إعادة إرسال الرمز بعد 00:${auth.resendCountdown.toString().padLeft(2, "0")}'
                       : 'Resend code in 00:${auth.resendCountdown.toString().padLeft(2, "0")}',
                   style: AppTypography.bodySecondary(),
                 ),
@@ -391,7 +403,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 }
               },
               label: Text(
-                isAr ? 'إعادة إرسال الكود' : 'Resend Code',
+                isAr ? 'إعادة إرسال الرمز' : 'Resend Code',
                 style: AppTypography.body(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700),
               ),
             ),

@@ -107,7 +107,7 @@ class _AdminDriverVerificationsScreenState extends State<AdminDriverVerification
                         dataRowMaxHeight: 64,
                         columns: [
                           DataColumn(label: Text(isAr ? 'السائق' : 'Driver', style: const TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text(isAr ? 'المحافظة' : 'Governorate', style: const TextStyle(fontWeight: FontWeight.bold))),
+                          DataColumn(label: Text(isAr ? 'البلدية' : 'Municipality', style: const TextStyle(fontWeight: FontWeight.bold))),
                           DataColumn(label: Text(isAr ? 'تاريخ الإرسال' : 'Submitted At', style: const TextStyle(fontWeight: FontWeight.bold))),
                           DataColumn(label: Text(isAr ? 'المدة' : 'Wait Time', style: const TextStyle(fontWeight: FontWeight.bold))),
                           DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -234,12 +234,12 @@ class _AdminDriverVerificationsScreenState extends State<AdminDriverVerification
           ),
           const SizedBox(height: 16),
           Text(
-            isAr ? 'مفيش طلبات في الانتظار' : 'No Pending Requests',
+            isAr ? 'لا توجد طلبات بانتظار المراجعة' : 'No Pending Requests',
             style: AppTypography.title(),
           ),
           const SizedBox(height: 6),
           Text(
-            isAr ? 'كل الطلبات اتراجعت وجاهزة.' : 'All driver requests have been processed.',
+            isAr ? 'تمت مراجعة جميع الطلبات وهي جاهزة.' : 'All driver requests have been processed.',
             style: AppTypography.bodySecondary(),
           ),
         ],
@@ -362,7 +362,7 @@ class _DriverReviewModalState extends State<_DriverReviewModal> {
                   children: [
                     _buildDetailRow(isAr ? 'الاسم' : 'Driver Name', widget.req.driverName),
                     const Divider(height: 16),
-                    _buildDetailRow(isAr ? 'المحافظة' : 'Governorate', widget.req.governorate),
+                    _buildDetailRow(isAr ? 'البلدية' : 'Municipality', widget.req.governorate),
                     const Divider(height: 16),
                     _buildDetailRow(isAr ? 'السيارة' : 'Vehicle', widget.req.carModel),
                     const Divider(height: 16),

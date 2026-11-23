@@ -19,7 +19,7 @@ void main() {
         ChangeNotifierProvider<SettingsProvider>.value(value: settings ?? SettingsProvider()),
       ],
       child: MaterialApp(
-        locale: const Locale('ar', 'EG'),
+        locale: const Locale('ar', 'QA'),
         home: child,
       ),
     );
@@ -34,7 +34,7 @@ void main() {
       expect(find.text('رحلتك وطردك في نفس الطريق'), findsOneWidget);
 
       // Primary Choice 1: Phone
-      expect(find.text('المتابعة برقم الموبايل'), findsOneWidget);
+      expect(find.text('المتابعة برقم الجوال'), findsOneWidget);
 
       // Divider OR
       expect(find.text('أو'), findsOneWidget);
@@ -53,11 +53,11 @@ void main() {
       await tester.pumpWidget(buildAppWidget(child: const WelcomeScreen()));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('المتابعة برقم الموبايل'));
+      await tester.tap(find.text('المتابعة برقم الجوال'));
       await tester.pumpAndSettle();
 
       expect(find.byType(PhoneInputScreen), findsOneWidget);
-      expect(find.text('أدخل رقم موبايلك'), findsOneWidget);
+      expect(find.text('أدخل رقم جوالك'), findsOneWidget);
     });
 
     testWidgets('Tapping Continue with Email navigates to EmailInputScreen', (WidgetTester tester) async {
@@ -81,18 +81,18 @@ void main() {
 
       // Verify Google Account bottom sheet appears
       expect(find.text('تسجيل الدخول باستخدام Google'), findsOneWidget);
-      expect(find.text('أحمد مصطفى'), findsOneWidget);
-      expect(find.text('ahmed.mostafa@gmail.com'), findsOneWidget);
-      expect(find.text('عبدالرحمن أحمد'), findsOneWidget);
-      expect(find.text('abdelrahman@mashwar.eg'), findsOneWidget);
+      expect(find.text('حمد الكواري'), findsOneWidget);
+      expect(find.text('hamad.alkuwari@gmail.com'), findsOneWidget);
+      expect(find.text('عبدالرحمن المهنا'), findsOneWidget);
+      expect(find.text('abdelrahman@mashwar.qa'), findsOneWidget);
 
-      // Tap on Ahmed Mostafa
-      await tester.tap(find.text('أحمد مصطفى'));
+      // Tap on Hamad Al-Kuwari
+      await tester.tap(find.text('حمد الكواري'));
       await tester.pumpAndSettle();
 
       // Verifies auth provider updated and navigated to ProfileSetupScreen
       expect(auth.authMethod, 'google');
-      expect(auth.email, 'ahmed.mostafa@gmail.com');
+      expect(auth.email, 'hamad.alkuwari@gmail.com');
       expect(find.byType(ProfileSetupScreen), findsOneWidget);
     });
   });
@@ -104,8 +104,8 @@ void main() {
 
       expect(find.text('أدخل بريدك الإلكتروني'), findsOneWidget);
       expect(find.text('البريد الإلكتروني'), findsOneWidget);
-      expect(find.text('المتابعة برقم الموبايل بدلاً من ذلك'), findsOneWidget);
-      expect(find.widgetWithText(MashwarButton, 'إرسال الكود'), findsOneWidget);
+      expect(find.text('المتابعة برقم الجوال بدلاً من ذلك'), findsOneWidget);
+      expect(find.widgetWithText(MashwarButton, 'إرسال الرمز'), findsOneWidget);
     });
 
     testWidgets('Email validation triggers on invalid email format', (WidgetTester tester) async {
@@ -116,7 +116,7 @@ void main() {
       await tester.enterText(textField, 'invalid-email');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(MashwarButton, 'إرسال الكود'));
+      await tester.tap(find.widgetWithText(MashwarButton, 'إرسال الرمز'));
       await tester.pumpAndSettle();
 
       expect(find.textContaining('أدخل بريد إلكتروني صحيح'), findsOneWidget);
@@ -128,15 +128,15 @@ void main() {
       await tester.pumpAndSettle();
 
       final textField = find.byType(TextField);
-      await tester.enterText(textField, 'student@mashwar.eg');
+      await tester.enterText(textField, 'student@mashwar.qa');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.widgetWithText(MashwarButton, 'إرسال الكود'));
+      await tester.tap(find.widgetWithText(MashwarButton, 'إرسال الرمز'));
       await tester.pumpAndSettle();
 
       expect(find.byType(OtpVerificationScreen), findsOneWidget);
-      expect(find.textContaining('student@mashwar.eg'), findsOneWidget);
-      expect(auth.email, 'student@mashwar.eg');
+      expect(find.textContaining('student@mashwar.qa'), findsOneWidget);
+      expect(auth.email, 'student@mashwar.qa');
       expect(auth.authMethod, 'email');
 
       auth.dispose();
@@ -152,7 +152,7 @@ void main() {
       expect(find.byType(EmailInputScreen), findsOneWidget);
 
       // Tap switch back to phone
-      await tester.tap(find.text('المتابعة برقم الموبايل بدلاً من ذلك'));
+      await tester.tap(find.text('المتابعة برقم الجوال بدلاً من ذلك'));
       await tester.pumpAndSettle();
       expect(find.byType(PhoneInputScreen), findsOneWidget);
     });
@@ -162,13 +162,13 @@ void main() {
     testWidgets('Renders email address destination and verifies with 6 digits', (WidgetTester tester) async {
       final auth = AuthProvider();
       await tester.pumpWidget(buildAppWidget(
-        child: const OtpVerificationScreen(email: 'user@mashwar.eg'),
+        child: const OtpVerificationScreen(email: 'user@mashwar.qa'),
         auth: auth,
       ));
       await tester.pumpAndSettle();
 
       // Subtitle mentions the email
-      expect(find.textContaining('user@mashwar.eg'), findsOneWidget);
+      expect(find.textContaining('user@mashwar.qa'), findsOneWidget);
 
       // Enter 6-digit OTP code
       await tester.enterText(find.byType(TextField), '482911');

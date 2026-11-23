@@ -34,16 +34,16 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
       text: '${widget.ad.myOfferPrice ?? widget.ad.priceOrBudget}',
     );
     final defaultNote = widget.ad.type == BoardAdType.parcelRequest
-        ? 'أقدر أستلم الطرد وأوصّله في ميعاد رحلتي'
+        ? 'أقدر أستلم الطرد وأوصّله في موعد رحلتي'
         : widget.ad.type == BoardAdType.rideOffer
-            ? 'محتاج أحجز معاك في الرحلة دي'
+            ? 'أرغب في الحجز معك في هذه الرحلة'
             : widget.ad.type == BoardAdType.errandService
-                ? 'نازل في نفس المسار ومستعد أشتري لك الطلبات أو أقضي لك المصلحة'
+                ? 'متجه في نفس المسار ومستعد لشراء طلباتك أو إنجاز معاملتك'
                 : widget.ad.type == BoardAdType.localTrip
-                    ? 'أنا قريب من موقعك ومعايا وسيلة وأقدر أوصلك فوراً'
+                    ? 'أنا قريب من موقعك ومعي سيارة وأقدر أوصلك الآن'
                     : widget.ad.type == BoardAdType.goodsDelivery
-                        ? 'مستعد أنقل البضاعة للمحل بسلامة مع كود التسليم'
-                        : 'أقدر أعدّي عليك في طريقي';
+                        ? 'مستعد لنقل البضاعة للمحل بأمان مع رمز التسليم'
+                        : 'أقدر أستلم طلبك في طريقي';
     _noteController = TextEditingController(text: defaultNote);
   }
 
@@ -72,9 +72,9 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
     final board = context.watch<BoardProvider>();
     // Get live updated ad from provider if available
     final currentAd = board.filteredAds.firstWhere(
-      (a) => a.id == widget.ad.id && a.priceOrBudget == widget.ad.priceOrBudget,
+      (a) => a.id == widget.ad.id && a.type == widget.ad.type && a.priceOrBudget == widget.ad.priceOrBudget,
       orElse: () => board.mySentOffers.firstWhere(
-        (a) => a.id == widget.ad.id && a.priceOrBudget == widget.ad.priceOrBudget,
+        (a) => a.id == widget.ad.id && a.type == widget.ad.type && a.priceOrBudget == widget.ad.priceOrBudget,
         orElse: () => widget.ad,
       ),
     );
@@ -91,9 +91,9 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
     } else if (currentAd.type == BoardAdType.rideOffer) {
       primaryButtonLabel = isAr ? 'طلب حجز / تقديم عرض' : 'Request Seat / Make Offer';
     } else if (currentAd.type == BoardAdType.localTrip) {
-      primaryButtonLabel = isAr ? 'أقدر أوصلك دلوقتي' : 'I Can Take This Ride';
+      primaryButtonLabel = isAr ? 'أقدر أوصلك الآن' : 'I Can Take This Ride';
     } else if (currentAd.type == BoardAdType.errandService) {
-      primaryButtonLabel = isAr ? 'مستعد أقضي المصلحة' : 'I Can Fulfill This Errand';
+      primaryButtonLabel = isAr ? 'مستعد لإنجاز المعاملة' : 'I Can Fulfill This Errand';
     } else if (currentAd.type == BoardAdType.goodsDelivery) {
       primaryButtonLabel = isAr ? 'مستعد أنقل البضاعة' : 'I Can Deliver Goods';
     } else {
@@ -132,16 +132,16 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                     children: [
                       const Icon(Icons.close_rounded, size: 54, color: AppColors.danger),
                       const SizedBox(height: 12),
-                      Text(isAr ? 'الإعلان ده خلص' : 'This ad has expired', style: AppTypography.largeTitle()),
+                      Text(isAr ? 'انتهت صلاحية هذا الإعلان' : 'This ad has expired', style: AppTypography.largeTitle()),
                       const SizedBox(height: 6),
                       Text(
-                        isAr ? 'صاحب الإعلان اختار عرض تاني أو الموعد عدّى.' : 'Author chose another offer or time has passed.',
+                        isAr ? 'اختار صاحب الإعلان عرضاً آخر أو انتهى الموعد.' : 'Author chose another offer or time has passed.',
                         style: AppTypography.bodySecondary(),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 24),
                       MashwarButton(
-                        text: isAr ? 'شوف إعلانات تانية' : 'Browse other ads',
+                        text: isAr ? 'تصفح إعلانات أخرى' : 'Browse other ads',
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
@@ -164,8 +164,8 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                       Expanded(
                         child: Text(
                           isAr
-                              ? 'عرضك (${currentAd.myOfferPrice ?? currentAd.priceOrBudget} ج) اتبعت لـ ${currentAd.authorName}. هنبلغك فور الرد.'
-                              : 'Your offer (${currentAd.myOfferPrice ?? currentAd.priceOrBudget} EGP) was sent to ${currentAd.authorName}.',
+                              ? 'تم إرسال عرضك (${currentAd.myOfferPrice ?? currentAd.priceOrBudget} ر.ق) إلى ${currentAd.authorName}. سنبلّغك فور الرد.'
+                              : 'Your offer (${currentAd.myOfferPrice ?? currentAd.priceOrBudget} QAR) was sent to ${currentAd.authorName}.',
                           style: AppTypography.body().copyWith(color: AppColors.navy, fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -232,8 +232,8 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                 MashwarTextField(
                   controller: _priceController,
                   label: currentAd.type == BoardAdType.parcelRequest
-                      ? (isAr ? 'مكافأة التوصيل المقترحة (ج)' : 'Proposed Delivery Fee (EGP)')
-                      : (isAr ? 'سعرك للمقعد (ج)' : 'Your Price per Seat (EGP)'),
+                      ? (isAr ? 'مكافأة التوصيل المقترحة (ر.ق)' : 'Proposed Delivery Fee (QAR)')
+                      : (isAr ? 'سعرك للمقعد (ر.ق)' : 'Your Price per Seat (QAR)'),
                   hint: '${currentAd.priceOrBudget}',
                   errorText: _priceError,
                   keyboardType: TextInputType.number,
@@ -247,19 +247,19 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                     children: [
                       if (currentAd.priceOrBudget > 15) ...[
                         _buildQuickPriceChip(
-                          '-10 ${isAr ? "ج" : "EGP"}',
+                          '-10 ${isAr ? "ر.ق" : "QAR"}',
                           currentAd.priceOrBudget - 10,
                         ),
                         const SizedBox(width: 8),
                       ],
                       _buildQuickPriceChip(
-                        isAr ? 'المعروض (${currentAd.priceOrBudget} ج)' : 'Listed (${currentAd.priceOrBudget})',
+                        isAr ? 'المعروض (${currentAd.priceOrBudget} ر.ق)' : 'Listed (${currentAd.priceOrBudget})',
                         currentAd.priceOrBudget,
                       ),
                       const SizedBox(width: 8),
-                      _buildQuickPriceChip('+10 ${isAr ? "ج" : "EGP"}', currentAd.priceOrBudget + 10),
+                      _buildQuickPriceChip('+10 ${isAr ? "ر.ق" : "QAR"}', currentAd.priceOrBudget + 10),
                       const SizedBox(width: 8),
-                      _buildQuickPriceChip('+20 ${isAr ? "ج" : "EGP"}', currentAd.priceOrBudget + 20),
+                      _buildQuickPriceChip('+20 ${isAr ? "ر.ق" : "QAR"}', currentAd.priceOrBudget + 20),
                     ],
                   ),
                 ),
@@ -281,8 +281,8 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                       Flexible(
                         child: Text(
                           isAr
-                              ? 'نطاق مشاركة التكلفة العادل لهذا المسار: $minFair - $maxFair ج'
-                              : 'Fair cost-sharing range for this route: $minFair - $maxFair EGP',
+                              ? 'نطاق مشاركة التكلفة العادل لهذا المسار: $minFair - $maxFair ر.ق'
+                              : 'Fair cost-sharing range for this route: $minFair - $maxFair QAR',
                           style: const TextStyle(fontSize: 11, color: Color(0xFF166534), fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -500,7 +500,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                 style: AppTypography.label(color: AppColors.textSecondary),
               ),
               Text(
-                '${ad.priceOrBudget} ${isAr ? "ج" : "EGP"}',
+                '${ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"}',
                 style: AppTypography.title().copyWith(color: AppColors.teal),
               ),
             ],

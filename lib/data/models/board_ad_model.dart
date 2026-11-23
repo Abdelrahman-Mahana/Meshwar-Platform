@@ -1,11 +1,11 @@
 enum BoardAdType {
   all,
-  rideOffer,     // عرض سفر / كراسي فاضية بعربية
+  rideOffer,     // عرض سفر / مقاعد متاحة في سيارة
   rideRequest,   // طلب سفر تشاركي
   localTrip,     // انتقال ومشاوير محلية ومركبات فورية
   errandService, // قضاء مصلحة / إحضار أوراق ومستندات
   goodsDelivery, // توصيل ونقل بضائع ومستلزمات محلات
-  parcelRequest, // شحن طرد أو شنطة
+  parcelRequest, // شحن طرد أو أمانة
 }
 
 enum BoardAdStatus {
@@ -58,7 +58,7 @@ class BoardAdModel {
   String typeTitle(bool isAr) {
     switch (type) {
       case BoardAdType.rideOffer:
-        return isAr ? 'عرض سفر تشاركي (كراسي)' : 'Carpooling Offer';
+        return isAr ? 'عرض سفر تشاركي (مقاعد)' : 'Carpooling Offer';
       case BoardAdType.rideRequest:
         return isAr ? 'طلب سفر ومقعد' : 'Need a Seat';
       case BoardAdType.localTrip:
@@ -77,17 +77,17 @@ class BoardAdModel {
   String priceTagLabel(bool isAr) {
     switch (type) {
       case BoardAdType.rideOffer:
-        return isAr ? 'للكرسي' : 'Per Seat';
+        return isAr ? 'للمقعد' : 'Per Seat';
       case BoardAdType.rideRequest:
         return isAr ? 'الميزانية' : 'Budget';
       case BoardAdType.localTrip:
-        return isAr ? 'أجرة المشوار' : 'Trip Fare';
+        return isAr ? 'تكلفة المشوار' : 'Trip Fare';
       case BoardAdType.errandService:
         return isAr ? 'أتعاب الخدمة' : 'Service Fee';
       case BoardAdType.goodsDelivery:
-        return isAr ? 'أجرة التوريد' : 'Freight';
+        return isAr ? 'تكلفة التوريد' : 'Freight';
       case BoardAdType.parcelRequest:
-        return isAr ? 'أجرة الشحن' : 'Delivery Fee';
+        return isAr ? 'رسوم الشحن' : 'Delivery Fee';
       case BoardAdType.all:
         return isAr ? 'السعر' : 'Price';
     }

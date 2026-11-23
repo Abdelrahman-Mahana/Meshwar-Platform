@@ -43,9 +43,9 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                   const SizedBox(height: 6),
                   Text('${isAr ? "الموعد:" : "Time:"} ${item.time}'),
                   const SizedBox(height: 6),
-                  Text('${isAr ? "الكراسي:" : "Seats:"} ${item.seats}'),
+                  Text('${isAr ? "المقاعد:" : "Seats:"} ${item.seats}'),
                   const SizedBox(height: 6),
-                  Text('${isAr ? "المحافظة:" : "Governorate:"} ${item.governorate}'),
+                  Text('${isAr ? "البلدية:" : "Municipality:"} ${item.governorate}'),
                   const SizedBox(height: 12),
                   const Divider(height: 1),
                   const SizedBox(height: 12),
@@ -143,7 +143,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
             const SizedBox(height: 4),
             Text('${isAr ? "عدد المقاعد:" : "Seats:"} ${item.seats}'),
             const SizedBox(height: 4),
-            Text('${isAr ? "المبلغ الإجمالي:" : "Fare:"} ${item.fare.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}'),
+            Text('${isAr ? "المبلغ الإجمالي:" : "Fare:"} ${item.fare.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}'),
             const SizedBox(height: 4),
             Text('${isAr ? "الحالة:" : "Status:"} ${item.status}'),
           ],
@@ -174,7 +174,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
             const SizedBox(height: 4),
             Text('${isAr ? "محتوى الطرد:" : "Item:"} ${item.item}'),
             const SizedBox(height: 4),
-            Text('${isAr ? "الأجر:" : "Fee:"} ${item.fee.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}'),
+            Text('${isAr ? "الأجر:" : "Fee:"} ${item.fee.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}'),
             const SizedBox(height: 4),
             Text('${isAr ? "كود التسليم:" : "Handover PIN:"} ${item.pin}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.teal)),
             const SizedBox(height: 4),
@@ -244,9 +244,9 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     _buildDropdownFilter(
-                      label: isAr ? 'المحافظة' : 'Governorate',
+                      label: isAr ? 'البلدية' : 'Municipality',
                       value: _selectedGov,
-                      items: ['الكل', 'كفر الشيخ', 'الغربية', 'القاهرة', 'الإسكندرية'],
+                      items: ['الكل', 'بلدية الدوحة', 'بلدية الوكرة', 'بلدية الريان', 'بلدية الخور والذخيرة', 'بلدية الشيحانية'],
                       onChanged: (val) => setState(() => _selectedGov = val),
                     ),
                     _buildDropdownFilter(
@@ -337,7 +337,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                 DataColumn(label: Text(isAr ? 'السائق' : 'Driver', style: const TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(label: Text(isAr ? 'المسار' : 'Route', style: const TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(label: Text(isAr ? 'الموعد' : 'Date & Time', style: const TextStyle(fontWeight: FontWeight.bold))),
-                DataColumn(label: Text(isAr ? 'الكراسي' : 'Seats', style: const TextStyle(fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isAr ? 'المقاعد' : 'Seats', style: const TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
                 DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
               ],
@@ -413,7 +413,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                     DataCell(Text(b.route)),
                     DataCell(Text(b.time)),
                     DataCell(Text('${b.seats}')),
-                    DataCell(Text('${b.fare.toStringAsFixed(0)} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text('${b.fare.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}', style: const TextStyle(fontWeight: FontWeight.bold))),
                     DataCell(MashwarBadge(type: bType, customLabel: b.status)),
                     DataCell(
                       OutlinedButton(
@@ -468,7 +468,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                     DataCell(Text(p.receiver)),
                     DataCell(Text(p.driver)),
                     DataCell(Text(p.route)),
-                    DataCell(Text('${p.fee.toStringAsFixed(0)} ${isAr ? "ج" : "EGP"}', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    DataCell(Text('${p.fee.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}', style: const TextStyle(fontWeight: FontWeight.bold))),
                     DataCell(Text(p.pin, style: const TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, color: AppColors.teal))),
                     DataCell(MashwarBadge(type: bType, customLabel: p.status)),
                     DataCell(

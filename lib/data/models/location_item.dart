@@ -1,7 +1,7 @@
 class LocationItem {
   final String name;
   final String region;
-  final String typeLabel; // 'محافظة' | 'مدينة' | 'قرية'
+  final String typeLabel; // 'بلدية' | 'مدينة' | 'منطقة'
   final bool isRecent;
 
   const LocationItem({

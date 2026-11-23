@@ -8,6 +8,7 @@ import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../state/auth_provider.dart';
@@ -34,15 +35,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   BoardAdType _homeCategoryFilter = BoardAdType.all;
-  final PageController _promoController = PageController();
-  int _activePromoPage = 0;
   double _swapTurns = 0.0;
-
-  @override
-  void dispose() {
-    _promoController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final isAr = context.isArabic;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFCFCFD),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -78,39 +71,37 @@ class _HomeScreenState extends State<HomeScreen> {
                       _buildTopHeader(context, auth, isAr, isUltraCompact),
                       const SizedBox(height: AppDimens.space16),
 
-                      // 2. Uber-style "Where to?" Search Pill + Quick Schedule Pill
+                      // 2. Flagship Uber-Style Live Animated Qatar Map + Moving Cars + "Where to?" Bar
                       MashwarFadeSlideIn(
                         duration: const Duration(milliseconds: 280),
                         offsetY: 10,
-                        child: _buildUberWhereToBar(context, rides, isAr),
+                        child: _buildLiveQatarMapAndWhereTo(
+                          context,
+                          rides,
+                          isAr,
+                          isWide,
+                          isUltraCompact,
+                        ),
                       ),
-                      const SizedBox(height: AppDimens.space20),
+                      const SizedBox(height: AppDimens.space16),
 
-                      // 3. Careem Super-App 4-Tile Illustrated Services Grid
+                      // 3. Effortless Requester <-> Provider Connection Bridge (Un-truncated cards)
                       MashwarFadeSlideIn(
                         duration: const Duration(milliseconds: 340),
                         offsetY: 12,
-                        child: _buildServicesShowcaseGrid(context, isAr, isMedium),
+                        child: _buildTwoPrimaryActionButtons(context, isAr, isUltraCompact),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: AppDimens.space20),
 
-                      // 4. Dual Request / Offer Action Strip
+                      // 4. Careem Super-App 4-Tile Illustrated Services Grid
                       MashwarFadeSlideIn(
                         duration: const Duration(milliseconds: 380),
                         offsetY: 12,
-                        child: _buildTwoPrimaryActionButtons(context, isAr),
+                        child: _buildServicesShowcaseGrid(context, isAr, isMedium),
                       ),
                       const SizedBox(height: AppDimens.space20),
 
-                      // 5. Interactive Swipeable Hero Promo Carousel (with custom 3D artwork)
-                      MashwarFadeSlideIn(
-                        duration: const Duration(milliseconds: 420),
-                        offsetY: 14,
-                        child: _buildHeroPromoCarousel(context, isAr, isWide),
-                      ),
-                      const SizedBox(height: AppDimens.space20),
-
-                      // 6. Active Alerts & Upcoming Bookings (if any)
+                      // 5. Active Alerts & Upcoming Bookings (if any)
                       if (auth.user.hasActiveAlerts) ...[
                         _buildAlertMatchBanner(context, isAr),
                         const SizedBox(height: AppDimens.space16),
@@ -120,23 +111,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(height: AppDimens.space16),
                       ],
 
-                      // 7. Fast Inter-City Route Search Card
+                      // 6. Fast Inter-City Route Search Card
                       _buildSearchCard(context, rides, isAr),
                       const SizedBox(height: AppDimens.space24),
 
-                      // 8. Live Community Feed of Requests & Errands
+                      // 7. Live Community Feed of Requests & Errands
                       _buildLiveCommunityFeedSection(context, board, isAr),
                       const SizedBox(height: AppDimens.space24),
 
-                      // 9. Popular Corridors
+                      // 8. Popular Corridors
                       _buildPopularRoutesSection(context, rides, isAr),
                       const SizedBox(height: AppDimens.space24),
 
-                      // 10. Safety & Guarantees Strip
+                      // 9. Safety & Guarantees Strip
                       _buildSafetyPillarsGrid(context, isAr, isWide),
                       const SizedBox(height: AppDimens.space24),
 
-                      // 11. Driver Partner Showcase Card
+                      // 10. Driver Partner Showcase Card
                       _buildDriverPromoCard(context, isAr),
                       const SizedBox(height: AppDimens.space20),
                     ],
@@ -237,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const Icon(Icons.account_balance_wallet_outlined, size: 14, color: AppColors.teal),
                     const SizedBox(width: 4),
                     Text(
-                      '${auth.user.walletBalance.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}',
+                      '${auth.user.walletBalance.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}',
                       style: AppTypography.label(color: AppColors.teal).copyWith(
                         fontWeight: FontWeight.w800,
                         fontSize: isUltraCompact ? 11 : 12,
@@ -299,7 +290,211 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 2. Uber Signature "Where to?" Hero Search Bar
+  // 2. Flagship Uber-Style Live Animated Qatar Map + Integrated "Where to?" Bar
+  Widget _buildLiveQatarMapAndWhereTo(
+    BuildContext context,
+    RidesProvider rides,
+    bool isAr,
+    bool isWide,
+    bool isUltraCompact,
+  ) {
+    final mapHeight = isWide ? 264.0 : (isUltraCompact ? 172.0 : 218.0);
+    final quickCorridors = <List<String>>[
+      ['الدوحة', 'الخور'],
+      ['الدوحة', 'لوسيل'],
+      ['الدوحة', 'الوكرة'],
+      ['الدوحة', 'دخان'],
+      ['المنطقة الصناعية', 'مسيعيد'],
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.navy.withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Live Animated Qatar Map Canvas
+          SizedBox(
+            height: mapHeight,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                QatarLiveMapCanvas(
+                  style: QatarMapStyle.light,
+                  activeFromCity: rides.fromCity,
+                  activeToCity: rides.toCity,
+                  borderRadius: 22,
+                  bottomOverlayInset: 42,
+                  onHubTap: (selectedHub) {
+                    rides.setRoute(to: selectedHub);
+                  },
+                ),
+
+                // Top Frosted Telemetry & Corridor Switcher Strip
+                PositionedDirectional(
+                  top: 10,
+                  start: 10,
+                  end: 10,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.navy.withValues(alpha: 0.90),
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.14),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const MashwarLivePulseDot(color: AppColors.gold, size: 7.5),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  isAr
+                                      ? '14 كابتن ومنفّذ متصل الآن · قطر'
+                                      : '14 captains & couriers live · Qatar',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Material(
+                        color: Colors.white.withValues(alpha: 0.96),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: AppColors.teal.withValues(alpha: 0.35)),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        elevation: 2,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MashwarPageRoute(builder: (_) => const SearchResultsScreen()),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.alt_route_rounded, size: 13, color: AppColors.teal),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isAr ? 'استكشاف المسار' : 'View Route',
+                                  style: const TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.navy,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Bottom Live Quick-Corridor Selector Inside Map
+                PositionedDirectional(
+                  bottom: 10,
+                  start: 10,
+                  end: 10,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: quickCorridors.map((pair) {
+                        final from = pair[0];
+                        final to = pair[1];
+                        final isSelected = rides.fromCity == from && rides.toCity == to;
+                        final label = context.trRoute('$from ← $to');
+                        return Padding(
+                          padding: const EdgeInsetsDirectional.only(end: 6),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () => rides.setRoute(from: from, to: to),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.teal
+                                    : Colors.white.withValues(alpha: 0.94),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? AppColors.teal
+                                      : const Color(0xFFDDE3EC),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: isSelected ? Colors.white : AppColors.navy,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Attached Uber-style "Where to?" Bar directly anchored below live map
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+            child: _buildUberWhereToBar(context, rides, isAr),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Uber Signature "Where to?" Search Bar
   Widget _buildUberWhereToBar(BuildContext context, RidesProvider rides, bool isAr) {
     final scheduleLabel = rides.date.isEmpty || rides.date == 'الجمعة 6 نوفمبر'
         ? (isAr ? 'الآن' : 'Now')
@@ -360,7 +555,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            isAr ? 'رايح فين أو محتاج إيه؟' : 'Where to or what do you need?',
+                            isAr ? 'وين رايح أو وش محتاج؟' : 'Where to or what do you need?',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
@@ -451,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final tiles = [
       _ServiceTileData(
         title: isAr ? 'سفر ومشاوير' : 'Rides',
-        subtitle: isAr ? 'كراسي بين المحافظات' : 'Inter-city seats',
+        subtitle: isAr ? 'مقاعد بين مناطق قطر' : 'Inter-city seats',
         assetPath: 'assets/images/service_ride.jpg',
         badge: isAr ? 'الأكثر طلباً' : 'Popular',
         badgeBg: AppColors.goldSurface,
@@ -685,23 +880,26 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 4. Two Primary Community Action Cards (اطلب مشوار أو خدمة | اعرض مشوار أو خدمة)
-  Widget _buildTwoPrimaryActionButtons(BuildContext context, bool isAr) {
+  // 3. Effortless Requester <-> Provider Connection Cards (Zero ellipsis truncation)
+  Widget _buildTwoPrimaryActionButtons(BuildContext context, bool isAr, bool isUltraCompact) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: _buildActionCard(
-              title: isAr ? 'اطلب مشوار أو خدمة' : 'Request Service',
-              subtitle: isAr ? 'شراء طلبات، كراسي، أوراق، بضاعة' : 'Shop items, rides, errands, goods',
+              badge: isAr ? 'للطالبين' : 'Requester',
+              title: isAr ? 'أطلب خدمة' : 'Request Service',
+              subtitle: isAr ? 'مشوار، شراء طلبات، أو شحن طرد' : 'Rides, shopping errands or parcels',
               icon: Icons.add_task_rounded,
               iconBg: AppColors.tealSurface,
               iconColor: AppColors.teal,
-              borderColor: AppColors.teal.withValues(alpha: 0.35),
+              borderColor: AppColors.teal.withValues(alpha: 0.4),
+              bgTint: const Color(0xFFF3FAF8),
+              isUltraCompact: isUltraCompact,
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const PostAdScreen(initialIntent: 0)),
+                  MashwarPageRoute(builder: (_) => const PostAdScreen(initialIntent: 0)),
                 );
               },
             ),
@@ -709,15 +907,18 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: _buildActionCard(
-              title: isAr ? 'اعرض مشوار أو خدمة' : 'Offer Service',
-              subtitle: isAr ? 'كراسي فاضية بعربيتك، توصيل بالسكة' : 'Empty seats, deliveries on your way',
+              badge: isAr ? 'للكباتن' : 'Provider',
+              title: isAr ? 'أقدّم خدمة' : 'Offer Service',
+              subtitle: isAr ? 'مقاعد شاغرة أو توصيل بطريقك' : 'Share seats or deliver along route',
               icon: Icons.directions_car_filled_rounded,
               iconBg: AppColors.goldSurface,
               iconColor: AppColors.navy,
-              borderColor: AppColors.gold.withValues(alpha: 0.45),
+              borderColor: AppColors.gold.withValues(alpha: 0.55),
+              bgTint: const Color(0xFFFFFBF2),
+              isUltraCompact: isUltraCompact,
               onTap: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const PostAdScreen(initialIntent: 1, initialIsOffer: true)),
+                  MashwarPageRoute(builder: (_) => const PostAdScreen(initialIntent: 1, initialIsOffer: true)),
                 );
               },
             ),
@@ -728,415 +929,104 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildActionCard({
+    required String badge,
     required String title,
     required String subtitle,
     required IconData icon,
     required Color iconBg,
     required Color iconColor,
     required Color borderColor,
+    required Color bgTint,
+    required bool isUltraCompact,
     required VoidCallback onTap,
   }) {
     return MashwarPressable(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(13),
+        padding: EdgeInsets.all(isUltraCompact ? 11 : 14),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          color: bgTint,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderColor, width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.025),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: AppColors.navy.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Container(
-              padding: const EdgeInsets.all(9),
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.navy,
-                      fontFamily: 'Cairo',
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(isUltraCompact ? 6 : 7.5),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(color: borderColor.withValues(alpha: 0.4)),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textSecondary,
-                      fontFamily: 'Cairo',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward_rounded, color: iconColor, size: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // 5. Swipeable Hero Promo Carousel (Uber & Careem Visual Storytelling)
-  Widget _buildHeroPromoCarousel(BuildContext context, bool isAr, bool isWide) {
-    final slides = [
-      // Slide 1: Full-bleed illustrated highway banner
-      _buildFullBleedHeroSlide(context, isAr),
-      // Slide 2: Parcel Crowd-Shipping Promo
-      _buildFramedArtSlide(
-        context: context,
-        gradientColors: const [AppColors.navy, AppColors.teal],
-        badge: isAr ? 'توصيل آمن بالكود' : 'OTP Secured Shipping',
-        badgeBg: Colors.white.withValues(alpha: 0.18),
-        badgeColor: Colors.white,
-        title: isAr ? 'ابعت طردك أو أوراقك بنفس اليوم' : 'Send parcels & docs same day',
-        subtitle: isAr
-            ? 'تسليم يد بيد مع مسافر على نفس طريقك بكود تحقق OTP'
-            : 'Hand-to-hand delivery with verified travelers',
-        ctaText: isAr ? 'اطلب شحن طرد' : 'Send a Parcel',
-        ctaBg: AppColors.gold,
-        ctaFg: AppColors.navy,
-        assetPath: 'assets/images/service_parcel.jpg',
-        fallbackIcon: Icons.inventory_2_rounded,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const PostAdScreen(
-                initialIntent: 0,
-                initialCategory: BoardAdType.parcelRequest,
-              ),
-            ),
-          );
-        },
-      ),
-      // Slide 3: Driver Earnings Promo
-      _buildFramedArtSlide(
-        context: context,
-        gradientColors: const [Color(0xFF0A1E30), AppColors.navy],
-        badge: isAr ? 'لأصحاب السيارات' : 'For Car Owners',
-        badgeBg: AppColors.gold.withValues(alpha: 0.2),
-        badgeColor: AppColors.gold,
-        title: isAr ? 'شارك طريقك وزوّد دخلك يومياً' : 'Share your commute & earn daily',
-        subtitle: isAr
-            ? 'غطّي مصاريف البنزين مع ركاب وطلبات على خط سيرك'
-            : 'Cover fuel costs with verified riders along your way',
-        ctaText: isAr ? 'سجّل كسائق' : 'Become a Driver',
-        ctaBg: AppColors.gold,
-        ctaFg: AppColors.navy,
-        assetPath: 'assets/images/driver_promo.jpg',
-        fallbackIcon: Icons.directions_car_filled_rounded,
-        onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const DriverOnboardingScreen()),
-          );
-        },
-      ),
-    ];
-
-    return Column(
-      children: [
-        SizedBox(
-          height: isWide ? 210 : 198,
-          child: PageView.builder(
-            controller: _promoController,
-            itemCount: slides.length,
-            onPageChanged: (index) => setState(() => _activePromoPage = index),
-            itemBuilder: (context, index) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: slides[index],
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(slides.length, (idx) {
-            final isActive = _activePromoPage == idx;
-            return GestureDetector(
-              onTap: () {
-                _promoController.animateToPage(
-                  idx,
-                  duration: const Duration(milliseconds: 280),
-                  curve: Curves.easeOutCubic,
-                );
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: isActive ? 22 : 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: isActive ? AppColors.navy : const Color(0xFFCBD5E1),
-                  borderRadius: BorderRadius.circular(4),
+                  child: Icon(icon, color: iconColor, size: isUltraCompact ? 17 : 19),
                 ),
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFullBleedHeroSlide(BuildContext context, bool isAr) {
-    return MashwarPressable(
-      borderRadius: BorderRadius.circular(20),
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const SearchResultsScreen()),
-        );
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Container(color: AppColors.navy),
-            MashwarAssetArt(
-              assetPath: 'assets/images/hero_banner.jpg',
-              fit: BoxFit.cover,
-              flipX: isAr,
-              fallbackIcon: Icons.directions_car_filled_rounded,
-              fallbackBg: AppColors.navy,
-              fallbackColor: AppColors.gold,
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: isAr ? Alignment.centerRight : Alignment.centerLeft,
-                  end: isAr ? Alignment.centerLeft : Alignment.centerRight,
-                  colors: [
-                    AppColors.navy.withValues(alpha: 0.94),
-                    AppColors.navy.withValues(alpha: 0.72),
-                    AppColors.navy.withValues(alpha: 0.15),
-                  ],
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: isUltraCompact ? 6 : 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            badge,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: isUltraCompact ? 9.5 : 10,
+                              fontWeight: FontWeight.w800,
+                              color: iconColor,
+                              fontFamily: 'Cairo',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(Icons.arrow_forward_rounded, color: iconColor, size: 11),
+                      ],
+                    ),
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: isUltraCompact ? 13.5 : 15,
+                fontWeight: FontWeight.w800,
+                color: AppColors.navy,
+                fontFamily: 'Cairo',
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.gold.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
-                    ),
-                    child: Text(
-                      isAr ? 'مشوارك أسهل وأوفر' : 'Smarter Inter-City Travel',
-                      style: const TextStyle(
-                        color: AppColors.gold,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  FractionallySizedBox(
-                    widthFactor: 0.68,
-                    child: Text(
-                      isAr ? 'سافر بين المحافظات بأمان' : 'Travel Across Egypt Safely',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        height: 1.2,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  FractionallySizedBox(
-                    widthFactor: 0.65,
-                    child: Text(
-                      isAr
-                          ? 'مسافرون موثّقون بالرقم القومي وتفاوض مباشر'
-                          : 'ID-verified travelers & fair community pricing',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 11.5,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.gold,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      isAr ? 'استكشف الرحلات' : 'Explore Rides',
-                      style: const TextStyle(
-                        color: AppColors.navy,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFramedArtSlide({
-    required BuildContext context,
-    required List<Color> gradientColors,
-    required String badge,
-    required Color badgeBg,
-    required Color badgeColor,
-    required String title,
-    required String subtitle,
-    required String ctaText,
-    required Color ctaBg,
-    required Color ctaFg,
-    required String assetPath,
-    required IconData fallbackIcon,
-    required VoidCallback onTap,
-  }) {
-    return MashwarPressable(
-      borderRadius: BorderRadius.circular(20),
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: AlignmentDirectional.topStart,
-            end: AlignmentDirectional.bottomEnd,
-            colors: gradientColors,
-          ),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: badgeBg,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      badge,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: badgeColor,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                      fontFamily: 'Cairo',
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      fontSize: 11,
-                      fontFamily: 'Cairo',
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: ctaBg,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      ctaText,
-                      style: TextStyle(
-                        color: ctaFg,
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Cairo',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.16),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: MashwarAssetArt(
-                assetPath: assetPath,
-                width: 84,
-                height: 84,
-                fit: BoxFit.contain,
-                borderRadius: BorderRadius.circular(12),
-                fallbackIcon: fallbackIcon,
-                fallbackBg: AppColors.surfaceLight,
-                fallbackColor: AppColors.navy,
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: isUltraCompact ? 10 : 11,
+                color: AppColors.textSecondary,
+                height: 1.3,
+                fontFamily: 'Cairo',
               ),
             ),
           ],
@@ -1177,7 +1067,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  isAr ? 'مخطط البحث عن رحلات بين المحافظات' : 'Inter-City Route Planner',
+                  isAr ? 'مخطط البحث عن رحلات بين المدن' : 'Inter-City Route Planner',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -1198,7 +1088,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Column(
                 children: [
                   _buildRouteField(
-                    label: isAr ? 'من أين؟ (المحافظة أو المركز أو القرية)' : 'From (Governorate / City / Village)',
+                    label: isAr ? 'من وين؟ (البلدية أو المنطقة)' : 'From (Municipality / Area)',
                     value: context.trCity(rides.fromCity),
                     leadingDotColor: AppColors.teal,
                     isSquare: false,
@@ -1383,7 +1273,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 8),
               _buildCategoryFilterChip(
-                label: isAr ? 'سفر بين المحافظات' : 'Inter-city Rides',
+                label: isAr ? 'سفر بين المدن' : 'Inter-city Rides',
                 icon: Icons.directions_car_outlined,
                 isSelected: _homeCategoryFilter == BoardAdType.rideOffer,
                 onTap: () => setState(() => _homeCategoryFilter = BoardAdType.rideOffer),
@@ -1612,7 +1502,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
                     ),
                     child: Text(
-                      '${ad.priceOrBudget} ${isAr ? "ج.م" : "EGP"} · ${ad.priceTagLabel(isAr)}',
+                      '${ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"} · ${ad.priceTagLabel(isAr)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -1819,10 +1709,10 @@ class _HomeScreenState extends State<HomeScreen> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _buildPopularChip(context, rides, isAr ? 'كفر الشيخ ← القاهرة' : 'Kafr El-Sheikh → Cairo', 'كفر الشيخ', 'القاهرة'),
-            _buildPopularChip(context, rides, isAr ? 'القاهرة ← الإسكندرية' : 'Cairo → Alexandria', 'القاهرة', 'الإسكندرية'),
-            _buildPopularChip(context, rides, isAr ? 'القاهرة ← طنطا' : 'Cairo → Tanta', 'القاهرة', 'طنطا'),
-            _buildPopularChip(context, rides, isAr ? 'الإسكندرية ← المنصورة' : 'Alexandria → Mansoura', 'الإسكندرية', 'المنصورة'),
+            _buildPopularChip(context, rides, isAr ? 'الدوحة ← الخور' : 'Doha → Al Khor', 'الدوحة', 'الخور'),
+            _buildPopularChip(context, rides, isAr ? 'الدوحة ← الوكرة' : 'Doha → Al Wakrah', 'الدوحة', 'الوكرة'),
+            _buildPopularChip(context, rides, isAr ? 'الدوحة ← دخان' : 'Doha → Dukhan', 'الدوحة', 'دخان'),
+            _buildPopularChip(context, rides, isAr ? 'المنطقة الصناعية ← مسيعيد' : 'Industrial Area → Mesaieed', 'المنطقة الصناعية', 'مسيعيد'),
           ],
         ),
       ],
@@ -1858,10 +1748,10 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildPillarRow(
         icon: Icons.badge_outlined,
         color: AppColors.teal,
-        title: isAr ? 'توثيق الهوية والرقم القومي' : 'Mandatory National ID Verification',
+        title: isAr ? 'توثيق الهوية بالبطاقة القطرية' : 'Mandatory Qatar ID Verification',
         description: isAr
-            ? 'لا يمكن لأي طرف تقديم عروض أو طلبات دون مطابقة الهوية الشخصية'
-            : 'All participants must verify National ID before posting or making offers',
+            ? 'لا يمكن لأي طرف تقديم عروض أو طلبات دون مطابقة البطاقة الشخصية القطرية (QID)'
+            : 'All participants must verify Qatar ID (QID) before posting or making offers',
       ),
       _buildPillarRow(
         icon: Icons.pin_outlined,
@@ -1985,8 +1875,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildAlertMatchBanner(BuildContext context, bool isAr) {
     return AlertBanner(
       message: isAr
-          ? 'لقينا رحلة مطابقة لتنبيهك: كفر الشيخ ← القاهرة\n7:30 ص'
-          : 'Found a matching ride for your alert: Kafr El-Sheikh → Cairo\n7:30 AM',
+          ? 'وجدنا رحلة مطابقة لتنبيهك: الدوحة ← الخور\n7:30 ص'
+          : 'Found a matching ride for your alert: Doha → Al Khor\n7:30 AM',
       type: AlertBannerType.info,
       onTap: () {
         Navigator.of(context).push(
@@ -2089,7 +1979,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isAr ? 'عندك عربية أو وسيلة نقل؟' : 'Have a car or vehicle?',
+                  isAr ? 'عندك سيارة وتتنقل بين المناطق؟' : 'Have a car or vehicle?',
                   style: const TextStyle(
                     fontSize: 15.5,
                     fontWeight: FontWeight.w800,
@@ -2100,7 +1990,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 3),
                 Text(
                   isAr
-                      ? 'شارك مقاعدك الفاضية وقضاء المشاوير وزوّد دخلك في نفس طريقك'
+                      ? 'شارك مقاعدك الشاغرة وقضاء المشاوير وحقق دخلاً إضافياً على نفس مسارك'
                       : 'Share empty seats & errands and boost your income along your route',
                   style: TextStyle(
                     fontSize: 11.5,

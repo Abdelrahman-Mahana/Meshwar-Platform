@@ -66,7 +66,7 @@ class MashwarAdminWebApp extends StatelessWidget {
             ),
             locale: settings.locale,
             supportedLocales: const [
-              Locale('ar', 'EG'),
+              Locale('ar', 'QA'),
               Locale('ar'),
               Locale('en', 'US'),
               Locale('en'),
