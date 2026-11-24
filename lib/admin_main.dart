@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 import 'firebase_options.dart';
+import 'core/config/app_environment.dart';
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_colors.dart';
 import 'state/settings_provider.dart';
@@ -16,7 +17,7 @@ import 'data/services/firebase_firestore_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (FirebaseConfig.useFirebase) {
+  if (FirebaseConfig.useFirebase || AppEnvironment.useFirebase) {
     try {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
@@ -31,14 +32,29 @@ Future<void> main() async {
 }
 
 class MashwarAdminWebApp extends StatelessWidget {
-  const MashwarAdminWebApp({super.key});
+  final AdminProvider? adminProvider;
+  final SettingsProvider? settingsProvider;
+
+  const MashwarAdminWebApp({
+    super.key,
+    this.adminProvider,
+    this.settingsProvider,
+  });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        ChangeNotifierProvider(create: (_) => AdminProvider()),
+        if (settingsProvider != null)
+          ChangeNotifierProvider<SettingsProvider>.value(
+            value: settingsProvider!,
+          )
+        else
+          ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        if (adminProvider != null)
+          ChangeNotifierProvider<AdminProvider>.value(value: adminProvider!)
+        else
+          ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: Consumer2<SettingsProvider, AdminProvider>(
         builder: (context, settings, admin, _) {
@@ -103,6 +119,10 @@ class MashwarAdminWebApp extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
+            routes: {
+              '/admin': (_) => const AdminShell(),
+              '/admin-login': (_) => const AdminLoginScreen(),
+            },
             home: admin.isLoggedIn ? const AdminShell() : const AdminLoginScreen(),
           );
         },

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:mashwar/admin_main.dart';
 import 'package:mashwar/state/admin_provider.dart';
 import 'package:mashwar/state/settings_provider.dart';
+import 'package:mashwar/screens/admin/admin_login_screen.dart';
 import 'package:mashwar/screens/admin/admin_shell.dart';
 
 void main() {
@@ -11,7 +12,18 @@ void main() {
     late AdminProvider admin;
 
     setUp(() {
-      admin = AdminProvider();
+      admin = AdminProvider.forTesting();
+    });
+
+    test('Production AdminProvider defaults unauthenticated and blocks client role spoofing', () {
+      final prodAdmin = AdminProvider();
+      expect(prodAdmin.isLoggedIn, isFalse);
+      expect(prodAdmin.canSwitchRoleLocally, isFalse);
+      expect(prodAdmin.login('admin@mashwar.example', '12345678'), isFalse);
+      expect(prodAdmin.isLoggedIn, isFalse);
+
+      prodAdmin.setActiveRole(AdminRole.reviewAdmin);
+      expect(prodAdmin.activeRole, AdminRole.superAdmin);
     });
 
     test('Initial Admin State and Default Stats', () {
@@ -159,13 +171,31 @@ void main() {
   });
 
   group('Admin Web App UI & Smoke Tests', () {
-    testWidgets('MashwarAdminWebApp boots properly into AdminShell', (WidgetTester tester) async {
+    testWidgets('Unauthenticated MashwarAdminWebApp and /admin guard render AdminLoginScreen directly', (WidgetTester tester) async {
       tester.view.physicalSize = const Size(1920, 1080);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
       await tester.pumpWidget(const MashwarAdminWebApp());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AdminLoginScreen), findsOneWidget);
+      expect(find.byType(AdminShell), findsNothing);
+      expect(find.text('admin@mashwar.example'), findsNothing);
+      expect(find.text('12345678'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('MashwarAdminWebApp boots properly into AdminShell with authenticated fixture', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1920, 1080);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MashwarAdminWebApp(adminProvider: AdminProvider.forTesting()),
+      );
       await tester.pumpAndSettle();
 
       // Verify Admin Shell is mounted in desktop mode
@@ -176,6 +206,7 @@ void main() {
       expect(find.text('توثيق السائقين'), findsWidgets);
       expect(find.text('المستخدمون'), findsWidgets);
       expect(find.text('الرحلات والطرود'), findsWidgets);
+      expect(find.text('طلبات ومزودو التوريد'), findsWidgets);
       expect(tester.takeException(), isNull);
     });
   });
@@ -197,7 +228,9 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
 
-        await tester.pumpWidget(const MashwarAdminWebApp());
+        await tester.pumpWidget(
+          MashwarAdminWebApp(adminProvider: AdminProvider.forTesting()),
+        );
         await tester.pumpAndSettle();
 
         expect(find.byType(AdminShell), findsOneWidget);
@@ -216,7 +249,7 @@ void main() {
           MultiProvider(
             providers: [
               ChangeNotifierProvider(create: (_) => SettingsProvider()),
-              ChangeNotifierProvider(create: (_) => AdminProvider()),
+              ChangeNotifierProvider(create: (_) => AdminProvider.forTesting()),
             ],
             child: MaterialApp(
               home: AdminShell(initialIndex: screenIndex),

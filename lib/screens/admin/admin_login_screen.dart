@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../admin_main.dart';
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -17,8 +19,8 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
-  final TextEditingController _emailController = TextEditingController(text: 'admin@mashwar.example');
-  final TextEditingController _passwordController = TextEditingController(text: '12345678');
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _hasError = false;
   int _remainingAttempts = 3;
   bool _isLoading = false;
@@ -32,23 +34,43 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _hasError = true;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _hasError = false;
     });
 
-    await Future.delayed(const Duration(milliseconds: 450));
+    final admin = context.read<AdminProvider>();
+    final bool ok;
+    if (AppEnvironment.useDevMocks && admin.isDevMockMode) {
+      ok = admin.login(email, password);
+    } else {
+      ok = await admin.signInStaffWithFirebase(email, password);
+    }
 
     if (!mounted) return;
 
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    if (email == 'admin@mashwar.example' && password.length >= 6) {
-      context.read<AdminProvider>().login(email, password);
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const AdminShell()),
-      );
+    if (ok) {
+      setState(() => _isLoading = false);
+      final insideShell =
+          context.findAncestorWidgetOfExactType<AdminShell>() != null;
+      final insideAdminApp =
+          context.findAncestorWidgetOfExactType<MashwarAdminWebApp>() != null;
+      if (!insideShell && !insideAdminApp) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AdminShell()),
+        );
+      }
     } else {
       setState(() {
         _isLoading = false;
@@ -61,9 +83,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   void _fillDemoRole(AdminRole role) {
+    if (!AppEnvironment.useDevMocks) return;
     setState(() {
-      _emailController.text = 'admin@mashwar.example';
-      _passwordController.text = '12345678';
+      _emailController.text = 'dev-staff@mashwar.qa';
+      _passwordController.text = 'dev-mock-only';
       _hasError = false;
     });
     context.read<AdminProvider>().setActiveRole(role);
@@ -243,23 +266,84 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   isAr ? 'مشوار · لوحة تحكم النظام المركزية' : 'MASHWAR · Central Operations Center',
                   style: AppTypography.label(color: AppColors.textSecondary),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  isAr ? 'اختر الدور الإداري:' : 'Select Staff Role:',
-                  style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    _roleChip(AdminRole.superAdmin, Icons.shield_rounded, isAr ? 'مشرف أول' : 'Super Admin', AppColors.navy),
-                    _roleChip(AdminRole.reviewAdmin, Icons.verified_user_rounded, isAr ? 'مراجعة QID' : 'Reviewer', AppColors.teal),
-                    _roleChip(AdminRole.supportAdmin, Icons.support_agent_rounded, isAr ? 'الدعم والنزاعات' : 'Support', const Color(0xFFD97706)),
-                    _roleChip(AdminRole.financeAdmin, Icons.account_balance_wallet_rounded, isAr ? 'مالية وضمان' : 'Escrow', AppColors.qatarMaroon),
-                    _roleChip(AdminRole.devopsAdmin, Icons.terminal_rounded, 'DevOps / SRE', const Color(0xFF4338CA)),
-                  ],
-                ),
+                if (AppEnvironment.useDevMocks) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.goldSurface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.gold.withValues(alpha: 0.45),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.developer_mode_rounded,
+                              size: 16,
+                              color: AppColors.warning,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                isAr
+                                    ? 'وضع التطوير التجريبي (DEV MOCK ONLY)'
+                                    : 'DEV MOCK MODE ONLY — Not active in production',
+                                style: AppTypography.label(
+                                  color: AppColors.navy,
+                                ).copyWith(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            _roleChip(
+                              AdminRole.superAdmin,
+                              Icons.shield_rounded,
+                              isAr ? 'مشرف أول' : 'Super Admin',
+                              AppColors.navy,
+                            ),
+                            _roleChip(
+                              AdminRole.reviewAdmin,
+                              Icons.verified_user_rounded,
+                              isAr ? 'مراجعة QID' : 'Reviewer',
+                              AppColors.teal,
+                            ),
+                            _roleChip(
+                              AdminRole.supportAdmin,
+                              Icons.support_agent_rounded,
+                              isAr ? 'الدعم والنزاعات' : 'Support',
+                              const Color(0xFFD97706),
+                            ),
+                            _roleChip(
+                              AdminRole.financeAdmin,
+                              Icons.account_balance_wallet_rounded,
+                              isAr ? 'مالية وضمان' : 'Escrow',
+                              AppColors.qatarMaroon,
+                            ),
+                            _roleChip(
+                              AdminRole.devopsAdmin,
+                              Icons.terminal_rounded,
+                              'DevOps / SRE',
+                              const Color(0xFF4338CA),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 if (_hasError) ...[
                   Container(
@@ -275,9 +359,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            isAr
-                                ? 'البريد أو كلمة المرور غير صحيحة. باقي $_remainingAttempts محاولات'
-                                : 'Invalid email or password. $_remainingAttempts attempts left',
+                            context.watch<AdminProvider>().authError ??
+                                (isAr
+                                    ? 'بيانات الدخول غير صحيحة أو الحساب غير مخوّل. باقي $_remainingAttempts محاولات'
+                                    : 'Invalid credentials or inactive staff access. $_remainingAttempts attempts left'),
                             style: AppTypography.label(color: AppColors.danger).copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -293,7 +378,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textDirection: TextDirection.ltr,
                   decoration: InputDecoration(
-                    hintText: 'admin@mashwar.example',
+                    hintText: 'staff@mashwar.qa',
                     prefixIcon: const Icon(Icons.email_outlined, color: AppColors.navy),
                     filled: true,
                     fillColor: const Color(0xFFF8FAFC),

@@ -4,16 +4,176 @@ import 'package:provider/provider.dart';
 import 'package:mashwar/admin_main.dart';
 import 'package:mashwar/data/models/admin_platform_models.dart';
 import 'package:mashwar/data/models/board_ad_model.dart';
+import 'package:mashwar/data/models/worksite_models.dart';
+import 'package:mashwar/screens/admin/admin_login_screen.dart';
 import 'package:mashwar/screens/admin/admin_shell.dart';
+import 'package:mashwar/screens/admin/admin_worksite_ops_screen.dart';
 import 'package:mashwar/state/admin_provider.dart';
 import 'package:mashwar/state/settings_provider.dart';
+
+class _FakeAdminBackendGateway implements AdminBackendGateway {
+  bool signedOutCalled = false;
+  AdminAuthSessionResult? activeSession;
+  Map<String, dynamic>? staffDoc;
+  final List<String> events = [];
+  final List<Map<String, dynamic>> writtenAuditLogs = [];
+  final List<Map<String, dynamic>> reviewedProviders = [];
+  final List<Map<String, dynamic>> moderatedRequests = [];
+  bool shouldThrowOnSignIn = false;
+
+  @override
+  Future<AdminAuthSessionResult> signInWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
+    if (shouldThrowOnSignIn) {
+      throw StateError('invalid-credential');
+    }
+    final session = AdminAuthSessionResult(
+      uid: 'staff_uid_1',
+      email: email,
+      displayName: 'Noura Al-Kuwari',
+      idToken: 'fake-id-token',
+    );
+    activeSession = session;
+    events.add('signIn');
+    return session;
+  }
+
+  @override
+  Future<void> signOut() async {
+    signedOutCalled = true;
+    activeSession = null;
+    events.add('signOut');
+  }
+
+  @override
+  AdminAuthSessionResult? currentSession() => activeSession;
+
+  @override
+  Future<Map<String, dynamic>?> fetchAdminStaffRecord(String uid) async {
+    return staffDoc;
+  }
+
+  @override
+  Future<void> writeAuditLog(Map<String, dynamic> payload) async {
+    events.add('writeAuditLog:${payload['action']}');
+    writtenAuditLogs.add(payload);
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchAuditLogs({int limit = 100}) async =>
+      const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchProviderProfiles({
+    int limit = 100,
+  }) async =>
+      const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchProviderVerifications({
+    int limit = 100,
+  }) async =>
+      const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchWorkRequests({
+    int limit = 100,
+  }) async =>
+      const [];
+
+  @override
+  Future<Map<String, dynamic>> callAdminReviewProvider({
+    required String providerId,
+    required String decision,
+    required String reviewerId,
+    String? reason,
+  }) async {
+    reviewedProviders.add({
+      'providerId': providerId,
+      'decision': decision,
+      'reviewerId': reviewerId,
+      'reason': reason,
+    });
+    return {'providerId': providerId, 'approvalStatus': decision};
+  }
+
+  @override
+  Future<Map<String, dynamic>> callAdminModerateWorkRequest({
+    required String requestId,
+    required String action,
+    required String adminUid,
+    String? targetStatus,
+    String? reason,
+  }) async {
+    moderatedRequests.add({
+      'requestId': requestId,
+      'action': action,
+      'adminUid': adminUid,
+      'targetStatus': targetStatus,
+      'reason': reason,
+    });
+    return {'requestId': requestId, 'action': action};
+  }
+}
 
 void main() {
   group('Enterprise Admin & DevOps State Engine Tests', () {
     late AdminProvider admin;
 
     setUp(() {
-      admin = AdminProvider();
+      admin = AdminProvider.forTesting();
+    });
+
+    test('Firebase Staff Auth enforces admin_staff/{uid} active check, server role, and audit logs', () async {
+      final gateway = _FakeAdminBackendGateway();
+      final prodAdmin = AdminProvider(backendGateway: gateway);
+
+      expect(prodAdmin.isLoggedIn, isFalse);
+      expect(prodAdmin.canSwitchRoleLocally, isFalse);
+
+      // 1. Missing or inactive admin_staff record fails closed and signs out
+      gateway.staffDoc = {'id': 'staff_uid_1', 'isActive': false, 'role': 'superAdmin'};
+      final inactiveResult = await prodAdmin.signInStaffWithFirebase(
+        'inactive@mashwar.qa',
+        'StrongPass!23',
+      );
+      expect(inactiveResult, isFalse);
+      expect(prodAdmin.isLoggedIn, isFalse);
+      expect(gateway.signedOutCalled, isTrue);
+
+      // 2. Active admin_staff record assigns server-stored role and logs admin_login
+      gateway.signedOutCalled = false;
+      gateway.staffDoc = {
+        'id': 'staff_uid_1',
+        'name': 'نورة الكواري',
+        'email': 'noura.reviewer@mashwar.qa',
+        'role': 'reviewAdmin',
+        'isActive': true,
+      };
+      final ok = await prodAdmin.signInStaffWithFirebase(
+        'noura.reviewer@mashwar.qa',
+        'StrongPass!23',
+      );
+      expect(ok, isTrue);
+      expect(prodAdmin.isLoggedIn, isTrue);
+      expect(prodAdmin.activeRole, AdminRole.reviewAdmin);
+      expect(gateway.writtenAuditLogs.last['action'], 'admin_login');
+
+      // Client-side role spoofing MUST be ignored in production
+      prodAdmin.setActiveRole(AdminRole.superAdmin);
+      expect(prodAdmin.activeRole, AdminRole.reviewAdmin);
+
+      // 3. Logout records admin_logout BEFORE calling Firebase signOut
+      await prodAdmin.logout();
+      expect(prodAdmin.isLoggedIn, isFalse);
+      expect(gateway.signedOutCalled, isTrue);
+      expect(gateway.writtenAuditLogs.last['action'], 'admin_logout');
+      final logoutIdx = gateway.events.lastIndexOf('writeAuditLog:admin_logout');
+      final signOutIdx = gateway.events.lastIndexOf('signOut');
+      expect(logoutIdx, greaterThan(-1));
+      expect(signOutIdx, greaterThan(logoutIdx));
     });
 
     test('Extensible 6+ Service Catalog CRUD & Pricing Updates', () {
@@ -216,9 +376,156 @@ void main() {
       await admin.syncInquiriesFromFirestore();
       expect(admin.inquiriesSyncStatus, isNotNull);
     });
+
+    test('Module 13 Worksite Supply Ops: provider KYC, payment proof settlement, dispute moderation & audit logs', () async {
+      final beforeAuditCount = admin.auditLogs.length;
+      final beforePending = admin.pendingVerificationsCount;
+      expect(beforePending, greaterThanOrEqualTo(2));
+      expect(admin.canAccessMenu(13), isTrue);
+
+      // RBAC check for Module 13
+      admin.setActiveRole(AdminRole.reviewAdmin);
+      expect(admin.canAccessMenu(13), isTrue);
+      admin.setActiveRole(AdminRole.financeAdmin);
+      expect(admin.canAccessMenu(13), isTrue);
+      admin.setActiveRole(AdminRole.devopsAdmin);
+      expect(admin.canAccessMenu(13), isFalse);
+      admin.setActiveRole(AdminRole.superAdmin);
+
+      // SearchGlobal finds Module 13 worksite providers & requests
+      final qidHits = admin.searchGlobal('28963401842', true);
+      expect(qidHits.any((r) => r.targetMenuIndex == 13), isTrue);
+      final reqHits = admin.searchGlobal('req_ws_901', true);
+      expect(reqHits.any((r) => r.targetMenuIndex == 13), isTrue);
+
+      // 1. Rejecting without reason must fail
+      final emptyRejectOk = await admin.reviewWorksiteProvider(
+        userId: 'prov_101',
+        decision: ProviderApprovalStatus.rejected,
+        reason: '   ',
+      );
+      expect(emptyRejectOk, isFalse);
+
+      // 2. Approving provider updates status, decrements pending count, and logs audit
+      final approveOk = await admin.reviewWorksiteProvider(
+        userId: 'prov_101',
+        decision: ProviderApprovalStatus.approved,
+      );
+      expect(approveOk, isTrue);
+      expect(admin.pendingVerificationsCount, beforePending - 1);
+      expect(
+        admin.worksiteProviders
+            .firstWhere((p) => p.profile.userId == 'prov_101')
+            .profile
+            .approvalStatus,
+        ProviderApprovalStatus.approved,
+      );
+      expect(admin.auditLogs.length, beforeAuditCount + 1);
+      expect(admin.auditLogs.first.action, 'provider_review');
+
+      // 3. Suspending provider requires mandatory reason and logs audit
+      final suspendOk = await admin.reviewWorksiteProvider(
+        userId: 'prov_102',
+        decision: ProviderApprovalStatus.suspended,
+        reason: 'انتهاء صلاحية استمارة المركبة',
+      );
+      expect(suspendOk, isTrue);
+      expect(
+        admin.worksiteProviders
+            .firstWhere((p) => p.profile.userId == 'prov_102')
+            .profile
+            .approvalStatus,
+        ProviderApprovalStatus.suspended,
+      );
+
+      // 4. Verify transfer_proof_submitted -> verified_settled with transaction reference
+      final emptyRefOk = await admin.verifyWorksitePaymentSettlement(
+        requestId: 'req_ws_901',
+        transactionReference: '',
+      );
+      expect(emptyRefOk, isFalse);
+
+      final settleOk = await admin.verifyWorksitePaymentSettlement(
+        requestId: 'req_ws_901',
+        transactionReference: 'QNB-2026-99101',
+      );
+      expect(settleOk, isTrue);
+      final settledReq =
+          admin.worksiteRequests.firstWhere((r) => r.id == 'req_ws_901');
+      expect(
+        settledReq.paymentSettlementStatus,
+        PaymentSettlementStatus.verifiedSettled,
+      );
+      expect(settledReq.paymentReference, 'QNB-2026-99101');
+      expect(admin.auditLogs.first.action, 'verify_payment_settled');
+
+      // Once verified_settled, cannot be re-verified or overwritten
+      final reSettleOk = await admin.verifyWorksitePaymentSettlement(
+        requestId: 'req_ws_901',
+        transactionReference: 'QNB-2026-TAMPER',
+      );
+      expect(reSettleOk, isFalse);
+
+      // 5. Resolve disputed request with mandatory reason
+      final resolveOk = await admin.moderateWorksiteRequestDispute(
+        requestId: 'req_ws_902',
+        action: 'resolve_dispute',
+        targetStatus: WorkRequestStatus.inTransit,
+        reason: 'تم الاتفاق مع المورد على استبدال الصمامات',
+      );
+      expect(resolveOk, isTrue);
+      expect(
+        admin.worksiteRequests
+            .firstWhere((r) => r.id == 'req_ws_902')
+            .status,
+        WorkRequestStatus.inTransit,
+      );
+      expect(admin.auditLogs.first.action, 'moderate_resolve_dispute');
+    });
   });
 
-  group('All 13 Admin & DevOps Screens Multi-Viewport Zero-Overflow Tests', () {
+  group('Auth-Guarded AdminShell & Login Security Tests', () {
+    testWidgets('Unauthenticated /admin route and AdminShell render AdminLoginScreen directly without sidebar or prefilled creds', (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      final unauthAdmin = AdminProvider();
+      expect(unauthAdmin.isLoggedIn, isFalse);
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => SettingsProvider()),
+            ChangeNotifierProvider<AdminProvider>.value(value: unauthAdmin),
+          ],
+          child: MaterialApp(
+            initialRoute: '/admin',
+            routes: {
+              '/admin': (_) => const AdminShell(),
+              '/admin-login': (_) => const AdminLoginScreen(),
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Must render AdminLoginScreen directly instead of AdminShell modules/sidebar
+      expect(find.byType(AdminLoginScreen), findsOneWidget);
+      expect(find.text('مشوار · الإدارة'), findsNothing);
+      expect(find.text('لوحة الأرقام'), findsNothing);
+
+      // No prefilled admin@mashwar.example or 12345678 and no client role chips in non-dev-mock mode
+      expect(find.text('admin@mashwar.example'), findsNothing);
+      expect(find.text('12345678'), findsNothing);
+      expect(find.text('Super Admin'), findsNothing);
+      expect(find.text('مشرف أول'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('All 14 Admin & DevOps Screens Multi-Viewport Zero-Overflow Tests', () {
     Future<void> pumpModule(
       WidgetTester tester, {
       required int moduleIndex,
@@ -231,7 +538,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      final adminProvider = AdminProvider()..setDarkMode(isDark);
+      final adminProvider = AdminProvider.forTesting(isDarkMode: isDark);
       final settingsProvider = SettingsProvider()..setLocale(locale);
 
       await tester.pumpWidget(
@@ -265,15 +572,15 @@ void main() {
     };
 
     for (final entry in viewports.entries) {
-      testWidgets('All 13 Modules render with zero overflow on ${entry.key}', (tester) async {
-        for (int idx = 0; idx < 13; idx++) {
+      testWidgets('All 14 Modules render with zero overflow on ${entry.key}', (tester) async {
+        for (int idx = 0; idx < 14; idx++) {
           await pumpModule(tester, moduleIndex: idx, viewport: entry.value);
         }
       });
     }
 
     testWidgets('Dark NOC Mode & English LTR render cleanly on Desktop and Mobile', (tester) async {
-      for (final idx in [0, 8, 9, 10, 11, 12]) {
+      for (final idx in [0, 8, 9, 10, 11, 12, 13]) {
         await pumpModule(
           tester,
           moduleIndex: idx,
@@ -291,13 +598,72 @@ void main() {
       }
     });
 
-    testWidgets('MashwarAdminWebApp boots cleanly into Light & Dark modes', (tester) async {
+    testWidgets('Module 13 AdminWorksiteOpsScreen interactive provider approval & audit log flow', (tester) async {
       tester.view.physicalSize = const Size(1440, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(const MashwarAdminWebApp());
+      final adminProvider = AdminProvider.forTesting();
+      final settingsProvider = SettingsProvider()..setLocale(const Locale('en', 'US'));
+      final initialLogs = adminProvider.auditLogs.length;
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<SettingsProvider>.value(value: settingsProvider),
+            ChangeNotifierProvider<AdminProvider>.value(value: adminProvider),
+          ],
+          child: const MaterialApp(
+            locale: Locale('en', 'US'),
+            home: AdminShell(initialIndex: 13),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AdminWorksiteOpsScreen), findsOneWidget);
+      expect(find.text('حمد سعيد الكواري'), findsOneWidget);
+
+      // Open Review KYC dialog for first pending provider and approve
+      final reviewBtn = find.text('Review KYC').first;
+      await tester.ensureVisible(reviewBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(reviewBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('28963401842 (Valid 11-digit)'), findsOneWidget);
+      await tester.tap(find.text('Approve'));
+      await tester.pumpAndSettle();
+
+      expect(adminProvider.auditLogs.length, initialLogs + 1);
+      expect(adminProvider.auditLogs.first.action, 'provider_review');
+      expect(adminProvider.pendingVerificationsCount, 1);
+
+      // Switch to Tab B (Requests & Payments) and Tab C (Privileged Audit Trail)
+      final tabB = find.textContaining('Requests & Payments');
+      await tester.ensureVisible(tabB);
+      await tester.tap(tabB);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('req_ws_901'), findsOneWidget);
+
+      final tabC = find.textContaining('Privileged Audit Trail');
+      await tester.ensureVisible(tabC);
+      await tester.tap(tabC);
+      await tester.pumpAndSettle();
+      expect(find.text('provider_review'), findsWidgets);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('MashwarAdminWebApp boots cleanly into Light & Dark modes when authenticated', (tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MashwarAdminWebApp(adminProvider: AdminProvider.forTesting()),
+      );
       await tester.pumpAndSettle();
       expect(find.byType(AdminShell), findsOneWidget);
       expect(tester.takeException(), isNull);

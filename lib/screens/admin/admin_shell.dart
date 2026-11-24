@@ -20,6 +20,7 @@ import 'admin_services_catalog_screen.dart';
 import 'admin_settings_screen.dart';
 import 'admin_staff_screen.dart';
 import 'admin_users_screen.dart';
+import 'admin_worksite_ops_screen.dart';
 import 'widgets/admin_ui_kit.dart';
 
 class AdminShell extends StatefulWidget {
@@ -47,6 +48,7 @@ class _AdminShellState extends State<AdminShell> {
     10: Icons.account_balance_wallet_rounded,
     11: Icons.terminal_rounded,
     12: Icons.mark_email_unread_rounded,
+    13: Icons.engineering_rounded,
   };
 
   @override
@@ -156,6 +158,29 @@ class _AdminShellState extends State<AdminShell> {
                 _navigateToModule(4, admin, isAr);
               },
             ),
+            const Divider(height: 12),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: AppColors.teal.withValues(alpha: 0.2),
+                child: const Icon(Icons.engineering_rounded, color: AppColors.teal, size: 20),
+              ),
+              title: Text(
+                isAr
+                    ? '${admin.pendingVerificationsCount} توثيق مزود توريد · ${admin.pendingPaymentProofsCount} إيصال تحويل'
+                    : '${admin.pendingVerificationsCount} pending supply KYC · ${admin.pendingPaymentProofsCount} transfer proofs',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              subtitle: Text(
+                isAr ? 'عمليات التوريد الميداني والتحقق من الدفع' : 'Worksite Supply Ops & Settlement Review',
+                style: const TextStyle(fontSize: 11),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _navigateToModule(13, admin, isAr);
+              },
+            ),
           ],
         ),
         actions: [
@@ -251,6 +276,8 @@ class _AdminShellState extends State<AdminShell> {
         return const AdminDevOpsSreScreen();
       case 12:
         return const AdminInquiriesScreen();
+      case 13:
+        return const AdminWorksiteOpsScreen();
       default:
         return AdminDashboardScreen(onJumpToModule: (idx) => _navigateToModule(idx, admin, isAr));
     }
@@ -457,7 +484,7 @@ class _AdminShellState extends State<AdminShell> {
             ),
           ),
 
-          // Grouped 12-Module Menu
+          // Grouped 14-Module Menu
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -491,6 +518,8 @@ class _AdminShellState extends State<AdminShell> {
                         badgeCount = admin.newInquiriesCount;
                         badgeBg = AppColors.coral;
                         badgeText = Colors.white;
+                      } else if (mod.index == 13 && admin.pendingVerificationsCount > 0) {
+                        badgeCount = admin.pendingVerificationsCount;
                       }
 
                       return Column(
@@ -685,13 +714,7 @@ class _AdminShellState extends State<AdminShell> {
                             isAr ? 'تسجيل الخروج' : 'Log Out',
                             style: const TextStyle(color: Colors.white, fontSize: 12),
                           ),
-                          onTap: () {
-                            admin.logout();
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-                              (route) => false,
-                            );
-                          },
+                          onTap: () => admin.logout(),
                         ),
                         const SizedBox(height: 6),
                         Text(
@@ -707,16 +730,97 @@ class _AdminShellState extends State<AdminShell> {
     );
   }
 
+  Widget _buildRolePillOrSwitcher(
+    AdminProvider admin,
+    AdminThemeTokens t,
+    bool isAr, {
+    required bool compact,
+  }) {
+    final pill = Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 9,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: t.surfaceMuted,
+        borderRadius: BorderRadius.circular(compact ? 16 : 18),
+        border: Border.all(color: t.border, width: 0.8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: compact ? 10 : 11,
+            backgroundColor: AppColors.navy,
+            child: Text(
+              _getRoleInitial(admin.activeRole),
+              style: TextStyle(
+                color: AppColors.gold,
+                fontSize: compact ? 9.5 : 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SizedBox(width: compact ? 5 : 6),
+          Text(
+            _getRoleLabel(admin.activeRole, isAr),
+            style: TextStyle(
+              color: t.textPrimary,
+              fontSize: compact ? 10.5 : 11,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (admin.canSwitchRoleLocally)
+            Icon(
+              Icons.arrow_drop_down_rounded,
+              size: compact ? 15 : 16,
+              color: t.textSecondary,
+            ),
+        ],
+      ),
+    );
+
+    if (!admin.canSwitchRoleLocally) {
+      return Tooltip(
+        message: admin.staffEmail ?? _getRoleLabel(admin.activeRole, isAr),
+        child: pill,
+      );
+    }
+
+    return PopupMenuButton<AdminRole>(
+      tooltip: isAr ? 'تبديل الدور الإداري' : 'Switch Role',
+      onSelected: (newRole) {
+        admin.setActiveRole(newRole);
+        if (!admin.canAccessMenu(_selectedIndex)) {
+          setState(() => _selectedIndex = 0);
+        }
+      },
+      itemBuilder: (ctx) => [
+        for (final role in AdminRole.values)
+          _buildRoleMenuItem(role, isAr, admin.activeRole),
+      ],
+      child: pill,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final admin = context.watch<AdminProvider>();
+
+    // Strict route guard: never expose any admin module or sidebar when unauthenticated.
+    if (!admin.isLoggedIn) {
+      return const AdminLoginScreen();
+    }
+
     final t = AdminThemeTokens.of(context);
     final isAr = settings.isArabic;
 
     final pendingDriversCount = admin.driverRequests.where((r) => r.status == 'قيد المراجعة').length;
     final openDisputesCount = admin.disputes.where((d) => d.status == 'مفتوح').length;
     final pendingEscrowCount = admin.escrowItems.where((e) => e.status == 'frozen' || e.status == 'receipt_pending').length;
+    final totalAlertsCount =
+        pendingDriversCount + openDisputesCount + admin.pendingVerificationsCount;
 
     final currentMod = AdminProvider.modulesCatalog.firstWhere(
       (m) => m.index == _selectedIndex,
@@ -794,8 +898,8 @@ class _AdminShellState extends State<AdminShell> {
                           visualDensity: VisualDensity.compact,
                           tooltip: isAr ? 'التنبيهات' : 'Alerts',
                           icon: Badge(
-                            label: Text('${pendingDriversCount + openDisputesCount}'),
-                            isLabelVisible: (pendingDriversCount + openDisputesCount) > 0,
+                            label: Text('$totalAlertsCount'),
+                            isLabelVisible: totalAlertsCount > 0,
                             child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 20),
                           ),
                           onPressed: () => _showNotificationsDialog(context, admin, isAr),
@@ -935,46 +1039,7 @@ class _AdminShellState extends State<AdminShell> {
                                           ),
                                         ),
                                         const SizedBox(width: 6),
-                                        PopupMenuButton<AdminRole>(
-                                          tooltip: isAr ? 'تبديل الدور الإداري' : 'Switch Role',
-                                          onSelected: (newRole) {
-                                            admin.setActiveRole(newRole);
-                                            if (!admin.canAccessMenu(_selectedIndex)) {
-                                              setState(() => _selectedIndex = 0);
-                                            }
-                                          },
-                                          itemBuilder: (ctx) => [
-                                            for (final role in AdminRole.values)
-                                              _buildRoleMenuItem(role, isAr, admin.activeRole),
-                                          ],
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                            decoration: BoxDecoration(
-                                              color: t.surfaceMuted,
-                                              borderRadius: BorderRadius.circular(16),
-                                              border: Border.all(color: t.border, width: 0.8),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                CircleAvatar(
-                                                  radius: 10,
-                                                  backgroundColor: AppColors.navy,
-                                                  child: Text(
-                                                    _getRoleInitial(admin.activeRole),
-                                                    style: const TextStyle(color: AppColors.gold, fontSize: 9.5, fontWeight: FontWeight.bold),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 5),
-                                                Text(
-                                                  _getRoleLabel(admin.activeRole, isAr),
-                                                  style: TextStyle(color: t.textPrimary, fontSize: 10.5, fontWeight: FontWeight.w700),
-                                                ),
-                                                Icon(Icons.arrow_drop_down_rounded, size: 15, color: t.textSecondary),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
+                                        _buildRolePillOrSwitcher(admin, t, isAr, compact: true),
                                       ],
                                     ),
                                   ],
@@ -1056,8 +1121,8 @@ class _AdminShellState extends State<AdminShell> {
                                             IconButton(
                                               tooltip: isAr ? 'التنبيهات' : 'Alerts',
                                               icon: Badge(
-                                                label: Text('${pendingDriversCount + openDisputesCount}'),
-                                                isLabelVisible: (pendingDriversCount + openDisputesCount) > 0,
+                                                label: Text('$totalAlertsCount'),
+                                                isLabelVisible: totalAlertsCount > 0,
                                                 child: Icon(Icons.notifications_none_rounded, color: t.textPrimary, size: 20),
                                               ),
                                               onPressed: () => _showNotificationsDialog(context, admin, isAr),
@@ -1104,47 +1169,7 @@ class _AdminShellState extends State<AdminShell> {
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          // 5-Role RBAC Switcher
-                                          PopupMenuButton<AdminRole>(
-                                            tooltip: isAr ? 'تبديل الدور الإداري' : 'Switch Role',
-                                            onSelected: (newRole) {
-                                              admin.setActiveRole(newRole);
-                                              if (!admin.canAccessMenu(_selectedIndex)) {
-                                                setState(() => _selectedIndex = 0);
-                                              }
-                                            },
-                                            itemBuilder: (ctx) => [
-                                              for (final role in AdminRole.values)
-                                                _buildRoleMenuItem(role, isAr, admin.activeRole),
-                                            ],
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                                              decoration: BoxDecoration(
-                                                color: t.surfaceMuted,
-                                                borderRadius: BorderRadius.circular(18),
-                                                border: Border.all(color: t.border, width: 0.8),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  CircleAvatar(
-                                                    radius: 11,
-                                                    backgroundColor: AppColors.navy,
-                                                    child: Text(
-                                                      _getRoleInitial(admin.activeRole),
-                                                      style: const TextStyle(color: AppColors.gold, fontSize: 10, fontWeight: FontWeight.bold),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  Text(
-                                                    _getRoleLabel(admin.activeRole, isAr),
-                                                    style: TextStyle(color: t.textPrimary, fontSize: 11, fontWeight: FontWeight.w700),
-                                                  ),
-                                                  Icon(Icons.arrow_drop_down_rounded, size: 16, color: t.textSecondary),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
+                                          _buildRolePillOrSwitcher(admin, t, isAr, compact: false),
                                           if (!isMobile && Navigator.of(context).canPop()) ...[
                                             const SizedBox(width: 8),
                                             OutlinedButton.icon(

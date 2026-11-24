@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import '../core/config/app_environment.dart';
 import '../data/api/mashwar_api_client.dart';
 import '../data/mock_data.dart';
 import '../data/models/admin_platform_models.dart';
 import '../data/models/board_ad_model.dart';
+import '../data/models/worksite_models.dart';
 import '../data/repositories/app_repositories.dart';
 import '../data/services/firebase_firestore_service.dart';
 
@@ -304,8 +308,504 @@ class AdminSystemSetting {
       };
 }
 
+class AdminAuthSessionResult {
+  final String uid;
+  final String? email;
+  final String? displayName;
+  final String? idToken;
+
+  const AdminAuthSessionResult({
+    required this.uid,
+    this.email,
+    this.displayName,
+    this.idToken,
+  });
+}
+
+class AdminWorksiteProviderRecord {
+  final ProviderProfile profile;
+  final String? vehicleLicenseUrl;
+  final String? reviewedBy;
+  final DateTime? reviewedAtUtc;
+  final bool hasVerificationRecord;
+
+  const AdminWorksiteProviderRecord({
+    required this.profile,
+    this.vehicleLicenseUrl,
+    this.reviewedBy,
+    this.reviewedAtUtc,
+    this.hasVerificationRecord = true,
+  });
+
+  AdminWorksiteProviderRecord copyWith({
+    ProviderProfile? profile,
+    String? vehicleLicenseUrl,
+    String? reviewedBy,
+    DateTime? reviewedAtUtc,
+    bool? hasVerificationRecord,
+  }) {
+    return AdminWorksiteProviderRecord(
+      profile: profile ?? this.profile,
+      vehicleLicenseUrl: vehicleLicenseUrl ?? this.vehicleLicenseUrl,
+      reviewedBy: reviewedBy ?? this.reviewedBy,
+      reviewedAtUtc: reviewedAtUtc ?? this.reviewedAtUtc,
+      hasVerificationRecord:
+          hasVerificationRecord ?? this.hasVerificationRecord,
+    );
+  }
+}
+
+abstract interface class AdminBackendGateway {
+  Future<AdminAuthSessionResult> signInWithEmailAndPassword(
+    String email,
+    String password,
+  );
+  Future<void> signOut();
+  AdminAuthSessionResult? currentSession();
+  Future<Map<String, dynamic>?> fetchAdminStaffRecord(String uid);
+  Future<void> writeAuditLog(Map<String, dynamic> payload);
+  Future<List<Map<String, dynamic>>> fetchAuditLogs({int limit = 100});
+  Future<List<Map<String, dynamic>>> fetchProviderProfiles({int limit = 100});
+  Future<List<Map<String, dynamic>>> fetchProviderVerifications({
+    int limit = 100,
+  });
+  Future<List<Map<String, dynamic>>> fetchWorkRequests({int limit = 100});
+  Future<Map<String, dynamic>> callAdminReviewProvider({
+    required String providerId,
+    required String decision,
+    required String reviewerId,
+    String? reason,
+  });
+  Future<Map<String, dynamic>> callAdminModerateWorkRequest({
+    required String requestId,
+    required String action,
+    required String adminUid,
+    String? targetStatus,
+    String? reason,
+  });
+}
+
+class _NoOpAdminBackendGateway implements AdminBackendGateway {
+  @override
+  Future<AdminAuthSessionResult> signInWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
+    throw StateError('No Firebase Auth backend configured in test fixture.');
+  }
+
+  @override
+  Future<void> signOut() async {}
+
+  @override
+  AdminAuthSessionResult? currentSession() => null;
+
+  @override
+  Future<Map<String, dynamic>?> fetchAdminStaffRecord(String uid) async => null;
+
+  @override
+  Future<void> writeAuditLog(Map<String, dynamic> payload) async {}
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchAuditLogs({int limit = 100}) async =>
+      const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchProviderProfiles({
+    int limit = 100,
+  }) async =>
+      const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchProviderVerifications({
+    int limit = 100,
+  }) async =>
+      const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchWorkRequests({
+    int limit = 100,
+  }) async =>
+      const [];
+
+  @override
+  Future<Map<String, dynamic>> callAdminReviewProvider({
+    required String providerId,
+    required String decision,
+    required String reviewerId,
+    String? reason,
+  }) async {
+    return {
+      'providerId': providerId,
+      'approvalStatus': decision,
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> callAdminModerateWorkRequest({
+    required String requestId,
+    required String action,
+    required String adminUid,
+    String? targetStatus,
+    String? reason,
+  }) async {
+    return {
+      'requestId': requestId,
+      'action': action,
+      if (targetStatus != null) 'status': targetStatus,
+    };
+  }
+}
+
+class _FirebaseAdminBackendGateway implements AdminBackendGateway {
+  static const String _providerProfilesCol = 'provider_profiles';
+  static const String _providerVerificationsCol = 'provider_verifications';
+  static const String _workRequestsCol = 'work_requests';
+
+  final http.Client _httpClient;
+
+  _FirebaseAdminBackendGateway({http.Client? httpClient})
+      : _httpClient = httpClient ?? http.Client();
+
+  dynamic _normalizeValue(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate().toUtc().toIso8601String();
+    }
+    if (value is DateTime) {
+      return value.toUtc().toIso8601String();
+    }
+    if (value is Map) {
+      return value.map(
+        (k, v) => MapEntry(k.toString(), _normalizeValue(v)),
+      );
+    }
+    if (value is Iterable) {
+      return value.map(_normalizeValue).toList();
+    }
+    return value;
+  }
+
+  Map<String, dynamic> _normalizeDoc(String id, Map<String, dynamic> raw) {
+    final normalized = <String, dynamic>{};
+    for (final entry in raw.entries) {
+      normalized[entry.key] = _normalizeValue(entry.value);
+    }
+    normalized['id'] = (normalized['id'] ?? id).toString().isEmpty
+        ? id
+        : normalized['id'].toString();
+    return normalized;
+  }
+
+  Future<Map<String, dynamic>?> _invokeCallable(
+    String functionName,
+    Map<String, dynamic> payload,
+  ) async {
+    if (Firebase.apps.isEmpty) {
+      throw StateError('Firebase is not initialized.');
+    }
+    final user = fb_auth.FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw StateError('Authenticated Firebase staff session required.');
+    }
+    final idToken = await user.getIdToken();
+    final uri = Uri.parse(
+      'https://${AppEnvironment.firebaseRegion}-${AppEnvironment.firebaseProjectId}.cloudfunctions.net/$functionName',
+    );
+    final response = await _httpClient.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        if (idToken != null && idToken.isNotEmpty)
+          'Authorization': 'Bearer $idToken',
+      },
+      body: jsonEncode({'data': payload}),
+    );
+
+    if (response.statusCode == 404) {
+      return null;
+    }
+
+    final decoded = response.body.trim().isNotEmpty
+        ? jsonDecode(response.body)
+        : const <String, dynamic>{};
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (decoded is Map<String, dynamic>) {
+        final result = decoded['result'];
+        if (result is Map<String, dynamic>) return result;
+        return decoded;
+      }
+      return const <String, dynamic>{};
+    }
+
+    String message = 'Cloud Function $functionName failed (${response.statusCode})';
+    if (decoded is Map && decoded['error'] is Map) {
+      final err = decoded['error'] as Map;
+      if (err['message'] != null) {
+        message = err['message'].toString();
+      }
+    }
+    throw StateError(message);
+  }
+
+  @override
+  Future<AdminAuthSessionResult> signInWithEmailAndPassword(
+    String email,
+    String password,
+  ) async {
+    if (Firebase.apps.isEmpty) {
+      throw StateError('Firebase is not initialized.');
+    }
+    final cred = await fb_auth.FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    final user = cred.user;
+    if (user == null) {
+      throw StateError('FirebaseAuth returned no user.');
+    }
+    final token = await user.getIdToken();
+    return AdminAuthSessionResult(
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      idToken: token,
+    );
+  }
+
+  @override
+  Future<void> signOut() async {
+    if (Firebase.apps.isEmpty) return;
+    await fb_auth.FirebaseAuth.instance.signOut();
+  }
+
+  @override
+  AdminAuthSessionResult? currentSession() {
+    if (Firebase.apps.isEmpty) return null;
+    final user = fb_auth.FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return AdminAuthSessionResult(
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>?> fetchAdminStaffRecord(String uid) async {
+    if (Firebase.apps.isEmpty) return null;
+    final db = FirebaseFirestore.instance;
+    final direct =
+        await db.collection(FirestoreCollections.adminStaff).doc(uid).get();
+    if (direct.exists && direct.data() != null) {
+      return _normalizeDoc(direct.id, direct.data()!);
+    }
+    final query = await db
+        .collection(FirestoreCollections.adminStaff)
+        .where('uid', isEqualTo: uid)
+        .limit(1)
+        .get();
+    if (query.docs.isEmpty) return null;
+    final first = query.docs.first;
+    return _normalizeDoc(first.id, first.data());
+  }
+
+  @override
+  Future<void> writeAuditLog(Map<String, dynamic> payload) async {
+    if (Firebase.apps.isEmpty) return;
+    final db = FirebaseFirestore.instance;
+    final docId = (payload['id'] ?? '').toString().trim();
+    final data = {
+      ...payload,
+      'serverTimestamp': FieldValue.serverTimestamp(),
+    };
+    if (docId.isNotEmpty) {
+      await db
+          .collection(FirestoreCollections.adminAuditLogs)
+          .doc(docId)
+          .set(data);
+    } else {
+      await db.collection(FirestoreCollections.adminAuditLogs).add(data);
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchAuditLogs({int limit = 100}) async {
+    if (Firebase.apps.isEmpty) return const [];
+    final col =
+        FirebaseFirestore.instance.collection(FirestoreCollections.adminAuditLogs);
+    try {
+      final snap = await col
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
+      return snap.docs.map((d) => _normalizeDoc(d.id, d.data())).toList();
+    } catch (_) {
+      final snap = await col.limit(limit).get();
+      return snap.docs.map((d) => _normalizeDoc(d.id, d.data())).toList();
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchProviderProfiles({
+    int limit = 100,
+  }) async {
+    if (Firebase.apps.isEmpty) return const [];
+    final snap = await FirebaseFirestore.instance
+        .collection(_providerProfilesCol)
+        .limit(limit)
+        .get();
+    return snap.docs.map((d) => _normalizeDoc(d.id, d.data())).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchProviderVerifications({
+    int limit = 100,
+  }) async {
+    if (Firebase.apps.isEmpty) return const [];
+    final snap = await FirebaseFirestore.instance
+        .collection(_providerVerificationsCol)
+        .limit(limit)
+        .get();
+    return snap.docs.map((d) => _normalizeDoc(d.id, d.data())).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchWorkRequests({
+    int limit = 100,
+  }) async {
+    if (Firebase.apps.isEmpty) return const [];
+    final snap = await FirebaseFirestore.instance
+        .collection(_workRequestsCol)
+        .limit(limit)
+        .get();
+    return snap.docs.map((d) => _normalizeDoc(d.id, d.data())).toList();
+  }
+
+  @override
+  Future<Map<String, dynamic>> callAdminReviewProvider({
+    required String providerId,
+    required String decision,
+    required String reviewerId,
+    String? reason,
+  }) async {
+    try {
+      final callableRes = await _invokeCallable('adminReviewProvider', {
+        'providerId': providerId,
+        'decision': decision,
+        if (reason != null && reason.isNotEmpty) 'reason': reason,
+      });
+      if (callableRes != null) return callableRes;
+    } on http.ClientException {
+      // Fallback to direct Firestore admin writes if callable endpoint is unreachable/not yet deployed.
+    }
+
+    if (Firebase.apps.isEmpty) {
+      throw StateError('Firebase is not initialized.');
+    }
+
+    final db = FirebaseFirestore.instance;
+    final nowIso = DateTime.now().toUtc().toIso8601String();
+    final batch = db.batch();
+
+    final profileRef = db.collection(_providerProfilesCol).doc(providerId);
+    final profileSnap = await profileRef.get();
+    if (profileSnap.exists) {
+      batch.update(profileRef, {
+        'approvalStatus': decision,
+        'reviewedBy': reviewerId,
+        'reviewedAtUtc': nowIso,
+        'rejectionReason':
+            decision == 'rejected' || decision == 'suspended' ? reason : null,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    final verificationRef =
+        db.collection(_providerVerificationsCol).doc(providerId);
+    final verificationSnap = await verificationRef.get();
+    if (verificationSnap.exists) {
+      // firestore.rules provider_verifications allows pending|underReview|approved|rejected.
+      final verStatus = decision == 'suspended' ? 'rejected' : decision;
+      batch.update(verificationRef, {
+        'status': verStatus,
+        'reviewedBy': reviewerId,
+        'reviewedAtUtc': nowIso,
+        'rejectionReason':
+            decision == 'rejected' || decision == 'suspended' ? reason : null,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    }
+
+    await batch.commit();
+    return {
+      'providerId': providerId,
+      'approvalStatus': decision,
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> callAdminModerateWorkRequest({
+    required String requestId,
+    required String action,
+    required String adminUid,
+    String? targetStatus,
+    String? reason,
+  }) async {
+    try {
+      final callableRes = await _invokeCallable('adminModerateWorkRequest', {
+        'requestId': requestId,
+        'action': action,
+        if (targetStatus != null) 'targetStatus': targetStatus,
+        if (reason != null && reason.isNotEmpty) 'reason': reason,
+      });
+      if (callableRes != null) return callableRes;
+    } on http.ClientException {
+      // Fallback to direct Firestore admin write if callable endpoint is unreachable/not yet deployed.
+    }
+
+    if (Firebase.apps.isEmpty) {
+      throw StateError('Firebase is not initialized.');
+    }
+
+    final patch = <String, dynamic>{
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (action == 'verify_payment_settled') {
+      patch['paymentStatus'] = 'verified_settled';
+    } else if (action == 'flag_dispute') {
+      patch['status'] = 'disputed';
+    } else if (action == 'cancel') {
+      patch['status'] = 'cancelled';
+    } else if (action == 'resolve_dispute' && targetStatus != null) {
+      patch['status'] = targetStatus;
+    }
+
+    await FirebaseFirestore.instance
+        .collection(_workRequestsCol)
+        .doc(requestId)
+        .update(patch);
+
+    return {
+      'requestId': requestId,
+      'action': action,
+      if (targetStatus != null) 'status': targetStatus,
+    };
+  }
+}
+
 class AdminProvider extends ChangeNotifier {
-  bool _isLoggedIn = true;
+  static final RegExp qatarQidRegex = RegExp(r'^[0-9]{11}$');
+
+  final AdminBackendGateway _backendGateway;
+  final bool _requestedDevMock;
+  final bool _isTestingFixture;
+
+  bool _isLoggedIn = false;
+  String? _staffUid;
+  String? _staffEmail;
+  String? _staffName;
+  String? _authError;
+  bool _isSigningIn = false;
   String _currentPeriod = '7 أيام'; // 'اليوم', '7 أيام', '30 يوم'
   AdminRole _activeRole = AdminRole.superAdmin;
   bool _isDarkMode = false;
@@ -314,7 +814,71 @@ class AdminProvider extends ChangeNotifier {
   String? _selectedCorridorId = 'cor_1';
   AdminBroadcastBanner _broadcastBanner = const AdminBroadcastBanner();
 
+  late List<AdminWorksiteProviderRecord> _worksiteProviders;
+  late List<WorkRequest> _worksiteRequests;
+  bool _isSyncingWorksiteOps = false;
+  String? _worksiteSyncStatus;
+  String? _worksiteActionError;
+
+  AdminProvider({
+    bool? useDevMockAuth,
+    AdminBackendGateway? backendGateway,
+  })  : _backendGateway = backendGateway ?? _FirebaseAdminBackendGateway(),
+        _requestedDevMock = useDevMockAuth ?? AppEnvironment.useDevMocks,
+        _isTestingFixture = false,
+        _isLoggedIn = false,
+        _activeRole = AdminRole.superAdmin {
+    final allowDevQueue = _requestedDevMock &&
+        AppEnvironment.isDevMocksAllowed(
+          flavor: AppEnvironment.flavor,
+          useFirebase: AppEnvironment.useFirebase,
+        );
+    _worksiteProviders =
+        allowDevQueue ? _buildDevWorksiteProviders() : <AdminWorksiteProviderRecord>[];
+    _worksiteRequests =
+        allowDevQueue ? _buildDevWorksiteRequests() : <WorkRequest>[];
+  }
+
+  @visibleForTesting
+  AdminProvider.forTesting({
+    bool loggedIn = true,
+    AdminRole role = AdminRole.superAdmin,
+    bool isDarkMode = false,
+    bool useDevMock = true,
+    AdminBackendGateway? backendGateway,
+    List<AdminWorksiteProviderRecord>? worksiteProviders,
+    List<WorkRequest>? worksiteRequests,
+  })  : _backendGateway = backendGateway ?? _NoOpAdminBackendGateway(),
+        _requestedDevMock = useDevMock,
+        _isTestingFixture = true,
+        _isLoggedIn = loggedIn,
+        _activeRole = role,
+        _isDarkMode = isDarkMode,
+        _staffUid = loggedIn ? 'test_admin_uid' : null,
+        _staffEmail = loggedIn ? 'test.admin@mashwar.qa' : null,
+        _staffName = loggedIn ? 'Test Admin Staff' : null {
+    _worksiteProviders = worksiteProviders != null
+        ? List<AdminWorksiteProviderRecord>.from(worksiteProviders)
+        : _buildDevWorksiteProviders();
+    _worksiteRequests = worksiteRequests != null
+        ? List<WorkRequest>.from(worksiteRequests)
+        : _buildDevWorksiteRequests();
+  }
+
+  bool get isDevMockMode =>
+      _requestedDevMock &&
+      AppEnvironment.isDevMocksAllowed(
+        flavor: AppEnvironment.flavor,
+        useFirebase: AppEnvironment.useFirebase,
+      );
+
+  bool get canSwitchRoleLocally => _isTestingFixture || isDevMockMode;
   bool get isLoggedIn => _isLoggedIn;
+  String? get staffUid => _staffUid;
+  String? get staffEmail => _staffEmail;
+  String? get staffName => _staffName;
+  String? get authError => _authError;
+  bool get isSigningIn => _isSigningIn;
   String get currentPeriod => _currentPeriod;
   AdminRole get activeRole => _activeRole;
   bool get isDarkMode => _isDarkMode;
@@ -322,6 +886,66 @@ class AdminProvider extends ChangeNotifier {
   String get activeEnvironment => _activeEnvironment;
   String? get selectedCorridorId => _selectedCorridorId;
   AdminBroadcastBanner get broadcastBanner => _broadcastBanner;
+
+  List<AdminWorksiteProviderRecord> get worksiteProviders =>
+      List.unmodifiable(_worksiteProviders);
+  List<WorkRequest> get worksiteRequests =>
+      List.unmodifiable(_worksiteRequests);
+  bool get isSyncingWorksiteOps => _isSyncingWorksiteOps;
+  String? get worksiteSyncStatus => _worksiteSyncStatus;
+  String? get worksiteActionError => _worksiteActionError;
+
+  int get pendingVerificationsCount => _worksiteProviders
+      .where((p) => p.profile.approvalStatus == ProviderApprovalStatus.pending)
+      .length;
+
+  int get pendingPaymentProofsCount => _worksiteRequests
+      .where(
+        (r) =>
+            r.paymentSettlementStatus ==
+            PaymentSettlementStatus.transferProofSubmitted,
+      )
+      .length;
+
+  int get disputedWorksiteRequestsCount => _worksiteRequests
+      .where((r) => r.status == WorkRequestStatus.disputed)
+      .length;
+
+  static AdminRole? parseAdminRole(String? raw) {
+    if (raw == null) return null;
+    switch (raw.trim().toLowerCase()) {
+      case 'superadmin':
+      case 'admin':
+        return AdminRole.superAdmin;
+      case 'reviewadmin':
+        return AdminRole.reviewAdmin;
+      case 'supportadmin':
+      case 'operations':
+        return AdminRole.supportAdmin;
+      case 'financeadmin':
+      case 'compliance':
+        return AdminRole.financeAdmin;
+      case 'devopsadmin':
+        return AdminRole.devopsAdmin;
+      default:
+        return null;
+    }
+  }
+
+  static String serverRoleName(AdminRole role) {
+    switch (role) {
+      case AdminRole.superAdmin:
+        return 'superAdmin';
+      case AdminRole.reviewAdmin:
+        return 'reviewAdmin';
+      case AdminRole.supportAdmin:
+        return 'supportAdmin';
+      case AdminRole.financeAdmin:
+        return 'financeAdmin';
+      case AdminRole.devopsAdmin:
+        return 'devopsAdmin';
+    }
+  }
 
   static const List<AdminModuleSpec> modulesCatalog = [
     AdminModuleSpec(
@@ -341,6 +965,15 @@ class AdminProvider extends ChangeNotifier {
       titleEn: 'Investor Inquiries',
       shortAr: 'المستثمرون',
       shortEn: 'Inquiries',
+    ),
+    AdminModuleSpec(
+      index: 13,
+      groupAr: 'التشغيل والسوق',
+      groupEn: 'Marketplace Ops',
+      titleAr: 'طلبات ومزودو التوريد',
+      titleEn: 'Worksite Supply Ops',
+      shortAr: 'التوريد',
+      shortEn: 'Supply Ops',
     ),
     AdminModuleSpec(
       index: 8,
@@ -443,14 +1076,200 @@ class AdminProvider extends ChangeNotifier {
     ),
   ];
 
-  void login(String email, String password) {
-    _isLoggedIn = true;
+  /// Authenticates staff via FirebaseAuth AND verifies an active `admin_staff/{uid}`
+  /// record (`isActive == true`), deriving [_activeRole] strictly from the server record.
+  Future<bool> signInStaffWithFirebase(String email, String password) async {
+    final trimmedEmail = email.trim();
+    if (trimmedEmail.isEmpty || password.isEmpty) {
+      _authError = 'يرجى إدخال البريد الإلكتروني وكلمة المرور';
+      notifyListeners();
+      return false;
+    }
+
+    _isSigningIn = true;
+    _authError = null;
     notifyListeners();
+
+    try {
+      final session = await _backendGateway.signInWithEmailAndPassword(
+        trimmedEmail,
+        password,
+      );
+      final staffRecord =
+          await _backendGateway.fetchAdminStaffRecord(session.uid);
+      final isActive = staffRecord?['isActive'] == true;
+      final serverRole = parseAdminRole(staffRecord?['role']?.toString());
+
+      if (staffRecord == null || !isActive || serverRole == null) {
+        await _backendGateway.signOut();
+        _isLoggedIn = false;
+        _staffUid = null;
+        _staffEmail = null;
+        _staffName = null;
+        _authError =
+            'الحساب غير مصرح له أو موقوف في سجل الموظفين / Unauthorized or inactive admin_staff account';
+        return false;
+      }
+
+      _activeRole = serverRole;
+      _staffUid = session.uid;
+      _staffEmail =
+          (staffRecord['email'] ?? session.email ?? trimmedEmail).toString();
+      _staffName =
+          (staffRecord['name'] ?? session.displayName ?? _staffEmail!)
+              .toString();
+      _isLoggedIn = true;
+      _authError = null;
+
+      await _writeStructuredAudit(
+        action: 'admin_login',
+        targetCollection: FirestoreCollections.adminStaff,
+        targetEntityId: session.uid,
+        targetLabel: 'admin_staff/${session.uid} ($_staffEmail)',
+        previousState: const {'isLoggedIn': false},
+        newState: {
+          'isLoggedIn': true,
+          'role': serverRoleName(serverRole),
+        },
+        beforeAfter: 'unauthenticated ← ${serverRoleName(serverRole)}',
+      );
+      return true;
+    } catch (e) {
+      _isLoggedIn = false;
+      _staffUid = null;
+      _staffEmail = null;
+      _staffName = null;
+      _authError =
+          'تعذر تسجيل الدخول عبر Firebase Staff Auth: ${e.toString()}';
+      return false;
+    } finally {
+      _isSigningIn = false;
+      notifyListeners();
+    }
   }
 
-  void logout() {
-    _isLoggedIn = false;
+  /// Restores an existing Firebase staff session only if `admin_staff/{uid}` is active.
+  Future<bool> restoreStaffSession() async {
+    final session = _backendGateway.currentSession();
+    if (session == null) {
+      _isLoggedIn = false;
+      notifyListeners();
+      return false;
+    }
+    try {
+      final staffRecord =
+          await _backendGateway.fetchAdminStaffRecord(session.uid);
+      final isActive = staffRecord?['isActive'] == true;
+      final serverRole = parseAdminRole(staffRecord?['role']?.toString());
+      if (staffRecord == null || !isActive || serverRole == null) {
+        await _backendGateway.signOut();
+        _isLoggedIn = false;
+        _staffUid = null;
+        _staffEmail = null;
+        _staffName = null;
+        notifyListeners();
+        return false;
+      }
+      _activeRole = serverRole;
+      _staffUid = session.uid;
+      _staffEmail = (staffRecord['email'] ?? session.email ?? '').toString();
+      _staffName = (staffRecord['name'] ?? session.displayName ?? '').toString();
+      _isLoggedIn = true;
+      _authError = null;
+      notifyListeners();
+      return true;
+    } catch (_) {
+      _isLoggedIn = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Dev-mock-only login shortcut. Strictly disabled unless [isDevMockMode] is true.
+  bool login(String email, String password) {
+    if (!isDevMockMode) {
+      _isLoggedIn = false;
+      _authError =
+          'Dev mock login is disabled outside development USE_DEV_MOCKS mode.';
+      notifyListeners();
+      return false;
+    }
+    final trimmed = email.trim();
+    if (trimmed.isEmpty || password.trim().length < 6) {
+      _authError = 'أدخل بريداً إلكترونياً وكلمة مرور (6+ أحرف) لوضع التطوير';
+      notifyListeners();
+      return false;
+    }
+    _isLoggedIn = true;
+    _staffUid = 'dev_mock_staff';
+    _staffEmail = trimmed;
+    _staffName = 'Dev Mock Staff';
+    _authError = null;
+    _recordAudit(
+      action: 'admin_login_dev_mock',
+      target: 'admin_staff/$trimmed',
+      beforeAfter: 'unauthenticated ← ${serverRoleName(_activeRole)}',
+    );
     notifyListeners();
+    return true;
+  }
+
+  Future<void> logout() async {
+    final wasLoggedIn = _isLoggedIn;
+    final uid = _staffUid;
+    final role = _activeRole;
+    final actorLabel = _currentActorLabel();
+    final nowIso = DateTime.now().toUtc().toIso8601String();
+
+    Map<String, dynamic>? logoutAuditPayload;
+    if (wasLoggedIn) {
+      final entry = AdminAuditLogEntry(
+        time: 'الآن',
+        actor: actorLabel,
+        action: 'admin_logout',
+        target: 'admin_staff/${uid ?? 'session'}',
+        beforeAfter: '${serverRoleName(role)} ← logged_out',
+      );
+      _auditLogs.insert(0, entry);
+      logoutAuditPayload = {
+        'id': 'aud_${DateTime.now().toUtc().microsecondsSinceEpoch}',
+        'adminUid': uid ?? 'session',
+        'adminRole': serverRoleName(role),
+        'actor': actorLabel,
+        'action': 'admin_logout',
+        'targetCollection': FirestoreCollections.adminStaff,
+        'targetEntityId': uid ?? 'session',
+        'target': entry.target,
+        'previousState': {
+          'isLoggedIn': true,
+          'role': serverRoleName(role),
+        },
+        'newState': const {'isLoggedIn': false},
+        'beforeAfter': entry.beforeAfter,
+        'reason': null,
+        'createdAt': nowIso,
+      };
+    }
+
+    _isLoggedIn = false;
+    _staffUid = null;
+    _staffEmail = null;
+    _staffName = null;
+    _authError = null;
+    notifyListeners();
+
+    if (logoutAuditPayload != null) {
+      try {
+        await _backendGateway.writeAuditLog(logoutAuditPayload);
+      } catch (_) {
+        // Best-effort audit persistence during sign-out.
+      }
+      try {
+        await _backendGateway.signOut();
+      } catch (_) {
+        // Ignore signOut errors in offline/unit test environments.
+      }
+    }
   }
 
   void setPeriod(String period) {
@@ -459,6 +1278,9 @@ class AdminProvider extends ChangeNotifier {
   }
 
   void setActiveRole(AdminRole role) {
+    if (!canSwitchRoleLocally) {
+      return;
+    }
     _activeRole = role;
     notifyListeners();
   }
@@ -497,22 +1319,34 @@ class AdminProvider extends ChangeNotifier {
   bool canAccessMenu(int index) {
     // Preserve exact compatibility for indices 0..7 in admin_web_test.dart:
     // 0: Dashboard, 1: Drivers, 2: Users, 3: Rides/Parcels, 4: Disputes,
-    // 5: Settings, 6: Staff, 7: Audit Log, 8: Services, 9: Corridors, 10: Escrow, 11: DevOps
+    // 5: Settings, 6: Staff, 7: Audit Log, 8: Services, 9: Corridors,
+    // 10: Escrow, 11: DevOps, 12: Investor Inquiries, 13: Worksite Supply Ops
     switch (_activeRole) {
       case AdminRole.superAdmin:
         return true;
       case AdminRole.reviewAdmin:
-        return index == 0 || index == 1;
+        return index == 0 || index == 1 || index == 13;
       case AdminRole.supportAdmin:
         return index == 0 ||
             index == 2 ||
             index == 3 ||
             index == 4 ||
-            index == 12;
+            index == 12 ||
+            index == 13;
       case AdminRole.financeAdmin:
-        return index == 0 || index == 3 || index == 7 || index == 8 || index == 10;
+        return index == 0 ||
+            index == 3 ||
+            index == 7 ||
+            index == 8 ||
+            index == 10 ||
+            index == 13;
       case AdminRole.devopsAdmin:
-        return index == 0 || index == 5 || index == 7 || index == 8 || index == 9 || index == 11;
+        return index == 0 ||
+            index == 5 ||
+            index == 7 ||
+            index == 8 ||
+            index == 9 ||
+            index == 11;
     }
   }
 
@@ -2127,6 +2961,13 @@ class AdminProvider extends ChangeNotifier {
 
   List<AdminAuditLogEntry> get auditLogs => _auditLogs;
 
+  String _currentActorLabel() {
+    if (_staffName != null && _staffName!.trim().isNotEmpty) {
+      return '${_staffName!.trim()} (${serverRoleName(_activeRole)})';
+    }
+    return 'مشرف أول: مدير النظام';
+  }
+
   void _recordAudit({
     required String action,
     required String target,
@@ -2134,13 +2975,57 @@ class AdminProvider extends ChangeNotifier {
   }) {
     final entry = AdminAuditLogEntry(
       time: 'الآن',
-      actor: 'مشرف أول: مدير النظام',
+      actor: _currentActorLabel(),
       action: action,
       target: target,
       beforeAfter: beforeAfter,
     );
     _auditLogs.insert(0, entry);
     AppRepositories.instance.admin.writeAuditEvent(entry.toJson());
+  }
+
+  Future<void> _writeStructuredAudit({
+    required String action,
+    required String targetCollection,
+    required String targetEntityId,
+    required String targetLabel,
+    required Map<String, dynamic>? previousState,
+    required Map<String, dynamic> newState,
+    required String beforeAfter,
+    String? reason,
+  }) async {
+    final nowIso = DateTime.now().toUtc().toIso8601String();
+    final actorLabel = _currentActorLabel();
+    final entry = AdminAuditLogEntry(
+      time: 'الآن',
+      actor: actorLabel,
+      action: action,
+      target: targetLabel,
+      beforeAfter: beforeAfter,
+    );
+    _auditLogs.insert(0, entry);
+
+    final payload = <String, dynamic>{
+      'id': 'aud_${DateTime.now().toUtc().microsecondsSinceEpoch}',
+      'adminUid': _staffUid ?? 'dev_mock',
+      'adminRole': serverRoleName(_activeRole),
+      'actor': actorLabel,
+      'action': action,
+      'targetCollection': targetCollection,
+      'targetEntityId': targetEntityId,
+      'target': targetLabel,
+      'previousState': previousState,
+      'newState': newState,
+      'beforeAfter': beforeAfter,
+      'reason': reason,
+      'createdAt': nowIso,
+    };
+
+    try {
+      await _backendGateway.writeAuditLog(payload);
+    } catch (_) {
+      await AppRepositories.instance.admin.writeAuditEvent(payload);
+    }
   }
 
   Future<void> _persistSnapshot() async {
@@ -2244,6 +3129,45 @@ class AdminProvider extends ChangeNotifier {
     }
 
     if (q.isEmpty) return results.take(8).toList();
+
+    if (canAccessMenu(13)) {
+      for (final p in _worksiteProviders) {
+        final prof = p.profile;
+        if (prof.fullName.toLowerCase().contains(q) ||
+            (prof.qidNumber ?? '').toLowerCase().contains(q) ||
+            prof.phone.toLowerCase().contains(q) ||
+            (prof.vehiclePlate ?? '').toLowerCase().contains(q) ||
+            prof.approvalStatus.value.toLowerCase().contains(q)) {
+          results.add(
+            AdminCommandSearchResult(
+              targetMenuIndex: 13,
+              title: '${prof.fullName} (QID: ${prof.qidNumber ?? '—'})',
+              subtitle:
+                  '${prof.approvalStatus.label(isArabic: isAr)} · ${prof.vehicleType ?? ''}',
+              categoryTag: isAr ? 'مزود توريد' : 'Supply KYC',
+            ),
+          );
+        }
+      }
+      for (final r in _worksiteRequests) {
+        if (r.id.toLowerCase().contains(q) ||
+            r.title.toLowerCase().contains(q) ||
+            r.requesterName.toLowerCase().contains(q) ||
+            r.municipality.toLowerCase().contains(q) ||
+            (r.paymentReference ?? '').toLowerCase().contains(q) ||
+            r.status.value.toLowerCase().contains(q)) {
+          results.add(
+            AdminCommandSearchResult(
+              targetMenuIndex: 13,
+              title: '${r.id} · ${r.title}',
+              subtitle:
+                  '${r.municipality} · ${r.paymentSettlementStatus.label(isArabic: isAr)} · ${r.effectiveTotalMinor.format(isArabic: isAr)}',
+              categoryTag: isAr ? 'طلب توريد' : 'Worksite',
+            ),
+          );
+        }
+      }
+    }
 
     if (canAccessMenu(10)) {
       for (final e in _escrowItems) {
@@ -2350,6 +3274,604 @@ class AdminProvider extends ChangeNotifier {
     }
 
     return results.take(12).toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Module 13: Qatar Worksite Supply Ops (Providers, Requests, Payments, Audit)
+  // ---------------------------------------------------------------------------
+
+  static String _formatLocationField(dynamic raw) {
+    if (raw is Map) {
+      final label = raw['label']?.toString().trim();
+      final address = raw['address']?.toString().trim();
+      final area = raw['area']?.toString().trim();
+      if (label != null && label.isNotEmpty) return label;
+      if (address != null && address.isNotEmpty) return address;
+      if (area != null && area.isNotEmpty) return area;
+    }
+    return (raw ?? '').toString();
+  }
+
+  Future<void> syncWorksiteOpsFromFirestore() async {
+    _isSyncingWorksiteOps = true;
+    _worksiteActionError = null;
+    notifyListeners();
+
+    try {
+      if (Firebase.apps.isEmpty && _backendGateway is _FirebaseAdminBackendGateway) {
+        _worksiteSyncStatus = isDevMockMode || _isTestingFixture
+            ? 'وضع التطوير المحلي — بيانات تجريبية لقسم التوريد (${_worksiteProviders.length} مزود · ${_worksiteRequests.length} طلب)'
+            : 'يتطلب الاتصال بـ Firebase لمزامنة سجلات التوريد الحية.';
+        return;
+      }
+
+      final profilesRaw = await _backendGateway.fetchProviderProfiles();
+      final verificationsRaw = await _backendGateway.fetchProviderVerifications();
+      final requestsRaw = await _backendGateway.fetchWorkRequests();
+      final logsRaw = await _backendGateway.fetchAuditLogs();
+
+      final verByUid = <String, Map<String, dynamic>>{};
+      for (final v in verificationsRaw) {
+        final uid = (v['providerId'] ?? v['userId'] ?? v['id'] ?? '').toString();
+        if (uid.isNotEmpty) verByUid[uid] = v;
+      }
+
+      final mergedProviders = <AdminWorksiteProviderRecord>[];
+      final seenUids = <String>{};
+
+      for (final p in profilesRaw) {
+        final uid = (p['userId'] ?? p['id'] ?? '').toString();
+        if (uid.isEmpty) continue;
+        seenUids.add(uid);
+        final v = verByUid[uid];
+        final combined = <String, dynamic>{
+          ...p,
+          if (v != null) ...{
+            'qidNumber': v['qidNumber'] ?? p['qidNumber'],
+            'qidFrontUrl': v['qidFrontUrl'] ?? p['qidFrontUrl'],
+            'qidBackUrl': v['qidBackUrl'] ?? p['qidBackUrl'],
+            'selfieUrl': v['selfieUrl'] ?? p['selfieUrl'],
+          },
+        };
+        final prof = ProviderProfile.fromJson(combined);
+        mergedProviders.add(
+          AdminWorksiteProviderRecord(
+            profile: prof,
+            vehicleLicenseUrl: v?['vehicleLicenseUrl'] as String?,
+            reviewedBy: (p['reviewedBy'] ?? v?['reviewedBy']) as String?,
+            reviewedAtUtc: DateTime.tryParse(
+              (p['reviewedAtUtc'] ?? v?['reviewedAtUtc'] ?? '').toString(),
+            )?.toUtc(),
+            hasVerificationRecord: v != null,
+          ),
+        );
+      }
+
+      for (final entry in verByUid.entries) {
+        if (seenUids.contains(entry.key)) continue;
+        final v = entry.value;
+        final prof = ProviderProfile.fromJson({
+          ...v,
+          'userId': entry.key,
+          'approvalStatus': v['status'] ?? 'pending',
+        });
+        mergedProviders.add(
+          AdminWorksiteProviderRecord(
+            profile: prof,
+            vehicleLicenseUrl: v['vehicleLicenseUrl'] as String?,
+            reviewedBy: v['reviewedBy'] as String?,
+            reviewedAtUtc: DateTime.tryParse(
+              (v['reviewedAtUtc'] ?? '').toString(),
+            )?.toUtc(),
+            hasVerificationRecord: true,
+          ),
+        );
+      }
+
+      final parsedRequests = requestsRaw.map((raw) {
+        final normalized = Map<String, dynamic>.from(raw);
+        normalized['pickupLocation'] =
+            _formatLocationField(normalized['pickupLocation']);
+        normalized['dropoffWorksite'] = _formatLocationField(
+          normalized['dropoffWorksite'] ?? normalized['deliveryLocation'],
+        );
+        return WorkRequest.fromJson(normalized);
+      }).toList();
+
+      if (mergedProviders.isNotEmpty || !isDevMockMode && !_isTestingFixture) {
+        _worksiteProviders = mergedProviders;
+      }
+      if (parsedRequests.isNotEmpty || !isDevMockMode && !_isTestingFixture) {
+        _worksiteRequests = parsedRequests;
+      }
+
+      if (logsRaw.isNotEmpty) {
+        final parsedLogs = logsRaw.map((row) {
+          final prev = row['previousState'];
+          final next = row['newState'];
+          final reason = row['reason']?.toString();
+          final computedDiff = (row['beforeAfter'] ?? '').toString().isNotEmpty
+              ? row['beforeAfter'].toString()
+              : '${prev ?? '-'} ← ${next ?? '-'}${reason != null && reason.isNotEmpty ? ' ($reason)' : ''}';
+          return AdminAuditLogEntry(
+            time: (row['createdAt'] ?? row['time'] ?? '').toString(),
+            actor: (row['actor'] ??
+                    '${row['adminUid'] ?? 'admin'} (${row['adminRole'] ?? 'staff'})')
+                .toString(),
+            action: (row['action'] ?? '').toString(),
+            target: (row['target'] ??
+                    '${row['targetCollection'] ?? ''}/${row['targetEntityId'] ?? ''}')
+                .toString(),
+            beforeAfter: computedDiff,
+          );
+        }).toList();
+        _auditLogs
+          ..clear()
+          ..addAll(parsedLogs);
+      }
+
+      _worksiteSyncStatus =
+          'تمت المزامنة: ${_worksiteProviders.length} مزود · ${_worksiteRequests.length} طلب · ${_auditLogs.length} سجل تدقيق';
+    } catch (e) {
+      _worksiteSyncStatus = 'تعذر المزامنة من Firestore: ${e.toString()}';
+    } finally {
+      _isSyncingWorksiteOps = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> reviewWorksiteProvider({
+    required String userId,
+    required ProviderApprovalStatus decision,
+    String? reason,
+  }) async {
+    final idx = _worksiteProviders.indexWhere((p) => p.profile.userId == userId);
+    if (idx == -1) {
+      _worksiteActionError = 'Provider $userId not found.';
+      notifyListeners();
+      return false;
+    }
+
+    final cleanReason = reason?.trim();
+    if ((decision == ProviderApprovalStatus.rejected ||
+            decision == ProviderApprovalStatus.suspended) &&
+        (cleanReason == null || cleanReason.isEmpty)) {
+      _worksiteActionError =
+          'سبب الرفض أو الإيقاف إلزامي / Mandatory reason required for reject or suspend.';
+      notifyListeners();
+      return false;
+    }
+
+    _worksiteActionError = null;
+    final current = _worksiteProviders[idx];
+    final prevStatus = current.profile.approvalStatus;
+    final reviewerId = _staffUid ?? 'admin_staff';
+    final nowUtc = DateTime.now().toUtc();
+
+    try {
+      await _backendGateway.callAdminReviewProvider(
+        providerId: userId,
+        decision: decision.value,
+        reviewerId: reviewerId,
+        reason: cleanReason,
+      );
+
+      final updatedProfile = current.profile.copyWith(
+        approvalStatus: decision,
+        rejectionReason: (decision == ProviderApprovalStatus.rejected ||
+                decision == ProviderApprovalStatus.suspended)
+            ? cleanReason
+            : null,
+        isAvailable: decision == ProviderApprovalStatus.approved
+            ? current.profile.isAvailable
+            : false,
+        updatedAt: nowUtc,
+      );
+
+      _worksiteProviders[idx] = current.copyWith(
+        profile: updatedProfile,
+        reviewedBy: reviewerId,
+        reviewedAtUtc: nowUtc,
+      );
+
+      await _writeStructuredAudit(
+        action: 'provider_review',
+        targetCollection: 'provider_profiles',
+        targetEntityId: userId,
+        targetLabel: 'provider_profiles/$userId (${current.profile.fullName})',
+        previousState: {'approvalStatus': prevStatus.value},
+        newState: {'approvalStatus': decision.value},
+        beforeAfter:
+            '${prevStatus.value} ← ${decision.value}${cleanReason != null && cleanReason.isNotEmpty ? ' ($cleanReason)' : ''}',
+        reason: cleanReason,
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _worksiteActionError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> verifyWorksitePaymentSettlement({
+    required String requestId,
+    required String transactionReference,
+  }) async {
+    final idx = _worksiteRequests.indexWhere((r) => r.id == requestId);
+    if (idx == -1) {
+      _worksiteActionError = 'Work request $requestId not found.';
+      notifyListeners();
+      return false;
+    }
+
+    final ref = transactionReference.trim();
+    if (ref.isEmpty) {
+      _worksiteActionError =
+          'مرجع التحويل البنكي مطلوب / Transaction reference is required.';
+      notifyListeners();
+      return false;
+    }
+
+    final req = _worksiteRequests[idx];
+    if (req.paymentSettlementStatus == PaymentSettlementStatus.verifiedSettled) {
+      _worksiteActionError =
+          'الدفعة موثقة ومسواة مسبقاً (غير قابلة للتعديل) / Payment is already verified_settled.';
+      notifyListeners();
+      return false;
+    }
+    if (req.paymentSettlementStatus !=
+        PaymentSettlementStatus.transferProofSubmitted) {
+      _worksiteActionError =
+          'يتطلب التحقق وجود إيصال تحويل مرفوع (transfer_proof_submitted).';
+      notifyListeners();
+      return false;
+    }
+
+    _worksiteActionError = null;
+    final adminUid = _staffUid ?? 'admin_staff';
+    final prevPaymentStatus = req.paymentSettlementStatus;
+
+    try {
+      await _backendGateway.callAdminModerateWorkRequest(
+        requestId: requestId,
+        action: 'verify_payment_settled',
+        adminUid: adminUid,
+        reason: 'Ref: $ref',
+      );
+
+      _worksiteRequests[idx] = req.copyWith(
+        paymentSettlementStatus: PaymentSettlementStatus.verifiedSettled,
+        paymentReference: ref,
+        updatedAt: DateTime.now().toUtc(),
+      );
+
+      await _writeStructuredAudit(
+        action: 'verify_payment_settled',
+        targetCollection: 'work_requests',
+        targetEntityId: requestId,
+        targetLabel: 'work_requests/$requestId',
+        previousState: {'paymentStatus': prevPaymentStatus.value},
+        newState: {
+          'paymentStatus': PaymentSettlementStatus.verifiedSettled.value,
+          'paymentReference': ref,
+        },
+        beforeAfter:
+            '${prevPaymentStatus.value} ← verified_settled (Ref: $ref)',
+        reason: 'Ref: $ref',
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _worksiteActionError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> moderateWorksiteRequestDispute({
+    required String requestId,
+    required String action,
+    WorkRequestStatus? targetStatus,
+    required String reason,
+  }) async {
+    final idx = _worksiteRequests.indexWhere((r) => r.id == requestId);
+    if (idx == -1) {
+      _worksiteActionError = 'Work request $requestId not found.';
+      notifyListeners();
+      return false;
+    }
+
+    final cleanReason = reason.trim();
+    if (cleanReason.isEmpty) {
+      _worksiteActionError =
+          'سبب الإجراء الرقابي إلزامي / Mandatory moderation reason is required.';
+      notifyListeners();
+      return false;
+    }
+
+    final req = _worksiteRequests[idx];
+    final WorkRequestStatus resolvedNextStatus;
+
+    if (action == 'flag_dispute') {
+      if (!WorkRequestStatusMachine.canTransition(
+        req.status,
+        WorkRequestStatus.disputed,
+        actorRole: 'admin',
+      )) {
+        _worksiteActionError =
+            'Cannot flag dispute from status ${req.status.value}.';
+        notifyListeners();
+        return false;
+      }
+      resolvedNextStatus = WorkRequestStatus.disputed;
+    } else if (action == 'resolve_dispute') {
+      if (req.status != WorkRequestStatus.disputed || targetStatus == null) {
+        _worksiteActionError =
+            'Dispute resolution requires disputed status and targetStatus.';
+        notifyListeners();
+        return false;
+      }
+      if (!WorkRequestStatusMachine.canTransition(
+        req.status,
+        targetStatus,
+        actorRole: 'admin',
+      )) {
+        _worksiteActionError =
+            'Invalid dispute resolution target ${targetStatus.value}.';
+        notifyListeners();
+        return false;
+      }
+      resolvedNextStatus = targetStatus;
+    } else if (action == 'cancel') {
+      if (!WorkRequestStatusMachine.canTransition(
+        req.status,
+        WorkRequestStatus.cancelled,
+        actorRole: 'admin',
+      )) {
+        _worksiteActionError = 'Cannot cancel from status ${req.status.value}.';
+        notifyListeners();
+        return false;
+      }
+      resolvedNextStatus = WorkRequestStatus.cancelled;
+    } else {
+      _worksiteActionError = 'Unsupported moderation action: $action';
+      notifyListeners();
+      return false;
+    }
+
+    _worksiteActionError = null;
+    final adminUid = _staffUid ?? 'admin_staff';
+
+    try {
+      await _backendGateway.callAdminModerateWorkRequest(
+        requestId: requestId,
+        action: action,
+        adminUid: adminUid,
+        targetStatus: targetStatus?.value,
+        reason: cleanReason,
+      );
+
+      _worksiteRequests[idx] = req.copyWith(
+        status: resolvedNextStatus,
+        disputeReason: action == 'flag_dispute' ? cleanReason : req.disputeReason,
+        cancellationReason: action == 'cancel' ||
+                (action == 'resolve_dispute' &&
+                    resolvedNextStatus == WorkRequestStatus.cancelled)
+            ? cleanReason
+            : req.cancellationReason,
+        updatedAt: DateTime.now().toUtc(),
+      );
+
+      await _writeStructuredAudit(
+        action: 'moderate_$action',
+        targetCollection: 'work_requests',
+        targetEntityId: requestId,
+        targetLabel: 'work_requests/$requestId',
+        previousState: {'status': req.status.value},
+        newState: {'status': resolvedNextStatus.value},
+        beforeAfter:
+            '${req.status.value} ← ${resolvedNextStatus.value} ($cleanReason)',
+        reason: cleanReason,
+      );
+
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _worksiteActionError = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  static List<AdminWorksiteProviderRecord> _buildDevWorksiteProviders() {
+    final now = DateTime.utc(2026, 11, 24, 18, 0);
+    return [
+      AdminWorksiteProviderRecord(
+        profile: ProviderProfile(
+          id: 'prov_101',
+          userId: 'prov_101',
+          fullName: 'حمد سعيد الكواري',
+          phone: '+97455112233',
+          qidNumber: '28963401842',
+          qidFrontUrl: 'https://storage.mashwar.qa/kyc/prov_101/qid_front.jpg',
+          qidBackUrl: 'https://storage.mashwar.qa/kyc/prov_101/qid_back.jpg',
+          selfieUrl: 'https://storage.mashwar.qa/kyc/prov_101/selfie.jpg',
+          vehicleType: 'Pickup 1.5 Ton',
+          vehiclePlate: 'قطر 418920',
+          serviceMunicipalities: const ['المنطقة الصناعية', 'لوسيل', 'الدوحة'],
+          supplySpecialties: const ['معدات كهربائية', 'سباكة ومواسير'],
+          approvalStatus: ProviderApprovalStatus.pending,
+          createdAt: now.subtract(const Duration(hours: 5)),
+          updatedAt: now.subtract(const Duration(hours: 5)),
+        ),
+        vehicleLicenseUrl:
+            'https://storage.mashwar.qa/kyc/prov_101/istamara.jpg',
+      ),
+      AdminWorksiteProviderRecord(
+        profile: ProviderProfile(
+          id: 'prov_102',
+          userId: 'prov_102',
+          fullName: 'راشد ناصر الهاجري',
+          phone: '+97433884411',
+          qidNumber: '29463409115',
+          qidFrontUrl: 'https://storage.mashwar.qa/kyc/prov_102/qid_front.jpg',
+          qidBackUrl: 'https://storage.mashwar.qa/kyc/prov_102/qid_back.jpg',
+          selfieUrl: 'https://storage.mashwar.qa/kyc/prov_102/selfie.jpg',
+          vehicleType: 'Toyota Hilux 4x4',
+          vehiclePlate: 'قطر 602114',
+          serviceMunicipalities: const ['الوكرة', 'مسيعيد'],
+          supplySpecialties: const ['مواد بناء', 'أدوات سلامة'],
+          approvalStatus: ProviderApprovalStatus.pending,
+          createdAt: now.subtract(const Duration(hours: 3)),
+          updatedAt: now.subtract(const Duration(hours: 3)),
+        ),
+        vehicleLicenseUrl:
+            'https://storage.mashwar.qa/kyc/prov_102/istamara.jpg',
+      ),
+      AdminWorksiteProviderRecord(
+        profile: ProviderProfile(
+          id: 'prov_103',
+          userId: 'prov_103',
+          fullName: 'سالم فهد المري',
+          phone: '+97455990044',
+          qidNumber: '28563405519',
+          qidFrontUrl: 'https://storage.mashwar.qa/kyc/prov_103/qid_front.jpg',
+          qidBackUrl: 'https://storage.mashwar.qa/kyc/prov_103/qid_back.jpg',
+          selfieUrl: 'https://storage.mashwar.qa/kyc/prov_103/selfie.jpg',
+          vehicleType: 'Nissan Navara',
+          vehiclePlate: 'قطر 219084',
+          serviceMunicipalities: const ['الدوحة', 'الريان', 'لوسيل'],
+          supplySpecialties: const ['معدات ميكانيكية'],
+          approvalStatus: ProviderApprovalStatus.approved,
+          rating: 4.8,
+          completedJobsCount: 19,
+          isAvailable: true,
+          createdAt: now.subtract(const Duration(days: 12)),
+          updatedAt: now.subtract(const Duration(days: 2)),
+        ),
+        vehicleLicenseUrl:
+            'https://storage.mashwar.qa/kyc/prov_103/istamara.jpg',
+        reviewedBy: 'admin_seed',
+        reviewedAtUtc: now.subtract(const Duration(days: 10)),
+      ),
+      AdminWorksiteProviderRecord(
+        profile: ProviderProfile(
+          id: 'prov_104',
+          userId: 'prov_104',
+          fullName: 'طلال جاسم المناعي',
+          phone: '+97466771122',
+          qidNumber: '29163407781',
+          qidFrontUrl: 'https://storage.mashwar.qa/kyc/prov_104/qid_front.jpg',
+          qidBackUrl: 'https://storage.mashwar.qa/kyc/prov_104/qid_back.jpg',
+          selfieUrl: 'https://storage.mashwar.qa/kyc/prov_104/selfie.jpg',
+          vehicleType: 'Mitsubishi L200',
+          vehiclePlate: 'قطر 339105',
+          serviceMunicipalities: const ['الضعاين'],
+          approvalStatus: ProviderApprovalStatus.rejected,
+          rejectionReason: 'صورة الوجه الخلفي للبطاقة القطرية QID غير مقروءة',
+          createdAt: now.subtract(const Duration(days: 4)),
+          updatedAt: now.subtract(const Duration(days: 3)),
+        ),
+        reviewedBy: 'admin_seed',
+        reviewedAtUtc: now.subtract(const Duration(days: 3)),
+      ),
+    ];
+  }
+
+  static List<WorkRequest> _buildDevWorksiteRequests() {
+    final now = DateTime.utc(2026, 11, 24, 18, 0);
+    return [
+      WorkRequest(
+        id: 'req_ws_901',
+        requesterId: 'biz_almadar',
+        requesterName: 'م. فهد المري (شركة المدار)',
+        title: 'توريد لوحات قواطع كهربائية وكابلات 16mm',
+        description: 'طلب توريد عاجل من مورد الكهرباء المعتمد إلى موقع أبراج لوسيل.',
+        pickupLocation: 'المنطقة الصناعية - شارع 14',
+        dropoffWorksite: 'مشروع أبراج لوسيل - البوابة 3',
+        municipality: 'بلدية الضعاين / لوسيل',
+        estimatedItemsCostMinor: MoneyMinor.fromMajorQar(650),
+        maxItemsCapMinor: MoneyMinor.fromMajorQar(800),
+        deliveryFeeBudgetMinor: MoneyMinor.fromMajorQar(65),
+        agreedFeeMinor: MoneyMinor.fromMajorQar(65),
+        status: WorkRequestStatus.deliveredPendingConfirmation,
+        paymentMethod: PaymentMethod.bankTransferManual,
+        paymentSettlementStatus: PaymentSettlementStatus.transferProofSubmitted,
+        paymentProofUrl: 'https://storage.mashwar.qa/proofs/req_ws_901_qnb.jpg',
+        assignedProviderId: 'prov_103',
+        assignedProviderName: 'سالم فهد المري',
+        createdAt: now.subtract(const Duration(hours: 6)),
+        updatedAt: now.subtract(const Duration(minutes: 45)),
+      ),
+      WorkRequest(
+        id: 'req_ws_902',
+        requesterId: 'biz_gulf_mep',
+        requesterName: 'شركة الخليج للمقاولات',
+        title: 'قطع سباكة وصمامات ضغط عالي 2 إنش',
+        description: 'توريد 12 صمام نحاسي مع وصلات تثبيت.',
+        pickupLocation: 'طريق سلوى - سوق الحديد',
+        dropoffWorksite: 'موقع الوكرة اللوجستي',
+        municipality: 'بلدية الوكرة',
+        estimatedItemsCostMinor: MoneyMinor.fromMajorQar(420),
+        maxItemsCapMinor: MoneyMinor.fromMajorQar(500),
+        deliveryFeeBudgetMinor: MoneyMinor.fromMajorQar(50),
+        agreedFeeMinor: MoneyMinor.fromMajorQar(45),
+        status: WorkRequestStatus.disputed,
+        paymentMethod: PaymentMethod.bankTransferManual,
+        paymentSettlementStatus: PaymentSettlementStatus.disputed,
+        paymentProofUrl: 'https://storage.mashwar.qa/proofs/req_ws_902_cbq.jpg',
+        disputeReason: 'اختلاف مواصفات الصمامات عن الفاتورة المرفوعة',
+        assignedProviderId: 'prov_103',
+        assignedProviderName: 'سالم فهد المري',
+        createdAt: now.subtract(const Duration(days: 1)),
+        updatedAt: now.subtract(const Duration(hours: 2)),
+      ),
+      WorkRequest(
+        id: 'req_ws_903',
+        requesterId: 'biz_adv_build',
+        requesterName: 'شركة البناء المتقدم',
+        title: 'خوذ سلامة وأحذية موقع (20 طقم)',
+        description: 'مستلزمات HSE قياسية للموقع الشمالي.',
+        pickupLocation: 'المنطقة الصناعية - بوابة 7',
+        dropoffWorksite: 'مدينة خليفة الشمالية - موقع B',
+        municipality: 'بلدية الدوحة',
+        estimatedItemsCostMinor: MoneyMinor.fromMajorQar(1100),
+        maxItemsCapMinor: MoneyMinor.fromMajorQar(1250),
+        deliveryFeeBudgetMinor: MoneyMinor.fromMajorQar(75),
+        status: WorkRequestStatus.open,
+        paymentMethod: PaymentMethod.cashOnDelivery,
+        paymentSettlementStatus: PaymentSettlementStatus.unpaid,
+        offerCount: 2,
+        createdAt: now.subtract(const Duration(hours: 2)),
+        updatedAt: now.subtract(const Duration(hours: 1)),
+      ),
+      WorkRequest(
+        id: 'req_ws_904',
+        requesterId: 'biz_rayyan_eng',
+        requesterName: 'مؤسسة الريان الهندسية',
+        title: 'مضخة مياه غاطسة مع خرطوم 25 متر',
+        description: 'مضخة طوارئ لموقع الخور الساحلي.',
+        pickupLocation: 'سوق واقف الصناعي',
+        dropoffWorksite: 'مشروع الخور الساحلي',
+        municipality: 'بلدية الخور والذخيرة',
+        estimatedItemsCostMinor: MoneyMinor.fromMajorQar(890),
+        maxItemsCapMinor: MoneyMinor.fromMajorQar(950),
+        deliveryFeeBudgetMinor: MoneyMinor.fromMajorQar(90),
+        agreedFeeMinor: MoneyMinor.fromMajorQar(85),
+        status: WorkRequestStatus.completed,
+        paymentMethod: PaymentMethod.bankTransferManual,
+        paymentSettlementStatus: PaymentSettlementStatus.verifiedSettled,
+        paymentReference: 'QNB-2026-77419',
+        assignedProviderId: 'prov_103',
+        assignedProviderName: 'سالم فهد المري',
+        isHandoverVerified: true,
+        createdAt: now.subtract(const Duration(days: 2)),
+        updatedAt: now.subtract(const Duration(days: 1)),
+      ),
+    ];
   }
 
   // Landing Page Investor & Partner Inquiries (Firebase investor_inquiries)
