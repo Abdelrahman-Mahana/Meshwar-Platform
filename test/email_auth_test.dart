@@ -15,7 +15,9 @@ void main() {
   Widget buildAppWidget({required Widget child, AuthProvider? auth, SettingsProvider? settings}) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AuthProvider>.value(value: auth ?? AuthProvider()),
+        ChangeNotifierProvider<AuthProvider>.value(
+          value: auth ?? AuthProvider.forTesting(useDevMockAuth: true),
+        ),
         ChangeNotifierProvider<SettingsProvider>.value(value: settings ?? SettingsProvider()),
       ],
       child: MaterialApp(
@@ -72,7 +74,7 @@ void main() {
     });
 
     testWidgets('Tapping Continue with Google opens Google Account Sheet and selects account', (WidgetTester tester) async {
-      final auth = AuthProvider();
+      final auth = AuthProvider.forTesting(useDevMockAuth: true);
       await tester.pumpWidget(buildAppWidget(child: const WelcomeScreen(), auth: auth));
       await tester.pumpAndSettle();
 
@@ -123,7 +125,7 @@ void main() {
     });
 
     testWidgets('Submitting valid email sends OTP and navigates to OtpVerificationScreen in email mode', (WidgetTester tester) async {
-      final auth = AuthProvider();
+      final auth = AuthProvider.forTesting(useDevMockAuth: true);
       await tester.pumpWidget(buildAppWidget(child: const EmailInputScreen(), auth: auth));
       await tester.pumpAndSettle();
 
@@ -160,7 +162,7 @@ void main() {
 
   group('OtpVerificationScreen with Email Mode Tests', () {
     testWidgets('Renders email address destination and verifies with 6 digits', (WidgetTester tester) async {
-      final auth = AuthProvider();
+      final auth = AuthProvider.forTesting(useDevMockAuth: true);
       await tester.pumpWidget(buildAppWidget(
         child: const OtpVerificationScreen(email: 'user@mashwar.qa'),
         auth: auth,

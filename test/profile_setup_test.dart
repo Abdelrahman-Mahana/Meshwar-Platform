@@ -11,7 +11,10 @@ void main() {
     late AuthProvider auth;
 
     setUp(() {
-      auth = AuthProvider();
+      auth = AuthProvider.forTesting(
+        useDevMockAuth: true,
+        status: AuthStatus.otpVerified,
+      );
     });
 
     test('AuthProvider saves and preserves extended future profile fields', () {

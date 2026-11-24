@@ -97,7 +97,31 @@ void main() {
       return MultiProvider(
         providers: [
           ChangeNotifierProvider<SettingsProvider>.value(value: settingsProvider),
-          ChangeNotifierProvider(create: (_) => AuthProvider()),
+          ChangeNotifierProvider(
+            create: (_) => AuthProvider.forTesting(
+              user: MockData.currentUser,
+              walletTransactions: const [
+                {
+                  'titleAr': 'شحن رصيد - خدمة فوراً (Fawran)',
+                  'titleEn': 'Top-up - Fawran Instant Transfer',
+                  'date': 'أمس، 4:30 م',
+                  'dateEn': 'Yesterday, 4:30 PM',
+                  'amount': '+200 ر.ق',
+                  'amountValue': 200.0,
+                  'isPositive': true,
+                },
+                {
+                  'titleAr': 'رحلة الدوحة ← الخور',
+                  'titleEn': 'Ride Doha → Al Khor',
+                  'date': '2 نوفمبر، 7:30 ص',
+                  'dateEn': 'Nov 2, 7:30 AM',
+                  'amount': '-35 ر.ق',
+                  'amountValue': -35.0,
+                  'isPositive': false,
+                },
+              ],
+            ),
+          ),
           ChangeNotifierProvider(create: (_) => RidesProvider()),
           ChangeNotifierProvider(create: (_) => ParcelsProvider()),
           ChangeNotifierProvider(create: (_) => BoardProvider()),

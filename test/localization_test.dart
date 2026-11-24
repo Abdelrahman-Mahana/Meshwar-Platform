@@ -5,6 +5,7 @@ import 'package:mashwar/core/localization/app_strings.dart';
 import 'package:mashwar/core/widgets/mashwar_badge.dart';
 import 'package:mashwar/core/widgets/mashwar_button.dart';
 import 'package:mashwar/core/widgets/mashwar_chip.dart';
+import 'package:mashwar/data/mock_data.dart';
 import 'package:mashwar/state/settings_provider.dart';
 import 'package:mashwar/state/auth_provider.dart';
 
@@ -64,7 +65,7 @@ void main() {
 
     testWidgets('Reactive widgets update on language switch while preserving DB fields', (WidgetTester tester) async {
       final settings = SettingsProvider();
-      final auth = AuthProvider();
+      final auth = AuthProvider.forTesting(user: MockData.currentUser);
 
       await tester.pumpWidget(
         MultiProvider(

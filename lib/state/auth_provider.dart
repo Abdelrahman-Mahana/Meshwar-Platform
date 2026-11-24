@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../data/mock_data.dart';
+import '../core/config/app_environment.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/app_repositories.dart';
+import '../data/repositories/contracts/i_auth_repository.dart';
 
 enum AuthStatus {
   unauthenticated,
@@ -13,20 +14,72 @@ enum AuthStatus {
 }
 
 class AuthProvider extends ChangeNotifier {
-  AuthStatus _status = AuthStatus.authenticated; // Default to authenticated for instant prototype exploration
-  UserModel _user = MockData.currentUser;
-  
-  String _phoneNumber = '55123456';
+  static final RegExp _qatarQidRegex = RegExp(r'^[0-9]{11}$');
+
+  final IAuthRepository? _injectedAuthRepository;
+  final bool _requestedDevMockAuth;
+  final String _devOtpCode;
+
+  AuthStatus _status;
+  UserModel _user;
+  String _phoneNumber;
   String? _email;
-  String _authMethod = 'phone'; // 'phone', 'email', 'google'
+  String _authMethod = 'email'; // 'email', 'phone', 'google'
   final String _enteredOtp = '';
   int _resendCountdown = 59;
   Timer? _resendTimer;
   int _otpAttemptsLeft = 3;
   bool _isLocked = false;
   bool _isLoading = false;
+  String? _lastError;
+
+  final List<Map<String, dynamic>> _walletTransactions;
+
+  AuthProvider({
+    IAuthRepository? authRepository,
+    bool? useDevMockAuth,
+    String devOtpCode = '482911',
+  })  : _injectedAuthRepository = authRepository,
+        _requestedDevMockAuth = useDevMockAuth ?? AppEnvironment.useDevMocks,
+        _devOtpCode = devOtpCode,
+        _status = AuthStatus.unauthenticated,
+        _user = UserModel.empty,
+        _phoneNumber = '',
+        _email = null,
+        _walletTransactions = <Map<String, dynamic>>[];
+
+  @visibleForTesting
+  AuthProvider.forTesting({
+    IAuthRepository? authRepository,
+    AuthStatus status = AuthStatus.authenticated,
+    UserModel? user,
+    bool useDevMockAuth = true,
+    List<Map<String, dynamic>> walletTransactions = const [],
+    String devOtpCode = '482911',
+  })  : _injectedAuthRepository = authRepository,
+        _requestedDevMockAuth = useDevMockAuth,
+        _devOtpCode = devOtpCode,
+        _status = status,
+        _user = user ?? UserModel.empty,
+        _phoneNumber = user?.phone ?? '',
+        _email = user?.email,
+        _walletTransactions =
+            List<Map<String, dynamic>>.from(walletTransactions);
+
+  IAuthRepository get _repo =>
+      _injectedAuthRepository ?? AppRepositories.instance.auth;
+
+  /// Dev-mock auth is allowed ONLY when explicitly requested AND running in
+  /// `development` without Firebase enabled.
+  bool get isDevMockAuthEnabled =>
+      _requestedDevMockAuth &&
+      AppEnvironment.isDevMocksAllowed(
+        flavor: AppEnvironment.flavor,
+        useFirebase: AppEnvironment.useFirebase,
+      );
 
   AuthStatus get status => _status;
+  bool get isAuthenticated => _status == AuthStatus.authenticated;
   UserModel get user => _user;
   String get phoneNumber => _phoneNumber;
   String? get email => _email;
@@ -36,6 +89,14 @@ class AuthProvider extends ChangeNotifier {
   int get otpAttemptsLeft => _otpAttemptsLeft;
   bool get isLocked => _isLocked;
   bool get isLoading => _isLoading;
+  String? get lastError => _lastError;
+
+  void clearError() {
+    if (_lastError != null) {
+      _lastError = null;
+      notifyListeners();
+    }
+  }
 
   void setPhoneNumber(String phone) {
     _phoneNumber = phone;
@@ -66,19 +127,197 @@ class AuthProvider extends ChangeNotifier {
     if (value == null || value.trim().isEmpty) {
       return 'أدخل بريدك الإلكتروني';
     }
-    final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+    final emailRegex =
+        RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
     if (!emailRegex.hasMatch(value.trim())) {
       return 'أدخل بريد إلكتروني صحيح (مثال: name@example.com)';
     }
     return null;
   }
 
-  Future<bool> sendOtp(String phone) async {
+  /// Restores an existing authenticated session from [_repo] if signed in.
+  Future<bool> restoreSession() async {
     _isLoading = true;
+    _lastError = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 700));
-    _phoneNumber = phone;
+    try {
+      final signedIn = await _repo.isSignedIn();
+      if (!signedIn) {
+        _user = UserModel.empty;
+        _status = AuthStatus.unauthenticated;
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      final currentUser = await _repo.getCurrentUser();
+      if (currentUser != null && currentUser.id.isNotEmpty) {
+        _user = currentUser;
+        _phoneNumber = currentUser.phone;
+        _email = currentUser.email;
+        _status = AuthStatus.authenticated;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+
+      _user = UserModel.empty;
+      _status = AuthStatus.unauthenticated;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _lastError = e.toString();
+      _user = UserModel.empty;
+      _status = AuthStatus.unauthenticated;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Real email/password sign-in via the configured [IAuthRepository].
+  Future<bool> loginWithEmail(String email, String password) async {
+    final trimmedEmail = email.trim();
+    final emailErr = validateEmail(trimmedEmail);
+    if (emailErr != null) {
+      _lastError = emailErr;
+      notifyListeners();
+      return false;
+    }
+    if (password.isEmpty) {
+      _lastError = 'Password is required';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _lastError = null;
+    notifyListeners();
+
+    try {
+      final authenticatedUser = await _repo.loginWithEmail(
+        trimmedEmail,
+        password,
+      );
+      _user = authenticatedUser;
+      _email = authenticatedUser.email ?? trimmedEmail;
+      _phoneNumber = authenticatedUser.phone;
+      _authMethod = 'email';
+      _status = AuthStatus.authenticated;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _lastError = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Real email/password registration via the configured [IAuthRepository].
+  Future<bool> registerWithEmail({
+    required String email,
+    required String password,
+    String? fullName,
+    String? phone,
+  }) async {
+    final trimmedEmail = email.trim();
+    final emailErr = validateEmail(trimmedEmail);
+    if (emailErr != null) {
+      _lastError = emailErr;
+      notifyListeners();
+      return false;
+    }
+    if (password.length < 6) {
+      _lastError = 'Password must be at least 6 characters';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _lastError = null;
+    notifyListeners();
+
+    try {
+      final registeredUser = await _repo.registerWithEmail(
+        email: trimmedEmail,
+        password: password,
+        fullName: fullName?.trim(),
+        phone: phone?.trim(),
+      );
+      _user = registeredUser;
+      _email = registeredUser.email ?? trimmedEmail;
+      _phoneNumber = registeredUser.phone;
+      _authMethod = 'email';
+      _status = AuthStatus.authenticated;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _lastError = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> sendPasswordReset(String email) async {
+    final trimmedEmail = email.trim();
+    final emailErr = validateEmail(trimmedEmail);
+    if (emailErr != null) {
+      _lastError = emailErr;
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _lastError = null;
+    notifyListeners();
+
+    try {
+      await _repo.sendPasswordReset(trimmedEmail);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _lastError = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> sendOtp(String phone) async {
+    _isLoading = true;
+    _lastError = null;
+    notifyListeners();
+
+    if (!isDevMockAuthEnabled) {
+      try {
+        final ok = await _repo.sendPhoneOtp(phone.trim());
+        _isLoading = false;
+        if (ok) {
+          _phoneNumber = phone.trim();
+          _authMethod = 'phone';
+          _status = AuthStatus.phoneEntered;
+          _resendCountdown = 59;
+          _startCountdown();
+        }
+        notifyListeners();
+        return ok;
+      } catch (e) {
+        _lastError = e.toString();
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    }
+
+    await Future.delayed(const Duration(milliseconds: 50));
+    _phoneNumber = phone.trim();
     _authMethod = 'phone';
     _status = AuthStatus.phoneEntered;
     _isLoading = false;
@@ -90,9 +329,17 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> sendEmailOtp(String email) async {
     _isLoading = true;
+    _lastError = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    if (!isDevMockAuthEnabled) {
+      _lastError = 'Email OTP requires a configured email OTP provider; use email/password sign-in.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    await Future.delayed(const Duration(milliseconds: 50));
     _email = email.trim();
     _authMethod = 'email';
     _status = AuthStatus.phoneEntered;
@@ -113,12 +360,21 @@ class AuthProvider extends ChangeNotifier {
     String? avatarUrl,
   }) async {
     _isLoading = true;
+    _lastError = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    if (!isDevMockAuthEnabled) {
+      _lastError = 'Google Sign-In requires configured OAuth credentials.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    await Future.delayed(const Duration(milliseconds: 50));
     _email = email.trim();
     _authMethod = 'google';
     _user = _user.copyWith(
+      id: _user.id.isNotEmpty ? _user.id : 'dev_google_${email.trim().hashCode.abs()}',
       fullName: displayName.trim(),
       email: email.trim(),
       avatarUrl: avatarUrl,
@@ -141,19 +397,55 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
+  /// Verifies an OTP code.
+  ///
+  /// NEVER accepts arbitrary 6-digit codes outside explicit dev-mock mode.
   Future<bool> verifyOtp(String code) async {
+    if (_isLocked) {
+      _lastError = 'OTP verification temporarily locked';
+      notifyListeners();
+      return false;
+    }
+
     _isLoading = true;
+    _lastError = null;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    final trimmedCode = code.trim();
+
+    if (!isDevMockAuthEnabled) {
+      try {
+        final verifiedUser = await _repo.verifyPhoneOtp(
+          _phoneNumber,
+          trimmedCode,
+        );
+        _user = verifiedUser;
+        _status = AuthStatus.otpVerified;
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } catch (e) {
+        _lastError = e.toString();
+      }
+
+      _isLoading = false;
+      _otpAttemptsLeft--;
+      if (_otpAttemptsLeft <= 0) {
+        _isLocked = true;
+      }
+      notifyListeners();
+      return false;
+    }
+
+    await Future.delayed(const Duration(milliseconds: 50));
     _isLoading = false;
 
-    // Demo code: '482911' or any 6 digits for testing
-    if (code.length == 6) {
+    if (trimmedCode.length == 6 && trimmedCode == _devOtpCode) {
       _status = AuthStatus.otpVerified;
       notifyListeners();
       return true;
     } else {
+      _lastError = 'Invalid verification code';
       _otpAttemptsLeft--;
       if (_otpAttemptsLeft <= 0) {
         _isLocked = true;
@@ -178,15 +470,29 @@ class AuthProvider extends ChangeNotifier {
     bool ladiesOnlyPreference = false,
     String? avatarUrl,
   }) {
+    final canCompleteAuth = _status == AuthStatus.otpVerified ||
+        _status == AuthStatus.authenticated ||
+        isDevMockAuthEnabled;
+
+    if (!canCompleteAuth) {
+      _lastError = 'Authenticate before saving profile';
+      notifyListeners();
+      return;
+    }
+
+    final resolvedId = _user.id.isNotEmpty
+        ? _user.id
+        : (isDevMockAuthEnabled ? 'dev_usr_${DateTime.now().millisecondsSinceEpoch}' : '');
+
     _user = UserModel(
-      id: 'usr_${DateTime.now().millisecondsSinceEpoch}',
+      id: resolvedId,
       fullName: fullName,
       phone: _phoneNumber,
       gender: gender,
       governorate: governorate,
       city: city,
       birthDate: birthDate,
-      email: email,
+      email: email ?? _email,
       emergencyContactName: emergencyContactName,
       emergencyContactPhone: emergencyContactPhone,
       occupation: occupation,
@@ -194,34 +500,68 @@ class AuthProvider extends ChangeNotifier {
       tripVibe: tripVibe,
       ladiesOnlyPreference: ladiesOnlyPreference,
       avatarUrl: avatarUrl,
-      isVerified: false,
-      idVerificationStatus: IdVerificationStatus.unverified,
+      isVerified: _user.isVerified,
+      idVerificationStatus: _user.idVerificationStatus,
+      nationalId: _user.nationalId,
+      walletBalance: _user.walletBalance,
+      rating: _user.rating,
+      completedRides: _user.completedRides,
+      completedParcels: _user.completedParcels,
       hasActiveAlerts: false,
       hasUpcomingBooking: false,
     );
     _status = AuthStatus.authenticated;
     notifyListeners();
+    _persistProfileIfSignedIn();
   }
 
-  void submitIdVerification({
+  Future<bool> submitIdVerification({
     required String nationalId,
     required String frontPhoto,
     required String backPhoto,
     String? selfiePhoto,
-  }) {
+  }) async {
+    final qid = nationalId.trim();
+    if (!_qatarQidRegex.hasMatch(qid)) {
+      _lastError = 'Qatar QID must be exactly 11 digits';
+      notifyListeners();
+      return false;
+    }
+
     _user = _user.copyWith(
-      nationalId: nationalId,
+      nationalId: qid,
       idFrontImage: frontPhoto,
       idBackImage: backPhoto,
       selfieImage: selfiePhoto,
       idVerificationStatus: IdVerificationStatus.underReview,
       isVerified: false,
     );
-    _status = AuthStatus.authenticated;
     notifyListeners();
+
+    try {
+      if (await _repo.isSignedIn()) {
+        return await _repo.submitNationalId(
+          nationalId: qid,
+          idFrontImage: frontPhoto,
+          idBackImage: backPhoto,
+          selfieImage: selfiePhoto ?? '',
+        );
+      }
+      return true;
+    } catch (e) {
+      _lastError = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 
+  /// Dev-only helper; server/admin verification approval is enforced in production.
   void approveIdVerification() {
+    if (!isDevMockAuthEnabled) {
+      _lastError = 'Client-side verification approval is disabled';
+      notifyListeners();
+      return;
+    }
     _user = _user.copyWith(
       idVerificationStatus: IdVerificationStatus.verified,
       isVerified: true,
@@ -253,18 +593,36 @@ class AuthProvider extends ChangeNotifier {
       tripVibe: tripVibe ?? _user.tripVibe,
       ladiesOnlyPreference: ladiesOnlyPreference ?? _user.ladiesOnlyPreference,
       emergencyContactName: emergencyContactName ?? _user.emergencyContactName,
-      emergencyContactPhone: emergencyContactPhone ?? _user.emergencyContactPhone,
+      emergencyContactPhone:
+          emergencyContactPhone ?? _user.emergencyContactPhone,
     );
     notifyListeners();
-    AppRepositories.instance.auth.updateProfile(_user).ignore();
+    _persistProfileIfSignedIn();
+  }
+
+  void _persistProfileIfSignedIn() {
+    unawaited(() async {
+      try {
+        if (await _repo.isSignedIn()) {
+          await _repo.updateProfile(_user);
+        }
+      } catch (_) {
+        // Keep local optimistic profile state intact if offline.
+      }
+    }());
   }
 
   void updateWalletBalance(double newBalance) {
+    if (!AppEnvironment.enableDigitalWallet) {
+      _lastError = 'Digital wallet is disabled in MVP Phase 1';
+      notifyListeners();
+      return;
+    }
     _user = _user.copyWith(walletBalance: newBalance);
     notifyListeners();
   }
 
-  // Wallet Transactions & Payment Methods State
+  // Payment method preference (COD / manual bank transfer in MVP Phase 1)
   String _selectedPaymentMethod = 'cash';
   String get selectedPaymentMethod => _selectedPaymentMethod;
 
@@ -273,52 +631,22 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  final List<Map<String, dynamic>> _walletTransactions = [
-    {
-      'titleAr': 'شحن رصيد - خدمة فوراً (Fawran)',
-      'titleEn': 'Top-up - Fawran Instant Transfer',
-      'date': 'أمس، 4:30 م',
-      'dateEn': 'Yesterday, 4:30 PM',
-      'amount': '+200 ر.ق',
-      'amountValue': 200.0,
-      'isPositive': true,
-    },
-    {
-      'titleAr': 'رحلة الدوحة ← الخور',
-      'titleEn': 'Ride Doha → Al Khor',
-      'date': '2 نوفمبر، 7:30 ص',
-      'dateEn': 'Nov 2, 7:30 AM',
-      'amount': '-35 ر.ق',
-      'amountValue': -35.0,
-      'isPositive': false,
-    },
-    {
-      'titleAr': 'تعويض ضمان طرد #4810',
-      'titleEn': 'Parcel Insurance Refund #4810',
-      'date': '28 أكتوبر',
-      'dateEn': 'Oct 28',
-      'amount': '+150 ر.ق',
-      'amountValue': 150.0,
-      'isPositive': true,
-    },
-    {
-      'titleAr': 'إرسال طرد الدوحة ← الوكرة',
-      'titleEn': 'Parcel Doha → Al Wakrah',
-      'date': '22 أكتوبر',
-      'dateEn': 'Oct 22',
-      'amount': '-25 ر.ق',
-      'amountValue': -25.0,
-      'isPositive': false,
-    },
-  ];
+  List<Map<String, dynamic>> get walletTransactions =>
+      List.unmodifiable(_walletTransactions);
 
-  List<Map<String, dynamic>> get walletTransactions => List.unmodifiable(_walletTransactions);
-
-  void depositWalletFunds({
+  bool depositWalletFunds({
     required double amount,
     required String methodAr,
     required String methodEn,
   }) {
+    if (!AppEnvironment.enableDigitalWallet) {
+      _lastError = 'Digital wallet deposits are disabled in MVP Phase 1';
+      notifyListeners();
+      return false;
+    }
+    if (amount <= 0) {
+      return false;
+    }
     _user = _user.copyWith(walletBalance: _user.walletBalance + amount);
     _walletTransactions.insert(0, {
       'titleAr': 'شحن رصيد - $methodAr',
@@ -330,6 +658,7 @@ class AuthProvider extends ChangeNotifier {
       'isPositive': true,
     });
     notifyListeners();
+    return true;
   }
 
   bool withdrawWalletFunds({
@@ -337,6 +666,11 @@ class AuthProvider extends ChangeNotifier {
     required String destinationAr,
     required String destinationEn,
   }) {
+    if (!AppEnvironment.enableDigitalWallet) {
+      _lastError = 'Digital wallet withdrawals are disabled in MVP Phase 1';
+      notifyListeners();
+      return false;
+    }
     if (amount <= 0 || amount > _user.walletBalance) {
       return false;
     }
@@ -392,9 +726,24 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void logout() {
-    _status = AuthStatus.unauthenticated;
+  Future<void> logout() async {
+    _isLoading = true;
     notifyListeners();
+    try {
+      await _repo.signOut();
+    } finally {
+      _resendTimer?.cancel();
+      _user = UserModel.empty;
+      _phoneNumber = '';
+      _email = null;
+      _status = AuthStatus.unauthenticated;
+      _otpAttemptsLeft = 3;
+      _isLocked = false;
+      _lastError = null;
+      _walletTransactions.clear();
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   @override
@@ -403,5 +752,3 @@ class AuthProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-
-
