@@ -8,7 +8,7 @@ import 'models/location_item.dart';
 class MockData {
   MockData._();
 
-  // Current logged in user (Qatar baseline)
+  // Dev/Test Mock User fixture ONLY (Qatar baseline — never used as production default)
   static const UserModel currentUser = UserModel(
     id: 'user_01',
     fullName: 'عبدالرحمن المهنا',
@@ -25,6 +25,12 @@ class MockData {
     tripVibe: 'هادئ ومريح',
     ladiesOnlyPreference: false,
     isVerified: true,
+    idVerificationStatus: IdVerificationStatus.verified,
+    nationalId: '29663401842',
+    walletBalance: 450.0,
+    rating: 4.9,
+    completedRides: 14,
+    completedParcels: 6,
     hasActiveAlerts: true,
     hasUpcomingBooking: true,
   );

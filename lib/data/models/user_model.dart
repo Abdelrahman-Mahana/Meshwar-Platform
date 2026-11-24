@@ -1,17 +1,25 @@
 enum UserGender {
   female, // سيدة
-  male,   // رجل
+  male, // رجل
   preferNotToSay, // أفضّل عدم الذكر
 }
 
 enum IdVerificationStatus {
-  unverified,   // غير موثق
-  underReview,  // قيد المراجعة
-  verified,     // موثق بنجاح
-  rejected,     // مرفوض
+  unverified, // غير موثق
+  underReview, // قيد المراجعة
+  verified, // موثق بنجاح
+  rejected, // مرفوض
 }
 
 class UserModel {
+  /// Neutral unauthenticated / newly initialized placeholder with zero privileges.
+  static const UserModel empty = UserModel(
+    id: '',
+    fullName: '',
+    phone: '',
+    gender: UserGender.preferNotToSay,
+  );
+
   final String id;
   final String fullName;
   final String phone;
@@ -51,7 +59,7 @@ class UserModel {
     required this.phone,
     required this.gender,
     this.avatarUrl,
-    this.isVerified = true,
+    this.isVerified = false,
     this.hasActiveAlerts = false,
     this.hasUpcomingBooking = false,
     this.governorate,
@@ -64,16 +72,16 @@ class UserModel {
     this.smokingPreference,
     this.tripVibe,
     this.ladiesOnlyPreference = false,
-    this.idVerificationStatus = IdVerificationStatus.verified,
-    this.nationalId = '29663401842',
+    this.idVerificationStatus = IdVerificationStatus.unverified,
+    this.nationalId,
     this.idFrontImage,
     this.idBackImage,
     this.selfieImage,
     this.idRejectionReason,
-    this.walletBalance = 450.0,
-    this.rating = 4.9,
-    this.completedRides = 14,
-    this.completedParcels = 6,
+    this.walletBalance = 0.0,
+    this.rating = 0.0,
+    this.completedRides = 0,
+    this.completedParcels = 0,
   });
 
   UserModel copyWith({
@@ -178,7 +186,7 @@ class UserModel {
       phone: (json['phone'] ?? '').toString(),
       gender: UserGender.values.firstWhere(
         (e) => e.name == json['gender'],
-        orElse: () => UserGender.male,
+        orElse: () => UserGender.preferNotToSay,
       ),
       avatarUrl: json['avatarUrl'] as String?,
       isVerified: json['isVerified'] as bool? ?? false,
@@ -204,10 +212,9 @@ class UserModel {
       selfieImage: json['selfieImage'] as String?,
       idRejectionReason: json['idRejectionReason'] as String?,
       walletBalance: (json['walletBalance'] as num?)?.toDouble() ?? 0.0,
-      rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
       completedRides: (json['completedRides'] as num?)?.toInt() ?? 0,
       completedParcels: (json['completedParcels'] as num?)?.toInt() ?? 0,
     );
   }
 }
-

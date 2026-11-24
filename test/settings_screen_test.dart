@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 import 'package:mashwar/core/widgets/mashwar_button.dart';
+import 'package:mashwar/data/mock_data.dart';
 import 'package:mashwar/screens/settings/settings_screen.dart';
 import 'package:mashwar/state/alerts_provider.dart';
 import 'package:mashwar/state/auth_provider.dart';
@@ -10,7 +11,7 @@ import 'package:mashwar/state/settings_provider.dart';
 
 void main() {
   Widget buildSettingsWidget({AuthProvider? auth, SettingsProvider? settings, AlertsProvider? alerts}) {
-    final authProvider = auth ?? AuthProvider();
+    final authProvider = auth ?? AuthProvider.forTesting(user: MockData.currentUser);
     final settingsProvider = settings ?? SettingsProvider();
     final alertsProvider = alerts ?? AlertsProvider();
 
