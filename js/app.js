@@ -1,4 +1,4 @@
-/* MASHWAR (مشوار — Qatar) Lean Investor Landing Page Interactions */
+/* MASHWAR (مشوار — Qatar) Lean Investor Landing Page Interactions · v2.4.0 */
 (function () {
   const CORRIDORS = {
     al_khor: {
@@ -18,8 +18,28 @@
       parcel_vs_en: "vs 24–48h traditional courier",
       driver_ar: "110 – 160 ر.ق / رحلة ذهاب",
       driver_en: "110 – 160 QAR / trip",
-      driver_vs_ar: "3 مقاعد + طردان على نفس الطريق",
-      driver_vs_en: "3 seats + 2 urgent parcels en route"
+      driver_vs_ar: "3 مقاعد + أوراق ومشتريات على نفس الطريق",
+      driver_vs_en: "3 seats + paperwork/errands en route"
+    },
+    lusail_supply: {
+      origin_ar: "المنطقة الصناعية الدوحة",
+      origin_en: "Doha Industrial Area",
+      dest_ar: "لوسيل ومواقع الأبراج",
+      dest_en: "Lusail City & Project Sites",
+      dist_ar: "32 كم · ~28 دقيقة",
+      dist_en: "32 km · ~28 mins",
+      seat_ar: "18 ر.ق / مقعد",
+      seat_en: "18 QAR / seat",
+      seat_vs_ar: "توفير 72% لمشوار المهندسين اليومي",
+      seat_vs_en: "Save 72% for daily site commuters",
+      parcel_ar: "45 ر.ق · توريد موقع بفاتورة",
+      parcel_en: "45 QAR · Live-Receipt Site Supply",
+      parcel_vs_ar: "اعتماد فاتورة المحل بالضمان قبل التحرك",
+      parcel_vs_en: "In-store receipt approved via Escrow",
+      driver_ar: "120 – 185 ر.ق / رحلة",
+      driver_en: "120 – 185 QAR / run",
+      driver_vs_ar: "توريد معدات + مقاعد على نفس الخط",
+      driver_vs_en: "Site supply + commuter seats en route"
     },
     mesaieed: {
       origin_ar: "الدوحة / الوكرة",
@@ -34,8 +54,8 @@
       seat_vs_en: "Save 76% vs 92 QAR private charter",
       parcel_ar: "30 ر.ق · خلال ساعتين",
       parcel_en: "30 QAR · 2h Transit",
-      parcel_vs_ar: "توصيل فوري للمصانع والعقود",
-      parcel_vs_en: "Direct industrial plant & contract handoff",
+      parcel_vs_ar: "توصيل فوري للمصانع والعقود بـ OTP",
+      parcel_vs_en: "Direct industrial plant & OTP handoff",
       driver_ar: "96 – 140 ر.ق / رحلة",
       driver_en: "96 – 140 QAR / trip",
       driver_vs_ar: "مربوطة بتنقلات المهندسين والموظفين",
@@ -54,8 +74,8 @@
       seat_vs_en: "Save 70% vs 52 QAR charter",
       parcel_ar: "25 ر.ق · خلال 90 دقيقة",
       parcel_en: "25 QAR · 90m Express",
-      parcel_vs_ar: "مثالي لقطع غيار الورش والمحلات",
-      parcel_vs_en: "Ideal for B2B auto spare parts & SMEs",
+      parcel_vs_ar: "مثالي لقطع غيار الورش والمحلات بفاتورة",
+      parcel_vs_en: "Ideal for B2B auto parts & live receipts",
       driver_ar: "75 – 115 ر.ق / مسار",
       driver_en: "75 – 115 QAR / route",
       driver_vs_ar: "توريد سريع بين الورش والمخازن",
@@ -74,7 +94,7 @@
       seat_vs_en: "Save 78% vs 160 QAR private charter",
       parcel_ar: "45 ر.ق · خلال 3 ساعات",
       parcel_en: "45 QAR · 3h Same-Day",
-      parcel_vs_ar: "تغطية الغرب القطري في نفس اليوم",
+      parcel_vs_ar: "تغطية الغرب القطري ومشاوير الحضانات",
       parcel_vs_en: "Same-day Western Qatar highway fulfillment",
       driver_ar: "150 – 210 ر.ق / رحلة",
       driver_en: "150 – 210 QAR / trip",
@@ -85,18 +105,23 @@
 
   const SCREENS = [
     "./assets/mobile/10_tab_home_screen.png",
+    "./assets/mobile/67_service_escrow_screen.png",
     "./assets/mobile/11_tab_board_screen.png",
+    "./assets/mobile/28_post_ad_screen.png",
     "./assets/mobile/19_ride_details_screen.png",
-    "./assets/mobile/34_parcel_tracking_screen.png",
     "./assets/mobile/52_wallet_screen.png",
+    "./assets/mobile/34_parcel_tracking_screen.png",
     "./assets/mobile/47_vehicle_registration_screen.png",
     "./assets/mobile/50_emergency_sos_sheet.png"
   ];
 
   const WEB_SCREENS = {
-    home: { src: "./assets/web/01_web_home_desktop.png", url: "https://app.mashwar.qa/home" },
-    kpis: { src: "./assets/web/06_admin_dashboard_kpis.png", url: "https://admin.mashwar.qa/dashboard-kpis" },
-    kyc: { src: "./assets/web/07_admin_driver_verifications.png", url: "https://admin.mashwar.qa/driver-verifications" }
+    kpis: { src: "./assets/web/admin_v2_dashboard.png", url: "https://admin.mashwar.qa/dashboard" },
+    services: { src: "./assets/web/admin_v2_services.png", url: "https://admin.mashwar.qa/services-catalog" },
+    escrow: { src: "./assets/web/admin_v2_escrow.png", url: "https://admin.mashwar.qa/escrow-finance" },
+    devops_noc: { src: "./assets/web/admin_v2_devops_noc.png", url: "https://admin.mashwar.qa/devops-sre?mode=noc" },
+    web_home: { src: "./assets/web/01_web_home_desktop.png", url: "https://app.mashwar.qa/home" },
+    web_escrow: { src: "./assets/web/14_web_escrow_desktop.png", url: "https://app.mashwar.qa/escrow" }
   };
 
   let currentLang = "ar";
@@ -239,8 +264,12 @@
         const k = btn.getAttribute("data-web-tab");
         document.querySelectorAll("[data-web-tab]").forEach((b) => b.classList.toggle("is-active", b === btn));
         if (webImg && WEB_SCREENS[k]) {
-          webImg.src = WEB_SCREENS[k].src;
-          if (webUrl) webUrl.textContent = WEB_SCREENS[k].url;
+          webImg.style.opacity = "0.35";
+          setTimeout(() => {
+            webImg.src = WEB_SCREENS[k].src;
+            webImg.style.opacity = "1";
+            if (webUrl) webUrl.textContent = WEB_SCREENS[k].url;
+          }, 90);
         }
       });
     });
@@ -267,9 +296,13 @@
     if (localLaunch) {
       localLaunch.style.display = isLocalHost ? "inline-flex" : "none";
     }
+    const localAdminLaunch = document.getElementById("modal-local-admin-launch");
+    if (localAdminLaunch) {
+      localAdminLaunch.style.display = isLocalHost ? "inline-flex" : "none";
+    }
 
     document.querySelectorAll("[data-open-download]").forEach((btn) => btn.addEventListener("click", openDl));
-    document.querySelectorAll("[data-live-web-btn]").forEach((btn) => {
+    document.querySelectorAll("[data-live-web-btn], [data-live-admin-btn]").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         if (!isLocalHost) {
           e.preventDefault();

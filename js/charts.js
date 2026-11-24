@@ -180,10 +180,10 @@
     const y3 = DATA[state.scenario].years[2];
     const isAr = state.lang === "ar";
     const items = [
-      { key: "b2b", label: isAr ? "اشتراكات الشركات (B2B SaaS)" : "Mashwar Business (B2B SaaS)", val: y3.rev_b2b, color: "#1B7F79" },
-      { key: "parcels", label: isAr ? "شحن الطرود الفوري (OTP)" : "Same-Day OTP Parcels", val: y3.rev_parcels, color: "#F5A524" },
-      { key: "seats", label: isAr ? "التنقل التشاركي (المقاعد)" : "Shared Carpooling Seats", val: y3.rev_seats, color: "#0F2A43" },
-      { key: "board", label: isAr ? "لوحة المصالح وبضائع التجار" : "Dual-Intent Board & SME Cargo", val: y3.rev_board, color: "#8A1538" }
+      { key: "b2b", label: isAr ? "اشتراكات الأعمال والورش (B2B SaaS)" : "Mashwar Business (B2B SaaS)", val: y3.rev_b2b, color: "#1B7F79" },
+      { key: "parcels", label: isAr ? "توريد المواقع والأمانات (OTP)" : "Worksite Supply & OTP Parcels", val: y3.rev_parcels, color: "#F5A524" },
+      { key: "seats", label: isAr ? "مشاركة المقاعد والحضانات" : "Shared Seats & Nursery Rides", val: y3.rev_seats, color: "#0F2A43" },
+      { key: "board", label: isAr ? "مشتريات الفاتورة الحية واللوحة" : "Live-Receipt Buy & Community Board", val: y3.rev_board, color: "#8A1538" }
     ];
     const total = items.reduce((s, x) => s + x.val, 0) || 1;
 

@@ -624,6 +624,12 @@ textarea {
   background: #FCFCFD;
 }
 
+.phone-frame__screen img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
 .float-chip {
   position: absolute;
   z-index: 4;
@@ -733,44 +739,50 @@ textarea {
   color: #FFFFFF;
 }
 
+.corridor-stage__inner {
+  position: relative;
+  z-index: 2;
+  padding: 32px 36px 34px;
+}
+
+.corridor-stage__top {
+  display: grid;
+  grid-template-columns: 0.45fr 0.55fr;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
 .corridor-stage__banner {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 290px;
+  border-radius: 18px;
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
   background: #071624;
-}
-
-.corridor-stage__banner::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  height: 55%;
-  background: linear-gradient(180deg, rgba(7, 22, 36, 0) 0%, rgba(7, 22, 36, 0.96) 100%);
-  pointer-events: none;
+  box-shadow: 0 12px 32px rgba(2, 10, 18, 0.40);
 }
 
 .corridor-stage__banner img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center;
+  object-fit: contain;
   display: block;
 }
 
-.corridor-stage__inner {
-  position: relative;
-  z-index: 2;
-  padding: 28px 36px 34px;
+.corridor-stage__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
 .corridor-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 28px;
+  margin-bottom: 0;
 }
 
 .corridor-tab {
@@ -798,6 +810,10 @@ textarea {
   background: var(--gold);
   border-color: var(--gold);
   color: var(--navy-deep);
+}
+
+.corridor-stage__controls .corridor-route-bar {
+  margin-bottom: 0;
 }
 
 .corridor-route-bar {
@@ -931,11 +947,11 @@ textarea {
 }
 
 /* ==========================================================================
-   Chapter 3: 4-in-1 Super-App Services Grid
+   Chapter 3: 6-in-1 Super-App Services Grid & Bilateral Escrow Shield
    ========================================================================== */
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 22px;
 }
 
@@ -968,10 +984,16 @@ textarea {
   border-bottom: 1px solid #EEF2F6;
 }
 
+.service-card__media--dark {
+  background: #081B31;
+  border-bottom-color: #122B49;
+}
+
 .service-card__media img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  border-radius: 12px;
   transition: transform 420ms var(--ease-out);
 }
 
@@ -1029,6 +1051,101 @@ textarea {
   height: 16px;
   margin-top: 2px;
   flex-shrink: 0;
+}
+
+/* Bilateral MASHWAR Escrow Shield Card */
+.escrow-shield-card {
+  margin-top: 28px;
+  border-radius: var(--radius-xl);
+  padding: 30px;
+  background: linear-gradient(140deg, #071624 0%, #0F2A43 62%, #4A1228 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(245, 165, 36, 0.38);
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  grid-template-columns: 0.32fr 0.68fr;
+  gap: 28px;
+  align-items: center;
+}
+
+.escrow-shield-card__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.escrow-shield-card__media img {
+  width: 100%;
+  max-width: 250px;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  object-fit: contain;
+  border-radius: 20px;
+  background: #FAF7F2;
+  padding: 10px;
+  box-shadow: 0 14px 36px rgba(2, 10, 18, 0.42);
+}
+
+.escrow-shield-card__body .eyebrow {
+  background: rgba(245, 165, 36, 0.16);
+  color: var(--gold);
+  border-color: rgba(245, 165, 36, 0.35);
+  margin-bottom: 10px;
+}
+
+.escrow-shield-card__body h3 {
+  margin: 0 0 8px;
+  font-size: 1.42rem;
+  font-weight: 900;
+  color: #FFFFFF;
+}
+
+.escrow-shield-card__body > p {
+  margin: 0 0 20px;
+  font-size: 0.94rem;
+  color: #CBD5E1;
+  line-height: 1.72;
+}
+
+.escrow-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.escrow-step {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.escrow-step__num {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(245, 165, 36, 0.20);
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.escrow-step strong {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.escrow-step span:last-child {
+  font-size: 0.79rem;
+  color: #CBD5E1;
+  line-height: 1.5;
 }
 
 /* ==========================================================================
@@ -1128,6 +1245,8 @@ textarea {
 
 .phone-device-stage__inner img {
   width: 100%;
+  height: auto;
+  object-fit: contain;
   transition: opacity 200ms ease;
 }
 
@@ -1255,6 +1374,47 @@ textarea {
   background: rgba(255, 255, 255, 0.06);
   padding: 3px 12px;
   border-radius: 6px;
+}
+
+.browser-frame img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  transition: opacity 180ms ease;
+  display: block;
+}
+
+.admin-live-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.admin-cap-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-cap-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #E2E8F0;
+  font-size: 0.77rem;
+  font-weight: 700;
+}
+
+.admin-live-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 /* ==========================================================================
@@ -1917,6 +2077,16 @@ input[type="range"] {
   background: var(--gold);
 }
 
+.store-btn--admin {
+  background: #0F2A43;
+  color: #FFFFFF;
+  border-color: rgba(245, 165, 36, 0.45);
+}
+
+.store-btn--admin .store-btn__sub {
+  color: var(--gold);
+}
+
 .store-btn svg {
   width: 24px;
   height: 24px;
@@ -2202,13 +2372,22 @@ input[type="range"] {
     margin-top: 32px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .corridor-stage__banner { max-height: 230px; }
   .corridor-stage__inner { padding: 24px; }
+  .corridor-stage__top {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
   .corridor-steps,
   .services-grid,
-  .trust-pillars-grid {
+  .trust-pillars-grid,
+  .escrow-steps-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+  }
+  .escrow-shield-card {
+    grid-template-columns: 1fr;
+    padding: 22px;
+    gap: 20px;
   }
   .driver-promo-card {
     grid-template-columns: 0.42fr 0.58fr;
@@ -2310,14 +2489,14 @@ input[type="range"] {
   .corridor-stage { border-radius: 20px; }
   .corridor-stage__banner {
     aspect-ratio: 16 / 9;
-    max-height: 195px;
+    max-height: none;
   }
   .corridor-stage__inner { padding: 16px; }
   .corridor-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
   .corridor-tab {
     min-height: 38px;
@@ -2325,6 +2504,7 @@ input[type="range"] {
     font-size: 0.78rem;
     justify-content: center;
   }
+  .corridor-tab:last-child { grid-column: 1 / -1; }
   .corridor-route-bar {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -2347,7 +2527,7 @@ input[type="range"] {
   .corridor-step { font-size: 0.75rem; gap: 7px; }
   .corridor-step__num { width: 22px; height: 22px; font-size: 0.72rem; }
 
-  /* 2-Col Compact Uncropped Services Grid */
+  /* 2-Col Compact Uncropped Services Grid & Escrow Shield */
   .services-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
@@ -2368,6 +2548,24 @@ input[type="range"] {
   .service-card__body p { font-size: 0.75rem; margin-bottom: 10px; line-height: 1.48; }
   .service-card__control { font-size: 0.70rem; padding-top: 8px; gap: 5px; }
 
+  .escrow-shield-card {
+    margin-top: 18px;
+    padding: 18px;
+    border-radius: 20px;
+    gap: 16px;
+  }
+  .escrow-shield-card__media img {
+    max-width: 185px;
+    padding: 8px;
+  }
+  .escrow-shield-card__body h3 { font-size: 1.08rem; }
+  .escrow-shield-card__body > p { font-size: 0.82rem; margin-bottom: 14px; }
+  .escrow-steps-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .escrow-step { padding: 11px; }
+
   /* Mobile Showcase Compact Tabs Above Phone */
   .showcase-split { gap: 18px; margin-bottom: 28px; }
   .screen-tabs {
@@ -2381,7 +2579,6 @@ input[type="range"] {
     justify-content: center;
     text-align: center;
   }
-  .screen-tab:last-child { grid-column: 1 / -1; }
   .screen-tab__title { font-size: 0.80rem; margin-bottom: 0; }
   .screen-tab__desc,
   .screen-tab__badge { display: none; }
@@ -2398,6 +2595,12 @@ input[type="range"] {
   }
   .admin-showcase__head h3 { font-size: 1.04rem; }
   .admin-showcase__head p { font-size: 0.80rem; }
+  .admin-live-btns { width: 100%; }
+  .admin-live-btns .btn {
+    flex: 1 1 100%;
+    white-space: normal;
+    text-align: center;
+  }
   .pill-switch button {
     min-height: 34px;
     padding: 5px 10px;
@@ -2485,7 +2688,8 @@ input[type="range"] {
 @media (max-width: 360px) {
   .services-grid,
   .build-matrix,
-  .corridor-steps {
+  .corridor-steps,
+  .escrow-steps-grid {
     grid-template-columns: 1fr;
   }
 }
