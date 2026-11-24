@@ -276,6 +276,68 @@ rules_version = '2';
 //             phone, notes, lang, pageUrl
 //
 // ==============================================================================
+// MASHWAR Worksite Supply MVP (Qatar Pilot Collections 20-29)
+// ==============================================================================
+//
+// 20. business_profiles/{uid}
+//     Fields: id (immutable, == uid), userId (immutable, == uid), companyName,
+//             contactName, phone, defaultWorksiteArea, ratingAvg (number, starts 0),
+//             ratingCount (int, starts 0), createdAt (immutable), updatedAt
+//
+// 21. provider_profiles/{uid}
+//     Fields: id (immutable, == uid), userId (immutable, == uid), fullName, phone,
+//             vehicleType, vehiclePlate, serviceAreas (list <= 15),
+//             approvalStatus (enum: 'pending', 'underReview', 'approved', 'rejected', 'suspended'),
+//             completedTasksCount (int, starts 0), ratingAvg (number, starts 0),
+//             ratingCount (int, starts 0), reviewedBy, reviewedAtUtc, rejectionReason,
+//             createdAt (immutable), updatedAt
+//
+// 22. provider_verifications/{uid}
+//     Sensitive KYC documents (owner & admin read ONLY).
+//     Fields: id (immutable, == uid), providerId (immutable, == uid), fullName,
+//             qidNumber (11-digit QID ^[0-9]{11}$), qidFrontUrl, qidBackUrl, selfieUrl,
+//             vehicleLicenseUrl, status (enum: 'pending', 'underReview', 'approved', 'rejected'),
+//             rejectionReason, reviewedBy, reviewedAtUtc, createdAt (immutable), updatedAt
+//
+// 23. work_requests/{requestId}
+//     Fields: id (immutable), requesterId (immutable), category ('worksite_supply'),
+//             title, description, pickupLocation, deliveryLocation, deliveryArea,
+//             budgetMinor (int > 0), paymentMethod ('cash_on_delivery' | 'bank_transfer_manual'),
+//             paymentStatus ('unpaid' | 'transfer_proof_submitted' | 'verified_settled' | 'refunded' | 'disputed'),
+//             paymentProofUrl, status, offerCount (int >= 0), selectedOfferId,
+//             assignedProviderId, agreedAmountMinor, agreedFeeMinor,
+//             referenceImageUrls (list <= 5), invoiceImageUrls (list <= 5),
+//             sourceRequestId, createdAt (immutable), updatedAt
+//
+// 24. work_offers/{offerId}
+//     Fields: id (immutable), requestId (immutable), providerId (immutable),
+//             providerName, totalAmountMinor (int > 0), serviceFeeMinor (int >= 0),
+//             etaMinutes (int > 0), notes, status ('pending' | 'accepted' | 'rejected' | 'withdrawn' | 'expired'),
+//             createdAt (immutable), updatedAt
+//
+// 25. work_request_secrets/{requestId}
+//     Admin SDK / Cloud Functions ONLY (hashed handover code, salt, attemptsRemaining, expiry).
+//
+// 26. work_request_handover_view/{requestId}
+//     Requester-only read view of active handover code; server-written only.
+//
+// 27. request_events/{eventId}
+//     Immutable append-only lifecycle audit log for work_requests.
+//     Fields: id (immutable), requestId (immutable), actorId (immutable), actorRole,
+//             type/eventType, fromStatus, toStatus, title, note/message, metadata, createdAt
+//
+// 28. ratings/{ratingId}
+//     One-time immutable post-completion rating; ID must equal requestId + '_' + uid.
+//     Fields: id, requestId, fromUserId, toUserId, fromRole, toRole, stars (int 1..5),
+//             comment, tags, createdAt
+//
+// 29. notifications/{notificationId}
+//     Owner-scoped notifications; clients may only toggle isRead.
+//     Fields: id, userId, title, titleAr, titleEn, body, bodyAr, bodyEn, type,
+//             category, requestId, offerId, targetRoute, actionUrl, data, isRead,
+//             readAt, createdAt, updatedAt
+//
+// ==============================================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -287,6 +349,11 @@ service cloud.firestore {
     // Check if the request is authenticated with Firebase Auth
     function isAuthenticated() {
       return request.auth != null && request.auth.uid != null;
+    }
+
+    // Alias for Worksite Supply MVP rules readability
+    function isSignedIn() {
+      return isAuthenticated();
     }
 
     // Role-Based Access Control: Trust ONLY server-minted Auth Token Custom Claims
@@ -315,6 +382,22 @@ service cloud.firestore {
       );
     }
 
+    // Check approved Worksite Supply provider status from provider_profiles/{uid}
+    function isApprovedProvider(uid) {
+      return exists(/databases/$(database)/documents/provider_profiles/$(uid)) &&
+        get(/databases/$(database)/documents/provider_profiles/$(uid)).data.approvalStatus == 'approved';
+    }
+
+    // Check whether a work_requests/{requestId} document exists
+    function requestExists(requestId) {
+      return exists(/databases/$(database)/documents/work_requests/$(requestId));
+    }
+
+    // Fetch a work_requests/{requestId} document snapshot
+    function requestDoc(requestId) {
+      return get(/databases/$(database)/documents/work_requests/$(requestId));
+    }
+
     // Validate that required fields are present in the document
     function hasRequiredFields(data, fields) {
       return data.keys().hasAll(fields);
@@ -340,6 +423,37 @@ service cloud.firestore {
       return !(field in data) || data[field] == null || (data[field] is string && data[field].size() >= minLen && data[field].size() <= maxLen);
     }
 
+    // Validate Qatar 8-digit mobile (optional +974/974 prefix) OR legacy 10-20 char phone
+    function isValidPhone(phone) {
+      return phone is string && (
+        phone.matches('^(?:\\+?974)?[3567][0-9]{7}$') ||
+        (phone.size() >= 10 && phone.size() <= 20)
+      );
+    }
+
+    // Validate optional Qatar or legacy phone field
+    function isValidOptionalPhone(data, field) {
+      return !(field in data) || data[field] == null || isValidPhone(data[field]);
+    }
+
+    // Strict phone validator for Worksite Supply MVP collections (Qatar mobile or numeric intl)
+    function isValidMvpPhone(phone) {
+      return phone is string && (
+        phone.matches('^(?:\\+?974)?[3567][0-9]{7}$') ||
+        phone.matches('^\\+?[0-9\\s-]{10,20}$')
+      );
+    }
+
+    // Validate 11-digit Qatar QID OR legacy 14-20 char National ID
+    function isValidOptionalNationalId(data, field) {
+      return !(field in data) || data[field] == null || (
+        data[field] is string && (
+          data[field].matches('^[0-9]{11}$') ||
+          (data[field].size() >= 14 && data[field].size() <= 20)
+        )
+      );
+    }
+
     // Validate optional URL: if present and non-null, must be string within bounds
     function validOptionalUrl(data, field) {
       return !(field in data) || data[field] == null || data[field] == '' || (
@@ -347,6 +461,19 @@ service cloud.firestore {
         data[field].size() <= 500 &&
         (data[field].matches('^https://.*') || data[field].matches('^http://.*') || data[field].matches('^gs://.*') || data[field].matches('^assets/.*'))
       );
+    }
+
+    // Validate required non-empty MVP URL (https://, http://, or gs://)
+    function isValidMvpUrl(url) {
+      return url is string &&
+        url.size() >= 8 &&
+        url.size() <= 1000 &&
+        (url.matches('^https://.*') || url.matches('^http://.*') || url.matches('^gs://.*'));
+    }
+
+    // Validate optional MVP URL
+    function validOptionalMvpUrl(data, field) {
+      return !(field in data) || data[field] == null || data[field] == '' || isValidMvpUrl(data[field]);
     }
 
     // Validate optional email format
@@ -375,6 +502,77 @@ service cloud.firestore {
       return !(field in data) || data[field] == null || data[field] is timestamp;
     }
 
+    // Validate optional timestamp or UTC ISO-8601 string
+    function validOptionalTimestampOrIso(data, field) {
+      return !(field in data) || data[field] == null ||
+        data[field] is timestamp ||
+        (data[field] is string && data[field].size() >= 10 && data[field].size() <= 50 && data[field].matches('^\\d{4}-\\d{2}-\\d{2}T.*'));
+    }
+
+    // Bounded list helpers (prevent 1MB payload injection or type juggling inside lists)
+    function isValidBoundedStringItem(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidStringListMax10(items, minLen, maxLen) {
+      return items is list &&
+        items.size() <= 10 &&
+        (items.size() < 1 || isValidBoundedStringItem(items[0], minLen, maxLen)) &&
+        (items.size() < 2 || isValidBoundedStringItem(items[1], minLen, maxLen)) &&
+        (items.size() < 3 || isValidBoundedStringItem(items[2], minLen, maxLen)) &&
+        (items.size() < 4 || isValidBoundedStringItem(items[3], minLen, maxLen)) &&
+        (items.size() < 5 || isValidBoundedStringItem(items[4], minLen, maxLen)) &&
+        (items.size() < 6 || isValidBoundedStringItem(items[5], minLen, maxLen)) &&
+        (items.size() < 7 || isValidBoundedStringItem(items[6], minLen, maxLen)) &&
+        (items.size() < 8 || isValidBoundedStringItem(items[7], minLen, maxLen)) &&
+        (items.size() < 9 || isValidBoundedStringItem(items[8], minLen, maxLen)) &&
+        (items.size() < 10 || isValidBoundedStringItem(items[9], minLen, maxLen));
+    }
+
+    function isValidStringListMax15(items, minLen, maxLen) {
+      return items is list &&
+        items.size() <= 15 &&
+        (items.size() < 1 || isValidBoundedStringItem(items[0], minLen, maxLen)) &&
+        (items.size() < 2 || isValidBoundedStringItem(items[1], minLen, maxLen)) &&
+        (items.size() < 3 || isValidBoundedStringItem(items[2], minLen, maxLen)) &&
+        (items.size() < 4 || isValidBoundedStringItem(items[3], minLen, maxLen)) &&
+        (items.size() < 5 || isValidBoundedStringItem(items[4], minLen, maxLen)) &&
+        (items.size() < 6 || isValidBoundedStringItem(items[5], minLen, maxLen)) &&
+        (items.size() < 7 || isValidBoundedStringItem(items[6], minLen, maxLen)) &&
+        (items.size() < 8 || isValidBoundedStringItem(items[7], minLen, maxLen)) &&
+        (items.size() < 9 || isValidBoundedStringItem(items[8], minLen, maxLen)) &&
+        (items.size() < 10 || isValidBoundedStringItem(items[9], minLen, maxLen)) &&
+        (items.size() < 11 || isValidBoundedStringItem(items[10], minLen, maxLen)) &&
+        (items.size() < 12 || isValidBoundedStringItem(items[11], minLen, maxLen)) &&
+        (items.size() < 13 || isValidBoundedStringItem(items[12], minLen, maxLen)) &&
+        (items.size() < 14 || isValidBoundedStringItem(items[13], minLen, maxLen)) &&
+        (items.size() < 15 || isValidBoundedStringItem(items[14], minLen, maxLen));
+    }
+
+    function isValidUrlListMax5(items) {
+      return items is list &&
+        items.size() <= 5 &&
+        (items.size() < 1 || isValidMvpUrl(items[0])) &&
+        (items.size() < 2 || isValidMvpUrl(items[1])) &&
+        (items.size() < 3 || isValidMvpUrl(items[2])) &&
+        (items.size() < 4 || isValidMvpUrl(items[3])) &&
+        (items.size() < 5 || isValidMvpUrl(items[4]));
+    }
+
+    // Location field validator for work_requests (supports string address OR structured map)
+    function isValidLocationField(val) {
+      return (val is string && val.size() >= 1 && val.size() <= 300) ||
+        (val is map && val.keys().size() >= 1 && val.keys().size() <= 10 &&
+          val.keys().hasOnly(['label', 'address', 'area', 'notes', 'lat', 'lng', 'placeId']) &&
+          validOptionalString(val, 'label', 1, 200) &&
+          validOptionalString(val, 'address', 1, 300) &&
+          validOptionalString(val, 'area', 1, 100) &&
+          validOptionalString(val, 'notes', 0, 300) &&
+          validOptionalString(val, 'placeId', 1, 200) &&
+          (!('lat' in val) || val.lat == null || (val.lat is number && val.lat >= -90 && val.lat <= 90)) &&
+          (!('lng' in val) || val.lng == null || (val.lng is number && val.lng >= -180 && val.lng <= 180)));
+    }
+
     // ==========================================================================
     // Domain Validators (Enforced on BOTH create AND update)
     // ==========================================================================
@@ -399,7 +597,7 @@ service cloud.firestore {
         hasRequiredFields(data, required) &&
         validString(data.id, 1, 128) &&
         validString(data.fullName, 2, 100) &&
-        validString(data.phone, 10, 20) &&
+        isValidPhone(data.phone) &&
         data.gender in ['male', 'female', 'preferNotToSay'] &&
         data.isVerified is bool &&
         data.idVerificationStatus in ['unverified', 'underReview', 'verified', 'rejected'] &&
@@ -413,14 +611,14 @@ service cloud.firestore {
         validOptionalString(data, 'birthDate', 1, 20) &&
         validOptionalEmail(data, 'email') &&
         validOptionalString(data, 'emergencyContactName', 1, 100) &&
-        validOptionalString(data, 'emergencyContactPhone', 10, 20) &&
+        isValidOptionalPhone(data, 'emergencyContactPhone') &&
         validOptionalString(data, 'occupation', 1, 100) &&
         validOptionalString(data, 'smokingPreference', 1, 50) &&
         validOptionalString(data, 'tripVibe', 1, 50) &&
         (!('ladiesOnlyPreference' in data) || data.ladiesOnlyPreference == null || data.ladiesOnlyPreference is bool) &&
         (!('hasActiveAlerts' in data) || data.hasActiveAlerts == null || data.hasActiveAlerts is bool) &&
         (!('hasUpcomingBooking' in data) || data.hasUpcomingBooking == null || data.hasUpcomingBooking is bool) &&
-        validOptionalString(data, 'nationalId', 14, 20) &&
+        isValidOptionalNationalId(data, 'nationalId') &&
         validOptionalUrl(data, 'idFrontImage') &&
         validOptionalUrl(data, 'idBackImage') &&
         validOptionalUrl(data, 'selfieImage') &&
@@ -447,7 +645,7 @@ service cloud.firestore {
         validString(data.driverId, 1, 128) &&
         validString(data.driverName, 2, 100) &&
         validString(data.driverCar, 2, 100) &&
-        validString(data.driverPhone, 10, 20) &&
+        isValidPhone(data.driverPhone) &&
         validString(data.fromCity, 1, 100) &&
         validString(data.toCity, 1, 100) &&
         validString(data.pickupPoint, 1, 200) &&
@@ -537,7 +735,7 @@ service cloud.firestore {
         validString(data.id, 1, 128) &&
         validString(data.senderId, 1, 128) &&
         validString(data.receiverName, 2, 100) &&
-        validString(data.receiverPhone, 10, 20) &&
+        isValidPhone(data.receiverPhone) &&
         validString(data.route, 1, 200) &&
         validString(data.description, 1, 500) &&
         data.size in ['envelope', 'small', 'medium', 'large'] &&
@@ -547,7 +745,7 @@ service cloud.firestore {
         validString(data.pickupOtp, 4, 8) &&
         data.status in ['requested', 'accepted', 'handedOver', 'inTransit', 'delivered', 'cancelled', 'disputed'] &&
         validOptionalString(data, 'senderName', 2, 100) &&
-        validOptionalString(data, 'senderPhone', 10, 20) &&
+        isValidOptionalPhone(data, 'senderPhone') &&
         validOptionalString(data, 'driverId', 1, 128) &&
         validOptionalString(data, 'driverName', 2, 100) &&
         validOptionalString(data, 'receiverId', 1, 128) &&
@@ -577,7 +775,7 @@ service cloud.firestore {
         validString(data.passengerId, 1, 128) &&
         validString(data.driverId, 1, 128) &&
         validString(data.passengerName, 2, 100) &&
-        validString(data.passengerPhone, 10, 20) &&
+        isValidPhone(data.passengerPhone) &&
         data.seats is int && data.seats >= 1 && data.seats <= 10 &&
         data.totalPrice is number && data.totalPrice >= 0 && data.totalPrice <= 50000 &&
         validString(data.pickupLocation, 1, 200) &&
@@ -662,7 +860,7 @@ service cloud.firestore {
         validString(data.userId, 1, 128) &&
         data.amount is number &&
         data.type in ['deposit', 'withdraw', 'ridePayment', 'rideEarning', 'errandPayment', 'errandEarning', 'parcelPayment', 'parcelEarning'] &&
-        data.method in ['vodafoneCash', 'instapay', 'fawry', 'creditCard', 'cash'] &&
+        data.method in ['vodafoneCash', 'instapay', 'fawry', 'creditCard', 'cash', 'fawran', 'qpay', 'skipCash', 'applePay', 'bank_transfer_manual', 'cash_on_delivery'] &&
         validString(data.referenceNumber, 1, 100) &&
         data.status in ['pending', 'success', 'failed', 'cancelled'] &&
         validString(data.titleAr, 1, 200) &&
@@ -691,7 +889,7 @@ service cloud.firestore {
         validString(data.carPlate, 1, 50) &&
         validString(data.licenseExpiryDate, 1, 50) &&
         data.status in ['pending', 'underReview', 'accepted', 'rejected', 'قيد المراجعة', 'مقبولة', 'مرفوضة'] &&
-        validOptionalString(data, 'nationalId', 14, 20) &&
+        isValidOptionalNationalId(data, 'nationalId') &&
         validOptionalUrl(data, 'licenseFrontImage') &&
         validOptionalUrl(data, 'licenseBackImage') &&
         validOptionalUrl(data, 'carFrontImage') &&
@@ -717,8 +915,11 @@ service cloud.firestore {
         (resource.data.driverId != null && resource.data.driverId == request.auth.uid) ||
         ('receiverId' in resource.data && resource.data.receiverId == request.auth.uid) ||
         (
+          'phone_number' in request.auth.token &&
           request.auth.token.phone_number != null && (
             resource.data.receiverPhone == request.auth.token.phone_number ||
+            request.auth.token.phone_number == "+974" + resource.data.receiverPhone ||
+            request.auth.token.phone_number == "+" + resource.data.receiverPhone ||
             request.auth.token.phone_number == "+2" + resource.data.receiverPhone ||
             request.auth.token.phone_number == "+20" + resource.data.receiverPhone
           )
@@ -862,7 +1063,7 @@ service cloud.firestore {
         data.amount is number && data.amount >= 0 && data.amount <= 100000 &&
         data.status in ['pending', 'held', 'locked', 'disputed', 'frozen', 'released', 'refunded', 'cancelled'] &&
         validOptionalString(data, 'referenceId', 1, 128) &&
-        (!('referenceType' in data) || data.referenceType == null || data.referenceType in ['ride', 'parcel', 'errand', 'board_ad', 'service']) &&
+        (!('referenceType' in data) || data.referenceType == null || data.referenceType in ['ride', 'parcel', 'errand', 'board_ad', 'service', 'work_request', 'worksite_supply']) &&
         validOptionalString(data, 'requesterId', 1, 128) &&
         validOptionalString(data, 'providerId', 1, 128) &&
         validOptionalString(data, 'payerId', 1, 128) &&
@@ -896,7 +1097,7 @@ service cloud.firestore {
       return hasOnlyAllowedFields(data, allowed) &&
         hasRequiredFields(data, required) &&
         validString(data.id, 1, 128) &&
-        data.type in ['parcel', 'user', 'ride', 'escrow', 'service', 'طرد', 'مستخدم', 'رحلة'] &&
+        data.type in ['parcel', 'user', 'ride', 'escrow', 'service', 'work_request', 'worksite_supply', 'طرد', 'مستخدم', 'رحلة'] &&
         validString(data.category, 1, 100) &&
         validString(data.complainantId, 1, 128) &&
         validString(data.complainantName, 2, 100) &&
@@ -995,6 +1196,389 @@ service cloud.firestore {
         (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
         (!('lang' in data) || data.lang in ['ar', 'en']) &&
         (!('pageUrl' in data) || (data.pageUrl is string && data.pageUrl.size() <= 300));
+    }
+
+    // ==========================================================================
+    // Worksite Supply MVP Domain Validators (Collections 20-29)
+    // ==========================================================================
+
+    // Validator for business_profiles/{uid}
+    function isValidBusinessProfile(data) {
+      let allowed = [
+        'id', 'userId', 'companyName', 'contactName', 'phone',
+        'defaultWorksiteArea', 'ratingAvg', 'ratingCount',
+        'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'userId', 'companyName', 'contactName', 'phone',
+        'defaultWorksiteArea', 'ratingAvg', 'ratingCount'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.userId, 1, 128) &&
+        validString(data.companyName, 1, 150) &&
+        validString(data.contactName, 1, 120) &&
+        isValidMvpPhone(data.phone) &&
+        validString(data.defaultWorksiteArea, 1, 120) &&
+        data.ratingAvg is number && data.ratingAvg >= 0 && data.ratingAvg <= 5 &&
+        data.ratingCount is int && data.ratingCount >= 0 &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for provider_profiles/{uid}
+    function isValidProviderProfile(data) {
+      let allowed = [
+        'id', 'userId', 'fullName', 'phone', 'vehicleType', 'vehiclePlate',
+        'serviceAreas', 'approvalStatus', 'completedTasksCount',
+        'ratingAvg', 'ratingCount', 'reviewedBy', 'reviewedAtUtc',
+        'rejectionReason', 'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'userId', 'fullName', 'phone', 'vehicleType', 'vehiclePlate',
+        'serviceAreas', 'approvalStatus', 'completedTasksCount',
+        'ratingAvg', 'ratingCount'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.userId, 1, 128) &&
+        validString(data.fullName, 2, 120) &&
+        isValidMvpPhone(data.phone) &&
+        validString(data.vehicleType, 1, 80) &&
+        validString(data.vehiclePlate, 1, 40) &&
+        isValidStringListMax15(data.serviceAreas, 1, 80) &&
+        data.approvalStatus in ['pending', 'underReview', 'approved', 'rejected', 'suspended'] &&
+        data.completedTasksCount is int && data.completedTasksCount >= 0 &&
+        data.ratingAvg is number && data.ratingAvg >= 0 && data.ratingAvg <= 5 &&
+        data.ratingCount is int && data.ratingCount >= 0 &&
+        validOptionalString(data, 'reviewedBy', 1, 128) &&
+        validOptionalTimestampOrIso(data, 'reviewedAtUtc') &&
+        validOptionalString(data, 'rejectionReason', 0, 500) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for provider_verifications/{uid}
+    function isValidProviderVerification(data) {
+      let allowed = [
+        'id', 'providerId', 'fullName', 'qidNumber',
+        'qidFrontUrl', 'qidBackUrl', 'selfieUrl', 'vehicleLicenseUrl',
+        'status', 'rejectionReason', 'reviewedBy', 'reviewedAtUtc',
+        'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'providerId', 'fullName', 'qidNumber',
+        'qidFrontUrl', 'qidBackUrl', 'selfieUrl', 'status'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.providerId, 1, 128) &&
+        validString(data.fullName, 2, 120) &&
+        data.qidNumber is string &&
+        data.qidNumber.matches('^[0-9]{11}$') &&
+        isValidMvpUrl(data.qidFrontUrl) &&
+        isValidMvpUrl(data.qidBackUrl) &&
+        isValidMvpUrl(data.selfieUrl) &&
+        validOptionalMvpUrl(data, 'vehicleLicenseUrl') &&
+        data.status in ['pending', 'underReview', 'approved', 'rejected'] &&
+        validOptionalString(data, 'rejectionReason', 0, 500) &&
+        validOptionalString(data, 'reviewedBy', 1, 128) &&
+        validOptionalTimestampOrIso(data, 'reviewedAtUtc') &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for work_requests/{requestId}
+    function isValidWorkRequest(data) {
+      let allowed = [
+        'id', 'requesterId', 'category', 'title', 'description',
+        'pickupLocation', 'deliveryLocation', 'deliveryArea',
+        'budgetMinor', 'paymentMethod', 'paymentStatus', 'paymentProofUrl',
+        'status', 'offerCount', 'selectedOfferId', 'assignedProviderId',
+        'agreedAmountMinor', 'agreedFeeMinor',
+        'referenceImageUrls', 'invoiceImageUrls', 'sourceRequestId',
+        'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'requesterId', 'category', 'title', 'description',
+        'pickupLocation', 'deliveryLocation', 'deliveryArea',
+        'budgetMinor', 'paymentMethod', 'paymentStatus', 'status',
+        'offerCount', 'selectedOfferId', 'assignedProviderId'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.requesterId, 1, 128) &&
+        data.category == 'worksite_supply' &&
+        validString(data.title, 2, 160) &&
+        validString(data.description, 1, 2000) &&
+        isValidLocationField(data.pickupLocation) &&
+        isValidLocationField(data.deliveryLocation) &&
+        validString(data.deliveryArea, 1, 120) &&
+        data.budgetMinor is int && data.budgetMinor > 0 && data.budgetMinor <= 50000000 &&
+        data.paymentMethod in ['cash_on_delivery', 'bank_transfer_manual'] &&
+        data.paymentStatus in ['unpaid', 'transfer_proof_submitted', 'verified_settled', 'refunded', 'disputed'] &&
+        validOptionalMvpUrl(data, 'paymentProofUrl') &&
+        data.status in [
+          'open', 'offer_received', 'accepted', 'in_progress',
+          'picked_up', 'in_transit', 'delivered_pending_confirmation',
+          'completed', 'cancelled', 'disputed'
+        ] &&
+        data.offerCount is int && data.offerCount >= 0 && data.offerCount <= 1000 &&
+        validOptionalString(data, 'selectedOfferId', 1, 128) &&
+        validOptionalString(data, 'assignedProviderId', 1, 128) &&
+        (!('agreedAmountMinor' in data) || data.agreedAmountMinor == null || (data.agreedAmountMinor is int && data.agreedAmountMinor > 0 && data.agreedAmountMinor <= 50000000)) &&
+        (!('agreedFeeMinor' in data) || data.agreedFeeMinor == null || (data.agreedFeeMinor is int && data.agreedFeeMinor >= 0 && data.agreedFeeMinor <= 50000000)) &&
+        (!('referenceImageUrls' in data) || data.referenceImageUrls == null || isValidUrlListMax5(data.referenceImageUrls)) &&
+        (!('invoiceImageUrls' in data) || data.invoiceImageUrls == null || isValidUrlListMax5(data.invoiceImageUrls)) &&
+        validOptionalString(data, 'sourceRequestId', 1, 128) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    function isActiveWorkRequestStatus(status) {
+      return status in [
+        'accepted', 'in_progress', 'picked_up',
+        'in_transit', 'delivered_pending_confirmation'
+      ];
+    }
+
+    function isValidWorkRequestClientFinancialGuard() {
+      return areImmutableFieldsUnchanged([
+        'id', 'requesterId', 'category', 'budgetMinor',
+        'agreedAmountMinor', 'agreedFeeMinor', 'paymentMethod',
+        'offerCount', 'selectedOfferId', 'assignedProviderId',
+        'sourceRequestId', 'createdAt'
+      ]) &&
+      (
+        request.resource.data.paymentStatus == resource.data.paymentStatus ||
+        (
+          resource.data.paymentStatus != 'verified_settled' &&
+          request.resource.data.paymentStatus != 'verified_settled'
+        )
+      );
+    }
+
+    function isValidWorkRequestRequesterUpdate() {
+      let prev = resource.data;
+      let next = request.resource.data;
+      let canCancelOrDispute = next.diff(prev).affectedKeys().hasOnly(['status', 'updatedAt']) && (
+        (prev.status in ['open', 'offer_received'] && next.status == 'cancelled') ||
+        (isActiveWorkRequestStatus(prev.status) && next.status == 'disputed')
+      );
+      let canAttachTransferProof = next.diff(prev).affectedKeys().hasOnly(['paymentStatus', 'paymentProofUrl', 'updatedAt']) &&
+        !(prev.status in ['cancelled', 'completed']) &&
+        prev.paymentMethod == 'bank_transfer_manual' &&
+        prev.paymentStatus == 'unpaid' &&
+        next.paymentStatus == 'transfer_proof_submitted' &&
+        next.status == prev.status &&
+        isValidMvpUrl(next.paymentProofUrl);
+      return isSignedIn() &&
+        prev.requesterId == request.auth.uid &&
+        isValidWorkRequestClientFinancialGuard() &&
+        next.status != 'completed' &&
+        (canCancelOrDispute || canAttachTransferProof);
+    }
+
+    function isValidWorkRequestProviderUpdate() {
+      let prev = resource.data;
+      let next = request.resource.data;
+      let validStageTransition = (
+        (prev.status == 'accepted' && next.status == 'in_progress') ||
+        (prev.status == 'in_progress' && next.status == 'picked_up') ||
+        (prev.status == 'picked_up' && next.status == 'in_transit') ||
+        (prev.status == 'in_transit' && next.status == 'delivered_pending_confirmation') ||
+        (isActiveWorkRequestStatus(prev.status) && next.status == 'disputed') ||
+        (isActiveWorkRequestStatus(prev.status) && next.status == prev.status)
+      );
+      return isSignedIn() &&
+        prev.assignedProviderId == request.auth.uid &&
+        isApprovedProvider(request.auth.uid) &&
+        isValidWorkRequestClientFinancialGuard() &&
+        next.diff(prev).affectedKeys().hasOnly(['status', 'invoiceImageUrls', 'updatedAt']) &&
+        validStageTransition &&
+        next.status != 'completed';
+    }
+
+    // Validator for work_offers/{offerId}
+    function isValidWorkOffer(data) {
+      let allowed = [
+        'id', 'requestId', 'providerId', 'providerName',
+        'totalAmountMinor', 'serviceFeeMinor', 'etaMinutes',
+        'notes', 'status', 'createdAt', 'updatedAt'
+      ];
+      let required = [
+        'id', 'requestId', 'providerId', 'providerName',
+        'totalAmountMinor', 'serviceFeeMinor', 'etaMinutes', 'status'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.requestId, 1, 128) &&
+        validString(data.providerId, 1, 128) &&
+        validString(data.providerName, 2, 120) &&
+        data.totalAmountMinor is int && data.totalAmountMinor > 0 && data.totalAmountMinor <= 50000000 &&
+        data.serviceFeeMinor is int && data.serviceFeeMinor >= 0 && data.serviceFeeMinor <= 50000000 &&
+        data.etaMinutes is int && data.etaMinutes > 0 && data.etaMinutes <= 10080 &&
+        validOptionalString(data, 'notes', 0, 500) &&
+        data.status in ['pending', 'accepted', 'rejected', 'withdrawn', 'expired'] &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for request_events/{eventId}
+    function isValidRequestEventMetadata(meta) {
+      return meta is map &&
+        meta.keys().size() <= 10 &&
+        meta.keys().hasOnly([
+          'fromStatus', 'toStatus', 'offerId', 'paymentMethod',
+          'paymentStatus', 'amountMinor', 'feeMinor', 'etaMinutes', 'reason'
+        ]) &&
+        validOptionalString(meta, 'fromStatus', 1, 60) &&
+        validOptionalString(meta, 'toStatus', 1, 60) &&
+        validOptionalString(meta, 'offerId', 1, 128) &&
+        validOptionalString(meta, 'paymentMethod', 1, 60) &&
+        validOptionalString(meta, 'paymentStatus', 1, 60) &&
+        validOptionalString(meta, 'reason', 0, 500) &&
+        (!('amountMinor' in meta) || meta.amountMinor == null || meta.amountMinor is int) &&
+        (!('feeMinor' in meta) || meta.feeMinor == null || meta.feeMinor is int) &&
+        (!('etaMinutes' in meta) || meta.etaMinutes == null || meta.etaMinutes is int);
+    }
+
+    function isValidRequestEvent(data) {
+      let allowed = [
+        'id', 'requestId', 'actorId', 'actorRole', 'type', 'eventType',
+        'fromStatus', 'toStatus', 'title', 'note', 'message',
+        'metadata', 'createdAt'
+      ];
+      let required = ['id', 'requestId', 'actorId'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        ('type' in data || 'eventType' in data) &&
+        validString(data.id, 1, 128) &&
+        validString(data.requestId, 1, 128) &&
+        validString(data.actorId, 1, 128) &&
+        (!('actorRole' in data) || data.actorRole == null || data.actorRole in ['requester', 'provider', 'admin', 'system']) &&
+        validOptionalString(data, 'type', 1, 80) &&
+        validOptionalString(data, 'eventType', 1, 80) &&
+        validOptionalString(data, 'fromStatus', 1, 60) &&
+        validOptionalString(data, 'toStatus', 1, 60) &&
+        validOptionalString(data, 'title', 1, 160) &&
+        validOptionalString(data, 'note', 0, 1000) &&
+        validOptionalString(data, 'message', 0, 1000) &&
+        (!('metadata' in data) || data.metadata == null || isValidRequestEventMetadata(data.metadata)) &&
+        validOptionalTimestamp(data, 'createdAt');
+    }
+
+    function isValidRequestEventCreate(eventId) {
+      let data = request.resource.data;
+      let reqId = data.requestId;
+      return isSignedIn() &&
+        data.id == eventId &&
+        isValidRequestEvent(data) &&
+        (
+          isAdmin() ||
+          (
+            data.actorId == request.auth.uid &&
+            requestExists(reqId) &&
+            (
+              (
+                requestDoc(reqId).data.requesterId == request.auth.uid &&
+                (!('actorRole' in data) || data.actorRole == null || data.actorRole == 'requester')
+              ) ||
+              (
+                requestDoc(reqId).data.assignedProviderId == request.auth.uid &&
+                (!('actorRole' in data) || data.actorRole == null || data.actorRole == 'provider')
+              )
+            )
+          )
+        );
+    }
+
+    // Validator for ratings/{ratingId}
+    function isValidRating(data, ratingId) {
+      let allowed = [
+        'id', 'requestId', 'fromUserId', 'toUserId',
+        'fromRole', 'toRole', 'stars', 'comment', 'tags', 'createdAt'
+      ];
+      let required = ['requestId', 'fromUserId', 'stars'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        (!('id' in data) || data.id == null || (validString(data.id, 1, 260) && data.id == ratingId)) &&
+        validString(data.requestId, 1, 128) &&
+        validString(data.fromUserId, 1, 128) &&
+        validOptionalString(data, 'toUserId', 1, 128) &&
+        (!('fromRole' in data) || data.fromRole == null || data.fromRole in ['requester', 'provider', 'business']) &&
+        (!('toRole' in data) || data.toRole == null || data.toRole in ['requester', 'provider', 'business']) &&
+        data.stars is int && data.stars >= 1 && data.stars <= 5 &&
+        validOptionalString(data, 'comment', 0, 1000) &&
+        (!('tags' in data) || data.tags == null || isValidStringListMax10(data.tags, 1, 50)) &&
+        validOptionalTimestamp(data, 'createdAt');
+    }
+
+    function isValidRatingParties(ratingData, reqData) {
+      let hasToUser = 'toUserId' in ratingData && ratingData.toUserId != null;
+      return reqData.status == 'completed' &&
+        (
+          reqData.requesterId == ratingData.fromUserId ||
+          reqData.assignedProviderId == ratingData.fromUserId
+        ) &&
+        (
+          !hasToUser || (
+            reqData.assignedProviderId != null &&
+            ratingData.fromUserId != ratingData.toUserId &&
+            (
+              (ratingData.fromUserId == reqData.requesterId && ratingData.toUserId == reqData.assignedProviderId) ||
+              (ratingData.fromUserId == reqData.assignedProviderId && ratingData.toUserId == reqData.requesterId)
+            )
+          )
+        );
+    }
+
+    function isValidRatingCreate(ratingId) {
+      let data = request.resource.data;
+      let reqId = data.requestId;
+      return isSignedIn() &&
+        isValidRating(data, ratingId) &&
+        data.fromUserId == request.auth.uid &&
+        ratingId == reqId + '_' + request.auth.uid &&
+        requestExists(reqId) &&
+        isValidRatingParties(data, requestDoc(reqId).data);
+    }
+
+    // Validator for notifications/{notificationId}
+    function isValidNotification(data) {
+      let allowed = [
+        'id', 'userId', 'title', 'titleAr', 'titleEn',
+        'body', 'bodyAr', 'bodyEn', 'type', 'category',
+        'requestId', 'offerId', 'targetRoute', 'actionUrl',
+        'data', 'isRead', 'readAt', 'createdAt', 'updatedAt'
+      ];
+      let required = ['id', 'userId', 'isRead'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.userId, 1, 128) &&
+        validOptionalString(data, 'title', 1, 200) &&
+        validOptionalString(data, 'titleAr', 1, 200) &&
+        validOptionalString(data, 'titleEn', 1, 200) &&
+        validOptionalString(data, 'body', 0, 1000) &&
+        validOptionalString(data, 'bodyAr', 0, 1000) &&
+        validOptionalString(data, 'bodyEn', 0, 1000) &&
+        validOptionalString(data, 'type', 1, 60) &&
+        validOptionalString(data, 'category', 1, 60) &&
+        validOptionalString(data, 'requestId', 1, 128) &&
+        validOptionalString(data, 'offerId', 1, 128) &&
+        validOptionalString(data, 'targetRoute', 1, 500) &&
+        validOptionalString(data, 'actionUrl', 1, 500) &&
+        (!('data' in data) || data.data == null || (data.data is map && data.data.keys().size() <= 15)) &&
+        data.isRead is bool &&
+        validOptionalTimestamp(data, 'readAt') &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
     }
 
     // ==========================================================================
@@ -1591,6 +2175,297 @@ service cloud.firestore {
       allow update: if isAdmin() &&
         isValidInvestorInquiry(request.resource.data) &&
         areImmutableFieldsUnchanged(['id', 'email', 'createdAt']);
+
+      // Delete: Administrators only
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 20. Business Profiles: business_profiles/{uid}
+    // ==========================================================================
+    match /business_profiles/{uid} {
+      // Read: Business owner, administrators, or approved providers viewing requester profile.
+      // List restricted to owner-scoped queries or administrators to protect contact phone PII.
+      allow get: if isOwner(uid) || isAdmin() || (isSignedIn() && isApprovedProvider(request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+
+      // Create: Owner initializes their business profile with zeroed server-managed ratings
+      allow create: if isOwner(uid) &&
+        request.resource.data.id == uid &&
+        request.resource.data.userId == uid &&
+        isValidBusinessProfile(request.resource.data) &&
+        (request.resource.data.ratingAvg == 0 || request.resource.data.ratingAvg == 0.0) &&
+        request.resource.data.ratingCount == 0;
+
+      // Update: Owner can edit business info without modifying ratingAvg/ratingCount/id/userId/createdAt
+      allow update: if isValidBusinessProfile(request.resource.data) && (
+        (
+          isAdmin() &&
+          areImmutableFieldsUnchanged(['id', 'userId', 'createdAt'])
+        ) ||
+        (
+          isOwner(uid) &&
+          areImmutableFieldsUnchanged(['id', 'userId', 'ratingAvg', 'ratingCount', 'createdAt'])
+        )
+      );
+
+      // Delete: Administrators only
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 21. Provider Profiles: provider_profiles/{uid}
+    // ==========================================================================
+    match /provider_profiles/{uid} {
+      // Read: Any signed-in user (no QID or KYC image PII is stored in this collection)
+      allow read: if isSignedIn();
+
+      // Create: Owner registers with pending approval status and zeroed stats
+      allow create: if isOwner(uid) &&
+        request.resource.data.id == uid &&
+        request.resource.data.userId == uid &&
+        isValidProviderProfile(request.resource.data) &&
+        request.resource.data.approvalStatus == 'pending' &&
+        request.resource.data.completedTasksCount == 0 &&
+        (request.resource.data.ratingAvg == 0 || request.resource.data.ratingAvg == 0.0) &&
+        request.resource.data.ratingCount == 0 &&
+        (!('reviewedBy' in request.resource.data) || request.resource.data.reviewedBy == null) &&
+        (!('reviewedAtUtc' in request.resource.data) || request.resource.data.reviewedAtUtc == null) &&
+        (!('rejectionReason' in request.resource.data) || request.resource.data.rejectionReason == null);
+
+      // Update: Administrators may approve/reject/reconcile; owners MUST NEVER self-approve or alter stats
+      allow update: if isValidProviderProfile(request.resource.data) && (
+        (
+          isAdmin() &&
+          areImmutableFieldsUnchanged(['id', 'userId', 'createdAt'])
+        ) ||
+        (
+          isOwner(uid) &&
+          areImmutableFieldsUnchanged([
+            'id', 'userId', 'approvalStatus', 'completedTasksCount',
+            'ratingAvg', 'ratingCount', 'reviewedBy', 'reviewedAtUtc',
+            'rejectionReason', 'createdAt'
+          ])
+        )
+      );
+
+      // Delete: Administrators only
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 22. Provider KYC Verifications: provider_verifications/{uid}
+    // ==========================================================================
+    match /provider_verifications/{uid} {
+      // Read: Restricted strictly to document owner or administrator (protects QID & ID images)
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Create: Owner submits 11-digit QID verification with pending/underReview status
+      allow create: if isOwner(uid) &&
+        request.resource.data.id == uid &&
+        request.resource.data.providerId == uid &&
+        isValidProviderVerification(request.resource.data) &&
+        request.resource.data.status in ['pending', 'underReview'] &&
+        (!('reviewedBy' in request.resource.data) || request.resource.data.reviewedBy == null) &&
+        (!('reviewedAtUtc' in request.resource.data) || request.resource.data.reviewedAtUtc == null) &&
+        (!('rejectionReason' in request.resource.data) || request.resource.data.rejectionReason == null);
+
+      // Update: Administrators review; owner may only resubmit pending/underReview docs without touching review metadata
+      allow update: if isValidProviderVerification(request.resource.data) && (
+        (
+          isAdmin() &&
+          areImmutableFieldsUnchanged(['id', 'providerId', 'createdAt'])
+        ) ||
+        (
+          isOwner(uid) &&
+          resource.data.status in ['pending', 'underReview', 'rejected'] &&
+          request.resource.data.status in ['pending', 'underReview'] &&
+          areImmutableFieldsUnchanged([
+            'id', 'providerId', 'reviewedBy', 'reviewedAtUtc', 'rejectionReason', 'createdAt'
+          ])
+        )
+      );
+
+      // Delete: Administrators only
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 23. Worksite Supply Requests: work_requests/{requestId}
+    // ==========================================================================
+    match /work_requests/{requestId} {
+      // Read: Signed-in users (filtered by requesterId / status / area in client queries)
+      allow read: if isSignedIn();
+
+      // Create: Signed-in requester posts an open worksite_supply order with clean initial state
+      allow create: if isSignedIn() &&
+        request.resource.data.id == requestId &&
+        request.resource.data.requesterId == request.auth.uid &&
+        isValidWorkRequest(request.resource.data) &&
+        request.resource.data.category == 'worksite_supply' &&
+        request.resource.data.status == 'open' &&
+        request.resource.data.budgetMinor is int &&
+        request.resource.data.budgetMinor > 0 &&
+        request.resource.data.offerCount == 0 &&
+        request.resource.data.selectedOfferId == null &&
+        request.resource.data.assignedProviderId == null &&
+        request.resource.data.paymentMethod in ['cash_on_delivery', 'bank_transfer_manual'] &&
+        request.resource.data.paymentStatus == 'unpaid' &&
+        (!('paymentProofUrl' in request.resource.data) || request.resource.data.paymentProofUrl == null) &&
+        (!('agreedAmountMinor' in request.resource.data) || request.resource.data.agreedAmountMinor == null) &&
+        (!('agreedFeeMinor' in request.resource.data) || request.resource.data.agreedFeeMinor == null) &&
+        (!('invoiceImageUrls' in request.resource.data) || request.resource.data.invoiceImageUrls == null || request.resource.data.invoiceImageUrls.size() == 0);
+
+      // Update: Administrator OR strict role-based requester / approved assigned provider transitions
+      allow update: if isValidWorkRequest(request.resource.data) && (
+        (
+          isAdmin() &&
+          areImmutableFieldsUnchanged(['id', 'requesterId', 'createdAt'])
+        ) ||
+        isValidWorkRequestRequesterUpdate() ||
+        isValidWorkRequestProviderUpdate()
+      );
+
+      // Delete: Forbidden from client SDKs to preserve financial & operational audit trail
+      allow delete: if false;
+    }
+
+    // ==========================================================================
+    // 24. Worksite Supply Offers: work_offers/{offerId}
+    // ==========================================================================
+    match /work_offers/{offerId} {
+      // Read: Offer provider, target request requester, or administrator
+      allow read: if isSignedIn() && (
+        resource.data.providerId == request.auth.uid ||
+        isAdmin() ||
+        (
+          requestExists(resource.data.requestId) &&
+          requestDoc(resource.data.requestId).data.requesterId == request.auth.uid
+        )
+      );
+
+      // Create: Approved provider (not the requester) submitting a pending offer on an open request
+      allow create: if isSignedIn() &&
+        request.resource.data.id == offerId &&
+        request.resource.data.providerId == request.auth.uid &&
+        isApprovedProvider(request.auth.uid) &&
+        isValidWorkOffer(request.resource.data) &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.totalAmountMinor is int &&
+        request.resource.data.totalAmountMinor > 0 &&
+        request.resource.data.serviceFeeMinor is int &&
+        request.resource.data.serviceFeeMinor >= 0 &&
+        requestExists(request.resource.data.requestId) &&
+        requestDoc(request.resource.data.requestId).data.requesterId != request.auth.uid &&
+        requestDoc(request.resource.data.requestId).data.status in ['open', 'offer_received'];
+
+      // Update: Administrator OR provider withdrawing their own pending offer without changing pricing
+      allow update: if isValidWorkOffer(request.resource.data) && (
+        (
+          isAdmin() &&
+          areImmutableFieldsUnchanged(['id', 'requestId', 'providerId', 'createdAt'])
+        ) ||
+        (
+          isSignedIn() &&
+          resource.data.providerId == request.auth.uid &&
+          resource.data.status == 'pending' &&
+          request.resource.data.status == 'withdrawn' &&
+          request.resource.data.totalAmountMinor == resource.data.totalAmountMinor &&
+          areImmutableFieldsUnchanged([
+            'id', 'requestId', 'providerId', 'providerName',
+            'totalAmountMinor', 'serviceFeeMinor', 'etaMinutes', 'notes', 'createdAt'
+          ])
+        )
+      );
+
+      // Delete: Forbidden from client SDKs
+      allow delete: if false;
+    }
+
+    // ==========================================================================
+    // 25. Work Request Secrets: work_request_secrets/{requestId}
+    // ==========================================================================
+    match /work_request_secrets/{requestId} {
+      // Cloud Functions / Admin SDK ONLY (stores hashed handover code, salt, attemptsRemaining, expiry)
+      allow read, write: if false;
+    }
+
+    // ==========================================================================
+    // 26. Work Request Handover View: work_request_handover_view/{requestId}
+    // ==========================================================================
+    match /work_request_handover_view/{requestId} {
+      // Read: Requester only (even when listening before doc exists); client writes strictly forbidden
+      allow list: if isSignedIn() && resource.data.requesterId == request.auth.uid;
+      allow get: if isSignedIn() && (
+        (resource != null && resource.data.requesterId == request.auth.uid) ||
+        (resource == null && requestExists(requestId) && requestDoc(requestId).data.requesterId == request.auth.uid)
+      );
+      allow write: if false;
+    }
+
+    // ==========================================================================
+    // 27. Work Request Audit Events: request_events/{eventId}
+    // ==========================================================================
+    match /request_events/{eventId} {
+      // Read: Request participants (requester or assigned provider) or administrator
+      allow read: if isAdmin() || (
+        isSignedIn() &&
+        requestExists(resource.data.requestId) &&
+        (
+          requestDoc(resource.data.requestId).data.requesterId == request.auth.uid ||
+          requestDoc(resource.data.requestId).data.assignedProviderId == request.auth.uid
+        )
+      );
+
+      // Create: Administrator or validated request participant append
+      allow create: if isValidRequestEventCreate(eventId);
+
+      // Immutable append-only event log
+      allow update, delete: if false;
+    }
+
+    // ==========================================================================
+    // 28. Worksite Supply Ratings: ratings/{ratingId}
+    // ==========================================================================
+    match /ratings/{ratingId} {
+      // Read: Signed-in users
+      allow read: if isSignedIn();
+
+      // Create: One-time post-completion rating strictly scoped to requestId + '_' + uid
+      allow create: if isValidRatingCreate(ratingId);
+
+      // Immutable once submitted
+      allow update, delete: if false;
+    }
+
+    // ==========================================================================
+    // 29. User Notifications: notifications/{notificationId}
+    // ==========================================================================
+    match /notifications/{notificationId} {
+      // Read: Notification owner or administrator
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
+
+      // Create: Administrators / Cloud Functions Admin SDK only
+      allow create: if isAdmin() &&
+        request.resource.data.id == notificationId &&
+        isValidNotification(request.resource.data);
+
+      // Update: Administrator OR owner toggling isRead ONLY
+      allow update: if isValidNotification(request.resource.data) && (
+        (
+          isAdmin() &&
+          areImmutableFieldsUnchanged(['id', 'userId', 'createdAt'])
+        ) ||
+        (
+          isSignedIn() &&
+          resource.data.userId == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']) &&
+          request.resource.data.isRead is bool
+        )
+      );
 
       // Delete: Administrators only
       allow delete: if isAdmin();
