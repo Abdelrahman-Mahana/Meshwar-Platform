@@ -299,9 +299,9 @@ class WelcomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
 
-          // Phone OTP Handling: enabled ONLY when SMS/dev-mock auth is available;
-          // otherwise clearly disabled with honest explanatory copy.
-          if (auth.isDevMockAuthEnabled)
+          // Phone OTP (+974): enabled when Firebase Phone Auth or explicit dev-mock auth is available;
+          // otherwise shows honest unavailable notice with direct Email+Password sign-in guidance.
+          if (auth.isPhoneAuthAvailable) ...[
             OutlinedButton.icon(
               key: const ValueKey('welcome_phone_btn'),
               style: OutlinedButton.styleFrom(
@@ -323,8 +323,19 @@ class WelcomeScreen extends StatelessWidget {
                 style: AppTypography.body(color: AppColors.navy)
                     .copyWith(fontWeight: FontWeight.w700, fontSize: 14),
               ),
-            )
-          else
+            ),
+            if (!auth.isDevMockAuthEnabled) ...[
+              const SizedBox(height: 8),
+              Text(
+                isAr
+                    ? 'ملاحظة: رسائل التحقق (+974 SMS) تتطلب تفعيل فوترة الرسائل في Firebase Console، أو يمكنك الدخول فوراً بالبريد الإلكتروني وكلمة المرور أعلاه.'
+                    : 'Note: +974 SMS OTP requires SMS billing enabled in Firebase Console, or sign in anytime with Email & Password above.',
+                textAlign: TextAlign.center,
+                style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                    .copyWith(fontSize: 11.5),
+              ),
+            ],
+          ] else
             Container(
               key: const ValueKey('welcome_sms_unavailable_notice'),
               padding: const EdgeInsets.all(12),
@@ -333,18 +344,53 @@ class WelcomeScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.slateBorder),
               ),
-              child: Row(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.sms_failed_outlined,
-                      size: 18, color: AppColors.textSecondary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isAr
-                          ? 'الدخول عبر رسائل SMS غير متاح حالياً لحين ربط مزود رسائل معتمد؛ يرجى استخدام البريد الإلكتروني وكلمة المرور.'
-                          : 'Phone SMS OTP sign-in is currently unavailable until an SMS gateway is configured. Please sign in with Email & Password.',
-                      style: AppTypography.bodySmall(),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.sms_failed_outlined,
+                          size: 18, color: AppColors.textSecondary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          isAr
+                              ? 'الدخول عبر رسائل SMS (+974) يتطلب تفعيل Firebase Auth وفوترة الرسائل في Firebase Console؛ يرجى استخدام البريد الإلكتروني وكلمة المرور.'
+                              : 'Phone SMS OTP (+974) requires Firebase Auth & SMS billing enabled in Firebase Console. Please sign in with Email & Password.',
+                          style: AppTypography.bodySmall(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton.icon(
+                      key: const ValueKey('welcome_sms_fallback_email_btn'),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MashwarPageRoute(
+                            builder: (_) =>
+                                const EmailInputScreen(initialIsRegister: false),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.mail_outline_rounded,
+                          size: 15, color: AppColors.teal),
+                      label: Text(
+                        isAr
+                            ? 'الدخول بالبريد وكلمة المرور'
+                            : 'Use Email & Password',
+                        style: AppTypography.label(color: AppColors.teal)
+                            .copyWith(fontWeight: FontWeight.w800),
+                      ),
                     ),
                   ),
                 ],

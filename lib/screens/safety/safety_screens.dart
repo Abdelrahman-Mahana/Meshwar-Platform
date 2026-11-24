@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -145,13 +146,30 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                         ),
                         IconButton(
                           icon: const Icon(Icons.phone_rounded, color: AppColors.teal),
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(isAr ? 'جاري الاتصال بالسائق جاسم الكواري (5523 4567)...' : 'Calling Driver Jassim Al-Kuwari (+974 5523 4567)...'),
-                                backgroundColor: AppColors.teal,
-                              ),
-                            );
+                          onPressed: () async {
+                            final messenger = ScaffoldMessenger.maybeOf(context);
+                            final uri = Uri(scheme: 'tel', path: '+97455234567');
+                            bool launched = false;
+                            try {
+                              launched = await (EmergencySosSheet
+                                      .debugUrlLauncher
+                                      ?.call(uri) ??
+                                  launchUrl(uri));
+                            } catch (_) {
+                              launched = false;
+                            }
+                            if (!launched) {
+                              messenger?.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isAr
+                                        ? 'لا يدعم هذا الجهاز الاتصال الهاتفي المباشر (+974 5523 4567).'
+                                        : 'This device lacks a phone handler. Dial +974 5523 4567 manually.',
+                                  ),
+                                  backgroundColor: AppColors.navy,
+                                ),
+                              );
+                            }
                           },
                         ),
                       ],
@@ -329,6 +347,9 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
 
 // Page 53: طوارئ SOS (Emergency SOS Modal)
 class EmergencySosSheet extends StatefulWidget {
+  @visibleForTesting
+  static Future<bool> Function(Uri uri)? debugUrlLauncher;
+
   const EmergencySosSheet({super.key});
 
   @override
@@ -337,6 +358,39 @@ class EmergencySosSheet extends StatefulWidget {
 
 class _EmergencySosSheetState extends State<EmergencySosSheet> {
   bool _sentToContacts = false;
+  String? _dialerFallbackNotice;
+
+  Future<void> _callQatarEmergency999(BuildContext context, bool isAr) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final uri = Uri(scheme: 'tel', path: '999');
+    bool launched = false;
+    try {
+      final override = EmergencySosSheet.debugUrlLauncher;
+      launched = override != null ? await override(uri) : await launchUrl(uri);
+    } catch (_) {
+      launched = false;
+    }
+
+    if (launched) {
+      if (context.mounted) {
+        Navigator.of(context).maybePop();
+      }
+      return;
+    }
+
+    final fallbackMsg = isAr
+        ? 'هذا الجهاز لا يدعم فتح تطبيق الاتصال التلقائي. يرجى الاتصال فوراً بالرقم 999 من أقرب هاتف.'
+        : 'This device does not have a phone dialer handler. Please dial 999 on a phone immediately.';
+    if (mounted) {
+      setState(() => _dialerFallbackNotice = fallbackMsg);
+    }
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(fallbackMsg),
+        backgroundColor: AppColors.danger,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -358,32 +412,34 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
               textAlign: TextAlign.center,
               style: AppTypography.bodySecondary(),
             ),
+            if (_dialerFallbackNotice != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                key: const ValueKey('sos_dialer_fallback_banner'),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.dangerBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  _dialerFallbackNotice!,
+                  style: AppTypography.label(color: AppColors.danger)
+                      .copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             ElevatedButton(
+              key: const ValueKey('sos_call_police_after_share_btn'),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.coral, foregroundColor: Colors.white),
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(isAr ? 'جاري الاتصال بطوارئ الداخلية القطرية 999...' : 'Calling Qatar MOI Emergency 999...'),
-                    backgroundColor: AppColors.danger,
-                  ),
-                );
-              },
+              onPressed: () => _callQatarEmergency999(context, isAr),
               child: Text(isAr ? 'اتصل بالطوارئ والشرطة · 999' : 'Call Police / MOI · 999'),
             ),
             const SizedBox(height: 8),
             ElevatedButton(
+              key: const ValueKey('sos_call_ambulance_after_share_btn'),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.coral, foregroundColor: Colors.white),
-              onPressed: () {
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(isAr ? 'جاري الاتصال بالإسعاف (999)...' : 'Calling Emergency Ambulance (999)...'),
-                    backgroundColor: AppColors.danger,
-                  ),
-                );
-              },
+              onPressed: () => _callQatarEmergency999(context, isAr),
               child: Text(isAr ? 'اتصل بالإسعاف والطوارئ · 999' : 'Call Ambulance · 999'),
             ),
             const SizedBox(height: 12),
@@ -406,41 +462,43 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
           Text(isAr ? 'هل تحتاج مساعدة طارئة؟' : 'Need emergency help?', style: AppTypography.largeTitle()),
           const SizedBox(height: 4),
           Text(isAr ? 'إذا كنت في خطر اتصل بالطوارئ القطرية فوراً.' : 'If in immediate danger, call Qatar emergency 999 first.', style: AppTypography.bodySecondary()),
+          if (_dialerFallbackNotice != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              key: const ValueKey('sos_dialer_fallback_banner'),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.dangerBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                _dialerFallbackNotice!,
+                style: AppTypography.label(color: AppColors.danger)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
           ElevatedButton(
+            key: const ValueKey('sos_call_police_999_btn'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.coral,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isAr ? 'جاري الاتصال بطوارئ الداخلية القطرية 999...' : 'Calling Qatar MOI Emergency 999...'),
-                  backgroundColor: AppColors.danger,
-                ),
-              );
-            },
+            onPressed: () => _callQatarEmergency999(context, isAr),
             child: Text(isAr ? 'اتصل بالطوارئ والشرطة · 999' : 'Call Police / MOI · 999', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 10),
           ElevatedButton(
+            key: const ValueKey('sos_call_ambulance_999_btn'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.coral,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isAr ? 'جاري الاتصال بالإسعاف (999)...' : 'Calling Emergency Ambulance (999)...'),
-                  backgroundColor: AppColors.danger,
-                ),
-              );
-            },
+            onPressed: () => _callQatarEmergency999(context, isAr),
             child: Text(isAr ? 'اتصل بالإسعاف والطوارئ · 999' : 'Call Ambulance · 999', style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
           const SizedBox(height: 10),

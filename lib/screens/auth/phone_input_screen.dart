@@ -74,10 +74,18 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
 
     final auth = context.read<AuthProvider>();
     final success = await auth.sendOtp(phone);
-    if (success && mounted) {
+    if (!mounted) return;
+    if (success) {
       Navigator.of(context).push(
         MashwarPageRoute(builder: (_) => const OtpVerificationScreen()),
       );
+    } else {
+      setState(() {
+        _errorText = auth.localizedError(isArabic: isAr) ??
+            (isAr
+                ? 'تعذّر إرسال رمز التحقق عبر SMS. يرجى المحاولة بالبريد الإلكتروني وكلمة المرور.'
+                : 'Unable to send SMS verification code. Please sign in with Email & Password.');
+      });
     }
   }
 
@@ -183,7 +191,12 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   const SizedBox(height: 8),
 
                   // Helper text / Error text
-                  _buildHelperOrError(hasError: hasError, isAr: isAr),
+                  _buildHelperOrError(
+                    context: context,
+                    auth: auth,
+                    hasError: hasError,
+                    isAr: isAr,
+                  ),
                 ],
               ),
             ),
@@ -372,19 +385,69 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     );
   }
 
-  Widget _buildHelperOrError({required bool hasError, required bool isAr}) {
+  Widget _buildHelperOrError({
+    required BuildContext context,
+    required AuthProvider auth,
+    required bool hasError,
+    required bool isAr,
+  }) {
     if (hasError) {
-      return Row(
-        children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 14),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              _errorText!,
-              style: AppTypography.label(color: AppColors.danger).copyWith(fontSize: 12),
+      return Container(
+        key: const ValueKey('phone_auth_error_banner'),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: AppColors.dangerBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.error_outline_rounded,
+                    color: AppColors.danger, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    _errorText!,
+                    style: AppTypography.label(color: AppColors.danger)
+                        .copyWith(fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            if (auth.shouldSuggestEmailFallback) ...[
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                key: const ValueKey('phone_fallback_email_btn'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.navy,
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.navy, width: 1),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+                onPressed: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            const EmailInputScreen(initialIsRegister: false)),
+                  );
+                },
+                icon: const Icon(Icons.mail_outline_rounded, size: 16),
+                label: Text(
+                  isAr
+                      ? 'الدخول بالبريد الإلكتروني وكلمة المرور'
+                      : 'Sign In with Email & Password',
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ],
+        ),
       );
     }
     return Row(

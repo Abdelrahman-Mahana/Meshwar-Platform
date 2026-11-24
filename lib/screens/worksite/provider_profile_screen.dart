@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -9,6 +10,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../data/models/worksite_models.dart';
+import '../../data/services/media_upload_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/worksite_provider.dart';
 
@@ -57,6 +59,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   late final TextEditingController _qidController;
   late final TextEditingController _qidFrontUrlController;
   late final TextEditingController _qidBackUrlController;
+  late final TextEditingController _qidSelfieUrlController;
+
+  String? _uploadingDocSlot;
+  MediaUploadResult? _uploadedQidFront;
+  MediaUploadResult? _uploadedQidBack;
+  MediaUploadResult? _uploadedQidSelfie;
 
   final Set<String> _selectedMunicipalities = {'الدوحة', 'لوسيل'};
   final Set<String> _selectedSpecialties = {'electrical', 'hardware'};
@@ -97,13 +105,17 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     _qidController = TextEditingController(
       text: existing?.qidNumber ?? auth?.user.nationalId ?? '',
     );
+    final isDevMocks = auth?.isDevMockAuthEnabled ?? false;
     _qidFrontUrlController = TextEditingController(
       text: existing?.qidFrontUrl ??
-          'https://storage.mashwar.qa/kyc/qid_front.jpg',
+          (isDevMocks ? 'https://storage.mashwar.qa/kyc/qid_front.jpg' : ''),
     );
     _qidBackUrlController = TextEditingController(
-      text:
-          existing?.qidBackUrl ?? 'https://storage.mashwar.qa/kyc/qid_back.jpg',
+      text: existing?.qidBackUrl ??
+          (isDevMocks ? 'https://storage.mashwar.qa/kyc/qid_back.jpg' : ''),
+    );
+    _qidSelfieUrlController = TextEditingController(
+      text: auth?.user.selfieImage ?? '',
     );
     if (existing != null) {
       if (existing.serviceMunicipalities.isNotEmpty) {
@@ -165,6 +177,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     _qidController.dispose();
     _qidFrontUrlController.dispose();
     _qidBackUrlController.dispose();
+    _qidSelfieUrlController.dispose();
     _fallbackWorksiteProvider?.dispose();
     super.dispose();
   }
@@ -252,12 +265,24 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
       return;
     }
 
+    final frontUrl = _qidFrontUrlController.text.trim();
+    final backUrl = _qidBackUrlController.text.trim();
+    if (frontUrl.isEmpty || backUrl.isEmpty) {
+      setState(() {
+        _localMessage = isAr
+            ? 'يرجى رفع صورة وجه وظهر البطاقة القطرية (QID) أولاً.'
+            : 'Please upload both QID front and QID back images before submitting.';
+        _localMessageIsError = true;
+      });
+      return;
+    }
+
     final uid = provider.currentUserId ?? auth?.user.id;
     final res = await provider.submitVerification(
       userId: uid,
       qidNumber: qid,
-      qidFrontUrl: _qidFrontUrlController.text.trim(),
-      qidBackUrl: _qidBackUrlController.text.trim(),
+      qidFrontUrl: frontUrl,
+      qidBackUrl: backUrl,
       vehicleType: _vehicleTypeController.text.trim(),
       vehiclePlate: _vehiclePlateController.text.trim(),
       serviceMunicipalities: _selectedMunicipalities.toList(),
@@ -690,6 +715,19 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             ),
           ),
           const SizedBox(height: 10),
+          _buildProviderDocUploadRow(
+            docType: 'qid_front',
+            uploadBtnKey: 'upload_provider_qid_front_btn',
+            pillKey: 'provider_qid_front_pill',
+            buttonLabel: isAr
+                ? 'رفع صورة وجه البطاقة (QID Front)'
+                : 'Upload QID Front Photo',
+            uploaded: _uploadedQidFront,
+            provider: provider,
+            auth: auth,
+            isAr: isAr,
+          ),
+          const SizedBox(height: 6),
           TextField(
             key: const ValueKey('provider_qid_front_input'),
             controller: _qidFrontUrlController,
@@ -699,7 +737,20 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   : 'QID Front Photo URL *',
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          _buildProviderDocUploadRow(
+            docType: 'qid_back',
+            uploadBtnKey: 'upload_provider_qid_back_btn',
+            pillKey: 'provider_qid_back_pill',
+            buttonLabel: isAr
+                ? 'رفع صورة ظهر البطاقة (QID Back)'
+                : 'Upload QID Back Photo',
+            uploaded: _uploadedQidBack,
+            provider: provider,
+            auth: auth,
+            isAr: isAr,
+          ),
+          const SizedBox(height: 6),
           TextField(
             key: const ValueKey('provider_qid_back_input'),
             controller: _qidBackUrlController,
@@ -707,6 +758,29 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               labelText: isAr
                   ? 'رابط صورة ظهر البطاقة القطرية *'
                   : 'QID Back Photo URL *',
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildProviderDocUploadRow(
+            docType: 'selfie',
+            uploadBtnKey: 'upload_provider_selfie_btn',
+            pillKey: 'provider_selfie_pill',
+            buttonLabel: isAr
+                ? 'رفع صورة التحقق الشخصية (Selfie)'
+                : 'Upload Verification Selfie',
+            uploaded: _uploadedQidSelfie,
+            provider: provider,
+            auth: auth,
+            isAr: isAr,
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            key: const ValueKey('provider_qid_selfie_input'),
+            controller: _qidSelfieUrlController,
+            decoration: InputDecoration(
+              labelText: isAr
+                  ? 'رابط الصورة الشخصية للمطابقة (اختياري)'
+                  : 'Verification Selfie URL (Optional)',
             ),
           ),
           const SizedBox(height: 16),
@@ -721,6 +795,162 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildProviderDocUploadRow({
+    required String docType,
+    required String uploadBtnKey,
+    required String pillKey,
+    required String buttonLabel,
+    required MediaUploadResult? uploaded,
+    required WorksiteProvider provider,
+    required AuthProvider? auth,
+    required bool isAr,
+  }) {
+    final isUploading = _uploadingDocSlot == docType;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton.icon(
+          key: ValueKey(uploadBtnKey),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppColors.navy,
+            side: const BorderSide(color: AppColors.teal),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+          onPressed: _uploadingDocSlot != null
+              ? null
+              : () => _handlePickProviderDoc(docType, provider, auth, isAr),
+          icon: isUploading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.teal,
+                  ),
+                )
+              : const Icon(Icons.cloud_upload_outlined,
+                  size: 18, color: AppColors.teal),
+          label: Text(
+            isUploading
+                ? (isAr ? 'جاري الرفع...' : 'Uploading...')
+                : buttonLabel,
+            style: AppTypography.label(color: AppColors.navy)
+                .copyWith(fontWeight: FontWeight.w800),
+          ),
+        ),
+        if (uploaded != null) ...[
+          const SizedBox(height: 6),
+          Container(
+            key: ValueKey(pillKey),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.tealSurface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.memory(
+                    uploaded.bytes,
+                    width: 34,
+                    height: 34,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.badge_outlined,
+                      color: AppColors.teal,
+                      size: 18,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${uploaded.fileName} · ${uploaded.formattedSize}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.label(color: AppColors.navy)
+                        .copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _handlePickProviderDoc(
+    String docType,
+    WorksiteProvider provider,
+    AuthProvider? auth,
+    bool isAr,
+  ) async {
+    final uid = provider.currentUserId ?? auth?.user.id ?? '';
+    if (uid.trim().isEmpty) {
+      setState(() {
+        _localMessage = isAr
+            ? 'يرجى تسجيل الدخول قبل رفع وثائق البطاقة القطرية.'
+            : 'Please sign in before uploading QID verification images.';
+        _localMessageIsError = true;
+      });
+      return;
+    }
+
+    setState(() {
+      _uploadingDocSlot = docType;
+      _localMessage = null;
+    });
+
+    try {
+      final res =
+          await MediaUploadService.instance.pickAndUploadProviderVerificationDoc(
+        uid: uid,
+        docType: docType,
+        source: ImageSource.gallery,
+        allowDevMocks: auth?.isDevMockAuthEnabled ?? false,
+      );
+      if (!mounted) return;
+      setState(() {
+        _uploadingDocSlot = null;
+        if (res != null) {
+          if (docType == 'qid_front') {
+            _uploadedQidFront = res;
+            _qidFrontUrlController.text = res.downloadUrl;
+          } else if (docType == 'qid_back') {
+            _uploadedQidBack = res;
+            _qidBackUrlController.text = res.downloadUrl;
+          } else {
+            _uploadedQidSelfie = res;
+            _qidSelfieUrlController.text = res.downloadUrl;
+          }
+          _localMessage = isAr
+              ? 'تم رفع الصورة (${res.fileName}) بنجاح.'
+              : 'Uploaded ${res.fileName} successfully.';
+          _localMessageIsError = false;
+        }
+      });
+    } on MediaUploadException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _uploadingDocSlot = null;
+        _localMessage = e.localizedMessage(isArabic: isAr);
+        _localMessageIsError = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _uploadingDocSlot = null;
+        _localMessage = isAr
+            ? 'تعذّر رفع الوثيقة: $e'
+            : 'Failed to upload verification document: $e';
+        _localMessageIsError = true;
+      });
+    }
   }
 
   Widget _buildSavedWorksitesSection(

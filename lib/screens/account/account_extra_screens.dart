@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -7,12 +8,16 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../data/models/user_model.dart';
+import '../../data/models/worksite_models.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
+import '../../state/worksite_provider.dart';
 import '../auth/id_verification_screen.dart';
+import '../auth/welcome_screen.dart';
 import '../board/board_extra_screens.dart';
 import '../settings/settings_screen.dart';
 import '../wallet/wallet_screen.dart';
+import '../worksite/work_request_details_screen.dart';
 
 // الملف الشخصي للمستخدم (User Profile Screen)
 class UserProfileScreen extends StatelessWidget {
@@ -682,15 +687,30 @@ class HelpSupportScreen extends StatelessWidget {
                     MashwarButton(
                       text: isAr ? 'محادثة مباشرة عبر واتساب' : 'Chat via WhatsApp Support',
                       icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              isAr ? 'جاري فتح دعم مشوار عبر واتساب (+974 4400 9999)...' : 'Opening MASHWAR Qatar WhatsApp Support...',
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.maybeOf(context);
+                        final uri = Uri.parse('https://wa.me/97444009999');
+                        bool launched = false;
+                        try {
+                          launched = await launchUrl(
+                            uri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                        } catch (_) {
+                          launched = false;
+                        }
+                        if (!launched) {
+                          messenger?.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isAr
+                                    ? 'تعذّر فتح واتساب تلقائياً. تواصل معنا على +974 4400 9999'
+                                    : 'Unable to launch WhatsApp automatically. Contact +974 4400 9999.',
+                              ),
+                              backgroundColor: AppColors.navy,
                             ),
-                            backgroundColor: AppColors.teal,
-                          ),
-                        );
+                          );
+                        }
                       },
                     ),
                     const SizedBox(height: 10),
@@ -702,15 +722,27 @@ class HelpSupportScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              isAr ? 'جاري الاتصال بالخط الساخن لخدمة عملاء مشوار 19884...' : 'Calling MASHWAR Hotline 19884...',
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.maybeOf(context);
+                        final uri = Uri(scheme: 'tel', path: '19884');
+                        bool launched = false;
+                        try {
+                          launched = await launchUrl(uri);
+                        } catch (_) {
+                          launched = false;
+                        }
+                        if (!launched) {
+                          messenger?.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isAr
+                                    ? 'لا يدعم هذا الجهاز الاتصال المباشر. اتصل بالخط الساخن 19884 من هاتفك.'
+                                    : 'This device lacks a phone handler. Dial 19884 on your phone.',
+                              ),
+                              backgroundColor: AppColors.navy,
                             ),
-                            backgroundColor: AppColors.navy,
-                          ),
-                        );
+                          );
+                        }
                       },
                       label: Text(isAr ? 'الاتصال بالخط الساخن' : 'Call Support Hotline', style: const TextStyle(fontWeight: FontWeight.bold)),
                     ),
@@ -726,7 +758,7 @@ class HelpSupportScreen extends StatelessWidget {
   }
 }
 
-// Page 61: حذف الحساب ومانع الحذف (Delete Account Screen)
+// Page 61: حذف الحساب ومانع الحذف الفعلي (Delete Account Screen)
 class DeleteAccountScreen extends StatefulWidget {
   const DeleteAccountScreen({super.key});
 
@@ -735,8 +767,30 @@ class DeleteAccountScreen extends StatefulWidget {
 }
 
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
+  static const Set<WorkRequestStatus> _activeBlockingStatuses = {
+    WorkRequestStatus.accepted,
+    WorkRequestStatus.inProgress,
+    WorkRequestStatus.pickedUp,
+    WorkRequestStatus.inTransit,
+    WorkRequestStatus.deliveredPendingConfirmation,
+    WorkRequestStatus.disputed,
+  };
+
   final TextEditingController _confirmController = TextEditingController();
-  final bool _hasUpcomingRide = false; // Toggle to test blocker
+  bool _serverRejectedActiveRequests = false;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ws = context.read<WorksiteProvider?>();
+      if (ws != null && ws.allLoadedRequests.isEmpty && !ws.isLoading) {
+        ws.loadRequests();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -744,88 +798,74 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     super.dispose();
   }
 
+  List<WorkRequest> _findActiveBlockingRequests(
+    WorksiteProvider? worksite,
+    String uid,
+  ) {
+    if (worksite == null || uid.trim().isEmpty) return const [];
+    return worksite.allLoadedRequests.where((req) {
+      final isParticipant =
+          req.requesterId == uid || req.assignedProviderId == uid;
+      return isParticipant && _activeBlockingStatuses.contains(req.status);
+    }).toList();
+  }
+
+  Future<void> _handleConfirmDelete(
+    BuildContext context,
+    AuthProvider auth,
+    List<WorkRequest> activeRequests,
+    bool isAr,
+  ) async {
+    final text = _confirmController.text.trim();
+    if (text != 'حذف' && text.toLowerCase() != 'delete') {
+      setState(() {
+        _errorMessage = isAr
+            ? 'يرجى كتابة كلمة «حذف» أو "delete" للتأكيد أولاً.'
+            : 'Please type "delete" to confirm account deletion first.';
+      });
+      return;
+    }
+
+    setState(() => _errorMessage = null);
+
+    final ok = await auth.deleteAccount(
+      reason: 'Self-service account deletion from DeleteAccountScreen',
+      activeBlockingRequestIds: activeRequests.map((r) => r.id),
+    );
+    if (!context.mounted) return;
+
+    if (ok) {
+      context.read<WorksiteProvider?>()?.syncAuthSession(uid: null);
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+        (_) => false,
+      );
+      return;
+    }
+
+    final ex = auth.lastAuthException;
+    setState(() {
+      if (ex?.code == 'failed-precondition') {
+        _serverRejectedActiveRequests = true;
+      }
+      _errorMessage = auth.localizedError(isArabic: isAr) ??
+          (isAr
+              ? 'تعذّر حذف الحساب حالياً. يرجى المحاولة لاحقاً.'
+              : 'Unable to delete account right now. Please try again.');
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
-
-    if (_hasUpcomingRide) {
-      // Blocker State (Page 61 - مانع)
-      return Scaffold(
-        backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-          title: Text(isAr ? 'حذف الحساب' : 'Delete Account', style: AppTypography.title()),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFFDE68A), width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFB45309), size: 22),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        isAr
-                            ? 'لا يمكن حذف الحساب حالياً لوجود رحلة قادمة مؤكدة.'
-                            : 'Cannot delete account now: You have an active upcoming trip.',
-                        style: const TextStyle(color: Color(0xFF92400E), fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(isAr ? 'الرحلة' : 'Trip', style: AppTypography.bodySecondary()),
-                        const Text('الدوحة ← الخور', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const Divider(height: 20, color: Color(0xFFF1F1F4)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(isAr ? 'الموعد' : 'Schedule', style: AppTypography.bodySecondary()),
-                        const Text('الجمعة 7:30 ص', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              MashwarButton(
-                text: isAr ? 'عرض الرحلة' : 'View Trip',
-                onPressed: () => Navigator.of(context).pop(),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    final auth = context.watch<AuthProvider>();
+    final worksite = context.watch<WorksiteProvider?>();
+    final uid = auth.user.id.trim().isNotEmpty
+        ? auth.user.id.trim()
+        : (worksite?.currentUserId ?? '');
+    final activeBlockingRequests = _findActiveBlockingRequests(worksite, uid);
+    final isBlocked =
+        activeBlockingRequests.isNotEmpty || _serverRejectedActiveRequests;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -834,10 +874,14 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(isAr ? 'حذف الحساب' : 'Delete Account', style: AppTypography.title()),
+        title: Text(
+          isAr ? 'حذف الحساب' : 'Delete Account',
+          style: AppTypography.title(),
+        ),
       ),
       body: SafeArea(
         child: Center(
@@ -845,91 +889,267 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             constraints: const BoxConstraints(maxWidth: 560),
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppDimens.space24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.dangerBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.danger.withValues(alpha: 0.3), width: 0.8),
+              child: isBlocked
+                  ? _buildActiveRequestsBlockerView(
+                      context,
+                      activeBlockingRequests,
+                      isAr,
+                    )
+                  : _buildConfirmationView(
+                      context,
+                      auth,
+                      activeBlockingRequests,
+                      isAr,
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 22),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            isAr ? 'الحذف نهائي ولا يمكن استرجاع الحساب' : 'Account deletion is permanent and irreversible',
-                            style: AppTypography.bodySecondary(color: AppColors.danger).copyWith(fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    isAr
-                        ? 'سيتم حذف اسمك، صورة حسابك، وبياناتك الشخصية نهائياً. يتم الاحتفاظ بسجلات المعاملات القانونية وفقاً للقانون القطري لحماية خصوصية البيانات رقم 13 لسنة 2016.'
-                        : 'Your personal data, name, and profile will be permanently deleted. Transaction audit records are retained per Qatar Personal Data Privacy Law No. 13 of 2016.',
-                    style: AppTypography.bodySecondary().copyWith(fontSize: 13),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    isAr ? 'اكتب كلمة «حذف» للتأكيد:' : 'Type "delete" to confirm:',
-                    style: AppTypography.label().copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  TextField(
-                    controller: _confirmController,
-                    decoration: InputDecoration(
-                      hintText: isAr ? 'حذف' : 'delete',
-                      filled: true,
-                      fillColor: AppColors.chipInactiveBg,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
-                        borderSide: const BorderSide(color: AppColors.borderDisabled, width: 0.8),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppDimens.radiusField),
-                        borderSide: const BorderSide(color: AppColors.borderDisabled, width: 0.8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppDimens.space32),
-                  MashwarButton(
-                    text: isAr ? 'حذف الحساب نهائياً' : 'Delete My Account Permanently',
-                    variant: MashwarButtonVariant.danger,
-                    onPressed: () {
-                      final text = _confirmController.text.trim();
-                      if (text == 'حذف' || text.toLowerCase() == 'delete') {
-                        context.read<AuthProvider>().logout();
-                        Navigator.of(context).popUntil((route) => route.isFirst);
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(isAr ? 'يرجى كتابة كلمة «حذف» للتأكيد أولاً' : 'Please type "delete" to confirm first'),
-                            backgroundColor: AppColors.danger,
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(
-                      isAr ? 'إلغاء والرجوع' : 'Cancel',
-                      style: AppTypography.body().copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildActiveRequestsBlockerView(
+    BuildContext context,
+    List<WorkRequest> activeRequests,
+    bool isAr,
+  ) {
+    return Column(
+      key: const ValueKey('delete_account_blocker_card'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF3C7),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFFDE68A), width: 0.8),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.warning_amber_rounded,
+                  color: Color(0xFFB45309), size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _errorMessage ??
+                      (isAr
+                          ? 'لا يمكن حذف الحساب حالياً لوجود طلبات توريد نشطة مرتبطة بحسابك. يرجى إتمامها أو تسويتها أولاً.'
+                          : 'Cannot delete account right now: You have active worksite supply requests that must be completed or resolved first.'),
+                  style: const TextStyle(
+                    color: Color(0xFF92400E),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...activeRequests.map(
+          (req) => Container(
+            key: ValueKey('delete_blocker_req_${req.id}'),
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    Text(
+                      req.title,
+                      style: AppTypography.body(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    MashwarBadge(
+                      type: req.status == WorkRequestStatus.disputed
+                          ? BadgeType.rejected
+                          : BadgeType.confirmed,
+                      customLabel: req.status.label(isArabic: isAr),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${req.pickupLocation} → ${req.dropoffWorksite}',
+                  style: AppTypography.bodySmall(),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              WorkRequestDetailsScreen(requestId: req.id),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.open_in_new_rounded,
+                        size: 15, color: AppColors.teal),
+                    label: Text(
+                      isAr ? 'فتح تفاصيل الطلب' : 'Open Request Details',
+                      style: AppTypography.label(color: AppColors.teal)
+                          .copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_serverRejectedActiveRequests && activeRequests.isEmpty) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            key: const ValueKey('delete_account_retry_btn'),
+            onPressed: () {
+              setState(() {
+                _serverRejectedActiveRequests = false;
+                _errorMessage = null;
+              });
+            },
+            icon: const Icon(Icons.refresh_rounded, size: 17),
+            label: Text(
+              isAr ? 'إعادة التحقق والمحاولة' : 'Re-check & Retry Deletion',
+            ),
+          ),
+        ],
+        const SizedBox(height: 16),
+        MashwarButton(
+          key: const ValueKey('delete_account_back_btn'),
+          text: isAr ? 'الرجوع لإدارة الطلبات' : 'Back to Manage Requests',
+          variant: MashwarButtonVariant.secondary,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConfirmationView(
+    BuildContext context,
+    AuthProvider auth,
+    List<WorkRequest> activeRequests,
+    bool isAr,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.dangerBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: AppColors.danger.withValues(alpha: 0.3), width: 0.8),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.error_outline_rounded,
+                  color: AppColors.danger, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isAr
+                      ? 'الحذف نهائي ولا يمكن استرجاع الحساب'
+                      : 'Account deletion is permanent and irreversible',
+                  style: AppTypography.bodySecondary(color: AppColors.danger)
+                      .copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          isAr
+              ? 'سيتم حذف ملفك الشخصي وملف المزود وبيانات التوثيق وحساب المصادقة نهائياً عبر الخادم، مع الاحتفاظ بسجلات التدقيق القانونية وفقاً للقانون القطري لحماية خصوصية البيانات رقم 13 لسنة 2016.'
+              : 'Your user profile, provider/business records, QID verification record, and authentication account will be permanently deleted on the server. Mandatory audit records are retained per Qatar Personal Data Privacy Law No. 13 of 2016.',
+          style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+        ),
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 14),
+          Container(
+            key: const ValueKey('delete_account_error_banner'),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.dangerBg,
+              borderRadius: BorderRadius.circular(10),
+              border:
+                  Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
+            ),
+            child: Text(
+              _errorMessage!,
+              style: AppTypography.label(color: AppColors.danger)
+                  .copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        Text(
+          isAr ? 'اكتب كلمة «حذف» للتأكيد:' : 'Type "delete" to confirm:',
+          style: AppTypography.label().copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          key: const ValueKey('delete_account_confirm_input'),
+          controller: _confirmController,
+          onChanged: (_) {
+            if (_errorMessage != null) {
+              setState(() => _errorMessage = null);
+            }
+          },
+          decoration: InputDecoration(
+            hintText: isAr ? 'حذف' : 'delete',
+            filled: true,
+            fillColor: AppColors.chipInactiveBg,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radiusField),
+              borderSide:
+                  const BorderSide(color: AppColors.borderDisabled, width: 0.8),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radiusField),
+              borderSide:
+                  const BorderSide(color: AppColors.borderDisabled, width: 0.8),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppDimens.space32),
+        MashwarButton(
+          key: const ValueKey('delete_account_submit_btn'),
+          text:
+              isAr ? 'حذف الحساب نهائياً' : 'Delete My Account Permanently',
+          variant: MashwarButtonVariant.danger,
+          isLoading: auth.isLoading,
+          onPressed: () => _handleConfirmDelete(
+            context,
+            auth,
+            activeRequests,
+            isAr,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            isAr ? 'إلغاء والرجوع' : 'Cancel',
+            style: AppTypography.body().copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

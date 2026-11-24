@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -10,6 +12,7 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../data/models/worksite_models.dart';
+import '../../data/services/media_upload_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/worksite_provider.dart';
 import '../chat/chat_screen.dart';
@@ -19,6 +22,9 @@ import 'provider_profile_screen.dart';
 /// Complete Worksite Request Details, Offers, Fulfillment, Handover Verification,
 /// Manual Transfer Proof, Audit Timeline, Rating, Dispute, and Quick Reorder screen.
 class WorkRequestDetailsScreen extends StatefulWidget {
+  @visibleForTesting
+  static Future<bool> Function(Uri uri, {LaunchMode mode})? debugUrlLauncher;
+
   final String requestId;
 
   const WorkRequestDetailsScreen({
@@ -726,6 +732,47 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
             ),
           ),
 
+          // Real OS Phone Call button (tel:) when siteContactPhone is provided
+          if (req.siteContactPhone != null &&
+              req.siteContactPhone!.trim().isNotEmpty)
+            OutlinedButton.icon(
+              key: const ValueKey('details_call_contact_btn'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.teal,
+                side: BorderSide(color: AppColors.teal.withValues(alpha: 0.5)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              onPressed: () => _launchSitePhoneCall(
+                context,
+                req.siteContactPhone!.trim(),
+                isAr,
+              ),
+              icon: const Icon(Icons.phone_in_talk_rounded, size: 17),
+              label: Text(
+                isAr ? 'اتصال بمسؤول الموقع' : 'Call Site Contact',
+                style: AppTypography.label(color: AppColors.teal)
+                    .copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+
+          // Real OS Email Support Escalation (mailto:)
+          OutlinedButton.icon(
+            key: const ValueKey('details_email_support_btn'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.navy,
+              side: const BorderSide(color: AppColors.borderDisabled),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            onPressed: () => _launchSupportEmail(context, req, isAr),
+            icon: const Icon(Icons.mail_outline_rounded, size: 17),
+            label: Text(
+              isAr ? 'مراسلة الدعم' : 'Email Support',
+              style: AppTypography.label(color: AppColors.navy)
+                  .copyWith(fontWeight: FontWeight.w800),
+            ),
+          ),
+
           // 1-Tap Quick Reorder
           if (isRequester)
             OutlinedButton.icon(
@@ -1380,7 +1427,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           '',
     );
     final noteCtrl = TextEditingController();
+    final auth = context.read<AuthProvider?>();
     String? modalErr;
+    bool isUploadingInvoice = false;
+    MediaUploadResult? uploadedInvoice;
 
     showModalBottomSheet(
       context: context,
@@ -1389,6 +1439,43 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (sheetCtx, setModalState) {
+            Future<void> pickInvoice(ImageSource source) async {
+              setModalState(() {
+                isUploadingInvoice = true;
+                modalErr = null;
+              });
+              try {
+                final res = await MediaUploadService.instance
+                    .pickAndUploadWorkRequestInvoice(
+                  requestId: req.id,
+                  source: source,
+                  allowDevMocks: auth?.isDevMockAuthEnabled ?? false,
+                );
+                if (!sheetCtx.mounted) return;
+                setModalState(() {
+                  isUploadingInvoice = false;
+                  if (res != null) {
+                    uploadedInvoice = res;
+                    invoiceUrlCtrl.text = res.downloadUrl;
+                  }
+                });
+              } on MediaUploadException catch (e) {
+                if (!sheetCtx.mounted) return;
+                setModalState(() {
+                  isUploadingInvoice = false;
+                  modalErr = e.localizedMessage(isArabic: isAr);
+                });
+              } catch (e) {
+                if (!sheetCtx.mounted) return;
+                setModalState(() {
+                  isUploadingInvoice = false;
+                  modalErr = isAr
+                      ? 'تعذّر رفع صورة الفاتورة: $e'
+                      : 'Failed to upload invoice image: $e';
+                });
+              }
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 left: 20,
@@ -1407,28 +1494,105 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                     ),
                     const SizedBox(height: 12),
                     if (modalErr != null) ...[
-                      Text(modalErr!,
-                          style: AppTypography.label(color: AppColors.danger)),
+                      Container(
+                        key: const ValueKey('stage_invoice_upload_error'),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.dangerBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          modalErr!,
+                          style: AppTypography.label(color: AppColors.danger)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
                       const SizedBox(height: 8),
                     ],
+                    OutlinedButton.icon(
+                      key: const ValueKey('upload_stage_invoice_btn'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        side: const BorderSide(color: AppColors.teal),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                      ),
+                      onPressed: isUploadingInvoice
+                          ? null
+                          : () => pickInvoice(ImageSource.gallery),
+                      icon: isUploadingInvoice
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.teal,
+                              ),
+                            )
+                          : const Icon(Icons.cloud_upload_outlined,
+                              size: 18, color: AppColors.teal),
+                      label: Text(
+                        isUploadingInvoice
+                            ? (isAr
+                                ? 'جاري رفع فاتورة الشراء...'
+                                : 'Uploading store invoice...')
+                            : (isAr
+                                ? 'رفع صورة فاتورة المتجر (حتى 10MB)'
+                                : 'Upload Store Invoice Photo (<= 10 MB)'),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    if (uploadedInvoice != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        key: const ValueKey('stage_invoice_uploaded_pill'),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.tealSurface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: AppColors.teal.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.memory(
+                                uploadedInvoice!.bytes,
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.receipt_long_rounded,
+                                    color: AppColors.teal,
+                                    size: 20),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${uploadedInvoice!.fileName} (${uploadedInvoice!.formattedSize})',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.label(color: AppColors.navy)
+                                    .copyWith(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
                     TextField(
                       key: const ValueKey('stage_invoice_url_input'),
                       controller: invoiceUrlCtrl,
                       decoration: InputDecoration(
                         labelText: isAr
-                            ? 'رابط صورة فاتورة الشراء (اختياري / موصى به)'
-                            : 'Store Invoice Photo URL (Optional / Recommended)',
-                        hintText: 'https://storage.mashwar.qa/invoices/...',
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.attach_file_rounded,
-                              color: AppColors.teal),
-                          onPressed: () {
-                            setModalState(() {
-                              invoiceUrlCtrl.text =
-                                  'https://storage.mashwar.qa/invoices/${req.id}_receipt.jpg';
-                            });
-                          },
-                        ),
+                            ? 'رابط صورة فاتورة الشراء (تلقائي بعد الرفع)'
+                            : 'Store Invoice Photo URL (Populated on Upload)',
+                        hintText: 'https://...',
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1647,17 +1811,88 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
     );
   }
 
+  Future<bool> _launchExternalUri(
+    Uri uri, {
+    LaunchMode mode = LaunchMode.platformDefault,
+  }) async {
+    final override = WorkRequestDetailsScreen.debugUrlLauncher;
+    if (override != null) {
+      return override(uri, mode: mode);
+    }
+    try {
+      return await launchUrl(uri, mode: mode);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _launchSitePhoneCall(
+    BuildContext context,
+    String rawPhone,
+    bool isAr,
+  ) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final digits = rawPhone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final normalized = digits.startsWith('+')
+        ? digits
+        : (digits.length == 8 ? '+974$digits' : digits);
+    final launched = await _launchExternalUri(
+      Uri(scheme: 'tel', path: normalized),
+    );
+    if (!launched) {
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            isAr
+                ? 'لا يدعم هذا الجهاز الاتصال المباشر. يمكنك الاتصال يدوياً على $normalized'
+                : 'This device cannot launch phone calls directly. Please dial $normalized manually.',
+          ),
+          backgroundColor: AppColors.navy,
+        ),
+      );
+    }
+  }
+
+  Future<void> _launchSupportEmail(
+    BuildContext context,
+    WorkRequest req,
+    bool isAr,
+  ) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final subject =
+        Uri.encodeComponent('MASHWAR Qatar Order #${req.id} - ${req.title}');
+    final uri = Uri.parse('mailto:ops@mashwar.qa?subject=$subject');
+    final launched = await _launchExternalUri(uri);
+    if (!launched) {
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            isAr
+                ? 'تعذّر فتح تطبيق البريد تلقائياً. راسلنا على ops@mashwar.qa بخصوص الطلب #${req.id}'
+                : 'No email handler configured on this device. Contact ops@mashwar.qa regarding #${req.id}.',
+          ),
+          backgroundColor: AppColors.navy,
+        ),
+      );
+    }
+  }
+
   void _showTransferProofModal(
     BuildContext context,
     WorksiteProvider provider,
     WorkRequest req,
     bool isAr,
   ) {
+    final auth = context.read<AuthProvider?>();
     final proofCtrl = TextEditingController(
-      text: 'https://storage.mashwar.qa/transfers/${req.id}_proof.jpg',
+      text: req.paymentProofUrl ?? '',
     );
-    final refCtrl = TextEditingController();
+    final refCtrl = TextEditingController(
+      text: req.paymentReference ?? '',
+    );
     String? modalErr;
+    bool isUploadingProof = false;
+    MediaUploadResult? uploadedProof;
 
     showModalBottomSheet(
       context: context,
@@ -1666,6 +1901,43 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (sheetCtx, setModalState) {
+            Future<void> pickProofImage() async {
+              setModalState(() {
+                isUploadingProof = true;
+                modalErr = null;
+              });
+              try {
+                final res = await MediaUploadService.instance
+                    .pickAndUploadWorkRequestPaymentProof(
+                  requestId: req.id,
+                  source: ImageSource.gallery,
+                  allowDevMocks: auth?.isDevMockAuthEnabled ?? false,
+                );
+                if (!sheetCtx.mounted) return;
+                setModalState(() {
+                  isUploadingProof = false;
+                  if (res != null) {
+                    uploadedProof = res;
+                    proofCtrl.text = res.downloadUrl;
+                  }
+                });
+              } on MediaUploadException catch (e) {
+                if (!sheetCtx.mounted) return;
+                setModalState(() {
+                  isUploadingProof = false;
+                  modalErr = e.localizedMessage(isArabic: isAr);
+                });
+              } catch (e) {
+                if (!sheetCtx.mounted) return;
+                setModalState(() {
+                  isUploadingProof = false;
+                  modalErr = isAr
+                      ? 'تعذّر رفع صورة إيصال التحويل: $e'
+                      : 'Failed to upload transfer proof image: $e';
+                });
+              }
+            }
+
             return Padding(
               padding: EdgeInsets.only(
                 left: 20,
@@ -1686,10 +1958,95 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                     ),
                     const SizedBox(height: 12),
                     if (modalErr != null) ...[
-                      Text(modalErr!,
-                          style: AppTypography.label(color: AppColors.danger)),
+                      Container(
+                        key: const ValueKey('transfer_proof_upload_error'),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.dangerBg,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          modalErr!,
+                          style: AppTypography.label(color: AppColors.danger)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
                       const SizedBox(height: 8),
                     ],
+                    OutlinedButton.icon(
+                      key: const ValueKey('pick_transfer_proof_image_btn'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        side: const BorderSide(color: AppColors.teal),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                      ),
+                      onPressed: isUploadingProof ? null : pickProofImage,
+                      icon: isUploadingProof
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.teal,
+                              ),
+                            )
+                          : const Icon(Icons.cloud_upload_outlined,
+                              size: 18, color: AppColors.teal),
+                      label: Text(
+                        isUploadingProof
+                            ? (isAr
+                                ? 'جاري رفع إيصال التحويل...'
+                                : 'Uploading transfer receipt...')
+                            : (isAr
+                                ? 'اختيار ورفع صورة الإيصال (حتى 10MB)'
+                                : 'Select & Upload Transfer Receipt (<= 10 MB)'),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    if (uploadedProof != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        key: const ValueKey('transfer_proof_uploaded_pill'),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.tealSurface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: AppColors.teal.withValues(alpha: 0.4)),
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.memory(
+                                uploadedProof!.bytes,
+                                width: 36,
+                                height: 36,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.account_balance_rounded,
+                                    color: AppColors.teal,
+                                    size: 20),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${uploadedProof!.fileName} (${uploadedProof!.formattedSize})',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.label(color: AppColors.navy)
+                                    .copyWith(fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 10),
                     TextField(
                       key: const ValueKey('transfer_proof_url_input'),
                       controller: proofCtrl,

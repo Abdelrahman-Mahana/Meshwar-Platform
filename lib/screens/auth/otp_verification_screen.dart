@@ -12,6 +12,8 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_onboarding_shell.dart';
 import '../../state/auth_provider.dart';
+import '../main_nav_shell.dart';
+import 'email_input_screen.dart';
 import 'profile_setup_screen.dart';
 
 /// Clean, bulletproof, minimalist OTP Verification Screen (Uber/inDrive standard).
@@ -103,14 +105,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ? await auth.verifyEmailOtp(code)
         : await auth.verifyOtp(code);
     if (success && mounted) {
-      Navigator.of(context).push(
-        MashwarPageRoute(builder: (_) => const ProfileSetupScreen()),
-      );
+      if (auth.isAuthenticated) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainNavShell()),
+          (_) => false,
+        );
+      } else {
+        Navigator.of(context).push(
+          MashwarPageRoute(builder: (_) => const ProfileSetupScreen()),
+        );
+      }
     } else if (mounted) {
+      final mappedMsg = auth.lastAuthException?.localizedMessage(isArabic: isAr);
+      final isInvalidCode =
+          auth.lastAuthException?.code == 'invalid-verification-code';
       setState(() {
-        _errorMessage = isAr
-            ? 'الكود غير صحيح. المتبقي ${auth.otpAttemptsLeft} محاولات'
-            : 'Invalid code. ${auth.otpAttemptsLeft} attempts remaining';
+        if (mappedMsg != null && !isInvalidCode) {
+          _errorMessage = mappedMsg;
+        } else {
+          _errorMessage = isAr
+              ? 'الكود غير صحيح. المتبقي ${auth.otpAttemptsLeft} محاولات'
+              : 'Invalid code. ${auth.otpAttemptsLeft} attempts remaining';
+        }
       });
     }
   }
@@ -250,7 +266,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
             const SizedBox(height: 16),
 
-            // Confirm CTA
+            // Confirm CTA + Email+Password Fallback
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -260,6 +276,30 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   onPressed: () => _verify(isAr),
                 ),
                 const SizedBox(height: 8),
+                Center(
+                  child: TextButton.icon(
+                    key: const ValueKey('otp_switch_to_email_btn'),
+                    icon: const Icon(Icons.mail_outline_rounded,
+                        size: 17, color: AppColors.navy),
+                    onPressed: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const EmailInputScreen(initialIsRegister: false),
+                        ),
+                      );
+                    },
+                    label: Text(
+                      isAr
+                          ? 'المتابعة بالبريد الإلكتروني وكلمة المرور'
+                          : 'Sign in with Email & Password instead',
+                      style: AppTypography.label(color: AppColors.navy).copyWith(
+                        fontWeight: FontWeight.w700,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ],

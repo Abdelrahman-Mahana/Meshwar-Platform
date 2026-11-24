@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/admin_platform_models.dart';
 import '../../data/services/firebase_firestore_service.dart';
@@ -9,6 +10,9 @@ import '../../state/settings_provider.dart';
 import 'widgets/admin_ui_kit.dart';
 
 class AdminInquiriesScreen extends StatefulWidget {
+  @visibleForTesting
+  static Future<bool> Function(Uri uri, {LaunchMode mode})? debugUrlLauncher;
+
   const AdminInquiriesScreen({super.key});
 
   @override
@@ -37,6 +41,32 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
         duration: const Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _launchExternal(
+    BuildContext context,
+    Uri uri, {
+    required String fallbackMessage,
+    LaunchMode mode = LaunchMode.platformDefault,
+  }) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    bool launched = false;
+    try {
+      final override = AdminInquiriesScreen.debugUrlLauncher;
+      launched = override != null
+          ? await override(uri, mode: mode)
+          : await launchUrl(uri, mode: mode);
+    } catch (_) {
+      launched = false;
+    }
+    if (!launched) {
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(fallbackMessage),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Color _statusColor(String st) {
@@ -95,6 +125,44 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
+                    ElevatedButton.icon(
+                      key: const ValueKey('admin_inquiry_mailto_btn'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.navy,
+                        foregroundColor: Colors.white,
+                      ),
+                      onPressed: () => _launchExternal(
+                        context,
+                        Uri.parse(
+                          'mailto:${item.email}?subject=${Uri.encodeComponent('MASHWAR Qatar — Follow-up (#${item.shortRef})')}',
+                        ),
+                        fallbackMessage: isAr
+                            ? 'لا يوجد تطبيق بريد افتراضي. راسل ${item.email} مباشرة.'
+                            : 'No mail client configured. Email ${item.email} directly.',
+                      ),
+                      icon: const Icon(Icons.send_rounded, size: 15),
+                      label: Text(isAr ? 'مراسلة بالبريد' : 'Send Email'),
+                    ),
+                    if (item.phone.trim().isNotEmpty)
+                      OutlinedButton.icon(
+                        key: const ValueKey('admin_inquiry_call_btn'),
+                        onPressed: () {
+                          final digits =
+                              item.phone.replaceAll(RegExp(r'[^0-9+]'), '');
+                          final dialTarget = digits.startsWith('+')
+                              ? digits
+                              : (digits.length == 8 ? '+974$digits' : digits);
+                          _launchExternal(
+                            context,
+                            Uri(scheme: 'tel', path: dialTarget),
+                            fallbackMessage: isAr
+                                ? 'لا يدعم هذا الجهاز الاتصال المباشر ($dialTarget).'
+                                : 'Phone dialer unavailable on this device ($dialTarget).',
+                          );
+                        },
+                        icon: const Icon(Icons.phone_in_talk_rounded, size: 15),
+                        label: Text(isAr ? 'اتصال هاتفي' : 'Call Phone'),
+                      ),
                     OutlinedButton.icon(
                       onPressed: () => _copyText(
                         context,
@@ -105,17 +173,6 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                       ),
                       icon: const Icon(Icons.copy_rounded, size: 16),
                       label: Text(isAr ? 'نسخ البريد' : 'Copy Email'),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () => _copyText(
-                        context,
-                        'mailto:${item.email}?subject=${Uri.encodeComponent('MASHWAR Qatar — Follow-up (#${item.shortRef})')}',
-                        isAr
-                            ? 'تم نسخ رابط الرد السريع mailto'
-                            : 'Copied quick reply mailto link',
-                      ),
-                      icon: const Icon(Icons.reply_rounded, size: 16),
-                      label: Text(isAr ? 'نسخ رابط الرد' : 'Copy Reply Link'),
                     ),
                   ],
                 ),
@@ -298,6 +355,22 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                       ),
                     ),
                     OutlinedButton.icon(
+                      key: const ValueKey('admin_open_firestore_console_btn'),
+                      onPressed: () => _launchExternal(
+                        context,
+                        Uri.parse(_firestoreConsoleUrl),
+                        mode: LaunchMode.externalApplication,
+                        fallbackMessage: isAr
+                            ? 'تعذّر فتح Firestore Console تلقائياً.'
+                            : 'Unable to open Firestore Console externally.',
+                      ),
+                      icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                      label: Text(
+                        isAr ? 'فتح Firestore Console' : 'Open Firestore Console',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    OutlinedButton.icon(
                       onPressed: () => _copyText(
                         context,
                         _firestoreConsoleUrl,
@@ -305,7 +378,7 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                             ? 'تم نسخ رابط Firestore Console المباشر'
                             : 'Copied direct Firestore Console URL',
                       ),
-                      icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                      icon: const Icon(Icons.copy_rounded, size: 16),
                       label: Text(
                         isAr ? 'نسخ رابط Firestore' : 'Copy Firestore URL',
                         style: const TextStyle(fontSize: 12),

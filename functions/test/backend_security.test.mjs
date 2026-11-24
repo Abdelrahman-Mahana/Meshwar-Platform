@@ -13,6 +13,7 @@ import {
   adminModerateWorkRequest,
   adminReviewProvider,
   createWorkRequest,
+  deleteUserAccount,
   recordPaymentStatus,
   submitRequestRating,
   submitWorkOffer,
@@ -233,6 +234,10 @@ test('unauthenticated callers are denied across all callable handlers', async ()
   );
   await assert.rejects(
     adminModerateWorkRequest(store, unauth, { requestId: 'req_x', action: 'cancel' }),
+    { code: 'unauthenticated' },
+  );
+  await assert.rejects(
+    deleteUserAccount(store, unauth, {}),
     { code: 'unauthenticated' },
   );
 });
@@ -941,4 +946,146 @@ test('adminReviewProvider and adminModerateWorkRequest require active admin_staf
   assert.equal(logs.length, 2);
   assert.equal(logs[0].data.adminUid, 'admin_1');
   assert.equal(logs[1].data.action, 'moderate_resolve_dispute');
+});
+
+test('deleteUserAccount blocks active work_requests across all active statuses, and deletes profiles + audit log + Firebase Auth user when clear', async () => {
+  const store = createSeededStore();
+  const clock = makeDeps();
+  const deletedAuthUids = [];
+
+  store.seed('users', 'req_1', {
+    id: 'req_1',
+    fullName: 'Eng. Fahad',
+    phone: '55112233',
+    email: 'fahad@site.qa',
+  });
+  store.seed('provider_profiles', 'req_1', {
+    id: 'req_1',
+    userId: 'req_1',
+    fullName: 'Eng. Fahad',
+    approvalStatus: 'pending',
+    completedTasksCount: 0,
+    ratingAvg: 0,
+    ratingCount: 0,
+  });
+  store.seed('provider_verifications', 'req_1', {
+    id: 'req_1',
+    providerId: 'req_1',
+    fullName: 'Eng. Fahad',
+    qidNumber: '29163401122',
+    status: 'pending',
+  });
+  store.seed('business_profiles', 'req_1', {
+    id: 'req_1',
+    userId: 'req_1',
+    companyName: 'Lusail Contracting WLL',
+    ratingAvg: 5,
+    ratingCount: 1,
+  });
+
+  const depsWithAuth = {
+    ...clock.deps,
+    deleteAuthUser: async (uid) => {
+      deletedAuthUids.push(uid);
+    },
+  };
+
+  // Setup accepted request: both req_1 (requester) and prov_approved_1 (assigned provider) must be blocked!
+  const { requestId, accepted } = await setupAcceptedRequest(store, clock);
+
+  for (const activeStatus of [
+    'accepted',
+    'in_progress',
+    'picked_up',
+    'in_transit',
+    'delivered_pending_confirmation',
+    'disputed',
+  ]) {
+    if (activeStatus !== 'accepted') {
+      await transitionWorkRequestStatus(
+        store,
+        { uid: activeStatus === 'disputed' ? 'req_1' : 'prov_approved_1' },
+        {
+          requestId,
+          targetStatus: activeStatus,
+          ...(activeStatus === 'disputed' ? { reason: 'Temporary check' } : {}),
+        },
+        clock.deps,
+      );
+    }
+
+    await assert.rejects(
+      deleteUserAccount(store, { uid: 'req_1' }, { reason: 'Leaving platform' }, depsWithAuth),
+      { code: 'failed-precondition' },
+    );
+    await assert.rejects(
+      deleteUserAccount(store, { uid: 'prov_approved_1' }, {}, depsWithAuth),
+      { code: 'failed-precondition' },
+    );
+
+    // Ensure profile docs and auth account were NOT deleted when blocked
+    assert.ok(store.getDoc('users', 'req_1'));
+    assert.equal(deletedAuthUids.length, 0);
+  }
+
+  // Resolve dispute -> delivered_pending_confirmation -> verify handover -> completed
+  await adminModerateWorkRequest(
+    store,
+    { uid: 'admin_1' },
+    {
+      requestId,
+      action: 'resolve_dispute',
+      targetStatus: 'delivered_pending_confirmation',
+      reason: 'Resolved on-site',
+    },
+    clock.deps,
+  );
+  await verifyHandoverAndComplete(
+    store,
+    { uid: 'prov_approved_1' },
+    { requestId, code: accepted.handoverCode },
+    clock.deps,
+  );
+
+  // Also create an unassigned 'open' request owned by req_1 (should be auto-cancelled, not block)
+  const openRes = await createWorkRequest(
+    store,
+    { uid: 'req_1' },
+    {
+      title: 'Unused open draft supply',
+      pickupLocation: 'Industrial Area',
+      deliveryLocation: 'Lusail',
+      budgetMinor: 9000,
+    },
+    clock.deps,
+  );
+
+  // Now req_1 has only completed + open requests -> deleteUserAccount succeeds cleanly!
+  const deleted = await deleteUserAccount(
+    store,
+    { uid: 'req_1' },
+    { reason: 'Project completed' },
+    depsWithAuth,
+  );
+
+  assert.equal(deleted.uid, 'req_1');
+  assert.equal(deleted.authUserDeleted, true);
+  assert.deepEqual(deletedAuthUids, ['req_1']);
+  assert.deepEqual(deleted.cancelledOpenRequestIds, [openRes.requestId]);
+
+  // Verify Firestore PII profile docs are purged
+  assert.equal(store.getDoc('users', 'req_1'), null);
+  assert.equal(store.getDoc('provider_profiles', 'req_1'), null);
+  assert.equal(store.getDoc('provider_verifications', 'req_1'), null);
+  assert.equal(store.getDoc('business_profiles', 'req_1'), null);
+
+  // Open request was cancelled while completed historical audit record remains intact
+  assert.equal(store.getDoc('work_requests', openRes.requestId).status, 'cancelled');
+  assert.equal(store.getDoc('work_requests', requestId).status, 'completed');
+
+  // Immutable admin_audit_logs entry recorded
+  const auditDoc = store.getDoc('admin_audit_logs', deleted.auditLogId);
+  assert.ok(auditDoc);
+  assert.equal(auditDoc.action, 'delete_user_account');
+  assert.equal(auditDoc.targetEntityId, 'req_1');
 });
