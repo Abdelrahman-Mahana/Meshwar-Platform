@@ -1,0 +1,26 @@
+{
+  "name": "mashwar-functions",
+  "version": "1.0.0",
+  "description": "MASHWAR Worksite Supply MVP Cloud Functions v2",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "pretest": "npm run build",
+    "test": "node --test test/backend_security.test.mjs",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2"
+  },
+  "private": true
+}
