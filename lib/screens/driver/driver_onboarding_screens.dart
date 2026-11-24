@@ -44,18 +44,18 @@ class DriverOnboardingScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // 3D Partner Driver Banner
+                            // Universal Service Provider & Mobility Partner Banner
                             ClipRRect(
                               borderRadius: BorderRadius.circular(20),
                               child: Stack(
                                 children: [
                                   MashwarAssetArt(
-                                    assetPath: 'assets/images/driver_promo.jpg',
+                                    assetPath: 'assets/images/hero_qatar_services.jpg',
                                     width: double.infinity,
-                                    height: 150,
+                                    height: 165,
                                     borderRadius: BorderRadius.circular(20),
-                                    fallbackIcon: Icons.directions_car_filled_rounded,
-                                    fallbackBg: AppColors.goldSurface,
+                                    fallbackIcon: Icons.handshake_rounded,
+                                    fallbackBg: AppColors.qatarMaroonSurface,
                                   ),
                                   Positioned.fill(
                                     child: DecoratedBox(
@@ -65,7 +65,7 @@ class DriverOnboardingScreen extends StatelessWidget {
                                           end: Alignment.bottomCenter,
                                           colors: [
                                             Colors.transparent,
-                                            AppColors.navy.withValues(alpha: 0.45),
+                                            AppColors.navy.withValues(alpha: 0.55),
                                           ],
                                         ),
                                       ),
@@ -76,32 +76,34 @@ class DriverOnboardingScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: AppDimens.space20),
 
-                            // Title & Subtitle (Page 37)
+                            // Title & Subtitle
                             Text(
-                              isAr ? 'اربح من مقاعدك الشاغرة' : 'Earn from your empty seats',
+                              isAr
+                                  ? 'اربح من طريقك ومقاعدك وخدماتك اليومية'
+                                  : 'Earn from routes, errands & empty seats',
                               textAlign: TextAlign.center,
                               style: AppTypography.largeTitle(),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               isAr
-                                  ? 'انشر رحلاتك بين مناطق قطر واستقبل ركاباً وطروداً في طريقك.'
-                                  : 'Publish trips across Qatar and take riders and parcels along your way.',
+                                  ? 'نفّذ طلبات الشراء بالفاتورة، توريد مواقع العمل، توصيل الحضانات والأوراق أو شارك مقاعدك بضمان مشوار Escrow.'
+                                  : 'Fulfill shopping errands, worksite supplies, daily commutes or empty seats with Escrow protection.',
                               textAlign: TextAlign.center,
                               style: AppTypography.bodySecondary(),
                             ),
                             const SizedBox(height: AppDimens.space20),
 
-                            // 3 Steps Card (Page 37)
+                            // 3 Steps Card
                             MashwarSectionCard(
                               padding: const EdgeInsets.all(AppDimens.space20),
                               child: Column(
                                 children: [
-                                  _buildStepRow('1', isAr ? 'وثّق هويتك ورخصتك' : 'Verify ID & Driver License'),
+                                  _buildStepRow('1', isAr ? 'وثّق بطاقتك القطرية QID ورخصتك' : 'Verify Qatar ID & Driver License'),
                                   const Divider(height: 24, color: AppColors.sand),
-                                  _buildStepRow('2', isAr ? 'انشر رحلتك وحدد سعرك' : 'Post trip & set price'),
+                                  _buildStepRow('2', isAr ? 'فعّل استقبال الطلبات أو انشر خط سيرك' : 'Accept service requests or post your route'),
                                   const Divider(height: 24, color: AppColors.sand),
-                                  _buildStepRow('3', isAr ? 'استقبل الحجوزات والطرود' : 'Accept bookings & parcels'),
+                                  _buildStepRow('3', isAr ? 'نفّذ الخدمة واستلم أتعابك فوراً بـ Escrow' : 'Fulfill safely & receive instant Escrow payout'),
                                 ],
                               ),
                             ),

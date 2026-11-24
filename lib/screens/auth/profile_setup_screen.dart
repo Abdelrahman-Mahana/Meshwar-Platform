@@ -199,8 +199,8 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                   const SizedBox(height: 6),
                                   Text(
                                     isAr
-                                        ? 'أدخل بياناتك كما تظهر في بطاقتك الشخصية لتسهيل رحلاتك وتأكيد هويتك للسائقين.'
-                                        : 'Enter your name as it appears on your ID so drivers can recognize you.',
+                                        ? 'أدخل بياناتك كما تظهر في بطاقتك القطرية لتسهيل طلب الخدمات والمشاوير وتوثيق الضمان بين الطرفين.'
+                                        : 'Enter your name as shown on your QID so service providers and requesters can verify you safely.',
                                     style: const TextStyle(
                                       fontSize: 14,
                                       color: AppColors.textSecondary,

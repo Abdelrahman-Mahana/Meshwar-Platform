@@ -152,10 +152,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         child: MashwarOnboardingShell(
           isAr: isAr,
           showcaseBadge: isAr ? 'حماية مزدوجة' : 'OTP Protected',
-          showcaseTitle: isAr ? 'تأكيد فوري وآمن لهويتك' : 'Instant & secure verification',
+          showcaseTitle: isAr
+              ? 'خطوة أمان أولى في منظومة مشوار الخالية من الاحتيال'
+              : 'Zero-fraud authentication for every MASHWAR user',
           showcaseSubtitle: isAr
-              ? 'نحمي كل حساب برمز تحقق لمرة واحدة لضمان موثوقية مجتمع مشوار في قطر.'
-              : 'Every account is secured with one-time OTP verification across Qatar.',
+              ? 'كل حساب في قطر مربوط بالتحقق اللحظي ثم البطاقة القطرية QID لضمان الأمان.'
+              : 'Every account pairs instant OTP verification with Qatar ID protection.',
           child: LayoutBuilder(
             builder: (context, constraints) {
               return _buildSingleLayout(context, auth, isAr, targetDestination, isEmailMode, constraints);

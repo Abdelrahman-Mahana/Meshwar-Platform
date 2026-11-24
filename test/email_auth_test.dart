@@ -30,8 +30,8 @@ void main() {
       await tester.pumpWidget(buildAppWidget(child: const WelcomeScreen()));
       await tester.pumpAndSettle();
 
-      // Brand Logo & Tagline
-      expect(find.text('رحلتك وطردك في نفس الطريق'), findsOneWidget);
+      // Brand Logo & Universal Qatari Community Services Tagline
+      expect(find.text('كل خدمة ومشوار في طريقك داخل قطر'), findsOneWidget);
 
       // Primary Choice 1: Phone
       expect(find.text('المتابعة برقم الجوال'), findsOneWidget);

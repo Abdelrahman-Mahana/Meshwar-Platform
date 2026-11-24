@@ -47,8 +47,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
   final TextEditingController _errandDescController = TextEditingController();
   final TextEditingController _goodsDescController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _itemBudgetController = TextEditingController(text: '150');
   bool _ladiesOnly = false;
   bool _acceptsParcels = true;
+  bool _hasEscrowProtection = true;
+  bool _requiresReceiptProof = false;
+  int? _activePresetIndex;
+  String? _subTagAr;
+  String? _subTagEn;
 
   @override
   void initState() {
@@ -66,6 +72,111 @@ class _PostAdScreenState extends State<PostAdScreen> {
       _selectedCategory = BoardAdType.rideRequest;
       _intentIndex = 0;
     }
+    if (_selectedCategory == BoardAdType.parcelRequest || _selectedCategory == BoardAdType.goodsDelivery) {
+      _requiresReceiptProof = true;
+    }
+  }
+
+  void _applyQuickPreset(int index, bool isAr) {
+    setState(() {
+      _activePresetIndex = index;
+      _formError = null;
+      if (index == 0) {
+        // Engineer Site Supply
+        _intentIndex = 0;
+        _selectedCategory = BoardAdType.goodsDelivery;
+        _fromController.text = 'المنطقة الصناعية';
+        _toController.text = 'لوسيل';
+        _timeController.text = isAr ? 'الآن / فوري' : 'Now / Instant';
+        _priceController.text = '45';
+        _itemBudgetController.text = '180';
+        _goodsDescController.text = isAr
+            ? 'قواطع كهربائية ووصلات عاجلة لموقع مشروع هندسي من شارع 10'
+            : 'Urgent electrical breakers & tools from Street 10 Industrial';
+        _notesController.text = isAr
+            ? 'مطلوب تصوير الفاتورة الأصلية من المحل واعتمادها قبل التحرك للموقع'
+            : 'Requires original store receipt approval photo before dispatch';
+        _requiresReceiptProof = true;
+        _hasEscrowProtection = true;
+        _ladiesOnly = false;
+        _subTagAr = 'توريد موقع هندسي';
+        _subTagEn = 'Site Supply';
+      } else if (index == 1) {
+        // Nursery & Daily Commute
+        _intentIndex = 0;
+        _selectedCategory = BoardAdType.localTrip;
+        _fromController.text = 'أم صلال';
+        _toController.text = 'الدوحة';
+        _timeController.text = isAr ? 'صباحاً 7:15 ص' : 'Morning 7:15 AM';
+        _priceController.text = '40';
+        _seatsController.text = '2';
+        _notesController.text = isAr
+            ? 'توصيل أطفال صباحي للحضانة بالدفنة بسيارة عائلية موثقة بالـ QID'
+            : 'Morning nursery drop-off in Al Dafna with QID-verified family car';
+        _requiresReceiptProof = false;
+        _hasEscrowProtection = true;
+        _ladiesOnly = true;
+        _subTagAr = 'توصيل حضانة ويومي';
+        _subTagEn = 'Nursery & Daily';
+      } else if (index == 2) {
+        // Cross-City Document Fetch
+        _intentIndex = 0;
+        _selectedCategory = BoardAdType.errandService;
+        _fromController.text = 'الدوحة';
+        _toController.text = 'الخور';
+        _timeController.text = isAr ? 'اليوم قبل الظهر' : 'Today Noon';
+        _priceController.text = '50';
+        _errandDescController.text = isAr
+            ? 'جلب شهادة / مستند رسمي مختوم مع مسافر متجه للخور'
+            : 'Collect stamped official document with traveler heading to Al Khor';
+        _notesController.text = isAr
+            ? 'بدل السفر من الخور مخصوص — التسليم بكود 4 أرقام OTP'
+            : 'Delivered hand-to-hand with 4-digit OTP protection';
+        _requiresReceiptProof = false;
+        _hasEscrowProtection = true;
+        _ladiesOnly = false;
+        _subTagAr = 'جلب مستند مع مسافر';
+        _subTagEn = 'Doc Fetch';
+      } else if (index == 3) {
+        // Buy & Deliver from Store
+        _intentIndex = 0;
+        _selectedCategory = BoardAdType.parcelRequest;
+        _fromController.text = 'الدوحة';
+        _toController.text = 'الريان';
+        _timeController.text = isAr ? 'خلال ساعتين' : 'Within 2 hours';
+        _priceController.text = '30';
+        _itemBudgetController.text = '95';
+        _parcelDescController.text = isAr
+            ? 'شراء مستلزمات صيدلية أو محل من فيلاجيو وتوصيلها للريان'
+            : 'Buy store/pharmacy items from Villaggio and deliver to Al Rayyan';
+        _notesController.text = isAr
+            ? 'المشتريات والفاتورة محفوظة في ضمان مشوار Escrow حتى التسليم'
+            : 'Purchases & fee held in MASHWAR Escrow until OTP confirmation';
+        _requiresReceiptProof = true;
+        _hasEscrowProtection = true;
+        _ladiesOnly = false;
+        _subTagAr = 'شراء وتوصيل بفاتورة';
+        _subTagEn = 'Shop with Receipt';
+      } else if (index == 4) {
+        // Shared Intercity 3 Empty Seats
+        _intentIndex = 1;
+        _selectedCategory = BoardAdType.rideOffer;
+        _fromController.text = 'الخور';
+        _toController.text = 'الدوحة';
+        _timeController.text = isAr ? 'غداً صباحاً' : 'Tomorrow morning';
+        _priceController.text = '35';
+        _seatsController.text = '3';
+        _acceptsParcels = true;
+        _requiresReceiptProof = false;
+        _hasEscrowProtection = true;
+        _ladiesOnly = false;
+        _notesController.text = isAr
+            ? 'معي 3 مقاعد شاغرة بسيارتي الخاصة على طريق الشمال وأقبل أمانات بالطريق'
+            : '3 empty seats available on North Road & can bring docs along route';
+        _subTagAr = '3 مقاعد شاغرة';
+        _subTagEn = '3 Empty Seats';
+      }
+    });
   }
 
   @override
@@ -80,6 +191,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
     _errandDescController.dispose();
     _goodsDescController.dispose();
     _notesController.dispose();
+    _itemBudgetController.dispose();
     super.dispose();
   }
 
@@ -142,6 +254,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
     final board = context.read<BoardProvider>();
     final type = _selectedCategory;
     final seats = int.tryParse(_seatsController.text.trim()) ?? 1;
+    final itemCost = _requiresReceiptProof ? int.tryParse(_itemBudgetController.text.trim()) : null;
 
     String computedTimeText = timeText;
     String computedDesc;
@@ -151,35 +264,35 @@ class _PostAdScreenState extends State<PostAdScreen> {
           ? '$timeText · ${_weightController.text.trim()} كجم'
           : '$timeText · ${_weightController.text.trim()} kg';
       computedDesc = isAr
-          ? 'طرد: ${_parcelDescController.text.trim()} · المكافأة: $price ر.ق'
-          : 'Parcel: ${_parcelDescController.text.trim()} · Reward: $price QAR';
+          ? 'طلب/طرد: ${_parcelDescController.text.trim()} · المكافأة: $price ر.ق'
+          : 'Shop/Parcel: ${_parcelDescController.text.trim()} · Reward: $price QAR';
     } else if (type == BoardAdType.rideOffer) {
       computedTimeText = isAr
           ? '$timeText · $seats مقاعد شاغرة'
           : '$timeText · $seats empty seats';
       computedDesc = _acceptsParcels
-          ? (isAr ? 'متاح سفر وتوصيل أمانات أو أوراق على الطريق' : 'Accepts seats & parcels along route')
+          ? (isAr ? 'متاح مقاعد شاغرة وتوصيل أمانات أو أوراق على الطريق' : 'Accepts seats & parcels along route')
           : (isAr ? 'رحلة سفر تشاركي مباشرة · السعر للمقعد $price ر.ق' : 'Direct ride · $price QAR per seat');
     } else if (type == BoardAdType.localTrip) {
-      computedTimeText = isAr ? '$timeText · مشوار محلي فوري' : '$timeText · Local mobility';
+      computedTimeText = isAr ? '$timeText · مشوار يومي وحضانات' : '$timeText · Daily / Nursery ride';
       computedDesc = _notesController.text.trim().isNotEmpty
           ? _notesController.text.trim()
           : (isAr
-              ? 'طلب توصيل ومشوار محلي مباشر · الأجرة المقترحة: $price ر.ق'
-              : 'Local mobility and direct transit · Proposed fare: $price QAR');
+              ? 'طلب توصيل ومشوار محلي موثق بالـ QID · الأجرة المقترحة: $price ر.ق'
+              : 'QID-verified local/school commute · Proposed fare: $price QAR');
     } else if (type == BoardAdType.errandService) {
-      computedTimeText = isAr ? '$timeText · إنجاز معاملة رسمية' : '$timeText · Official errand';
+      computedTimeText = isAr ? '$timeText · إنجاز معاملة أو جلب أوراق' : '$timeText · Doc & Errand';
       final errandText = _errandDescController.text.trim().isNotEmpty
           ? _errandDescController.text.trim()
-          : (isAr ? 'استخراج أوراق ومستندات رسمية' : 'Official documents retrieval');
+          : (isAr ? 'جلب أوراق ومستندات رسمية بالطريق' : 'Official documents & items along route');
       computedDesc = isAr
           ? '$errandText · أتعاب الخدمة: $price ر.ق'
           : '$errandText · Service fee: $price QAR';
     } else if (type == BoardAdType.goodsDelivery) {
-      computedTimeText = isAr ? '$timeText · لوجستيات وتوريد بضائع' : '$timeText · Logistics delivery';
+      computedTimeText = isAr ? '$timeText · توريد مواقع وبضائع' : '$timeText · Worksite & Cargo';
       final goodsText = _goodsDescController.text.trim().isNotEmpty
           ? _goodsDescController.text.trim()
-          : (isAr ? 'توريد مستلزمات وبضائع تجارية' : 'Store stock & goods supplies');
+          : (isAr ? 'توريد مستلزمات ومعدات لموقع العمل أو المحل' : 'Worksite supplies & store goods');
       computedDesc = isAr
           ? '$goodsText · الأجرة: $price ر.ق'
           : '$goodsText · Fare: $price QAR';
@@ -201,6 +314,12 @@ class _PostAdScreenState extends State<PostAdScreen> {
       priceOrBudget: price,
       notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
       isLadiesOnly: _ladiesOnly,
+      serviceSubTagAr: _subTagAr,
+      serviceSubTagEn: _subTagEn,
+      hasEscrowProtection: _hasEscrowProtection,
+      requiresReceiptProof: _requiresReceiptProof,
+      estimatedItemCost: itemCost,
+      isProviderOffer: _intentIndex == 1 || type == BoardAdType.rideOffer,
     );
 
     setState(() {
@@ -216,6 +335,22 @@ class _PostAdScreenState extends State<PostAdScreen> {
     if (_isSubmitted) {
       return _buildSuccessScreen(isAr);
     }
+
+    final quickPresets = isAr
+        ? [
+            'توريد لموقع هندسي',
+            'توصيل أطفال للحضانة',
+            'جلب مستند مع مسافر',
+            'شراء من محل بفاتورة',
+            '3 مقاعد شاغرة',
+          ]
+        : [
+            'Engineer Site Supply',
+            'Nursery Daily Ride',
+            'On-Route Doc Fetch',
+            'Shop with Receipt',
+            '3 Empty Car Seats',
+          ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -241,6 +376,49 @@ class _PostAdScreenState extends State<PostAdScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Quick 1-Tap Real-Life Qatari Service Templates
+                  Text(
+                    isAr ? 'قوالب سريعة جاهزة (تعبئة بنقرة واحدة)' : 'Quick 1-Tap Service Templates',
+                    style: AppTypography.label(color: AppColors.qatarMaroon).copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 6),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(quickPresets.length, (i) {
+                        final isSel = _activePresetIndex == i;
+                        return Padding(
+                          padding: const EdgeInsetsDirectional.only(end: 8),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(18),
+                            onTap: () => _applyQuickPreset(i, isAr),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 160),
+                              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: isSel ? AppColors.qatarMaroon : Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: isSel ? AppColors.qatarMaroon : const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: Text(
+                                quickPresets[i],
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSel ? Colors.white : AppColors.navy,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
                   // Section Title: Category Selection
                   Text(
                     isAr ? '١. ما الذي ترغب في نشره؟' : '1. What would you like to post?',
@@ -276,7 +454,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                           child: _buildIntentTab(
                             index: 1,
                             label: isAr ? 'أنا مسافر / أقدم خدمة' : 'I Offer a Service',
-                            icon: Icons.directions_car_rounded,
+                            icon: Icons.handshake_rounded,
                             onTap: () {
                               setState(() {
                                 _intentIndex = 1;
@@ -382,6 +560,92 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   // Price Card with Quick Stepper & Presets
                   _buildPriceSection(isAr),
 
+                  const SizedBox(height: 16),
+
+                  // Bilateral Anti-Fraud & Escrow Toggle Card
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.verified_user_rounded, color: AppColors.escrowGreen, size: 19),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                isAr ? 'حماية الضمان المزدوج وإثبات الفاتورة (Escrow)' : 'Bilateral Escrow & Receipt Protection',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13.5,
+                                  color: AppColors.navy,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => setState(() => _hasEscrowProtection = !_hasEscrowProtection),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: _hasEscrowProtection,
+                                activeColor: AppColors.escrowGreen,
+                                onChanged: (v) => setState(() => _hasEscrowProtection = v ?? true),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  isAr
+                                      ? 'حجز المبلغ في ضمان مشوار حتى إدخال كود OTP'
+                                      : 'Hold payment in MASHWAR Escrow until OTP handover',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'Cairo'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => setState(() => _requiresReceiptProof = !_requiresReceiptProof),
+                          child: Row(
+                            children: [
+                              Checkbox(
+                                value: _requiresReceiptProof,
+                                activeColor: AppColors.qatarMaroon,
+                                onChanged: (v) => setState(() => _requiresReceiptProof = v ?? false),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  isAr
+                                      ? 'يشترط تصوير الفاتورة الأصلية + الغرض (للمشتريات وتوريد المواقع)'
+                                      : 'Require live store receipt & item photo before dispatch',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'Cairo'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (_requiresReceiptProof) ...[
+                          const SizedBox(height: 6),
+                          MashwarTextField(
+                            controller: _itemBudgetController,
+                            label: isAr ? 'السقف التقديري لفاتورة الشراء (ر.ق)' : 'Estimated Store Receipt Cap (QAR)',
+                            hint: '150',
+                            keyboardType: TextInputType.number,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
                   const SizedBox(height: 20),
 
                   // Section Title: Additional Notes
@@ -402,29 +666,29 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
+                      color: AppColors.escrowSurface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                      border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.shield_outlined, color: Color(0xFF16A34A), size: 20),
+                        const Icon(Icons.shield_outlined, color: AppColors.escrowGreen, size: 20),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                isAr ? 'حماية وأمان المعاملات في مشوار' : 'Meshwar Transaction Security',
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF166534)),
+                                isAr ? 'حماية وأمان المعاملات في مشوار' : 'MASHWAR Bilateral Escrow Security',
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.escrowGreen),
                               ),
                               const SizedBox(height: 3),
                               Text(
                                 isAr
-                                    ? '• لن يتم مشاركة رقم هاتفك للعامة، والتواصل يتم عبر محادثة مشفرة داخل التطبيق.\n• تسليم الأمانات والبضائع مؤمن بكود OTP (4 أرقام) لضمان حقوق الطرفين.'
-                                    : '• Your phone number is private. Chat securely inside the app.\n• Parcel and cargo handovers require a 4-digit OTP code.',
-                                style: const TextStyle(fontSize: 11.5, color: Color(0xFF15803D), height: 1.4),
+                                    ? '• حق الطالب وحق المنفّذ محفوظ بالضمان المالي وتوثيق البطاقة القطرية QID.\n• تسليم الطلبات والمشتريات والمستندات مؤمّن بصورة الفاتورة وكود 4 أرقام OTP.'
+                                    : '• Phone numbers stay private inside encrypted chat.\n• Payments, purchases & handovers are protected by Escrow & 4-digit OTP.',
+                                style: const TextStyle(fontSize: 11.5, color: AppColors.navy, height: 1.4),
                               ),
                             ],
                           ),
@@ -458,7 +722,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720),
             child: MashwarButton(
-              text: isAr ? 'نشر الإعلان على اللوحة مجاناً' : 'Publish Ad for Free',
+              text: isAr ? 'نشر الإعلان على اللوحة بالضمان' : 'Publish Protected Ad Free',
               icon: const Icon(Icons.campaign_rounded),
               onPressed: () => _submit(isAr),
             ),
@@ -523,89 +787,89 @@ class _PostAdScreenState extends State<PostAdScreen> {
 
   // 2-Columns Responsive Category Cards Grid
   Widget _buildCategoryGrid(bool isAr) {
-    // Categories to display based on intent
     final List<Map<String, dynamic>> items;
 
     if (_intentIndex == 0) {
       // Requests (طلبات ومصالح)
       items = [
         {
-          'type': BoardAdType.rideRequest,
-          'title': isAr ? 'طلب سفر ومقعد' : 'Need a Ride',
-          'subtitle': isAr ? 'حجز مقعد مع مسافر متجه لنفس المدينة' : 'Book a seat with a traveler',
-          'icon': Icons.person_search_rounded,
-          'color': const Color(0xFF0284C7),
-        },
-        {
-          'type': BoardAdType.localTrip,
-          'title': isAr ? 'انتقال ومشوار محلي' : 'Local Mobility',
-          'subtitle': isAr ? 'طلب مشوار فوري بالأماكن التي تنعدم بها المواصلات' : 'On-demand local direct vehicle',
-          'icon': Icons.near_me_rounded,
-          'color': const Color(0xFF0D9488),
+          'type': BoardAdType.goodsDelivery,
+          'title': isAr ? 'لوجستيات وتوريد' : 'Site & Store Supply',
+          'subtitle': isAr ? 'توريد لمواقع الهندسة أو مستلزمات محلات بفاتورة' : 'Engineer site parts & shop stock',
+          'icon': Icons.engineering_rounded,
+          'asset': 'assets/images/service_site_supply.jpg',
+          'color': AppColors.qatarMaroon,
         },
         {
           'type': BoardAdType.errandService,
-          'title': isAr ? 'إنجاز معاملات رسمية' : 'Official Errand',
-          'subtitle': isAr ? 'شراء طلبات، إحضار أغراض، أو تخليص أوراق' : 'Buying items, errands or papers',
+          'title': isAr ? 'إنجاز معاملات رسمية' : 'Docs & Errands',
+          'subtitle': isAr ? 'جلب ورقة أو شراء طلبات مع مسافر بالطريق' : 'Buying items, errands or papers',
           'icon': Icons.description_rounded,
           'asset': 'assets/images/service_errand.jpg',
           'color': const Color(0xFFD97706),
         },
         {
-          'type': BoardAdType.goodsDelivery,
-          'title': isAr ? 'لوجستيات وتوريد' : 'Store Logistics',
-          'subtitle': isAr ? 'نقل مستلزمات وبضائع للمحل وموقع العمل' : 'Stock & supplies delivery for shops',
-          'icon': Icons.local_shipping_rounded,
-          'asset': 'assets/images/service_cargo.jpg',
-          'color': const Color(0xFF6366F1),
+          'type': BoardAdType.localTrip,
+          'title': isAr ? 'مشاوير وحضانات يومية' : 'Nursery & Daily',
+          'subtitle': isAr ? 'توصيل مدارس أو مناطق قليلة المواصلات' : 'School/nursery & remote commute',
+          'icon': Icons.family_restroom_rounded,
+          'color': AppColors.teal,
         },
         {
           'type': BoardAdType.parcelRequest,
-          'title': isAr ? 'شحن أمانات وطرود' : 'Parcel Delivery',
-          'subtitle': isAr ? 'توصيل أمانة مع مسافر موثق بكود OTP' : 'Send package safely with a traveler',
+          'title': isAr ? 'شراء من محل وشحن أمانات' : 'Shop & Parcel',
+          'subtitle': isAr ? 'شراء وتوصيل طلبات أو طرود بكود OTP' : 'Store purchase & OTP delivery',
           'icon': Icons.inventory_2_rounded,
           'asset': 'assets/images/service_parcel.jpg',
           'color': const Color(0xFF10B981),
         },
+        {
+          'type': BoardAdType.rideRequest,
+          'title': isAr ? 'طلب سفر ومقعد' : 'Need a Ride',
+          'subtitle': isAr ? 'حجز مقعد مع مسافر متجه لنفس المدينة' : 'Book a seat with a traveler',
+          'icon': Icons.person_search_rounded,
+          'asset': 'assets/images/service_ride.jpg',
+          'color': const Color(0xFF0284C7),
+        },
       ];
     } else {
-      // Offers (عروض ومسافرين)
+      // Offers (عروض ومنفّذين)
       items = [
         {
           'type': BoardAdType.rideOffer,
           'title': isAr ? 'عرض سفر تشاركي' : 'Offer Seats',
-          'subtitle': isAr ? 'مسافر ولديّ مقاعد شاغرة في سيارتي' : 'Empty seats in my private car',
+          'subtitle': isAr ? 'مسافر ومعي مقاعد شاغرة في سيارتي' : 'Empty seats in my private car',
           'icon': Icons.directions_car_rounded,
           'asset': 'assets/images/service_ride.jpg',
           'color': AppColors.navy,
         },
         {
           'type': BoardAdType.errandService,
-          'title': isAr ? 'إنجاز معاملات في الطريق' : 'Errand & Shopping',
-          'subtitle': isAr ? 'مسافر ومستعد لشراء طلبات أو تخليص أوراق في طريقي' : 'Traveler ready to buy or deliver papers',
+          'title': isAr ? 'جلب طلبات وأوراق بالطريق' : 'Errand & Shopping',
+          'subtitle': isAr ? 'متحرك بطريقي ومستعد لشراء طلبات أو جلب أوراق' : 'Traveler ready to buy or fetch docs',
           'icon': Icons.description_rounded,
           'asset': 'assets/images/service_errand.jpg',
           'color': const Color(0xFFD97706),
         },
         {
           'type': BoardAdType.goodsDelivery,
-          'title': isAr ? 'عرض نقل وتوريد بضائع' : 'Freight Service',
-          'subtitle': isAr ? 'مركبة مجهزة لنقل وتوريد مستلزمات المحلات' : 'Vehicle ready for store logistics',
-          'icon': Icons.local_shipping_rounded,
-          'asset': 'assets/images/service_cargo.jpg',
-          'color': const Color(0xFF6366F1),
+          'title': isAr ? 'عرض توريد مواقع وبضائع' : 'Worksite Freight',
+          'subtitle': isAr ? 'مركبة مجهزة لتوريد المواقع والمحلات بالفاتورة' : 'Vehicle ready for site/store logistics',
+          'icon': Icons.engineering_rounded,
+          'asset': 'assets/images/service_site_supply.jpg',
+          'color': AppColors.qatarMaroon,
         },
         {
           'type': BoardAdType.localTrip,
-          'title': isAr ? 'عرض مشاوير محلية' : 'Offer Local Rides',
-          'subtitle': isAr ? 'سائق متاح لتوصيل المشاوير في المناطق والمدن' : 'Driver available for local on-demand trips',
-          'icon': Icons.near_me_rounded,
-          'color': const Color(0xFF0D9488),
+          'title': isAr ? 'عرض مشاوير وحضانات' : 'Offer Daily Rides',
+          'subtitle': isAr ? 'سائق موثق لتوصيل المدارس والأسر والمناطق البعيدة' : 'QID-verified daily & school rides',
+          'icon': Icons.family_restroom_rounded,
+          'color': AppColors.teal,
         },
         {
           'type': BoardAdType.parcelRequest,
           'title': isAr ? 'استقبال أمانات في الطريق' : 'Accept Parcels',
-          'subtitle': isAr ? 'مسافر ومستعد لاستلام أمانات خفيفة في طريقي' : 'Traveler ready to take light parcels',
+          'subtitle': isAr ? 'مسافر ومستعد لتوصيل طرود وأمانات بكود OTP' : 'Traveler ready to take parcels',
           'icon': Icons.inventory_2_rounded,
           'asset': 'assets/images/service_parcel.jpg',
           'color': const Color(0xFF10B981),
@@ -635,6 +899,9 @@ class _PostAdScreenState extends State<PostAdScreen> {
                 onTap: () {
                   setState(() {
                     _selectedCategory = type;
+                    if (type == BoardAdType.goodsDelivery || type == BoardAdType.parcelRequest) {
+                      _requiresReceiptProof = true;
+                    }
                   });
                 },
               ),
@@ -788,7 +1055,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Visual Route Connector (Green Dot -> Vertical Line -> Red Pin)
+              // Visual Route Connector
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -843,13 +1110,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Departure Row
+                    // Departure Row (Authentic Qatari dialect: من وين؟)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Flexible(
                           child: Text(
-                            isAr ? 'نقطة الانطلاق (منين؟)' : 'Pickup / Departure',
+                            isAr ? 'نقطة الانطلاق (من وين؟)' : 'Pickup / Departure',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(

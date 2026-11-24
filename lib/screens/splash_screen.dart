@@ -59,14 +59,14 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-          // Radial vignette so the centerpiece brand emblem pops crisply
+          // Radial vignette with Qatari Al-Adaam Maroon & Navy depth
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
-                radius: 0.92,
+                radius: 0.95,
                 colors: [
-                  AppColors.navy.withValues(alpha: 0.55),
+                  AppColors.qatarMaroon.withValues(alpha: 0.24),
                   AppColors.navy.withValues(alpha: 0.94),
                 ],
               ),
@@ -75,7 +75,7 @@ class _SplashScreenState extends State<SplashScreen> {
           SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
+                constraints: const BoxConstraints(maxWidth: 440),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
                   child: MashwarFadeSlideIn(
@@ -85,42 +85,53 @@ class _SplashScreenState extends State<SplashScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Spacer(),
-                        // Concentric brand halo + Logo
+                        // Concentric brand halo + Qatari heritage bar + Logo
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 22),
+                          clipBehavior: Clip.antiAlias,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.06),
+                            color: Colors.white.withValues(alpha: 0.07),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: AppColors.gold.withValues(alpha: 0.35),
+                              color: AppColors.gold.withValues(alpha: 0.42),
                               width: 1.2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.teal.withValues(alpha: 0.22),
+                                color: AppColors.qatarMaroon.withValues(alpha: 0.26),
                                 blurRadius: 36,
                                 spreadRadius: 2,
                               ),
                             ],
                           ),
-                          child: const BrandLogo(fontSize: 44, isLight: true),
+                          child: const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              QatarSaduAccentBar(height: 5, borderRadius: 0),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                                child: BrandLogo(fontSize: 44, isLight: true),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 18),
                         Text(
-                          isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride & parcel along the same path',
+                          isAr
+                              ? 'كل خدمة ومشوار في طريقك داخل قطر'
+                              : 'Every service, errand & ride in Qatar',
                           textAlign: TextAlign.center,
                           style: AppTypography.title(color: Colors.white).copyWith(
-                            fontSize: 16.5,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
                         const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.teal.withValues(alpha: 0.22),
+                            color: AppColors.qatarMaroon.withValues(alpha: 0.36),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.teal.withValues(alpha: 0.45)),
+                            border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -129,11 +140,13 @@ class _SplashScreenState extends State<SplashScreen> {
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
-                                  isAr ? 'دولة قطر · تنقل وتوصيل ذكي' : 'Qatar · Smart Mobility & Delivery',
+                                  isAr
+                                      ? 'شراء بفاتورة · توريد مواقع · أوراق وحضانات · مقاعد بالضمان'
+                                      : 'Shopping · Site Supply · Docs & Nursery · Shared Seats',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTypography.label(color: Colors.white).copyWith(
-                                    fontSize: 11,
+                                    fontSize: 10.5,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -155,7 +168,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         ),
                         const SizedBox(height: AppDimens.space12),
                         Text(
-                          isAr ? 'جاري تجهيز المسارات الحية...' : 'Connecting live Qatar routes...',
+                          isAr ? 'جاري تجهيز شبكة الخدمات الحية في قطر...' : 'Connecting live Qatar services...',
                           style: AppTypography.bodySmall(color: AppColors.gold).copyWith(
                             fontWeight: FontWeight.w700,
                           ),

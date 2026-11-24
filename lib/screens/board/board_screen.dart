@@ -13,6 +13,7 @@ import '../chat/chat_screen.dart';
 import 'board_extra_screens.dart';
 import 'make_offer_sheet.dart';
 import 'post_ad_screen.dart';
+import '../escrow/service_escrow_screen.dart';
 
 class BoardScreen extends StatefulWidget {
   const BoardScreen({super.key});
@@ -109,43 +110,43 @@ class _BoardScreenState extends State<BoardScreen> {
   List<_CategoryFilterOption> _categoryOptions(bool isAr) => [
         _CategoryFilterOption(
           type: BoardAdType.all,
-          label: isAr ? 'الكل' : 'All',
+          label: isAr ? 'كل الخدمات' : 'All Services',
           icon: Icons.apps_rounded,
           accentColor: AppColors.navy,
         ),
         _CategoryFilterOption(
-          type: BoardAdType.rideOffer,
-          label: isAr ? 'سفر بين المناطق' : 'Inter-city Rides',
-          assetPath: 'assets/images/service_ride.jpg',
-          icon: Icons.directions_car_rounded,
-          accentColor: AppColors.navy,
-        ),
-        _CategoryFilterOption(
-          type: BoardAdType.errandService,
-          label: isAr ? 'إنجاز معاملات' : 'Errands',
-          assetPath: 'assets/images/service_errand.jpg',
-          icon: Icons.shopping_bag_rounded,
-          accentColor: const Color(0xFF6A1B9A),
+          type: BoardAdType.goodsDelivery,
+          label: isAr ? 'توريد مواقع وبضائع' : 'Site Supply & Cargo',
+          assetPath: 'assets/images/service_site_supply.jpg',
+          icon: Icons.engineering_rounded,
+          accentColor: AppColors.qatarMaroon,
         ),
         _CategoryFilterOption(
           type: BoardAdType.parcelRequest,
-          label: isAr ? 'شحن أمانات' : 'Parcels',
+          label: isAr ? 'شراء بفاتورة وطرود' : 'Shop & Parcels',
           assetPath: 'assets/images/service_parcel.jpg',
-          icon: Icons.inventory_2_rounded,
+          icon: Icons.shopping_bag_rounded,
           accentColor: AppColors.teal,
         ),
         _CategoryFilterOption(
-          type: BoardAdType.goodsDelivery,
-          label: isAr ? 'بضائع وتوريد' : 'Cargo',
-          assetPath: 'assets/images/service_cargo.jpg',
-          icon: Icons.local_shipping_rounded,
-          accentColor: const Color(0xFF00695C),
+          type: BoardAdType.errandService,
+          label: isAr ? 'جلب أوراق ومصالح' : 'Docs & Errands',
+          assetPath: 'assets/images/service_errand.jpg',
+          icon: Icons.description_rounded,
+          accentColor: const Color(0xFF6A1B9A),
         ),
         _CategoryFilterOption(
           type: BoardAdType.localTrip,
-          label: isAr ? 'مشاوير محلية' : 'Local Mobility',
-          icon: Icons.near_me_rounded,
-          accentColor: const Color(0xFFE65100),
+          label: isAr ? 'حضانات ومشاوير يومية' : 'Nursery & Daily',
+          icon: Icons.family_restroom_rounded,
+          accentColor: const Color(0xFFD97706),
+        ),
+        _CategoryFilterOption(
+          type: BoardAdType.rideOffer,
+          label: isAr ? 'سفر ومقاعد شاغرة' : 'Shared Seats',
+          assetPath: 'assets/images/service_ride.jpg',
+          icon: Icons.directions_car_rounded,
+          accentColor: AppColors.navy,
         ),
         _CategoryFilterOption(
           type: BoardAdType.rideRequest,
@@ -163,8 +164,8 @@ class _BoardScreenState extends State<BoardScreen> {
     final ads = _intentFilter == 0
         ? baseAds
         : _intentFilter == 1
-            ? baseAds.where((ad) => ad.type != BoardAdType.rideOffer).toList()
-            : baseAds.where((ad) => ad.type == BoardAdType.rideOffer).toList();
+            ? baseAds.where((ad) => !ad.isOfferCard).toList()
+            : baseAds.where((ad) => ad.isOfferCard).toList();
 
     final activeMyAdsCount = board.myAds
         .where((a) => a.status != BoardAdStatus.completed && a.status != BoardAdStatus.expired)
@@ -454,22 +455,27 @@ class _BoardScreenState extends State<BoardScreen> {
                           Padding(
                             padding: EdgeInsets.fromLTRB(horizontalPad, 2, horizontalPad, 10),
                             child: isWide
-                                ? Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Flexible(child: _buildIntentSegmentedControl(isAr, fillWidth: false)),
-                                      const SizedBox(width: 12),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          _buildRadiusButton(context, board, isAr),
-                                          if (sentOffersCount > 0) ...[
-                                            const SizedBox(width: 12),
-                                            _buildSentOffersLink(context, sentOffersCount, isAr),
+                                ? SizedBox(
+                                    width: double.infinity,
+                                    child: Wrap(
+                                      alignment: WrapAlignment.spaceBetween,
+                                      crossAxisAlignment: WrapCrossAlignment.center,
+                                      spacing: 12,
+                                      runSpacing: 8,
+                                      children: [
+                                        _buildIntentSegmentedControl(isAr, fillWidth: false),
+                                        Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _buildRadiusButton(context, board, isAr),
+                                            if (sentOffersCount > 0) ...[
+                                              const SizedBox(width: 12),
+                                              _buildSentOffersLink(context, sentOffersCount, isAr),
+                                            ],
                                           ],
-                                        ],
-                                      ),
-                                    ],
+                                        ),
+                                      ],
+                                    ),
                                   )
                                 : Column(
                                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -668,8 +674,8 @@ class _BoardScreenState extends State<BoardScreen> {
   Widget _buildIntentSegmentedControl(bool isAr, {bool fillWidth = true}) {
     final segments = [
       (0, isAr ? 'الكل' : 'Everything'),
-      (1, isAr ? 'طلبات المواطنين' : 'Requests'),
-      (2, isAr ? 'عروض المسافرين' : 'Travelers Offers'),
+      (1, isAr ? 'طلبات الخدمات والمشاوير' : 'Requests'),
+      (2, isAr ? 'عروض المنفّذين والمسافرين' : 'Providers Offers'),
     ];
 
     return Container(
@@ -718,7 +724,7 @@ class _BoardScreenState extends State<BoardScreen> {
               ),
             ),
           );
-          return fillWidth ? Expanded(child: tile) : tile;
+          return fillWidth ? Expanded(child: tile) : Flexible(fit: FlexFit.loose, child: tile);
         }).toList(),
       ),
     );
@@ -783,37 +789,37 @@ class _BoardScreenState extends State<BoardScreen> {
     switch (ad.type) {
       case BoardAdType.parcelRequest:
         typeColor = AppColors.teal;
-        typeLabel = isAr ? 'شحن طرد' : 'Parcel Request';
-        typeIcon = Icons.inventory_2_outlined;
+        typeLabel = ad.displaySubTag(isAr);
+        typeIcon = Icons.shopping_bag_outlined;
         break;
       case BoardAdType.rideRequest:
         typeColor = AppColors.warning;
-        typeLabel = isAr ? 'طلب سفر تشاركي' : 'Ride Request';
+        typeLabel = ad.displaySubTag(isAr);
         typeIcon = Icons.person_search_outlined;
         break;
       case BoardAdType.rideOffer:
         typeColor = AppColors.navy;
-        typeLabel = isAr ? 'عرض سفر (مقاعد)' : 'Ride Offer';
+        typeLabel = ad.displaySubTag(isAr);
         typeIcon = Icons.directions_car_outlined;
         break;
       case BoardAdType.localTrip:
-        typeColor = const Color(0xFFE65100);
-        typeLabel = isAr ? 'مشوار محلي وتوصيلة' : 'Local Ride';
-        typeIcon = Icons.two_wheeler_outlined;
+        typeColor = const Color(0xFFD97706);
+        typeLabel = ad.displaySubTag(isAr);
+        typeIcon = Icons.family_restroom_rounded;
         break;
       case BoardAdType.errandService:
         typeColor = const Color(0xFF6A1B9A);
-        typeLabel = isAr ? 'إنجاز معاملة وأوراق' : 'Inter-city Errand';
+        typeLabel = ad.displaySubTag(isAr);
         typeIcon = Icons.description_outlined;
         break;
       case BoardAdType.goodsDelivery:
-        typeColor = const Color(0xFF00695C);
-        typeLabel = isAr ? 'نقل بضاعة لمحل' : 'Goods Delivery';
-        typeIcon = Icons.local_shipping_outlined;
+        typeColor = AppColors.qatarMaroon;
+        typeLabel = ad.displaySubTag(isAr);
+        typeIcon = Icons.engineering_rounded;
         break;
       case BoardAdType.all:
         typeColor = AppColors.navy;
-        typeLabel = isAr ? 'مشوار أو خدمة' : 'Service';
+        typeLabel = ad.displaySubTag(isAr);
         typeIcon = Icons.campaign_outlined;
         break;
     }
@@ -841,18 +847,10 @@ class _BoardScreenState extends State<BoardScreen> {
       buttonText = isAr ? 'عرض العروض' : 'View Offers';
     } else if (isOfferSent) {
       buttonText = isAr ? 'عرضك (${ad.myOfferPrice ?? ad.priceOrBudget} ر.ق)' : 'Your Offer (${ad.myOfferPrice ?? ad.priceOrBudget} QAR)';
-    } else if (ad.type == BoardAdType.rideOffer) {
-      buttonText = isAr ? 'احجز مقعداً / تفاوض' : 'Book Seat / Offer';
-    } else if (ad.type == BoardAdType.localTrip) {
-      buttonText = isAr ? 'أقدر أوصلك' : 'I can take it';
-    } else if (ad.type == BoardAdType.errandService) {
-      buttonText = isAr ? 'أنجز المعاملة' : 'I can do errand';
-    } else if (ad.type == BoardAdType.goodsDelivery) {
-      buttonText = isAr ? 'أنقل البضاعة' : 'I can transport';
-    } else if (ad.type == BoardAdType.parcelRequest) {
-      buttonText = isAr ? 'أقدر أوصّلها' : 'I can deliver it';
+    } else if (ad.isOfferCard) {
+      buttonText = isAr ? 'احجز بالضمان' : 'Book Safe';
     } else {
-      buttonText = isAr ? 'قدّم عرض' : 'Make Offer';
+      buttonText = isAr ? 'نفّذ بالضمان' : 'Fulfill Safe';
     }
 
     return MashwarFadeSlideIn(
@@ -883,7 +881,7 @@ class _BoardScreenState extends State<BoardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header: Author, rating, relative time, and type badge
+                // Header: Author, rating, relative time, Escrow & type badge
                 Wrap(
                   alignment: WrapAlignment.spaceBetween,
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -945,16 +943,17 @@ class _BoardScreenState extends State<BoardScreen> {
                         ),
                       ],
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        if (isMyOwnAd) ...[
+                        if (isMyOwnAd)
                           MashwarBadge(
                             type: BadgeType.verified,
                             customLabel: isAr ? 'إعلانك' : 'Your Ad',
                           ),
-                          const SizedBox(width: 6),
-                        ],
+                        if (ad.hasEscrowProtection) MashwarEscrowBadge(isAr: isAr, compact: true),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
@@ -972,7 +971,7 @@ class _BoardScreenState extends State<BoardScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Uber/Careem Visual Route Box + Timing
+                // Visual Route Box + Timing
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -1016,9 +1015,34 @@ class _BoardScreenState extends State<BoardScreen> {
                 // Description / details
                 Text(ad.description, style: AppTypography.bodySecondary()),
 
+                if (ad.requiresReceiptProof) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBEB),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
+                    ),
+                    child: Text(
+                      ad.estimatedItemCost != null
+                          ? (isAr
+                              ? 'يشترط تصوير الفاتورة الأصلية (سقف المشتريات: ${ad.estimatedItemCost} ر.ق بالضمان)'
+                              : 'Original receipt photo required (Escrow item cap: ${ad.estimatedItemCost} QAR)')
+                          : (isAr ? 'يشترط تصوير الفاتورة الأصلية قبل التحرك' : 'Live receipt photo required'),
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF9A5B00),
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ),
+                ],
+
                 const SizedBox(height: 14),
 
-                // Footer: Suggested price + Chat & Action Button
+                // Footer: Suggested price + Escrow/Chat & Action Button
                 LayoutBuilder(
                   builder: (context, footerConstraints) {
                     final priceWidget = Column(
@@ -1026,9 +1050,7 @@ class _BoardScreenState extends State<BoardScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          ad.type == BoardAdType.rideOffer
-                              ? (isAr ? 'سعر المقعد' : 'Seat Price')
-                              : (isAr ? 'السعر المقترح' : 'Suggested Price'),
+                          ad.priceTagLabel(isAr),
                           style: AppTypography.label(color: AppColors.textSecondary),
                         ),
                         Row(
@@ -1053,6 +1075,24 @@ class _BoardScreenState extends State<BoardScreen> {
                     final actionsRow = Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          tooltip: isAr ? 'نظام الضمان وحماية الطرفين' : 'Bilateral Escrow Shield',
+                          icon: Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: AppColors.escrowSurface,
+                              border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.shield_outlined, size: 17, color: AppColors.escrowGreen),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => ServiceEscrowScreen(ad: ad)),
+                            );
+                          },
+                        ),
                         if (!isMyOwnAd)
                           IconButton(
                             visualDensity: VisualDensity.compact,
@@ -1103,7 +1143,7 @@ class _BoardScreenState extends State<BoardScreen> {
                       ],
                     );
 
-                    if (footerConstraints.maxWidth < 305) {
+                    if (footerConstraints.maxWidth < 365) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [

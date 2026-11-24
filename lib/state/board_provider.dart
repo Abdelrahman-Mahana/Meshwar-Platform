@@ -58,7 +58,9 @@ class BoardProvider extends ChangeNotifier {
           ad.toCity.toLowerCase().contains(q) ||
           ad.authorName.toLowerCase().contains(q) ||
           ad.description.toLowerCase().contains(q) ||
-          ad.timeText.toLowerCase().contains(q));
+          ad.timeText.toLowerCase().contains(q) ||
+          ad.displaySubTag(true).toLowerCase().contains(q) ||
+          (ad.notes?.toLowerCase().contains(q) ?? false));
     }
     return result.toList();
   }
@@ -87,6 +89,12 @@ class BoardProvider extends ChangeNotifier {
     required int priceOrBudget,
     String? notes,
     bool isLadiesOnly = false,
+    String? serviceSubTagAr,
+    String? serviceSubTagEn,
+    bool hasEscrowProtection = true,
+    bool requiresReceiptProof = false,
+    int? estimatedItemCost,
+    bool isProviderOffer = false,
   }) {
     final newAd = BoardAdModel(
       id: 'my_ad_${DateTime.now().millisecondsSinceEpoch}',
@@ -103,6 +111,12 @@ class BoardProvider extends ChangeNotifier {
       notes: notes,
       isLadiesOnly: isLadiesOnly,
       status: BoardAdStatus.active,
+      serviceSubTagAr: serviceSubTagAr,
+      serviceSubTagEn: serviceSubTagEn,
+      hasEscrowProtection: hasEscrowProtection,
+      requiresReceiptProof: requiresReceiptProof,
+      estimatedItemCost: estimatedItemCost,
+      isProviderOffer: isProviderOffer || type == BoardAdType.rideOffer,
     );
     _ads.insert(0, newAd);
     _myAds.insert(0, newAd);

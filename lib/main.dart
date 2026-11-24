@@ -52,7 +52,9 @@ class MashwarApp extends StatelessWidget {
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
           return MaterialApp(
-            title: settings.isArabic ? 'مشوار | MASHWAR' : 'MASHWAR | Carpooling & Shipping',
+            title: settings.isArabic
+                ? 'مشوار | خدمات ومشاوير قطر بالضمان'
+                : 'MASHWAR | Qatar Community Services & Mobility',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             locale: settings.locale,

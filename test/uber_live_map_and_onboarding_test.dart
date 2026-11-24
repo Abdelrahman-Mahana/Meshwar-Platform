@@ -104,13 +104,13 @@ void main() {
     await tester.pumpWidget(wrapApp(const WelcomeScreen()));
     await tester.pumpAndSettle();
     expect(find.byType(QatarLiveMapCanvas), findsOneWidget);
-    expect(find.text('مسارات نشطة في قطر'), findsOneWidget);
+    expect(find.text('خدمات ومشاوير حية · حماية Escrow'), findsOneWidget);
 
     // 2. LocationPermissionScreen displays live Qatar preview card and advances to Notifications
     await tester.pumpWidget(wrapApp(const LocationPermissionScreen()));
     await tester.pumpAndSettle();
     expect(find.byType(QatarLiveMapCanvas), findsOneWidget);
-    expect(find.text('اكتشف رحلات قريبة منك'), findsOneWidget);
+    expect(find.text('اكتشف خدمات ومشاوير قريبة منك'), findsOneWidget);
 
     await tester.tap(find.text('تفعيل الموقع'));
     await tester.pumpAndSettle();
@@ -147,9 +147,9 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.byType(QatarLiveMapCanvas), findsOneWidget);
-      expect(find.text('أطلب خدمة'), findsOneWidget);
-      expect(find.text('أقدّم خدمة'), findsOneWidget);
-      expect(find.text('وين رايح أو وش محتاج؟'), findsOneWidget);
+      expect(find.text('أطلب خدمة أو مشوار'), findsOneWidget);
+      expect(find.text('أقدّم خدمة بطريقي'), findsOneWidget);
+      expect(find.text('وش الخدمة أو المشوار اللي محتاجه اليوم؟'), findsOneWidget);
     }
 
     // Interactive corridor tap updates RidesProvider live route

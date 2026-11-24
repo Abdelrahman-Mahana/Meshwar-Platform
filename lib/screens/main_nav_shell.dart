@@ -32,6 +32,7 @@ import 'safety/safety_screens.dart';
 import 'account/account_extra_screens.dart';
 import 'account/legal_and_backend_screens.dart';
 import 'board/board_extra_screens.dart';
+import 'escrow/service_escrow_screen.dart';
 
 class MainNavShell extends StatefulWidget {
   const MainNavShell({super.key});
@@ -656,8 +657,51 @@ class _MainNavShellState extends State<MainNavShell> {
       );
     }
 
-    // Category 2: Errand & Shopping Service (Filter 0 or 2)
+    // Category 2: Errand, Site Supply & Shopping Service (Filter 0 or 2)
     if (_ordersFilterIndex == 0 || _ordersFilterIndex == 2) {
+      // Lusail Engineer Worksite Supply (Bilateral Escrow Highlight)
+      cards.add(
+        _buildUnifiedOrderCard(
+          context: context,
+          categoryTag: isAr ? 'توريد موقع هندسي (Escrow)' : 'Site Supply (Escrow)',
+          categoryColor: AppColors.qatarMaroon,
+          route: isAr ? 'المنطقة الصناعية ← لوسيل' : 'Industrial Area → Lusail',
+          description: isAr
+              ? 'شراء قواطع كهربائية من شارع 10 · أتعاب 45 ر.ق + فاتورة بالضمان 180 ر.ق'
+              : 'Electrical breakers from St 10 · 45 QAR fee + 180 QAR Escrow receipt cap',
+          badgeText: isAr ? 'مراجعة الفاتورة' : 'Receipt Check',
+          badgeType: BadgeType.underReview,
+          otpCode: '4829',
+          isAr: isAr,
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ServiceEscrowScreen(ad: MockData.initialBoardAds.first),
+              ),
+            );
+          },
+          actionButtons: [
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.qatarMaroon,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.verified_user_rounded, size: 16),
+              label: Text(isAr ? 'إدارة الضمان وكود OTP' : 'Escrow & OTP'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ServiceEscrowScreen(ad: MockData.initialBoardAds.first),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      );
+
       // Shopping & Parts Delivery Order
       cards.add(
         _buildUnifiedOrderCard(
@@ -1060,7 +1104,9 @@ class _MainNavShellState extends State<MainNavShell> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  MashwarBadge(type: badgeType, customLabel: badgeText),
+                  Flexible(
+                    child: MashwarBadge(type: badgeType, customLabel: badgeText),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -1708,6 +1754,19 @@ class _MainNavShellState extends State<MainNavShell> {
             child: Column(
               children: [
                 _buildMenuItem(
+                  icon: Icons.verified_user_rounded,
+                  iconBg: AppColors.escrowSurface,
+                  iconColor: AppColors.escrowGreen,
+                  title: isAr ? 'مركز الضمان المالي وحماية الطرفين (Escrow)' : 'Bilateral Escrow & Dispute Center',
+                  trailingText: isAr ? 'نشط' : 'Active',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ServiceEscrowScreen()),
+                    );
+                  },
+                ),
+                const Divider(height: 1, color: AppColors.borderDisabled),
+                _buildMenuItem(
                   icon: Icons.fmd_good_outlined,
                   iconBg: AppColors.tealSurface,
                   iconColor: AppColors.teal,
@@ -2241,7 +2300,7 @@ class _MainNavShellState extends State<MainNavShell> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        isAr ? 'شركاء مشوار' : 'MASHWAR Partners',
+                        isAr ? 'شركاء مشوار في قطر' : 'MASHWAR Qatar Providers',
                         style: const TextStyle(
                           color: AppColors.gold,
                           fontSize: 10.5,
@@ -2252,7 +2311,7 @@ class _MainNavShellState extends State<MainNavShell> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isAr ? 'حوّل مشاويرك اليومية لدخل إضافي' : 'Turn daily drives into extra income',
+                      isAr ? 'حوّل مشاويرك وخدماتك لدخل إضافي مضمون' : 'Earn from routes, errands & seats',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 15,
@@ -2263,8 +2322,8 @@ class _MainNavShellState extends State<MainNavShell> {
                     const SizedBox(height: 3),
                     Text(
                       isAr
-                          ? 'شارك مقاعد سيارتك الشاغرة مع مسافرين موثّقين'
-                          : 'Share empty seats with verified riders on your route',
+                          ? 'نفّذ طلبات الشراء، توريد المواقع، أو شارك مقاعدك بضمان مشوار Escrow'
+                          : 'Fulfill shopping errands, site supplies or share seats safely with Escrow',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.8),
                         fontSize: 11.5,
@@ -2292,7 +2351,7 @@ class _MainNavShellState extends State<MainNavShell> {
                             );
                           },
                           child: Text(
-                            isAr ? 'توثيق كسائق' : 'Become a Driver',
+                            isAr ? 'توثيق كمقدّم خدمة' : 'Become a Provider',
                             style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, fontFamily: 'Cairo'),
                           ),
                         ),
@@ -2311,7 +2370,7 @@ class _MainNavShellState extends State<MainNavShell> {
                             );
                           },
                           child: Text(
-                            isAr ? 'رحلاتي' : 'My Rides',
+                            isAr ? 'خدماتي ورحلاتي' : 'My Services',
                             style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, fontFamily: 'Cairo'),
                           ),
                         ),
@@ -2322,12 +2381,12 @@ class _MainNavShellState extends State<MainNavShell> {
               ),
               const SizedBox(width: 12),
               MashwarAssetArt(
-                assetPath: 'assets/images/driver_promo.jpg',
+                assetPath: 'assets/images/hero_qatar_services.jpg',
                 width: 82,
                 height: 82,
                 fit: BoxFit.cover,
                 borderRadius: BorderRadius.circular(14),
-                fallbackIcon: Icons.directions_car_filled_rounded,
+                fallbackIcon: Icons.handshake_rounded,
                 fallbackBg: Colors.white.withValues(alpha: 0.12),
                 fallbackColor: AppColors.gold,
               ),

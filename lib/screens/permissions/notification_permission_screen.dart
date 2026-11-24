@@ -27,13 +27,13 @@ class NotificationPermissionScreen extends StatelessWidget {
       body: SafeArea(
         child: MashwarOnboardingShell(
           isAr: isAr,
-          showcaseBadge: isAr ? 'متابعة لحظية' : 'Real-Time Alerts',
+          showcaseBadge: isAr ? 'متابعة الضمان والخدمة' : 'Escrow & Live Alerts',
           showcaseTitle: isAr
-              ? 'ابقَ على اطلاع بكل لحظة في مشوارك'
-              : 'Stay informed at every step of your trip',
+              ? 'تابع عروض التنفيذ، اعتماد الفواتير وأكواد الضمان لحظياً'
+              : 'Track offers, receipt approvals & OTP codes live',
           showcaseSubtitle: isAr
-              ? 'إشعارات فورية لقبول الكابتن، وصوله لنقطة الالتقاء، وأكواد استلام الطرود الآمنة.'
-              : 'Instant alerts when your captain accepts, arrives at pickup, or validates parcel OTP.',
+              ? 'إشعارات فورية لعروض قضاء المشاوير، صور الفواتير الأصلية من المحل، وأكواد OTP لتحرير الضمان.'
+              : 'Instant alerts for service offers, live store receipts & Escrow OTP release codes.',
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
@@ -83,20 +83,20 @@ class NotificationPermissionScreen extends StatelessWidget {
                                 child: Column(
                                   children: [
                                     _buildPreviewNotificationTile(
-                                      icon: Icons.directions_car_filled_rounded,
+                                      icon: Icons.receipt_long_rounded,
                                       iconBg: AppColors.gold,
                                       iconColor: AppColors.navy,
-                                      title: isAr ? 'الكابتن جاسم الكواري في طريقه إليك' : 'Captain Jassim Al-Kuwari is arriving',
-                                      subtitle: isAr ? 'يبعد 3 دقائق عن مترو مشيرب' : '3 mins away from Msheireb Metro',
+                                      title: isAr ? 'تم رفع فاتورة التوريد لموقع لوسيل' : 'Lusail supply receipt uploaded',
+                                      subtitle: isAr ? 'اعتماد الفاتورة يطلق التوصيل بالضمان' : 'Approve photo receipt to dispatch',
                                       time: isAr ? 'الآن' : 'Now',
                                     ),
                                     const SizedBox(height: 10),
                                     _buildPreviewNotificationTile(
                                       icon: Icons.verified_user_rounded,
-                                      iconBg: AppColors.teal,
+                                      iconBg: AppColors.qatarMaroon,
                                       iconColor: Colors.white,
-                                      title: isAr ? 'كود أمان تسليم الطرد جاهز' : 'Parcel OTP handover code ready',
-                                      subtitle: isAr ? 'توثيق يد بيد في الوجهة بنجاح' : 'Verified hand-to-hand delivery',
+                                      title: isAr ? 'كود إتمام الخدمة OTP جاهز (ضمان مشوار)' : 'Service Escrow OTP ready',
+                                      subtitle: isAr ? 'تحرير المستحقات فور التسليم الآمن' : 'Instant Escrow release on handover',
                                       time: isAr ? 'منذ 2 د' : '2m ago',
                                     ),
                                   ],
@@ -111,8 +111,8 @@ class NotificationPermissionScreen extends StatelessWidget {
                               const SizedBox(height: 8),
                               Text(
                                 isAr
-                                    ? 'سنبلغك فوراً عند قبول الكابتن لطلبك أو وصوله إلى نقطة الالتقاء.'
-                                    : 'We will notify you immediately when driver accepts booking or arrives at pickup.',
+                                    ? 'سنبلغك فوراً بعروض تنفيذ خدماتك، اعتماد الفواتير، وأكواد الضمان الآمنة.'
+                                    : 'Get instant alerts for offers, receipt approvals & secure handover OTPs.',
                                 textAlign: TextAlign.center,
                                 style: AppTypography.bodySecondary(),
                               ),

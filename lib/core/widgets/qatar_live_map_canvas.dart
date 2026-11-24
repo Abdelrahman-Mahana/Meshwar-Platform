@@ -441,14 +441,14 @@ class _QatarLiveMapPainter extends CustomPainter {
       _drawAnimatedFlowDashes(canvas, activeCorridor, progress);
     }
 
-    // 5. Smoothly Moving Vehicles on Qatar Expressways (with realistic curve tangent heading)
+    // 5. Smoothly Moving Multi-Service Vehicles on Qatar Expressways (Rides, Couriers & Site Supply)
     final specs = <_VehicleSpec>[
-      _VehicleSpec(path: roadCoastalNorth, speed: 1.0, phase: 0.12, isCourier: false),
-      _VehicleSpec(path: roadCoastalNorth, speed: 1.0, phase: 0.64, isCourier: true, reverse: true),
-      _VehicleSpec(path: roadSouthCoast, speed: 1.0, phase: 0.28, isCourier: false),
-      _VehicleSpec(path: roadSouthCoast, speed: 1.0, phase: 0.80, isCourier: true, reverse: true),
-      _VehicleSpec(path: roadWestDukhan, speed: 1.0, phase: 0.42, isCourier: false),
-      _VehicleSpec(path: roadSalwaInd, speed: 1.0, phase: 0.18, isCourier: true),
+      _VehicleSpec(path: roadCoastalNorth, speed: 1.0, phase: 0.12, role: _MapVehicleRole.ride),
+      _VehicleSpec(path: roadCoastalNorth, speed: 1.0, phase: 0.64, role: _MapVehicleRole.siteSupply, reverse: true),
+      _VehicleSpec(path: roadSouthCoast, speed: 1.0, phase: 0.28, role: _MapVehicleRole.ride),
+      _VehicleSpec(path: roadSouthCoast, speed: 1.0, phase: 0.80, role: _MapVehicleRole.courier, reverse: true),
+      _VehicleSpec(path: roadWestDukhan, speed: 1.0, phase: 0.42, role: _MapVehicleRole.ride),
+      _VehicleSpec(path: roadSalwaInd, speed: 1.0, phase: 0.18, role: _MapVehicleRole.siteSupply),
     ];
 
     for (final spec in specs) {
@@ -459,7 +459,7 @@ class _QatarLiveMapPainter extends CustomPainter {
         path: spec.path,
         t: t,
         reverseHeading: spec.reverse,
-        isCourier: spec.isCourier,
+        role: spec.role,
         isDark: isDark,
         scale: isCompact ? 0.82 : 1.0,
         showTrail: showCarTrails,
@@ -550,7 +550,7 @@ class _QatarLiveMapPainter extends CustomPainter {
     required Path path,
     required double t,
     required bool reverseHeading,
-    required bool isCourier,
+    required _MapVehicleRole role,
     required bool isDark,
     required double scale,
     required bool showTrail,
@@ -566,6 +566,12 @@ class _QatarLiveMapPainter extends CustomPainter {
     double angle = math.atan2(-tangent.vector.dy, tangent.vector.dx);
     if (reverseHeading) angle += math.pi;
 
+    final accentColor = switch (role) {
+      _MapVehicleRole.courier => AppColors.teal,
+      _MapVehicleRole.siteSupply => AppColors.qatarMaroon,
+      _MapVehicleRole.ride => AppColors.gold,
+    };
+
     // Optional soft motion trail behind vehicle
     if (showTrail) {
       final trailStart = (dist - (reverseHeading ? -16.0 : 16.0)).clamp(0.0, metric.length);
@@ -576,7 +582,7 @@ class _QatarLiveMapPainter extends CustomPainter {
         canvas.drawPath(
           trailPath,
           Paint()
-            ..color = (isCourier ? AppColors.teal : AppColors.gold).withValues(alpha: 0.45)
+            ..color = accentColor.withValues(alpha: 0.45)
             ..strokeWidth = 3.2 * scale
             ..strokeCap = StrokeCap.round
             ..style = PaintingStyle.stroke,
@@ -603,7 +609,7 @@ class _QatarLiveMapPainter extends CustomPainter {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            (isCourier ? AppColors.teal : AppColors.gold).withValues(alpha: isDark ? 0.35 : 0.24),
+            accentColor.withValues(alpha: isDark ? 0.35 : 0.24),
             Colors.transparent,
           ],
         ).createShader(const Rect.fromLTWH(6, -7, 15, 14)),
@@ -615,11 +621,13 @@ class _QatarLiveMapPainter extends CustomPainter {
       Paint()..color = Colors.black.withValues(alpha: isDark ? 0.48 : 0.20),
     );
 
-    // Car body shell
+    // Car body shell (Teal for Couriers, Qatari Maroon for Site Supply/Errands, Navy/White for Rides)
     final bodyRect = const Rect.fromLTWH(-9, -5.2, 18, 10.4);
-    final bodyColor = isCourier
-        ? AppColors.teal
-        : (isDark ? Colors.white : AppColors.navy);
+    final bodyColor = switch (role) {
+      _MapVehicleRole.courier => AppColors.teal,
+      _MapVehicleRole.siteSupply => AppColors.qatarMaroon,
+      _MapVehicleRole.ride => isDark ? Colors.white : AppColors.navy,
+    };
     canvas.drawRRect(
       RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)),
       Paint()..color = bodyColor,
@@ -629,9 +637,9 @@ class _QatarLiveMapPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(bodyRect, const Radius.circular(4)),
       Paint()
-        ..color = isCourier
-            ? Colors.white.withValues(alpha: 0.8)
-            : (isDark ? AppColors.gold : Colors.white.withValues(alpha: 0.85))
+        ..color = role == _MapVehicleRole.ride
+            ? (isDark ? AppColors.gold : Colors.white.withValues(alpha: 0.85))
+            : Colors.white.withValues(alpha: 0.85)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.0,
     );
@@ -640,15 +648,20 @@ class _QatarLiveMapPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(-4.5, -3.5, 9.5, 7.0), const Radius.circular(2.4)),
       Paint()
-        ..color = isCourier
-            ? const Color(0xFF0E4D49)
-            : (isDark ? const Color(0xFF0F2A43) : const Color(0xFF284D70)),
+        ..color = switch (role) {
+          _MapVehicleRole.courier => const Color(0xFF0E4D49),
+          _MapVehicleRole.siteSupply => AppColors.qatarMaroonDark,
+          _MapVehicleRole.ride => isDark ? const Color(0xFF0F2A43) : const Color(0xFF284D70),
+        },
     );
 
-    // Signature MASHWAR roof accent indicator (Gold for Rides, White/Gold parcel box for Couriers)
+    // Signature MASHWAR roof accent indicator
     canvas.drawRRect(
       RRect.fromRectAndRadius(const Rect.fromLTWH(-1.5, -2.0, 3.8, 4.0), const Radius.circular(1.2)),
-      Paint()..color = isCourier ? AppColors.gold : (isDark ? AppColors.teal : AppColors.gold),
+      Paint()
+        ..color = role == _MapVehicleRole.ride
+            ? (isDark ? AppColors.teal : AppColors.gold)
+            : AppColors.gold,
     );
 
     canvas.restore();
@@ -762,18 +775,20 @@ class _QatarLiveMapPainter extends CustomPainter {
   }
 }
 
+enum _MapVehicleRole { ride, courier, siteSupply }
+
 class _VehicleSpec {
   const _VehicleSpec({
     required this.path,
     required this.speed,
     required this.phase,
-    required this.isCourier,
+    required this.role,
     this.reverse = false,
   });
 
   final Path path;
   final double speed;
   final double phase;
-  final bool isCourier;
+  final _MapVehicleRole role;
   final bool reverse;
 }

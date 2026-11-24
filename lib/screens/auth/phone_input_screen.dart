@@ -101,11 +101,13 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       body: SafeArea(
         child: MashwarOnboardingShell(
           isAr: isAr,
-          showcaseBadge: isAr ? 'التحقق الفوري' : 'Instant SMS',
-          showcaseTitle: isAr ? 'توثيق سريع برقمك القطري +974' : 'Fast +974 Qatar phone verification',
+          showcaseBadge: isAr ? 'توثيق سريع' : 'Instant SMS',
+          showcaseTitle: isAr
+              ? 'دخول آمن لحماية طلباتك وخدماتك برقمك القطري +974'
+              : 'Secure +974 access for all your Qatar services & rides',
           showcaseSubtitle: isAr
-              ? 'يدعم جميع شبكات Ooredoo و Vodafone Qatar لإرسال رمز التحقق خلال ثوانٍ.'
-              : 'Instant OTP delivery across Ooredoo & Vodafone Qatar networks.',
+              ? 'ربط فوري مع شبكة Ooredoo و Vodafone Qatar لضمان موثوقية طالب الخدمة والمنفّذ.'
+              : 'Instant OTP across Ooredoo & Vodafone Qatar protecting every transaction.',
           child: LayoutBuilder(
             builder: (context, constraints) {
               return _buildSingleLayout(context, auth, isAr, hasError, constraints);

@@ -35,13 +35,13 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
       body: SafeArea(
         child: MashwarOnboardingShell(
           isAr: isAr,
-          showcaseBadge: isAr ? 'التقاط دقيق' : 'Precision Pickup',
+          showcaseBadge: isAr ? 'التقاط وتوصيل دقيق' : 'Precision Matching',
           showcaseTitle: isAr
-              ? 'نقاط التقاء ذكية في أنحاء الدوحة وقطر'
-              : 'Smart pickup bays across Doha & Qatar',
+              ? 'نقاط التقاء ومواقع عمل دقيقة في جميع بلديات قطر'
+              : 'Exact pickup spots & worksites across all Qatar',
           showcaseSubtitle: isAr
-              ? 'من مشيرب ولوسيل إلى محطات وقود WOQOD — حدّد موقعك ليصلك الكابتن دون عناء.'
-              : 'From Msheireb and Lusail to WOQOD stations — effortless pickup calibration.',
+              ? 'من لوسيل والخور والوكرة إلى المنطقة الصناعية — نصل طالب الخدمة بأقرب منفّذ أو مسافر بدقة.'
+              : 'From Lusail, Al Khor & Al Wakrah to Industrial Area — accurate peer-to-peer matching.',
           child: LayoutBuilder(
             builder: (context, constraints) => SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
@@ -139,15 +139,15 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                               Text(
                                 _isDenied
                                     ? (isAr ? 'إذن الموقع مغلق' : 'Location Permission Denied')
-                                    : (isAr ? 'اكتشف رحلات قريبة منك' : 'Find Rides Near You'),
+                                    : (isAr ? 'اكتشف خدمات ومشاوير قريبة منك' : 'Find Nearby Services & Rides'),
                                 textAlign: TextAlign.center,
-                                style: AppTypography.largeTitle().copyWith(fontSize: 24),
+                                style: AppTypography.largeTitle().copyWith(fontSize: 23),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 isAr
-                                    ? 'لاقتراح أقرب نقطة التقاء وحساب المسافة بدقة في قطر.'
-                                    : 'To suggest convenient pickup spots and calculate distances accurately in Qatar.',
+                                    ? 'لمطابقة طلبات الشراء والتوريد والمشاوير في نطاقك بدقة داخل قطر.'
+                                    : 'To match nearby errands, site deliveries & rides accurately in Qatar.',
                                 textAlign: TextAlign.center,
                                 style: AppTypography.bodySecondary(),
                               ),

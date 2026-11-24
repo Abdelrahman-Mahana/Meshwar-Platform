@@ -4,12 +4,19 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary Brand Colors
+  // Primary Brand Colors (Keep navy, gold, teal, sand exact hexes for widget tests)
   static const Color navy = Color(0xFF0F2A43); // كحلي ليلي (أساسي)
   static const Color gold = Color(0xFFF5A524); // ذهبي (تمييز)
   static const Color teal = Color(0xFF1B7F79); // فيروزي (نجاح)
   static const Color sand = Color(0xFFFAF7F0); // رملي (براند)
-  static const Color surfaceLight = Color(0xFFF8F9FA); // سطح محايد ناعم وعصري مثل أوبر
+  static const Color surfaceLight = Color(0xFFF8F9FA); // سطح محايد ناعم وعصري
+
+  // Qatari Al-Adaam Heritage & Bilateral Escrow Trust Tokens
+  static const Color qatarMaroon = Color(0xFF8A1538); // العنابي القطري (الأدعم)
+  static const Color qatarMaroonDark = Color(0xFF5C0E26); // عنابي داكن للتدرجات
+  static const Color qatarMaroonSurface = Color(0xFFFDF2F5); // خلفية عنابية ناعمة
+  static const Color escrowGreen = Color(0xFF0F766E); // أخضر الضمان المالي
+  static const Color escrowSurface = Color(0xFFECFDF5); // خلفية ضمان مشوار الآمن
 
   // Neutral & Functional Colors
   static const Color textPrimary = Color(0xFF0F2A43); // Always Navy for maximum contrast

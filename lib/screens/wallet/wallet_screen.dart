@@ -8,6 +8,7 @@ import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
+import '../escrow/service_escrow_screen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -405,6 +406,92 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
             );
 
+            final escrowProtectedCard = Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppDimens.space16),
+              decoration: BoxDecoration(
+                color: AppColors.escrowSurface,
+                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.verified_user_rounded, color: AppColors.escrowGreen, size: 20),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isAr ? 'رصيد الضمان المعلّق (MASHWAR Escrow)' : 'Protected Escrow Hold Balance',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.escrowGreen,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                            Text(
+                              isAr
+                                  ? 'محفوظ لحماية صفقات الشراء وتوريد المواقع حتى إدخال OTP'
+                                  : 'Held until receipt approval & 4-digit OTP completion',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.navy,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        isAr ? '225 ر.ق' : '225 QAR',
+                        style: AppTypography.title(color: AppColors.escrowGreen).copyWith(fontSize: 17),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: AppColors.escrowGreen.withValues(alpha: 0.4)),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const ServiceEscrowScreen()),
+                        );
+                      },
+                      icon: const Icon(Icons.shield_outlined, size: 17, color: AppColors.escrowGreen),
+                      label: Text(
+                        isAr ? 'إدارة صفقات الضمان وحماية الطرفين' : 'Manage Escrow Deals & Disputes',
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, fontFamily: 'Cairo'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+
             final paymentMethodsSection = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -453,7 +540,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         icon: Icons.payments_outlined,
                         iconColor: AppColors.gold,
                         title: isAr ? 'الدفع نقداً' : 'Cash upon meeting',
-                        subtitle: isAr ? 'دفع قيمة المقعد أو شحن الطرد باليد للسائق' : 'Pay in cash directly to the driver',
+                        subtitle: isAr ? 'دفع قيمة المقعد أو الخدمة باليد مع توثيق OTP' : 'Direct cash handover verified with 4-digit OTP',
                         isDefault: auth.selectedPaymentMethod == 'cash',
                         onTap: () => auth.setSelectedPaymentMethod('cash'),
                       ),
@@ -567,6 +654,8 @@ class _WalletScreenState extends State<WalletScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   balanceCard,
+                                  const SizedBox(height: AppDimens.space16),
+                                  escrowProtectedCard,
                                   const SizedBox(height: AppDimens.space24),
                                   paymentMethodsSection,
                                 ],
@@ -583,6 +672,8 @@ class _WalletScreenState extends State<WalletScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             balanceCard,
+                            const SizedBox(height: AppDimens.space16),
+                            escrowProtectedCard,
                             const SizedBox(height: AppDimens.space24),
                             paymentMethodsSection,
                             const SizedBox(height: AppDimens.space24),

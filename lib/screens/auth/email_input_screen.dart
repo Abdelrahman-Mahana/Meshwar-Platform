@@ -88,11 +88,13 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
       body: SafeArea(
         child: MashwarOnboardingShell(
           isAr: isAr,
-          showcaseBadge: isAr ? 'تحقق آمن' : 'Secure Auth',
-          showcaseTitle: isAr ? 'دخول موثوق بالبريد الإلكتروني' : 'Reliable email sign-in',
+          showcaseBadge: isAr ? 'للأفراد والشركات' : 'Personal & Teams',
+          showcaseTitle: isAr
+              ? 'حساب موثّق لخدماتك اليومية وتوريدات المواقع'
+              : 'Verified account for errands, site supplies & rides',
           showcaseSubtitle: isAr
-              ? 'مثالي للشركات والأفراد مع إرسال إيصالات الرحلات والطرود مباشرة.'
-              : 'Ideal for individuals & businesses with direct trip receipts.',
+              ? 'استلم فواتير الشراء المعتمدة وإيصالات الضمان المالي Escrow مباشرة على بريدك.'
+              : 'Receive approved store receipts & MASHWAR Escrow statements directly by email.',
           child: LayoutBuilder(
             builder: (context, constraints) {
               return _buildSingleLayout(context, auth, isAr, hasError, constraints);

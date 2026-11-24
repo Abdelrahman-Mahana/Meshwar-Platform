@@ -70,84 +70,107 @@ class MashwarOnboardingShell extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 child: Row(
                   children: [
-                    // Showcase Column: Live Qatar Animated Corridor Map
+                    // Showcase Column: Live Qatar Multi-Service Corridor Map + Qatari Heritage Ribbon
                     Expanded(
                       flex: 5,
                       child: Container(
-                        color: AppColors.navy,
-                        padding: const EdgeInsets.all(28),
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.navy, Color(0xFF172742), Color(0xFF3E1025)],
+                          ),
+                        ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const BrandLogo(fontSize: 28, isLight: true),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.18),
+                            const QatarSaduAccentBar(height: 5, borderRadius: 0),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(28),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        const BrandLogo(fontSize: 28, isLight: true),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.qatarMaroon.withValues(alpha: 0.45),
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(
+                                                color: AppColors.gold.withValues(alpha: 0.4),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const MashwarLivePulseDot(color: AppColors.gold, size: 7),
+                                                const SizedBox(width: 6),
+                                                Flexible(
+                                                  child: Text(
+                                                    showcaseBadge ?? (isAr ? 'شبكة قطر الحية' : 'Qatar Live Network'),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: AppTypography.label(color: Colors.white).copyWith(
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const MashwarLivePulseDot(color: AppColors.gold, size: 7),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        showcaseBadge ?? (isAr ? 'شبكة قطر الحية' : 'Qatar Live Network'),
-                                        style: AppTypography.label(color: Colors.white).copyWith(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
+                                    const SizedBox(height: 18),
+                                    Expanded(
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(22),
+                                          border: Border.all(
+                                            color: Colors.white.withValues(alpha: 0.16),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: QatarLiveMapCanvas(
+                                          style: QatarMapStyle.darkExecutive,
+                                          activeFromCity: activeFromCity,
+                                          activeToCity: activeToCity,
+                                          borderRadius: 21,
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(22),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.14),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: QatarLiveMapCanvas(
-                                  style: QatarMapStyle.darkExecutive,
-                                  activeFromCity: activeFromCity,
-                                  activeToCity: activeToCity,
-                                  borderRadius: 21,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    Text(
+                                      showcaseTitle ??
+                                          (isAr
+                                              ? 'منصة قطر للخدمات اليومية والمشاوير الموثقة'
+                                              : 'Qatar community services & verified transit on one platform'),
+                                      style: AppTypography.title(color: Colors.white).copyWith(
+                                        fontSize: 19,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      showcaseSubtitle ??
+                                          (isAr
+                                              ? 'شراء بفاتورة، توريد لمواقع العمل، مشاوير حضانات ومقاعد بين المدن بحماية الضمان المالي المزدوج.'
+                                              : 'Shop errands, site supplies, daily & school rides, and shared travel backed by Bilateral Escrow & QID.'),
+                                      style: AppTypography.bodySecondary(
+                                        color: Colors.white.withValues(alpha: 0.8),
+                                      ).copyWith(fontSize: 13),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              showcaseTitle ??
-                                  (isAr
-                                      ? 'تنقل تشاركي وشحن موثوق بين كل مناطق قطر'
-                                      : 'Trusted shared rides & deliveries across Qatar'),
-                              style: AppTypography.title(color: Colors.white).copyWith(
-                                fontSize: 19,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              showcaseSubtitle ??
-                                  (isAr
-                                      ? 'سائقون ومنفذو خدمات موثقون بالبطاقة الشخصية القطرية QID وكود تسليم رقمي آمن.'
-                                      : 'QID-verified captains & couriers with 4-digit OTP handover protection.'),
-                              style: AppTypography.bodySecondary(
-                                color: Colors.white.withValues(alpha: 0.78),
-                              ).copyWith(fontSize: 13),
                             ),
                           ],
                         ),

@@ -31,6 +31,12 @@ class BoardAdModel {
   final bool isLadiesOnly;
   final BoardAdStatus status;
   final int? myOfferPrice;
+  final String? serviceSubTagAr;
+  final String? serviceSubTagEn;
+  final bool hasEscrowProtection;
+  final bool requiresReceiptProof;
+  final int? estimatedItemCost;
+  final bool isProviderOffer;
 
   const BoardAdModel({
     required this.id,
@@ -48,27 +54,40 @@ class BoardAdModel {
     this.isLadiesOnly = false,
     this.status = BoardAdStatus.active,
     this.myOfferPrice,
+    this.serviceSubTagAr,
+    this.serviceSubTagEn,
+    this.hasEscrowProtection = true,
+    this.requiresReceiptProof = false,
+    this.estimatedItemCost,
+    this.isProviderOffer = false,
   });
 
   String get timeAgo => postedAgo;
   double get authorRating => 4.9;
   String get route => '$fromCity ← $toCity';
   int get suggestedPrice => priceOrBudget;
+  bool get isOfferCard => isProviderOffer || type == BoardAdType.rideOffer;
+
+  String displaySubTag(bool isAr) {
+    final tag = isAr ? serviceSubTagAr : serviceSubTagEn;
+    if (tag != null && tag.trim().isNotEmpty) return tag;
+    return typeTitle(isAr);
+  }
 
   String typeTitle(bool isAr) {
     switch (type) {
       case BoardAdType.rideOffer:
-        return isAr ? 'عرض سفر تشاركي (مقاعد)' : 'Carpooling Offer';
+        return isAr ? 'مقاعد وسفر تشاركي' : 'Shared Seats';
       case BoardAdType.rideRequest:
         return isAr ? 'طلب سفر ومقعد' : 'Need a Seat';
       case BoardAdType.localTrip:
-        return isAr ? 'انتقال ومشوار محلي' : 'Local Ride / Errand';
+        return isAr ? 'مشاوير يومية وحضانات' : 'Daily & Nursery Rides';
       case BoardAdType.errandService:
-        return isAr ? 'قضاء مصلحة وشراء طلبات' : 'Errand & Shopping';
+        return isAr ? 'جلب أوراق ومصالح' : 'Errands & Documents';
       case BoardAdType.goodsDelivery:
-        return isAr ? 'لوجستيات وتوريد بضائع' : 'Store Cargo Logistics';
+        return isAr ? 'توريد مواقع وبضائع' : 'Worksite & Cargo';
       case BoardAdType.parcelRequest:
-        return isAr ? 'شحن أمانات وطرود' : 'Express Delivery';
+        return isAr ? 'شراء وتوصيل أمانات' : 'Shop & Parcel';
       case BoardAdType.all:
         return isAr ? 'كافة الخدمات والمشاوير' : 'All Services';
     }
@@ -81,13 +100,13 @@ class BoardAdModel {
       case BoardAdType.rideRequest:
         return isAr ? 'الميزانية' : 'Budget';
       case BoardAdType.localTrip:
-        return isAr ? 'تكلفة المشوار' : 'Trip Fare';
+        return isAr ? 'أتعاب المشوار' : 'Trip Fare';
       case BoardAdType.errandService:
         return isAr ? 'أتعاب الخدمة' : 'Service Fee';
       case BoardAdType.goodsDelivery:
-        return isAr ? 'تكلفة التوريد' : 'Freight';
+        return isAr ? 'أتعاب التوريد' : 'Supply Fee';
       case BoardAdType.parcelRequest:
-        return isAr ? 'رسوم الشحن' : 'Delivery Fee';
+        return isAr ? 'رسوم التوصيل' : 'Delivery Fee';
       case BoardAdType.all:
         return isAr ? 'السعر' : 'Price';
     }
@@ -109,6 +128,12 @@ class BoardAdModel {
     bool? isLadiesOnly,
     BoardAdStatus? status,
     int? myOfferPrice,
+    String? serviceSubTagAr,
+    String? serviceSubTagEn,
+    bool? hasEscrowProtection,
+    bool? requiresReceiptProof,
+    int? estimatedItemCost,
+    bool? isProviderOffer,
   }) {
     return BoardAdModel(
       id: id ?? this.id,
@@ -126,6 +151,12 @@ class BoardAdModel {
       isLadiesOnly: isLadiesOnly ?? this.isLadiesOnly,
       status: status ?? this.status,
       myOfferPrice: myOfferPrice ?? this.myOfferPrice,
+      serviceSubTagAr: serviceSubTagAr ?? this.serviceSubTagAr,
+      serviceSubTagEn: serviceSubTagEn ?? this.serviceSubTagEn,
+      hasEscrowProtection: hasEscrowProtection ?? this.hasEscrowProtection,
+      requiresReceiptProof: requiresReceiptProof ?? this.requiresReceiptProof,
+      estimatedItemCost: estimatedItemCost ?? this.estimatedItemCost,
+      isProviderOffer: isProviderOffer ?? this.isProviderOffer,
     );
   }
 
@@ -146,6 +177,12 @@ class BoardAdModel {
       'isLadiesOnly': isLadiesOnly,
       'status': status.name,
       'myOfferPrice': myOfferPrice,
+      'serviceSubTagAr': serviceSubTagAr,
+      'serviceSubTagEn': serviceSubTagEn,
+      'hasEscrowProtection': hasEscrowProtection,
+      'requiresReceiptProof': requiresReceiptProof,
+      'estimatedItemCost': estimatedItemCost,
+      'isProviderOffer': isProviderOffer,
     };
   }
 
@@ -172,6 +209,12 @@ class BoardAdModel {
         orElse: () => BoardAdStatus.active,
       ),
       myOfferPrice: (json['myOfferPrice'] as num?)?.toInt(),
+      serviceSubTagAr: json['serviceSubTagAr'] as String?,
+      serviceSubTagEn: json['serviceSubTagEn'] as String?,
+      hasEscrowProtection: json['hasEscrowProtection'] as bool? ?? true,
+      requiresReceiptProof: json['requiresReceiptProof'] as bool? ?? false,
+      estimatedItemCost: (json['estimatedItemCost'] as num?)?.toInt(),
+      isProviderOffer: json['isProviderOffer'] as bool? ?? false,
     );
   }
 }

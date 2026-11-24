@@ -735,3 +735,267 @@ class _ActionPill extends StatelessWidget {
     );
   }
 }
+
+/// Qatari Al-Adaam heritage Sadu geometric ribbon accent bar.
+class QatarSaduAccentBar extends StatelessWidget {
+  const QatarSaduAccentBar({
+    super.key,
+    this.height = 5.0,
+    this.borderRadius = 4.0,
+  });
+
+  final double height;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: SizedBox(
+        height: height,
+        width: double.infinity,
+        child: CustomPaint(
+          painter: _QatarSaduRibbonPainter(),
+        ),
+      ),
+    );
+  }
+}
+
+class _QatarSaduRibbonPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    canvas.drawRect(rect, Paint()..color = AppColors.navy);
+
+    // Repeating Qatari Al-Adaam Maroon + Gold geometric triangles
+    final tileW = (size.height * 2.4).clamp(10.0, 22.0);
+    final maroonPaint = Paint()..color = AppColors.qatarMaroon;
+    final goldPaint = Paint()..color = AppColors.gold;
+    final sandPaint = Paint()..color = AppColors.sand.withValues(alpha: 0.72);
+
+    for (double x = -tileW; x < size.width + tileW; x += tileW) {
+      final path = Path()
+        ..moveTo(x, size.height)
+        ..lineTo(x + tileW * 0.5, 0)
+        ..lineTo(x + tileW, size.height)
+        ..close();
+      canvas.drawPath(path, maroonPaint);
+
+      final diamond = Path()
+        ..moveTo(x + tileW * 0.5, size.height * 0.15)
+        ..lineTo(x + tileW * 0.65, size.height * 0.5)
+        ..lineTo(x + tileW * 0.5, size.height * 0.85)
+        ..lineTo(x + tileW * 0.35, size.height * 0.5)
+        ..close();
+      canvas.drawPath(diamond, goldPaint);
+
+      canvas.drawCircle(
+        Offset(x, size.height * 0.5),
+        (size.height * 0.18).clamp(0.8, 2.0),
+        sandPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _QatarSaduRibbonPainter oldDelegate) => false;
+}
+
+/// Compact responsive badge signifying Bilateral MASHWAR Escrow Protection.
+class MashwarEscrowBadge extends StatelessWidget {
+  const MashwarEscrowBadge({
+    super.key,
+    required this.isAr,
+    this.compact = false,
+  });
+
+  final bool isAr;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 9,
+        vertical: compact ? 2.5 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.escrowSurface,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: AppColors.escrowGreen.withValues(alpha: 0.35),
+          width: 0.9,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.verified_user_rounded,
+            size: compact ? 11.5 : 13,
+            color: AppColors.escrowGreen,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              isAr ? 'مضمون بـ Escrow' : 'Escrow Protected',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 9.5 : 10.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.escrowGreen,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Custom vector art tile for Qatar Nursery, School & Remote-Area Daily Commutes.
+class MashwarFamilyCommuteArt extends StatelessWidget {
+  const MashwarFamilyCommuteArt({
+    super.key,
+    this.size = 56.0,
+  });
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: size,
+        height: size,
+        color: AppColors.sand,
+        child: CustomPaint(
+          painter: _FamilyCommutePainter(),
+        ),
+      ),
+    );
+  }
+}
+
+class _FamilyCommutePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // Warm desert sky dome
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, w, h),
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFAF4E8), Color(0xFFF3E9D2)],
+        ).createShader(Rect.fromLTWH(0, 0, w, h)),
+    );
+
+    // Qatari compound arch silhouette in back
+    final archPaint = Paint()..color = const Color(0xFFE7D8BC);
+    canvas.drawRRect(
+      RRect.fromRectAndCorners(
+        Rect.fromLTWH(w * 0.10, h * 0.22, w * 0.42, h * 0.48),
+        topLeft: Radius.circular(w * 0.14),
+        topRight: Radius.circular(w * 0.14),
+      ),
+      archPaint,
+    );
+
+    // Subtle palm leaves
+    final palmPaint = Paint()
+      ..color = AppColors.teal.withValues(alpha: 0.72)
+      ..strokeWidth = w * 0.045
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(Offset(w * 0.78, h * 0.64), Offset(w * 0.78, h * 0.34), palmPaint);
+    canvas.drawArc(
+      Rect.fromCenter(center: Offset(w * 0.78, h * 0.34), width: w * 0.26, height: h * 0.14),
+      3.14,
+      3.14,
+      false,
+      palmPaint,
+    );
+
+    // Ground asphalt strip
+    canvas.drawRect(
+      Rect.fromLTWH(0, h * 0.68, w, h * 0.32),
+      Paint()..color = const Color(0xFFDFD7C8),
+    );
+
+    // Family SUV body (Pearl white + Qatari Maroon accent strip + Navy windows)
+    final body = RRect.fromRectAndRadius(
+      Rect.fromLTWH(w * 0.16, h * 0.47, w * 0.62, h * 0.25),
+      Radius.circular(w * 0.07),
+    );
+    canvas.drawRRect(body, Paint()..color = Colors.white);
+    canvas.drawRRect(
+      body,
+      Paint()
+        ..color = AppColors.navy.withValues(alpha: 0.18)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    // Maroon heritage trim band along SUV
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.18, h * 0.59, w * 0.58, h * 0.06),
+        Radius.circular(w * 0.02),
+      ),
+      Paint()..color = AppColors.qatarMaroon,
+    );
+
+    // SUV Cabin Roof & Windows
+    final cabin = Path()
+      ..moveTo(w * 0.27, h * 0.47)
+      ..lineTo(w * 0.34, h * 0.34)
+      ..lineTo(w * 0.64, h * 0.34)
+      ..lineTo(w * 0.70, h * 0.47)
+      ..close();
+    canvas.drawPath(cabin, Paint()..color = AppColors.navy);
+
+    // Wheels
+    final wheelPaint = Paint()..color = AppColors.navy;
+    final hubPaint = Paint()..color = AppColors.gold;
+    canvas.drawCircle(Offset(w * 0.30, h * 0.72), w * 0.08, wheelPaint);
+    canvas.drawCircle(Offset(w * 0.30, h * 0.72), w * 0.035, hubPaint);
+    canvas.drawCircle(Offset(w * 0.64, h * 0.72), w * 0.08, wheelPaint);
+    canvas.drawCircle(Offset(w * 0.64, h * 0.72), w * 0.035, hubPaint);
+
+    // Top-start Gold-and-Teal verified shield crest
+    final shieldCenter = Offset(w * 0.22, h * 0.22);
+    canvas.drawCircle(shieldCenter, w * 0.14, Paint()..color = AppColors.teal);
+    canvas.drawCircle(
+      shieldCenter,
+      w * 0.14,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4,
+    );
+    final check = Path()
+      ..moveTo(w * 0.16, h * 0.22)
+      ..lineTo(w * 0.205, h * 0.265)
+      ..lineTo(w * 0.28, h * 0.18);
+    canvas.drawPath(
+      check,
+      Paint()
+        ..color = Colors.white
+        ..strokeWidth = 1.8
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _FamilyCommutePainter oldDelegate) => false;
+}

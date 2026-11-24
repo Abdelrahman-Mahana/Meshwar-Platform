@@ -11,6 +11,7 @@ import '../../core/localization/app_strings.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../state/board_provider.dart';
 import '../chat/chat_screen.dart';
+import '../escrow/service_escrow_screen.dart';
 
 class MakeOfferSheet extends StatefulWidget {
   const MakeOfferSheet({super.key, required this.ad});
@@ -375,7 +376,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                                   ],
                                 ),
                                 Text(
-                                  '★ ${currentAd.authorRating} · ${currentAd.tripCount} ${isAr ? "رحلة" : "rides"} · ${context.trDate(currentAd.timeAgo)}',
+                                  '★ ${currentAd.authorRating} · ${currentAd.tripCount} ${isAr ? "خدمة" : "trips"} · ${context.trDate(currentAd.timeAgo)}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTypography.label(color: AppColors.textSecondary),
@@ -389,17 +390,68 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                     const SizedBox(width: 8),
                     MashwarBadge(
                       type: currentAd.isLadiesOnly ? BadgeType.ladiesOnly : BadgeType.newBadge,
-                      customLabel: currentAd.type == BoardAdType.parcelRequest
-                          ? (isAr ? 'طلب طرد' : 'Parcel')
-                          : currentAd.type == BoardAdType.rideOffer
-                              ? (isAr ? 'عرض رحلة' : 'Ride Offer')
-                              : (isAr ? 'طلب مشوار' : 'Ride Request'),
+                      customLabel: currentAd.displaySubTag(isAr),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 _buildDetailsCard(currentAd, isAr),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+
+                // Bilateral Escrow Protection Card inside MakeOfferSheet
+                InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => ServiceEscrowScreen(ad: currentAd)),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.escrowSurface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.verified_user_rounded, color: AppColors.escrowGreen, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isAr
+                                    ? 'معاملة محمية بضمان مشوار المزدوج (Escrow)'
+                                    : 'Protected by MASHWAR Bilateral Escrow',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.escrowGreen,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                              Text(
+                                isAr
+                                    ? 'حجز الأتعاب والفاتورة + اعتماد بالصورة + كود تسليم OTP · اضغط للمعاينة'
+                                    : 'Locked fees & receipt check + 4-digit OTP · Tap to inspect',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  color: AppColors.navy,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.chevron_right_rounded, color: AppColors.escrowGreen, size: 18),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
 
                 Row(
                   children: [
@@ -505,6 +557,22 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
               ),
             ],
           ),
+          if (ad.requiresReceiptProof && ad.estimatedItemCost != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  isAr ? 'سقف فاتورة المشتريات بالضمان' : 'Escrow Receipt Budget Cap',
+                  style: AppTypography.label(color: AppColors.qatarMaroon),
+                ),
+                Text(
+                  '${ad.estimatedItemCost} ${isAr ? "ر.ق" : "QAR"}',
+                  style: AppTypography.body(color: AppColors.qatarMaroon).copyWith(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

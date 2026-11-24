@@ -201,13 +201,13 @@ class WelcomeScreen extends StatelessWidget {
       body: SafeArea(
         child: MashwarOnboardingShell(
           isAr: isAr,
-          showcaseBadge: isAr ? 'قطر · شبكة حية الآن' : 'Qatar Live Mobility',
+          showcaseBadge: isAr ? 'قطر · خدمات ومشاوير بالضمان' : 'Qatar Live Services',
           showcaseTitle: isAr
-              ? 'مشوار يجمع رحلتك وطردك وخدماتك في مسار واحد'
-              : 'MASHWAR connects rides, parcels & errands along one route',
+              ? 'مشوار يجمع كل خدماتك ومشاويرك اليومية بضمان مالي مزدوج'
+              : 'MASHWAR connects everyday services, errands & rides safely',
           showcaseSubtitle: isAr
-              ? 'تنقّل بثقة بين الدوحة ولوسيل والخور والوكرة ودخان ومسيعيد مع كباتن ومنفذين موثقين بالـ QID.'
-              : 'Commute and ship seamlessly between Doha, Lusail, Al Khor, Al Wakrah, Dukhan & Mesaieed with QID-verified captains.',
+              ? 'توريد لمواقع الهندسة، شراء بفواتير، جلب مستندات، مشاوير حضانات، ومقاعد شاغرة بين الدوحة ولوسيل والخور والوكرة ودخان.'
+              : 'Worksite supplies, store errands with receipts, document fetches, daily rides & seats protected by Escrow.',
           child: LayoutBuilder(
             builder: (context, constraints) {
               return _buildSingleLayout(context, settings, isAr, constraints);
@@ -256,23 +256,24 @@ class WelcomeScreen extends StatelessWidget {
                   BrandLogo(fontSize: isCompact ? 32 : 42),
                   const SizedBox(height: 6),
                   Text(
-                    isAr ? 'رحلتك وطردك في نفس الطريق' : 'Your ride and parcel along the same path',
+                    isAr ? 'كل خدمة ومشوار في طريقك داخل قطر' : 'Every service, errand & ride along your route in Qatar',
                     textAlign: TextAlign.center,
                     style: AppTypography.title(color: AppColors.navy).copyWith(
                       fontWeight: FontWeight.w800,
-                      fontSize: isCompact ? 14.5 : 17,
+                      fontSize: isCompact ? 14 : 16.5,
                     ),
                   ),
-                  SizedBox(height: isCompact ? 10 : 16),
+                  SizedBox(height: isCompact ? 10 : 14),
                   if (showMobileMapCard) ...[
                     Container(
                       height: isCompact ? 114 : 168,
                       width: double.infinity,
+                      clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                         color: AppColors.navy,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: AppColors.teal.withValues(alpha: 0.35),
+                          color: AppColors.qatarMaroon.withValues(alpha: 0.45),
                           width: 1.2,
                         ),
                         boxShadow: [
@@ -292,31 +293,45 @@ class WelcomeScreen extends StatelessWidget {
                             activeToCity: 'لوسيل',
                             borderRadius: 19,
                           ),
+                          const Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: QatarSaduAccentBar(height: 4, borderRadius: 0),
+                          ),
                           PositionedDirectional(
-                            top: 10,
+                            top: 12,
                             start: 10,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.navy.withValues(alpha: 0.88),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.18),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const MashwarLivePulseDot(color: AppColors.gold, size: 7),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    isAr ? 'مسارات نشطة في قطر' : 'Live Qatar Corridors',
-                                    style: AppTypography.label(color: Colors.white).copyWith(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                            end: 10,
+                            child: Align(
+                              alignment: AlignmentDirectional.topStart,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: AppColors.navy.withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: AppColors.gold.withValues(alpha: 0.35),
                                   ),
-                                ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const MashwarLivePulseDot(color: AppColors.gold, size: 7),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        isAr ? 'خدمات ومشاوير حية · حماية Escrow' : 'Live Qatar Services · Escrow Safe',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.label(color: Colors.white).copyWith(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -329,14 +344,14 @@ class WelcomeScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.sand,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+                        border: Border.all(color: AppColors.qatarMaroon.withValues(alpha: 0.25)),
                       ),
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: AppColors.navy,
+                              color: AppColors.qatarMaroon,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(Icons.verified_user_rounded, color: AppColors.gold, size: 22),
@@ -347,7 +362,7 @@ class WelcomeScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isAr ? 'دخول سريع وآمن خلال ثوانٍ' : 'Fast, verified sign-in in seconds',
+                                  isAr ? 'ضمان مالي مزدوج وفواتير موثّقة' : 'Bilateral Escrow & Receipt Protection',
                                   style: AppTypography.body(color: AppColors.navy).copyWith(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 13.5,
@@ -355,8 +370,8 @@ class WelcomeScreen extends StatelessWidget {
                                 ),
                                 Text(
                                   isAr
-                                      ? 'اختر رقم الجوال أو Google أو البريد للمتابعة'
-                                      : 'Choose mobile, Google, or email to begin',
+                                      ? 'اختر رقم الجوال أو Google أو البريد للمتابعة بأمان'
+                                      : 'Sign in with mobile, Google, or email in seconds',
                                   style: AppTypography.bodySmall(color: AppColors.textSecondary),
                                 ),
                               ],
