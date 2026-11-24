@@ -186,7 +186,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final isAr = context.isArabic;
-    final activeError = _validationError ?? auth.lastError;
+    final activeError = _validationError ?? auth.localizedError(isArabic: isAr);
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCFCFD),
@@ -547,7 +547,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  if (auth.isDevMockAuthEnabled)
+                  if (auth.isPhoneAuthAvailable)
                     Center(
                       child: TextButton.icon(
                         icon: const Icon(Icons.phone_iphone_rounded,

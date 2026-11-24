@@ -805,4 +805,56 @@ describe('Live Firestore & Storage Security Rules (MASHWAR Worksite Supply MVP)'
       strangerStorage.ref('work_requests/req_inv_1/invoices/inv.png').getMetadata(),
     );
   });
+
+  test('allows users/{uid} create with empty phone (Email signup) or empty fullName (Phone OTP) while rejecting invalid phone or isVerified=true', async () => {
+    const emailUid = 'usr_email_no_phone';
+    const phoneUid = 'usr_phone_no_name';
+    const badPhoneUid = 'usr_bad_phone';
+    const verifiedUid = 'usr_forged_verified';
+
+    const makeBaseUser = (uid, overrides = {}) => ({
+      id: uid,
+      fullName: 'Eng. Fahad Al-Marri',
+      phone: '55123456',
+      gender: 'preferNotToSay',
+      isVerified: false,
+      idVerificationStatus: 'unverified',
+      walletBalance: 0,
+      rating: 0,
+      completedRides: 0,
+      completedParcels: 0,
+      email: `${uid}@mashwar.qa`,
+      ...overrides,
+    });
+
+    // Email registration without optional phone succeeds
+    const emailDb = testEnv.authenticatedContext(emailUid).firestore();
+    await assertSucceeds(
+      emailDb.collection('users').doc(emailUid).set(makeBaseUser(emailUid, { phone: '' })),
+    );
+
+    // Phone OTP sign-in before profile setup (empty fullName) succeeds
+    const phoneDb = testEnv.authenticatedContext(phoneUid).firestore();
+    await assertSucceeds(
+      phoneDb
+        .collection('users')
+        .doc(phoneUid)
+        .set(makeBaseUser(phoneUid, { fullName: '', email: null })),
+    );
+
+    // Invalid short phone is still rejected
+    const badPhoneDb = testEnv.authenticatedContext(badPhoneUid).firestore();
+    await assertFails(
+      badPhoneDb.collection('users').doc(badPhoneUid).set(makeBaseUser(badPhoneUid, { phone: '123' })),
+    );
+
+    // Self-verification privilege escalation is still rejected
+    const verifiedDb = testEnv.authenticatedContext(verifiedUid).firestore();
+    await assertFails(
+      verifiedDb
+        .collection('users')
+        .doc(verifiedUid)
+        .set(makeBaseUser(verifiedUid, { isVerified: true })),
+    );
+  });
 });

@@ -63,9 +63,9 @@ flowchart LR
 
 ### Runtime Flavors & Fail-Closed Mock Boundary
 Configured via compile-time `--dart-define` parameters (see [`.env.example`](.env.example)):
-- `APP_ENV`: `development` | `staging` | `production` (parsed into `AppFlavor`).
-- `USE_FIREBASE`: `true` | `false` (connects `AppRepositories.instance.useFirebase()` to Firebase project `mashwar-qatar-2026-ec99d` in `europe-west1`).
-- `USE_DEV_MOCKS`: `true` | `false` — **strictly gated** by `AppEnvironment.resolveUseDevMocks` so local dev mocks can **only** activate when `APP_ENV == 'development'` and `USE_FIREBASE == false`. Staging and production builds fail closed to `ServiceUnavailableScreen` with retry if Firebase is disabled or unreachable, never leaking mock users or fake balances.
+- `APP_ENV`: `development` | `staging` | `production` (parsed into `AppFlavor`; defaults to `development`).
+- `USE_FIREBASE`: `true` | `false` — when omitted, real app entrypoints (`lib/main.dart`, `lib/admin_main.dart`) connect to Firebase project `mashwar-qatar-2026-ec99d` (`europe-west1`) by default (`AppEnvironment.isFirebaseRuntimeActive == true`, `AppRepositories.instance.useFirebase()`) unless `USE_DEV_MOCKS=true` is explicitly passed in `development`. Passing `USE_FIREBASE=false` without `USE_DEV_MOCKS=true` fails closed with a configuration error.
+- `USE_DEV_MOCKS`: `true` | `false` — **strictly gated** by `AppEnvironment.resolveUseDevMocks` so local dev mocks can **only** activate when `APP_ENV == 'development'` and Firebase is disabled. Staging and production builds fail closed to `ServiceUnavailableScreen` with retry if Firebase is disabled or unreachable, never leaking mock users or fake balances.
 
 ### Qatar Domain & Financial Standards
 - **Integer Minor-Unit Currency (`MoneyMinor`):** All MVP financial fields (`budgetMinor`, `estimatedItemsCostMinor`, `maxItemsCapMinor`, `deliveryFeeBudgetMinor`, `agreedAmountMinor`, `agreedFeeMinor`, `totalAmountMinor`, `serviceFeeMinor`) use integer minor units (`1 QAR = 100 dirhams`, e.g., `15000` = `150.00 QAR` / `150 ر.ق`) with zero floating-point `double` arithmetic.
@@ -76,7 +76,7 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 ```text
 ├── .env.example                 # Environment & --dart-define template (zero secrets)
 ├── firebase.json                # Firestore, Cloud Functions v2 (nodejs20), Storage & Emulator ports
-├── firestore.rules              # 2,344-line AST-optimized ruleset (Collections 1–19 + MVP Collections 20–29)
+├── firestore.rules              # 2,552-line AST-optimized ruleset (Collections 1–19 + MVP Collections 20–29)
 ├── firestore.indexes.json       # 14 composite indexes (incl. Worksite Supply queries)
 ├── storage.rules                # Private KYC & participant-scoped invoice/proof image rules (<=10 MB)
 ├── scripts/                     # Local automation (run_emulators_tests.ps1, fetch_firebase_configs.ps1, generate_upload_keystore.ps1)
@@ -90,7 +90,7 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 │   │   └── index.ts             # Cloud Functions v2 HTTPS onCall exports (incl. deleteUserAccount)
 │   └── test/
 │       ├── backend_security.test.mjs  # Node security & state-machine test suite (11/11 passing)
-│       └── emulator_rules.test.mjs    # Live Firestore & Storage Emulator rules suite (9/9 passing)
+│       └── emulator_rules.test.mjs    # Live Firestore & Storage Emulator rules suite (10/10 passing)
 ├── lib/
 │   ├── core/config/             # AppEnvironment, AppFlavor, feature flags & legal disclaimers
 │   ├── data/
@@ -130,29 +130,30 @@ powershell -ExecutionPolicy Bypass -File scripts/generate_upload_keystore.ps1
 
 ### 2. Run Customer App
 ```powershell
-# Local development with explicit dev mock data (APP_ENV=development & USE_FIREBASE=false)
-flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
+# Default: connects directly to Firebase project mashwar-qatar-2026-ec99d
+flutter run -d chrome
 
-# Connected to Firebase project mashwar-qatar-2026-ec99d
-flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=true
+# Explicit local development with dev mock data (APP_ENV=development & USE_FIREBASE=false)
+flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
 ```
 
 ### 3. Run Admin Operations Portal (`Module 13: Worksite Supply Ops`)
 ```powershell
+# Default: live Firebase staff auth mode (verifies active Firestore admin_staff/{uid} record)
+flutter run -t lib/admin_main.dart -d chrome
+
 # Dev-mock staff mode (local testing only)
 flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
-
-# Live Firebase staff auth mode (verifies active Firestore admin_staff/{uid} record)
-flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=staging --dart-define=USE_FIREBASE=true
 ```
 
 ### 4. Run Static Analysis, Unit/Widget Suites & Live Emulator Security Tests
 ```powershell
 flutter analyze --no-pub
-flutter test --no-pub                                           # 136/136 passing
+flutter test --no-pub                                           # 139/139 passing
 Push-Location functions; npm run build; npm test; Pop-Location  # 11/11 passing
-powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1  # 9/9 live Firestore + Storage suites passing
-flutter build web --release                                     # Production web bundle
+powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1  # 10/10 live Firestore + Storage suites passing
+flutter build web --release                                     # Production consumer web bundle
+flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin  # Admin web bundle
 ```
 
 ---

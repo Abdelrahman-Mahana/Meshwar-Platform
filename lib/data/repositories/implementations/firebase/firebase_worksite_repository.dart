@@ -28,9 +28,12 @@ abstract interface class FirebaseWorksiteStore {
 }
 
 class _FirestoreWorksiteStore implements FirebaseWorksiteStore {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
 
-  _FirestoreWorksiteStore(this._firestore);
+  _FirestoreWorksiteStore([this._injectedFirestore]);
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<List<Map<String, dynamic>>> queryWorkRequests({
@@ -137,8 +140,7 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
                       .currentUser
                       ?.getIdToken(),
             ),
-        _store =
-            _FirestoreWorksiteStore(firestore ?? FirebaseFirestore.instance);
+        _store = _FirestoreWorksiteStore(firestore);
 
   @visibleForTesting
   FirebaseWorksiteRepository.withDeps({

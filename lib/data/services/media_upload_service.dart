@@ -211,7 +211,7 @@ class MediaUploadService {
         _clock = clock ?? DateTime.now;
 
   bool get _effectiveUseFirebase =>
-      _useFirebaseOverride ?? AppEnvironment.useFirebase;
+      _useFirebaseOverride ?? AppEnvironment.isFirebaseRuntimeActive;
 
   bool _isDevMockActive({bool allowDevMocks = false}) {
     if (_effectiveUseFirebase) return false;

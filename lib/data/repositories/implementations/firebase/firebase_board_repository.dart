@@ -4,10 +4,13 @@ import '../../contracts/i_board_repository.dart';
 import '../../../services/firebase_firestore_service.dart';
 
 class FirebaseBoardRepository implements IBoardRepository {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
 
   FirebaseBoardRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _injectedFirestore = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<List<BoardAdModel>> getBoardAds({

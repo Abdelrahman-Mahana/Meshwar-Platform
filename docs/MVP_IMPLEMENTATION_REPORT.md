@@ -59,8 +59,8 @@ Across Waves 0–5 on `feat/mvp-worksite-supply`, the repository was re-engineer
 1. **Compile-Time Environment Resolution (`AppEnvironment`):**
    - Resolves `AppFlavor` (`development`, `staging`, `production`), `USE_FIREBASE`, and `USE_DEV_MOCKS`.
    - Enforces `resolveUseDevMocks`: dev mocks are **mathematically impossible** to enable when `APP_ENV != 'development'` or `USE_FIREBASE == true`.
-2. **Fail-Closed Application Boot (`lib/main.dart` & `lib/screens/splash_screen.dart`):**
-   - `initializeMashwarStartup()` initializes Firebase and `AppRepositories.instance.useFirebase()` when `USE_FIREBASE=true`, and rejects non-development builds without Firebase by rendering `ServiceUnavailableScreen` with Retry.
+2. **Fail-Closed Application Boot (`lib/main.dart` & `lib/admin_main.dart` & `lib/screens/splash_screen.dart`):**
+   - `initializeMashwarStartup()` and `admin_main.dart` connect to Firebase by default (`!env.useDevMocks && (!AppEnvironment.hasExplicitUseFirebase || env.useFirebase)`), marking `AppEnvironment.setFirebaseRuntimeActive(true)` and wiring `AppRepositories.instance.useFirebase()` (with lazy Firebase SDK instance resolution across all 9 Firebase repositories). Passing `USE_DEV_MOCKS=true` in `development` opts into local mocks, whereas `USE_FIREBASE=false` without `USE_DEV_MOCKS=true` or non-development builds without Firebase fail closed with `ServiceUnavailableScreen` and Retry.
    - `SplashScreen` restores Firebase sessions via `AuthProvider.restoreSession()` and routes unauthenticated users to `WelcomeScreen`.
 3. **Web-Safe Cloud Functions v2 Bridge (`FirebaseFunctionsCallableClient`):**
    - Located in `lib/data/services/firebase_firestore_service.dart`, invoking `europe-west1` v2 `onCall` endpoints via `package:http` with `Authorization: Bearer <ID_TOKEN>` and mapping server errors into bilingual `WorksiteRepositoryException` objects (avoiding `dart:io` Web incompatibilities).
@@ -71,7 +71,7 @@ Across Waves 0–5 on `feat/mvp-worksite-supply`, the repository was re-engineer
 
 ## 5. Database Collections
 
-Defined and enforced in [`firestore.rules`](../firestore.rules) (`2,344` lines, AST-optimized well below Firestore's 1,000-expression evaluation limit and live-tested in Cloud Firestore Emulator `v1.22.0`) with `14` composite indexes in [`firestore.indexes.json`](../firestore.indexes.json):
+Defined and enforced in [`firestore.rules`](../firestore.rules) (`2,552` lines, AST-optimized well below Firestore's 1,000-expression evaluation limit and live-tested in Cloud Firestore Emulator `v1.22.0`) with `14` composite indexes in [`firestore.indexes.json`](../firestore.indexes.json):
 
 ### Preserved Platform & Governance Collections (`1–19`)
 | # | Collection | Phase 1 Status | Role |
@@ -224,14 +224,14 @@ Verified directly from `git diff --diff-filter=A --name-only c444e6d..HEAD` on `
 
 All metrics below were executed and verified on Windows PowerShell 5.1 (`Flutter 3.47.9`, `Node.js v24.19.0`, `OpenJDK 21.0.13.1 LTS`, `firebase-tools 15.37.0`, Cloud Firestore Emulator `v1.22.0`, Cloud Storage Rules Runtime `v1.1.3`) on `feat/mvp-worksite-supply`:
 
-| Check / Suite | Exact Command | Exit Code | Observed Runner / Wall Time | Observed Result |
-| :--- | :--- | :---: | :---: | :--- |
-| **Live Firebase Firestore & Storage Emulator Rules Suite** | `powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1` | `0` | `33.22s` runner (`56.42s` wall) | **`9 / 9` live suites passed (`100%`, `0` failed)** via `@firebase/rules-unit-testing@6.0.0` against live `firestore.rules` (`2,344` lines) & `storage.rules` (unauth denials, `work_request_secrets` total lockdown, `work_request_handover_view` requester-only ACL, `provider_profiles` pending/self-approve block, `provider_verifications` 11-digit QID & owner/admin read, `work_requests` max-schema AST budget + transitions, `work_offers` self-bid/unapproved blocks, `ratings` single-create immutability, `storage.rules` auth/10MB/MIME/KYC/invoice ACLs). |
-| **Cloud Functions TypeScript Build** | `npm run build` (`tsc` in `functions/`) | `0` | `5.21s` | Compiled cleanly (`0` tracked artifacts in `functions/lib/` or `node_modules/`). |
-| **Cloud Functions Security & Erasure Suite** | `npm test` (`node --test test/backend_security.test.mjs`) | `0` | `282.74ms` runner (`6.80s` wall) | **`11 / 11` passed (`0` failed)** covering crypto, auth, state machine, handover attempts/TTL/reuse, settlement immutability, ratings, admin RBAC/audits, and `deleteUserAccount` active-order guards & full purge. |
-| **Dart Static Analysis** | `flutter analyze` | `0` | `99.8s` (`0` issues) | **`No issues found!`** (`0` errors, `0` warnings). |
-| **Flutter Unit, Repo, Media, Phone Auth & Widget Suite** | `flutter test` | `0` | `00:58` runner (`77.93s` wall) | **`136 / 136` passed (`0` failed)** (`00:58 +136: All tests passed!`). |
-| **Production Web Release Build** | `flutter build web --release` | `0` | `135.0s` compile (`140.63s` wall) | **`√ Built build\web`** (`main.dart.js` `4,821,001 B`, `index.html` `1,737 B`, MaterialIcons tree-shaken `97.0%`). |
+| Check / Suite | Exact Command | Exit Code | Observed Result |
+| :--- | :--- | :---: | :--- |
+| **Live Firebase Firestore & Storage Emulator Rules Suite** | `powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1` | `0` | **`10 / 10` live suites passed (`100%`, `0` failed)** via `@firebase/rules-unit-testing@6.0.0` against live `firestore.rules` (`2,552` lines) & `storage.rules` (unauth denials, `users/{uid}` empty-phone Email / empty-name Phone OTP create + invalid-phone/verify blocks, `work_request_secrets` lockdown, `work_request_handover_view` requester ACL, `provider_profiles`, `provider_verifications`, `work_requests`, `work_offers`, `ratings`, and `storage.rules`). |
+| **Cloud Functions TypeScript Build** | `npm run build` (`tsc` in `functions/`) | `0` | Compiled cleanly (`0` tracked artifacts in `functions/lib/` or `node_modules/`). |
+| **Cloud Functions Security & Erasure Suite** | `npm test` (`node --test test/backend_security.test.mjs`) | `0` | **`11 / 11` passed (`0` failed)** covering crypto, auth, state machine, handover attempts/TTL/reuse, settlement immutability, ratings, admin RBAC/audits, and `deleteUserAccount` active-order guards & full purge. |
+| **Dart Static Analysis** | `flutter analyze` | `0` | **`No issues found!`** (`0` errors, `0` warnings). |
+| **Flutter Unit, Repo, Media, Phone Auth & Widget Suite** | `flutter test` | `0` | **`139 / 139` passed (`0` failed)** (`All tests passed!`), including default-Firebase `initializeMashwarStartup()`, bilingual Email+Password error mapping, Firestore `permission-denied` doc tolerance, and `EmailInputScreen` phone switch / Arabic error rendering. |
+| **Production Web Release Builds (Consumer & Admin)** | `flutter build web --release; flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin` | `0` | Both `build/web` and `build/web/admin` compiled cleanly (`--dart-define=APP_ENV=production --dart-define=USE_FIREBASE=true` configured in `.github/workflows/mashwar_ci_cd.yml`). |
 
 *(Note: On Windows hosts where Windows Developer Mode symlink support is disabled, `flutter pub get` still downloads and resolves all Dart/Web packages cleanly (`Got dependencies!`), then emits exit `1` only for Windows desktop `.plugin_symlinks` creation; `flutter analyze --no-pub`, `flutter test --no-pub`, and `flutter build web --release` execute cleanly with exit `0`.)*
 
@@ -279,8 +279,8 @@ Defined in [`.env.example`](../.env.example) and read via `--dart-define` / `--d
 | Variable | Required | Default | Description |
 | :--- | :---: | :--- | :--- |
 | `APP_ENV` | Yes | `development` | Runtime flavor: `development` \| `staging` \| `production`. |
-| `USE_FIREBASE` | Yes | `false` | Enables Firebase Auth, Cloud Firestore, Cloud Storage & Cloud Functions v2 repositories (`true` required in `staging`/`production`). |
-| `USE_DEV_MOCKS` | No | `false` | Enables dev-only mock auth, deterministic media uploads & sample Qatar data (**only** honored when `APP_ENV=development` and `USE_FIREBASE=false`). |
+| `USE_FIREBASE` | Optional | Omitted (`default` connects to Firebase) | Real entrypoints (`main.dart`, `admin_main.dart`) connect to Firebase by default unless `USE_DEV_MOCKS=true` in `development`; set `USE_FIREBASE=true` explicitly in CI/staging/production. Passing `USE_FIREBASE=false` without `USE_DEV_MOCKS=true` fails closed. |
+| `USE_DEV_MOCKS` | No | `false` | Enables dev-only mock auth, deterministic media uploads & sample Qatar data (**only** honored when `APP_ENV=development` and Firebase is disabled). |
 | `FIREBASE_PROJECT_ID` | Yes (Cloud) | `mashwar-qatar-2026-ec99d` | Target Firebase project ID. |
 | `FIREBASE_REGION` | Yes (Cloud) | `europe-west1` | Cloud Functions v2 deployment region. |
 | `FIREBASE_WEB_API_KEY` | Yes (Web) | Configured SDK key | Restricted Firebase Web client API key. |
@@ -308,10 +308,12 @@ powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1
 powershell -ExecutionPolicy Bypass -File scripts/fetch_firebase_configs.ps1
 powershell -ExecutionPolicy Bypass -File scripts/generate_upload_keystore.ps1
 
-# 4. Run Customer App in Local Dev-Mock Mode (deterministic Qatar pilot data)
+# 4. Run Customer App (connects to Firebase by default; pass USE_DEV_MOCKS=true for offline mocks)
+flutter run -d chrome
 flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
 
-# 5. Run Standalone Admin Portal in Local Dev-Mock Mode (Module 13 Worksite Ops)
+# 5. Run Standalone Admin Portal (connects to Firebase by default; pass USE_DEV_MOCKS=true for local queue)
+flutter run -t lib/admin_main.dart -d chrome
 flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
 
 # 6. Run Interactive Local Firebase Emulators
@@ -349,7 +351,7 @@ flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBA
 ## 16. Remaining Work Before Public Release & Evidence Matrix
 
 ### Pre-Launch Operational & Legal Checklist
-- [x] Install OpenJDK 21 LTS + `firebase-tools` and verify `9/9` live `firestore.rules` + `storage.rules` emulator test suites (`scripts/run_emulators_tests.ps1`).
+- [x] Install OpenJDK 21 LTS + `firebase-tools` and verify `10/10` live `firestore.rules` + `storage.rules` emulator test suites (`scripts/run_emulators_tests.ps1`).
 - [x] Register native Firebase apps (`com.mashwar.app.mashwar` & `qa.mashwar.app`), add Android release keystore signing (`key.properties` + `proguard-rules.pro`), populate iOS `Info.plist` permission strings, and author Qatar PDPL compliance screens + release playbook (`docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md`).
 - [x] Add `firebase_storage` + `image_picker` (`MediaUploadService`) for direct KYC/invoice/proof uploads, `+974` Firebase Phone Auth, `url_launcher` (`tel:999`), and server-side `deleteUserAccount` callable + `DeleteAccountScreen`.
 - [ ] Enable Firebase Blaze billing, `+974`-only SMS region allowlist, Android SHA-1/SHA-256 + iOS APNs `.p8` + reCAPTCHA Enterprise in Firebase Console, and verify OTP delivery on physical Qatar SIMs.

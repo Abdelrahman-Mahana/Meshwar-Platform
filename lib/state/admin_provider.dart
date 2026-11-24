@@ -831,7 +831,7 @@ class AdminProvider extends ChangeNotifier {
     final allowDevQueue = _requestedDevMock &&
         AppEnvironment.isDevMocksAllowed(
           flavor: AppEnvironment.flavor,
-          useFirebase: AppEnvironment.useFirebase,
+          useFirebase: AppEnvironment.isFirebaseRuntimeActive,
         );
     _worksiteProviders =
         allowDevQueue ? _buildDevWorksiteProviders() : <AdminWorksiteProviderRecord>[];
@@ -869,7 +869,7 @@ class AdminProvider extends ChangeNotifier {
       _requestedDevMock &&
       AppEnvironment.isDevMocksAllowed(
         flavor: AppEnvironment.flavor,
-        useFirebase: AppEnvironment.useFirebase,
+        useFirebase: AppEnvironment.isFirebaseRuntimeActive,
       );
 
   bool get canSwitchRoleLocally => _isTestingFixture || isDevMockMode;

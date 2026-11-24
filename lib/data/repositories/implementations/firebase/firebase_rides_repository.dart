@@ -6,10 +6,13 @@ import '../../contracts/i_rides_repository.dart';
 import '../../../services/firebase_firestore_service.dart';
 
 class FirebaseRidesRepository implements IRidesRepository {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
 
   FirebaseRidesRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _injectedFirestore = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<List<RideModel>> searchRides({

@@ -49,9 +49,12 @@ abstract interface class FirebaseProviderStore {
 }
 
 class _FirestoreProviderStore implements FirebaseProviderStore {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
 
-  _FirestoreProviderStore(this._firestore);
+  _FirestoreProviderStore([this._injectedFirestore]);
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<Map<String, dynamic>?> getProviderProfileDoc(String uid) async {
@@ -200,8 +203,7 @@ class FirebaseProviderRepository implements IProviderRepository {
                       .currentUser
                       ?.getIdToken(),
             ),
-        _store =
-            _FirestoreProviderStore(firestore ?? FirebaseFirestore.instance);
+        _store = _FirestoreProviderStore(firestore);
 
   @visibleForTesting
   FirebaseProviderRepository.withDeps({

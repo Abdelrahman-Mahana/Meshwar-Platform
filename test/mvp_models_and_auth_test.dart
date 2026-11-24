@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mashwar/core/config/app_environment.dart';
 import 'package:mashwar/data/mock_data.dart';
@@ -134,9 +135,12 @@ class _FakeFirebaseAuth implements fb_auth.FirebaseAuth {
 class _InMemoryFirebaseAuthUserStore implements FirebaseAuthUserStore {
   final Map<String, Map<String, dynamic>> users = {};
   final Map<String, Map<String, dynamic>> providerVerifications = {};
+  FirebaseException? getError;
+  FirebaseException? setError;
 
   @override
   Future<Map<String, dynamic>?> getUserDoc(String uid) async {
+    if (getError != null) throw getError!;
     final doc = users[uid];
     return doc == null ? null : Map<String, dynamic>.from(doc);
   }
@@ -147,6 +151,7 @@ class _InMemoryFirebaseAuthUserStore implements FirebaseAuthUserStore {
     Map<String, dynamic> data, {
     bool merge = true,
   }) async {
+    if (setError != null) throw setError!;
     if (merge && users.containsKey(uid)) {
       users[uid] = {...users[uid]!, ...data};
     } else {
@@ -830,6 +835,88 @@ void main() {
 
       auth.dispose();
       restoredProvider.dispose();
+    });
+
+    test(
+        'FirebaseAuthRepository maps email auth errors to bilingual AuthExceptions and tolerates Firestore permission-denied on user doc hydration',
+        () async {
+      final fakeAuth = _FakeFirebaseAuth();
+      final fakeStore = _InMemoryFirebaseAuthUserStore()
+        ..setError = FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'permission-denied',
+          message: 'Missing or insufficient permissions.',
+        );
+      final repo = FirebaseAuthRepository.withUserStore(
+        firebaseAuth: fakeAuth,
+        userStore: fakeStore,
+      );
+
+      // Register without explicit fullName succeeds even if Firestore setUserDoc throws permission-denied
+      final registered = await repo.registerWithEmail(
+        email: 'engineer.lusail@mashwar.qa',
+        password: 'StrongPassword123',
+      );
+      expect(registered.id, isNotEmpty);
+      expect(registered.email, 'engineer.lusail@mashwar.qa');
+      expect(registered.fullName, 'engineer.lusail');
+      expect(registered.phone, isEmpty);
+
+      // Duplicate registration maps email-already-in-use cleanly
+      await expectLater(
+        () => repo.registerWithEmail(
+          email: 'engineer.lusail@mashwar.qa',
+          password: 'StrongPassword123',
+        ),
+        throwsA(
+          isA<AuthException>()
+              .having((e) => e.code, 'code', 'email-already-in-use')
+              .having((e) => e.suggestEmailFallback, 'suggestEmailFallback', isFalse)
+              .having((e) => e.messageAr, 'messageAr', contains('مسجل مسبقاً')),
+        ),
+      );
+
+      // Wrong password login maps invalid-credential cleanly
+      await expectLater(
+        () => repo.loginWithEmail(
+          'engineer.lusail@mashwar.qa',
+          'WrongPassword!',
+        ),
+        throwsA(
+          isA<AuthException>()
+              .having((e) => e.code, 'code', 'invalid-credential')
+              .having((e) => e.suggestEmailFallback, 'suggestEmailFallback', isFalse)
+              .having((e) => e.messageAr, 'messageAr', contains('غير صحيحة')),
+        ),
+      );
+
+      // Valid login succeeds even when getUserDoc & setUserDoc throw permission-denied
+      fakeStore.getError = FirebaseException(
+        plugin: 'cloud_firestore',
+        code: 'permission-denied',
+        message: 'Missing or insufficient permissions.',
+      );
+      final loggedIn = await repo.loginWithEmail(
+        'engineer.lusail@mashwar.qa',
+        'StrongPassword123',
+      );
+      expect(loggedIn.id, registered.id);
+      expect(loggedIn.fullName, 'engineer.lusail');
+
+      // operation-not-allowed differs cleanly for email vs phone flow
+      final emailOpDisabled = FirebaseAuthRepository.mapFirebaseAuthException(
+        fb_auth.FirebaseAuthException(code: 'operation-not-allowed'),
+        isEmailFlow: true,
+      );
+      expect(emailOpDisabled.suggestEmailFallback, isFalse);
+      expect(emailOpDisabled.messageEn, contains('Email/Password'));
+
+      final phoneOpDisabled = FirebaseAuthRepository.mapFirebaseAuthException(
+        fb_auth.FirebaseAuthException(code: 'operation-not-allowed'),
+        isEmailFlow: false,
+      );
+      expect(phoneOpDisabled.suggestEmailFallback, isTrue);
+      expect(phoneOpDisabled.messageEn, contains('Phone authentication'));
     });
   });
 }

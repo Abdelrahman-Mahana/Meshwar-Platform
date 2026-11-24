@@ -4,10 +4,13 @@ import '../../contracts/i_chat_repository.dart';
 import '../../../services/firebase_firestore_service.dart';
 
 class FirebaseChatRepository implements IChatRepository {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
 
   FirebaseChatRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _injectedFirestore = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<List<ChatMessageModel>> getMessages(String conversationId) async {

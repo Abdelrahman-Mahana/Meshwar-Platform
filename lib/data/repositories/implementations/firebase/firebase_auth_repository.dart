@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide FirebaseException;
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../models/user_model.dart';
@@ -27,9 +28,12 @@ abstract interface class FirebaseAuthUserStore {
 }
 
 class _FirestoreAuthUserStore implements FirebaseAuthUserStore {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
 
-  _FirestoreAuthUserStore(this._firestore);
+  _FirestoreAuthUserStore([this._injectedFirestore]);
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<Map<String, dynamic>?> getUserDoc(String uid) async {
@@ -76,7 +80,7 @@ class FirebaseAuthRepository implements IAuthRepository {
   static final RegExp qatarLocalPhoneRegex = RegExp(r'^[3567][0-9]{7}$');
   static final RegExp _otpSixDigitsRegex = RegExp(r'^[0-9]{6}$');
 
-  final fb_auth.FirebaseAuth _firebaseAuth;
+  final fb_auth.FirebaseAuth? _injectedAuth;
   final FirebaseAuthUserStore _userStore;
   final FirebaseFunctionsCallableClient? _injectedCallableClient;
   final bool _isWeb;
@@ -93,9 +97,8 @@ class FirebaseAuthRepository implements IAuthRepository {
     fb_auth.FirebaseAuth? firebaseAuth,
     FirebaseFirestore? firestore,
     FirebaseFunctionsCallableClient? callableClient,
-  })  : _firebaseAuth = firebaseAuth ?? fb_auth.FirebaseAuth.instance,
-        _userStore =
-            _FirestoreAuthUserStore(firestore ?? FirebaseFirestore.instance),
+  })  : _injectedAuth = firebaseAuth,
+        _userStore = _FirestoreAuthUserStore(firestore),
         _injectedCallableClient = callableClient,
         _isWeb = kIsWeb,
         _credentialFactory = fb_auth.PhoneAuthProvider.credential;
@@ -107,12 +110,15 @@ class FirebaseAuthRepository implements IAuthRepository {
     FirebaseFunctionsCallableClient? callableClient,
     bool? isWebOverride,
     PhoneCredentialFactory? credentialFactory,
-  })  : _firebaseAuth = firebaseAuth,
+  })  : _injectedAuth = firebaseAuth,
         _userStore = userStore,
         _injectedCallableClient = callableClient,
         _isWeb = isWebOverride ?? kIsWeb,
         _credentialFactory =
             credentialFactory ?? fb_auth.PhoneAuthProvider.credential;
+
+  fb_auth.FirebaseAuth get _firebaseAuth =>
+      _injectedAuth ?? fb_auth.FirebaseAuth.instance;
 
   FirebaseFunctionsCallableClient get _callableClient =>
       _injectedCallableClient ?? FirebaseFunctionsCallableClient();
@@ -164,12 +170,80 @@ class FirebaseAuthRepository implements IAuthRepository {
   }
 
   /// Maps [fb_auth.FirebaseAuthException] codes into clear bilingual [AuthException]s
-  /// explaining SMS billing / console configuration status and suggesting Email+Password fallback.
+  /// for both Email+Password (`isEmailFlow: true`) and `+974` Phone OTP flows.
   static AuthException mapFirebaseAuthException(
-    fb_auth.FirebaseAuthException e,
-  ) {
+    fb_auth.FirebaseAuthException e, {
+    bool isEmailFlow = false,
+  }) {
     final code = e.code.trim().toLowerCase();
     switch (code) {
+      case 'email-already-in-use':
+        return const AuthException(
+          code: 'email-already-in-use',
+          suggestEmailFallback: false,
+          messageAr:
+              'هذا البريد الإلكتروني مسجل مسبقاً. يرجى تسجيل الدخول أو استخدام بريد آخر.',
+          messageEn:
+              'This email address is already registered. Please sign in or use a different email.',
+        );
+      case 'invalid-credential':
+        return const AuthException(
+          code: 'invalid-credential',
+          suggestEmailFallback: false,
+          messageAr:
+              'البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى التحقق والمحاولة مرة أخرى.',
+          messageEn:
+              'Incorrect email or password. Please check your credentials and try again.',
+        );
+      case 'wrong-password':
+        return const AuthException(
+          code: 'wrong-password',
+          suggestEmailFallback: false,
+          messageAr:
+              'كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى أو استعادة كلمة المرور.',
+          messageEn:
+              'Incorrect password. Please try again or reset your password.',
+        );
+      case 'user-not-found':
+        return const AuthException(
+          code: 'user-not-found',
+          suggestEmailFallback: false,
+          messageAr: 'لا يوجد حساب مسجل بهذا البريد الإلكتروني.',
+          messageEn: 'No account found for this email address.',
+        );
+      case 'invalid-email':
+        return const AuthException(
+          code: 'invalid-email',
+          suggestEmailFallback: false,
+          messageAr: 'صيغة البريد الإلكتروني غير صالحة.',
+          messageEn: 'The email address is badly formatted.',
+        );
+      case 'weak-password':
+        return const AuthException(
+          code: 'weak-password',
+          suggestEmailFallback: false,
+          messageAr:
+              'كلمة المرور ضعيفة جداً. يجب أن تتكون من 6 أحرف أو أرقام على الأقل.',
+          messageEn:
+              'Password is too weak. Please choose at least 6 characters.',
+        );
+      case 'user-disabled':
+        return const AuthException(
+          code: 'user-disabled',
+          suggestEmailFallback: false,
+          messageAr: 'تم تعطيل هذا الحساب. يرجى التواصل مع فريق الدعم.',
+          messageEn:
+              'This user account has been disabled. Please contact support.',
+        );
+      case 'network-request-failed':
+        return const AuthException(
+          code: 'network-request-failed',
+          suggestEmailFallback: false,
+          messageAr:
+              'تعذّر الاتصال بالشبكة. تحقق من اتصالك بالإنترنت وأعد المحاولة.',
+          messageEn:
+              'Network request failed. Check your internet connection and retry.',
+        );
       case 'billing-not-enabled':
         return const AuthException(
           code: 'billing-not-enabled',
@@ -180,6 +254,16 @@ class FirebaseAuthRepository implements IAuthRepository {
               'SMS OTP (+974) requires SMS billing (Blaze plan) enabled in Firebase Console. Please sign in with Email & Password instead.',
         );
       case 'operation-not-allowed':
+        if (isEmailFlow) {
+          return const AuthException(
+            code: 'operation-not-allowed',
+            suggestEmailFallback: false,
+            messageAr:
+                'مزود الدخول بالبريد الإلكتروني وكلمة المرور غير مفعّل حالياً في Firebase Console.',
+            messageEn:
+                'Email/Password sign-in is not enabled in Firebase Console.',
+          );
+        }
         return const AuthException(
           code: 'operation-not-allowed',
           suggestEmailFallback: true,
@@ -198,6 +282,16 @@ class FirebaseAuthRepository implements IAuthRepository {
               'Firebase SMS quota has been exceeded for today. Please sign in with Email & Password instead.',
         );
       case 'too-many-requests':
+        if (isEmailFlow) {
+          return const AuthException(
+            code: 'too-many-requests',
+            suggestEmailFallback: false,
+            messageAr:
+                'تم حظر الطلبات مؤقتاً لكثرة المحاولات. يرجى الانتظار قليلاً والمحاولة مرة أخرى.',
+            messageEn:
+                'Too many requests from this device. Please wait a moment and try again.',
+          );
+        }
         return const AuthException(
           code: 'too-many-requests',
           suggestEmailFallback: true,
@@ -246,6 +340,17 @@ class FirebaseAuthRepository implements IAuthRepository {
               'Phone verification security check could not complete. Please sign in with Email & Password instead.',
         );
       default:
+        if (isEmailFlow) {
+          return AuthException(
+            code: code.isEmpty ? 'auth-error' : code,
+            suggestEmailFallback: false,
+            messageAr:
+                'تعذّر إتمام تسجيل الدخول بالبريد الإلكتروني (${e.code}). يرجى المحاولة مرة أخرى.',
+            messageEn: e.message?.trim().isNotEmpty == true
+                ? '${e.message!.trim()} (${e.code})'
+                : 'Email authentication failed (${e.code}).',
+          );
+        }
         return AuthException(
           code: code.isEmpty ? 'auth-error' : code,
           suggestEmailFallback: true,
@@ -444,15 +549,19 @@ class FirebaseAuthRepository implements IAuthRepository {
     if (trimmedEmail.isEmpty || password.isEmpty) {
       throw ArgumentError('Email and password are required');
     }
-    final credential = await _firebaseAuth.signInWithEmailAndPassword(
-      email: trimmedEmail,
-      password: password,
-    );
-    final fbUser = credential.user;
-    if (fbUser == null) {
-      throw StateError('FirebaseAuth sign-in returned no user');
+    try {
+      final credential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: trimmedEmail,
+        password: password,
+      );
+      final fbUser = credential.user;
+      if (fbUser == null) {
+        throw StateError('FirebaseAuth sign-in returned no user');
+      }
+      return await _hydrateOrCreateUserDoc(fbUser, fallbackEmail: trimmedEmail);
+    } on fb_auth.FirebaseAuthException catch (e) {
+      throw mapFirebaseAuthException(e, isEmailFlow: true);
     }
-    return _hydrateOrCreateUserDoc(fbUser, fallbackEmail: trimmedEmail);
   }
 
   @override
@@ -466,26 +575,34 @@ class FirebaseAuthRepository implements IAuthRepository {
     if (trimmedEmail.isEmpty || password.isEmpty) {
       throw ArgumentError('Email and password are required');
     }
-    final credential = await _firebaseAuth.createUserWithEmailAndPassword(
-      email: trimmedEmail,
-      password: password,
-    );
-    final fbUser = credential.user;
-    if (fbUser == null) {
-      throw StateError('FirebaseAuth registration returned no user');
-    }
+    try {
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: trimmedEmail,
+        password: password,
+      );
+      final fbUser = credential.user;
+      if (fbUser == null) {
+        throw StateError('FirebaseAuth registration returned no user');
+      }
 
-    final cleanName = fullName?.trim();
-    if (cleanName != null && cleanName.isNotEmpty) {
-      await fbUser.updateDisplayName(cleanName);
-    }
+      final cleanName = fullName?.trim();
+      if (cleanName != null && cleanName.isNotEmpty) {
+        try {
+          await fbUser.updateDisplayName(cleanName);
+        } catch (_) {
+          // Non-fatal: profile hydration still uses cleanName.
+        }
+      }
 
-    return _hydrateOrCreateUserDoc(
-      fbUser,
-      fallbackEmail: trimmedEmail,
-      fallbackName: cleanName,
-      fallbackPhone: phone?.trim(),
-    );
+      return await _hydrateOrCreateUserDoc(
+        fbUser,
+        fallbackEmail: trimmedEmail,
+        fallbackName: cleanName,
+        fallbackPhone: phone?.trim(),
+      );
+    } on fb_auth.FirebaseAuthException catch (e) {
+      throw mapFirebaseAuthException(e, isEmailFlow: true);
+    }
   }
 
   @override
@@ -494,7 +611,11 @@ class FirebaseAuthRepository implements IAuthRepository {
     if (trimmedEmail.isEmpty) {
       throw ArgumentError.value(email, 'email', 'Email is required');
     }
-    await _firebaseAuth.sendPasswordResetEmail(email: trimmedEmail);
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: trimmedEmail);
+    } on fb_auth.FirebaseAuthException catch (e) {
+      throw mapFirebaseAuthException(e, isEmailFlow: true);
+    }
   }
 
   @override
@@ -520,21 +641,48 @@ class FirebaseAuthRepository implements IAuthRepository {
     String? fallbackName,
     String? fallbackPhone,
   }) async {
-    final existing = await _userStore.getUserDoc(fbUser.uid);
-    if (existing != null) {
-      final data = Map<String, dynamic>.from(existing);
-      data['id'] = fbUser.uid;
-      return UserModel.fromJson(data);
+    try {
+      final existing = await _userStore.getUserDoc(fbUser.uid);
+      if (existing != null) {
+        final data = Map<String, dynamic>.from(existing);
+        data['id'] = fbUser.uid;
+        return UserModel.fromJson(data);
+      }
+    } on FirebaseException catch (e) {
+      debugPrint(
+        'Firestore users/${fbUser.uid} read skipped (${e.code}): ${e.message}',
+      );
     }
+
+    final effectiveEmail = (fbUser.email ?? fallbackEmail)?.trim();
+    final trimmedFallbackName = fallbackName?.trim() ?? '';
+    final trimmedDisplayName = fbUser.displayName?.trim() ?? '';
+    var resolvedFullName = trimmedFallbackName.isNotEmpty
+        ? trimmedFallbackName
+        : trimmedDisplayName;
+    if (resolvedFullName.isEmpty &&
+        effectiveEmail != null &&
+        effectiveEmail.contains('@')) {
+      final emailPrefix =
+          effectiveEmail.substring(0, effectiveEmail.indexOf('@')).trim();
+      if (emailPrefix.length >= 2) {
+        resolvedFullName =
+            emailPrefix.length > 100 ? emailPrefix.substring(0, 100) : emailPrefix;
+      }
+    }
+
+    final trimmedFallbackPhone = fallbackPhone?.trim() ?? '';
+    final resolvedPhone = trimmedFallbackPhone.isNotEmpty
+        ? trimmedFallbackPhone
+        : (fbUser.phoneNumber != null
+            ? extractQatarLocalDigits(fbUser.phoneNumber!)
+            : '');
 
     final newUser = UserModel(
       id: fbUser.uid,
-      fullName: fallbackName ?? fbUser.displayName ?? '',
-      phone: fallbackPhone ??
-          (fbUser.phoneNumber != null
-              ? extractQatarLocalDigits(fbUser.phoneNumber!)
-              : ''),
-      email: fbUser.email ?? fallbackEmail,
+      fullName: resolvedFullName,
+      phone: resolvedPhone,
+      email: effectiveEmail,
       gender: UserGender.preferNotToSay,
       isVerified: false,
       idVerificationStatus: IdVerificationStatus.unverified,
@@ -548,7 +696,13 @@ class FirebaseAuthRepository implements IAuthRepository {
     final payload = Map<String, dynamic>.from(newUser.toJson())
       ..['createdAt'] = FieldValue.serverTimestamp()
       ..['updatedAt'] = FieldValue.serverTimestamp();
-    await _userStore.setUserDoc(fbUser.uid, payload, merge: true);
+    try {
+      await _userStore.setUserDoc(fbUser.uid, payload, merge: true);
+    } on FirebaseException catch (e) {
+      debugPrint(
+        'Firestore users/${fbUser.uid} write skipped (${e.code}): ${e.message}',
+      );
+    }
     return newUser;
   }
 

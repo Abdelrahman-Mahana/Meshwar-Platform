@@ -35,32 +35,41 @@ Future<String?> initializeMashwarStartup({
   Future<void> Function()? firebaseInitializer,
 }) async {
   final env = config ?? AppEnvironment.current;
+  final bool shouldUseFirebase = config != null
+      ? config.useFirebase
+      : (!env.useDevMocks &&
+          (!AppEnvironment.hasExplicitUseFirebase || env.useFirebase));
 
-  if (env.useFirebase) {
+  if (shouldUseFirebase) {
     try {
       if (firebaseInitializer != null) {
         await firebaseInitializer();
-      } else {
+      } else if (Firebase.apps.isEmpty) {
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
       }
+      AppEnvironment.setFirebaseRuntimeActive(true);
       AppRepositories.instance.useFirebase();
       return null;
     } catch (e) {
+      AppEnvironment.setFirebaseRuntimeActive(false);
       debugPrint('Firebase initialization error (${env.flavor.name}): $e');
       return 'Firebase initialization failed in ${env.flavor.name} mode: $e';
     }
   }
 
+  AppEnvironment.setFirebaseRuntimeActive(false);
   if (env.flavor != AppFlavor.development) {
     return 'Configuration error: ${env.flavor.name} builds require USE_FIREBASE=true.';
   }
 
   if (env.useDevMocks) {
-    AppRepositories.instance.useLocalMocks();
+    AppRepositories.instance.useLocalMocks(allowDevMocks: true);
+    return null;
   }
-  return null;
+
+  return 'Configuration error: USE_FIREBASE=false requires USE_DEV_MOCKS=true in development mode, or omit USE_FIREBASE to connect to Firebase.';
 }
 
 Future<void> main() async {

@@ -16,6 +16,7 @@ import 'package:mashwar/data/models/worksite_models.dart';
 import 'package:mashwar/data/repositories/app_repositories.dart';
 import 'package:mashwar/data/repositories/contracts/i_worksite_repository.dart';
 import 'package:mashwar/data/repositories/implementations/auth_repository_impl.dart';
+import 'package:mashwar/data/repositories/implementations/firebase/firebase_auth_repository.dart';
 import 'package:mashwar/data/repositories/implementations/firebase/firebase_provider_repository.dart';
 import 'package:mashwar/data/repositories/implementations/firebase/firebase_worksite_repository.dart';
 import 'package:mashwar/data/repositories/implementations/provider_repository_impl.dart';
@@ -1522,6 +1523,41 @@ void main() {
             .isDevMockActive,
         isFalse,
       );
+    });
+
+    test(
+        'initializeMashwarStartup() with null config connects to Firebase by default and rejects USE_FIREBASE=false without USE_DEV_MOCKS=true',
+        () async {
+      addTearDown(() {
+        AppEnvironment.setFirebaseRuntimeActive(false);
+        AppRepositories.instance.useLocalMocks();
+      });
+
+      var initializerCalls = 0;
+      final defaultStartupErr = await initializeMashwarStartup(
+        firebaseInitializer: () async {
+          initializerCalls++;
+        },
+      );
+      expect(defaultStartupErr, isNull);
+      expect(initializerCalls, 1);
+      expect(AppEnvironment.isFirebaseRuntimeActive, isTrue);
+      expect(AppRepositories.instance.auth, isA<FirebaseAuthRepository>());
+      expect(
+        AppRepositories.instance.auth,
+        isNot(isA<DevMockAuthRepository>()),
+      );
+
+      final explicitFalseNoMocksErr = await initializeMashwarStartup(
+        config: AppEnvironmentConfig.resolve(
+          rawAppEnv: 'development',
+          useFirebase: false,
+          requestedDevMocks: false,
+        ),
+      );
+      expect(explicitFalseNoMocksErr, isNotNull);
+      expect(explicitFalseNoMocksErr, contains('USE_DEV_MOCKS=true'));
+      expect(AppEnvironment.isFirebaseRuntimeActive, isFalse);
     });
 
     testWidgets(

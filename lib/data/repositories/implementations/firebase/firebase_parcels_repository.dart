@@ -4,10 +4,13 @@ import '../../contracts/i_parcels_repository.dart';
 import '../../../services/firebase_firestore_service.dart';
 
 class FirebaseParcelsRepository implements IParcelsRepository {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
 
   FirebaseParcelsRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _injectedFirestore = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<List<ParcelModel>> getParcels() async {

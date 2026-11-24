@@ -38,7 +38,7 @@ class DevMockAuthRepository implements IAuthRepository {
   bool get isDevMockActive {
     if (!AppEnvironment.isDevMocksAllowed(
       flavor: AppEnvironment.flavor,
-      useFirebase: AppEnvironment.useFirebase,
+      useFirebase: AppEnvironment.isFirebaseRuntimeActive,
     )) {
       return false;
     }

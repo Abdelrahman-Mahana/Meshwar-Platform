@@ -4,10 +4,13 @@ import '../../contracts/i_wallet_repository.dart';
 import '../../../services/firebase_firestore_service.dart';
 
 class FirebaseWalletRepository implements IWalletRepository {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
 
   FirebaseWalletRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _injectedFirestore = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<double> getBalance(String userId) async {

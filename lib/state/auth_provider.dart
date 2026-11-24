@@ -79,7 +79,7 @@ class AuthProvider extends ChangeNotifier {
       _requestedDevMockAuth &&
       AppEnvironment.isDevMocksAllowed(
         flavor: AppEnvironment.flavor,
-        useFirebase: AppEnvironment.useFirebase,
+        useFirebase: AppEnvironment.isFirebaseRuntimeActive,
       );
 
   /// Whether Phone SMS OTP (+974) can be initiated via Firebase Auth or explicit dev-mock mode.

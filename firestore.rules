@@ -576,8 +576,8 @@ service cloud.firestore {
       return val == null || (val is string && val.size() > 0 && val.size() <= maxLen);
     }
 
-    function isValidCoordVal(val, maxAbs) {
-      return val == null || (val is number && val >= -maxAbs && val <= maxAbs);
+    function isValidCoordVal(val, minVal, maxVal) {
+      return val == null || (val is number && val >= minVal && val <= maxVal);
     }
 
     function isValidOptMvpUrlVal(val) {
@@ -592,18 +592,18 @@ service cloud.firestore {
       return val == null || val is timestamp;
     }
 
-    // Location field validator for work_requests (supports string address OR structured map)
+    // Location field validator for work_requests (supports structured map OR string address)
     function isValidLocationField(val) {
-      return (val is string && val.size() > 0 && val.size() <= 300) ||
-        (val is map && val.size() > 0 &&
+      return (val is map && val.size() > 0 &&
           val.keys().hasOnly(['label', 'address', 'area', 'notes', 'lat', 'lng', 'placeId']) &&
           isValidLocStr(val.get('label', null), 200) &&
           isValidLocStr(val.get('address', null), 300) &&
           isValidLocStr(val.get('area', null), 100) &&
           (val.get('notes', null) == null || (val.notes is string && val.notes.size() <= 300)) &&
           isValidLocStr(val.get('placeId', null), 200) &&
-          isValidCoordVal(val.get('lat', null), 90) &&
-          isValidCoordVal(val.get('lng', null), 180));
+          isValidCoordVal(val.get('lat', null), -90, 90) &&
+          isValidCoordVal(val.get('lng', null), -180, 180)) ||
+        (val is string && val.size() > 0 && val.size() <= 300);
     }
 
     // ==========================================================================
@@ -629,8 +629,8 @@ service cloud.firestore {
       return hasOnlyAllowedFields(data, allowed) &&
         hasRequiredFields(data, required) &&
         validString(data.id, 1, 128) &&
-        validString(data.fullName, 2, 100) &&
-        isValidPhone(data.phone) &&
+        (data.fullName == '' || validString(data.fullName, 2, 100)) &&
+        (data.phone == '' || isValidPhone(data.phone)) &&
         data.gender in ['male', 'female', 'preferNotToSay'] &&
         data.isVerified is bool &&
         data.idVerificationStatus in ['unverified', 'underReview', 'verified', 'rejected'] &&
@@ -1324,8 +1324,8 @@ service cloud.firestore {
         validOptionalTimestamp(data, 'updatedAt');
     }
 
-    // Base schema & shared invariant fields for work_requests/{requestId} (create + update)
-    function isValidWorkRequestBase(data) {
+    // Shared key whitelist & required keys for work_requests/{requestId}
+    function hasValidWorkRequestKeys(data) {
       let allowed = [
         'id', 'requesterId', 'category', 'title', 'description',
         'pickupLocation', 'deliveryLocation', 'deliveryArea',
@@ -1342,7 +1342,12 @@ service cloud.firestore {
         'offerCount', 'selectedOfferId', 'assignedProviderId'
       ];
       return hasOnlyAllowedFields(data, allowed) &&
-        hasRequiredFields(data, required) &&
+        hasRequiredFields(data, required);
+    }
+
+    // Create validator for work_requests/{requestId} (enforces clean initial state + full locations & ref URLs)
+    function isValidWorkRequest(data) {
+      return hasValidWorkRequestKeys(data) &&
         validString(data.id, 1, 128) &&
         validString(data.requesterId, 1, 128) &&
         data.category == 'worksite_supply' &&
@@ -1351,14 +1356,6 @@ service cloud.firestore {
         validString(data.deliveryArea, 1, 120) &&
         data.budgetMinor is int && data.budgetMinor > 0 && data.budgetMinor <= 50000000 &&
         data.paymentMethod in ['cash_on_delivery', 'bank_transfer_manual'] &&
-        isValidOptStringVal(data.get('sourceRequestId', null), 1, 128) &&
-        isValidOptTimestampVal(data.get('createdAt', null)) &&
-        isValidOptTimestampVal(data.get('updatedAt', null));
-    }
-
-    // Create validator for work_requests/{requestId} (enforces clean initial state + full locations & ref URLs)
-    function isValidWorkRequest(data) {
-      return isValidWorkRequestBase(data) &&
         data.status == 'open' &&
         data.offerCount == 0 &&
         data.selectedOfferId == null &&
@@ -1368,30 +1365,59 @@ service cloud.firestore {
         data.get('agreedAmountMinor', null) == null &&
         data.get('agreedFeeMinor', null) == null &&
         (data.get('invoiceImageUrls', null) == null || (data.invoiceImageUrls is list && data.invoiceImageUrls.size() == 0)) &&
+        isValidOptStringVal(data.get('sourceRequestId', null), 1, 128) &&
+        isValidOptTimestampVal(data.get('createdAt', null)) &&
+        isValidOptTimestampVal(data.get('updatedAt', null)) &&
         isValidLocationField(data.pickupLocation) &&
         isValidLocationField(data.deliveryLocation) &&
         (!('referenceImageUrls' in data) || data.referenceImageUrls == null || isValidUrlListMax5(data.referenceImageUrls));
     }
 
-    // Update validator for work_requests/{requestId} (skips unchanged heavy maps & URL lists)
+    // Client update schema validator (requester/provider transitions already lock status, paymentStatus, paymentProofUrl, and all immutable/location/ref fields)
+    function isValidWorkRequestClientUpdate(data, prev) {
+      return (data.keys() == prev.keys() || hasValidWorkRequestKeys(data)) &&
+        (data.get('updatedAt', null) == prev.get('updatedAt', null) || isValidOptTimestampVal(data.get('updatedAt', null))) &&
+        (data.get('invoiceImageUrls', null) == prev.get('invoiceImageUrls', null) || data.get('invoiceImageUrls', null) == null || isValidUrlListMax5(data.invoiceImageUrls));
+    }
+
+    // Full update validator for admin work_requests/{requestId} edits (pair with areImmutableFieldsUnchanged; skips unchanged heavy maps, lists, and paymentProofUrl)
     function isValidWorkRequestUpdate(data, prev) {
-      return isValidWorkRequestBase(data) &&
-        data.paymentStatus in ['unpaid', 'transfer_proof_submitted', 'verified_settled', 'refunded', 'disputed'] &&
-        isValidOptMvpUrlVal(data.get('paymentProofUrl', null)) &&
-        data.status in [
+      let changed = data.diff(prev).affectedKeys();
+      return (data.keys() == prev.keys() || hasValidWorkRequestKeys(data)) &&
+        (!('status' in changed) || data.status in [
           'open', 'offer_received', 'accepted', 'in_progress',
           'picked_up', 'in_transit', 'delivered_pending_confirmation',
           'completed', 'cancelled', 'disputed'
-        ] &&
-        data.offerCount is int && data.offerCount >= 0 && data.offerCount <= 1000 &&
-        isValidOptStringVal(data.get('selectedOfferId', null), 1, 128) &&
-        isValidOptStringVal(data.get('assignedProviderId', null), 1, 128) &&
-        isValidOptIntRange(data.get('agreedAmountMinor', null), 1, 50000000) &&
-        isValidOptIntRange(data.get('agreedFeeMinor', null), 0, 50000000) &&
-        (('pickupLocation' in prev && data.pickupLocation == prev.pickupLocation) || isValidLocationField(data.pickupLocation)) &&
-        (('deliveryLocation' in prev && data.deliveryLocation == prev.deliveryLocation) || isValidLocationField(data.deliveryLocation)) &&
-        (!('referenceImageUrls' in data) || data.referenceImageUrls == null || ('referenceImageUrls' in prev && data.referenceImageUrls == prev.referenceImageUrls) || isValidUrlListMax5(data.referenceImageUrls)) &&
-        (!('invoiceImageUrls' in data) || data.invoiceImageUrls == null || ('invoiceImageUrls' in prev && data.invoiceImageUrls == prev.invoiceImageUrls) || isValidUrlListMax5(data.invoiceImageUrls));
+        ]) &&
+        (!('updatedAt' in changed) || isValidOptTimestampVal(data.get('updatedAt', null))) &&
+        (
+          !changed.hasAny([
+            'paymentStatus', 'paymentProofUrl',
+            'category', 'title', 'description', 'deliveryArea',
+            'budgetMinor', 'paymentMethod', 'sourceRequestId',
+            'offerCount', 'selectedOfferId', 'assignedProviderId',
+            'agreedAmountMinor', 'agreedFeeMinor'
+          ]) || (
+            (!('paymentStatus' in changed) || data.paymentStatus in ['unpaid', 'transfer_proof_submitted', 'verified_settled', 'refunded', 'disputed']) &&
+            (!('paymentProofUrl' in changed) || isValidOptMvpUrlVal(data.get('paymentProofUrl', null))) &&
+            (!('category' in changed) || data.category == 'worksite_supply') &&
+            (!('title' in changed) || validString(data.title, 2, 160)) &&
+            (!('description' in changed) || validString(data.description, 1, 2000)) &&
+            (!('deliveryArea' in changed) || validString(data.deliveryArea, 1, 120)) &&
+            (!('budgetMinor' in changed) || (data.budgetMinor is int && data.budgetMinor > 0 && data.budgetMinor <= 50000000)) &&
+            (!('paymentMethod' in changed) || data.paymentMethod in ['cash_on_delivery', 'bank_transfer_manual']) &&
+            (!('sourceRequestId' in changed) || isValidOptStringVal(data.get('sourceRequestId', null), 1, 128)) &&
+            (!('offerCount' in changed) || (data.offerCount is int && data.offerCount >= 0 && data.offerCount <= 1000)) &&
+            (!('selectedOfferId' in changed) || isValidOptStringVal(data.get('selectedOfferId', null), 1, 128)) &&
+            (!('assignedProviderId' in changed) || isValidOptStringVal(data.get('assignedProviderId', null), 1, 128)) &&
+            (!('agreedAmountMinor' in changed) || isValidOptIntRange(data.get('agreedAmountMinor', null), 1, 50000000)) &&
+            (!('agreedFeeMinor' in changed) || isValidOptIntRange(data.get('agreedFeeMinor', null), 0, 50000000))
+          )
+        ) &&
+        (!('pickupLocation' in changed) || isValidLocationField(data.pickupLocation)) &&
+        (!('deliveryLocation' in changed) || isValidLocationField(data.deliveryLocation)) &&
+        (!('referenceImageUrls' in changed) || data.get('referenceImageUrls', null) == null || isValidUrlListMax5(data.referenceImageUrls)) &&
+        (!('invoiceImageUrls' in changed) || data.get('invoiceImageUrls', null) == null || isValidUrlListMax5(data.invoiceImageUrls));
     }
 
     function isActiveWorkRequestStatus(status) {
@@ -1418,49 +1444,47 @@ service cloud.firestore {
     }
 
     function isValidWorkRequestRequesterTransition(prev, next) {
-      return next.status != 'completed' && (
-        (
-          next.diff(prev).affectedKeys().hasOnly(['status', 'updatedAt']) && (
-            (prev.status in ['open', 'offer_received'] && next.status == 'cancelled') ||
-            (isActiveWorkRequestStatus(prev.status) && next.status == 'disputed')
-          )
-        ) ||
-        (
-          next.diff(prev).affectedKeys().hasOnly(['paymentStatus', 'paymentProofUrl', 'updatedAt']) &&
-          !(prev.status in ['cancelled', 'completed']) &&
-          prev.paymentMethod == 'bank_transfer_manual' &&
-          prev.paymentStatus == 'unpaid' &&
-          next.paymentStatus == 'transfer_proof_submitted' &&
-          next.status == prev.status &&
-          'paymentProofUrl' in next &&
-          isValidMvpUrl(next.paymentProofUrl)
+      let changed = next.diff(prev).affectedKeys();
+      return (
+        changed.hasOnly(['status', 'updatedAt']) && (
+          (prev.status in ['open', 'offer_received'] && next.status == 'cancelled') ||
+          (isActiveWorkRequestStatus(prev.status) && next.status == 'disputed')
         )
+      ) ||
+      (
+        changed.hasOnly(['paymentStatus', 'paymentProofUrl', 'updatedAt']) &&
+        !(prev.status in ['cancelled', 'completed']) &&
+        prev.paymentMethod == 'bank_transfer_manual' &&
+        prev.paymentStatus == 'unpaid' &&
+        next.paymentStatus == 'transfer_proof_submitted' &&
+        next.status == prev.status &&
+        'paymentProofUrl' in next &&
+        isValidMvpUrl(next.paymentProofUrl)
       );
     }
 
-    // Must be paired with isValidWorkRequestClientFinancialGuard() in allow update
+    // Must be paired with isSignedIn() and isValidWorkRequestClientFinancialGuard() in allow update
     function isValidWorkRequestRequesterUpdate() {
-      return isSignedIn() &&
-        resource.data.requesterId == request.auth.uid &&
+      return resource.data.requesterId == request.auth.uid &&
+        request.resource.data.status != 'completed' &&
         isValidWorkRequestRequesterTransition(resource.data, request.resource.data);
     }
 
     function isValidWorkRequestProviderTransition(prev, next) {
-      return next.status != 'completed' &&
-        next.diff(prev).affectedKeys().hasOnly(['status', 'invoiceImageUrls', 'updatedAt']) && (
-          (prev.status == 'accepted' && next.status == 'in_progress') ||
-          (prev.status == 'in_progress' && next.status == 'picked_up') ||
-          (prev.status == 'picked_up' && next.status == 'in_transit') ||
-          (prev.status == 'in_transit' && next.status == 'delivered_pending_confirmation') ||
-          (isActiveWorkRequestStatus(prev.status) && (next.status == 'disputed' || next.status == prev.status))
-        );
+      return next.diff(prev).affectedKeys().hasOnly(['status', 'invoiceImageUrls', 'updatedAt']) && (
+        (prev.status == 'accepted' && next.status == 'in_progress') ||
+        (prev.status == 'in_progress' && next.status == 'picked_up') ||
+        (prev.status == 'picked_up' && next.status == 'in_transit') ||
+        (prev.status == 'in_transit' && next.status == 'delivered_pending_confirmation') ||
+        (isActiveWorkRequestStatus(prev.status) && (next.status == 'disputed' || next.status == prev.status))
+      );
     }
 
-    // Must be paired with isValidWorkRequestClientFinancialGuard() in allow update
+    // Must be paired with isSignedIn() and isValidWorkRequestClientFinancialGuard() in allow update
     function isValidWorkRequestProviderUpdate() {
-      return isSignedIn() &&
-        resource.data.assignedProviderId == request.auth.uid &&
+      return resource.data.assignedProviderId == request.auth.uid &&
         isApprovedProvider(request.auth.uid) &&
+        request.resource.data.status != 'completed' &&
         isValidWorkRequestProviderTransition(resource.data, request.resource.data);
     }
 
@@ -2364,20 +2388,19 @@ service cloud.firestore {
         request.resource.data.requesterId == request.auth.uid &&
         isValidWorkRequest(request.resource.data);
 
-      // Update: Administrator OR strict role-based requester / approved assigned provider transitions
-      allow update: if isSignedIn() &&
-        isValidWorkRequestUpdate(request.resource.data, resource.data) && (
+      // Update: Strict role-based requester / approved assigned provider transitions OR administrator
+      allow update: if (
+        isSignedIn() &&
         (
-          isAdmin() &&
-          areImmutableFieldsUnchanged(['id', 'requesterId', 'createdAt'])
-        ) ||
-        (
-          (
-            isValidWorkRequestRequesterUpdate() ||
-            isValidWorkRequestProviderUpdate()
-          ) &&
-          isValidWorkRequestClientFinancialGuard()
-        )
+          isValidWorkRequestRequesterUpdate() ||
+          isValidWorkRequestProviderUpdate()
+        ) &&
+        isValidWorkRequestClientFinancialGuard() &&
+        isValidWorkRequestClientUpdate(request.resource.data, resource.data)
+      ) || (
+        isAdmin() &&
+        areImmutableFieldsUnchanged(['id', 'requesterId', 'createdAt']) &&
+        isValidWorkRequestUpdate(request.resource.data, resource.data)
       );
 
       // Delete: Forbidden from client SDKs to preserve financial & operational audit trail

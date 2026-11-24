@@ -7,11 +7,14 @@ import '../admin_repository_impl.dart';
 /// Synchronizes platform configuration, service catalog rules, corridors, feature flags,
 /// and immutable audit logs with graceful offline fallback to [AdminRepositoryImpl].
 class FirebaseAdminRepository implements IAdminRepository {
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _injectedFirestore;
   final AdminRepositoryImpl _localFallback = AdminRepositoryImpl();
 
   FirebaseAdminRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _injectedFirestore = firestore;
+
+  FirebaseFirestore get _firestore =>
+      _injectedFirestore ?? FirebaseFirestore.instance;
 
   DocumentReference<Map<String, dynamic>> get _globalSnapshotDoc =>
       _firestore.collection(FirestoreCollections.platformConfig).doc('global');

@@ -47,10 +47,10 @@ jobs:
         run: flutter pub get
 
       - name: Build Consumer Web App
-        run: flutter build web --release --base-href /
+        run: flutter build web --release --base-href / --dart-define=APP_ENV=production --dart-define=USE_FIREBASE=true
 
       - name: Build Standalone Admin & DevOps Portal
-        run: flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin
+        run: flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin --dart-define=APP_ENV=production --dart-define=USE_FIREBASE=true
 
       - name: Verify build manifest & health endpoint
         run: |

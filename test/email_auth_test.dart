@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:mashwar/core/localization/app_strings.dart';
 import 'package:mashwar/core/theme/app_theme.dart';
 import 'package:mashwar/data/repositories/implementations/auth_repository_impl.dart';
+import 'package:mashwar/data/repositories/implementations/firebase/firebase_auth_repository.dart';
 import 'package:mashwar/screens/auth/email_input_screen.dart';
 import 'package:mashwar/screens/auth/otp_verification_screen.dart';
 import 'package:mashwar/screens/auth/phone_input_screen.dart';
@@ -202,6 +204,52 @@ void main() {
         expect(find.byType(PhoneInputScreen), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'EmailInputScreen renders clean Arabic localizedError without exception prefixes and shows phone switch CTA when isPhoneAuthAvailable is true',
+      (WidgetTester tester) async {
+        final fakeFbAuth = _ErrorThrowingFirebaseAuth();
+        final repo = FirebaseAuthRepository.withUserStore(
+          firebaseAuth: fakeFbAuth,
+          userStore: _NoopUserStore(),
+        );
+        final auth = AuthProvider(
+          authRepository: repo,
+          useDevMockAuth: false,
+        );
+        expect(auth.isDevMockAuthEnabled, isFalse);
+        expect(auth.isPhoneAuthAvailable, isTrue);
+
+        await tester.pumpWidget(
+          buildAppWidget(child: const EmailInputScreen(), auth: auth),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('المتابعة برقم الجوال بدلاً من ذلك'), findsOneWidget);
+
+        await tester.enterText(
+          find.byKey(const ValueKey('auth_email_input')),
+          'wrong@mashwar.qa',
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('auth_password_input')),
+          'badpass123',
+        );
+        final submitBtn = find.byKey(const ValueKey('auth_submit_btn'));
+        await tester.ensureVisible(submitBtn);
+        await tester.tap(submitBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const ValueKey('auth_error_banner')), findsOneWidget);
+        expect(
+          find.textContaining('البريد الإلكتروني أو كلمة المرور غير صحيحة'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('AuthException('), findsNothing);
+        expect(find.textContaining('DevMockAuthRepository'), findsNothing);
+        auth.dispose();
+      },
+    );
   });
 
   group('OtpVerificationScreen with Email Mode Tests', () {
@@ -227,4 +275,42 @@ void main() {
       },
     );
   });
+}
+
+class _ErrorThrowingFirebaseAuth implements fb_auth.FirebaseAuth {
+  @override
+  fb_auth.User? get currentUser => null;
+
+  @override
+  Future<fb_auth.UserCredential> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    throw fb_auth.FirebaseAuthException(
+      code: 'invalid-credential',
+      message: 'The supplied auth credential is incorrect.',
+    );
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _NoopUserStore implements FirebaseAuthUserStore {
+  @override
+  Future<Map<String, dynamic>?> getUserDoc(String uid) async => null;
+
+  @override
+  Future<void> setProviderVerificationDoc(
+    String uid,
+    Map<String, dynamic> data, {
+    bool merge = true,
+  }) async {}
+
+  @override
+  Future<void> setUserDoc(
+    String uid,
+    Map<String, dynamic> data, {
+    bool merge = true,
+  }) async {}
 }

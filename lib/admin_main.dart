@@ -17,14 +17,28 @@ import 'data/services/firebase_firestore_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (FirebaseConfig.useFirebase || AppEnvironment.useFirebase) {
+  final shouldUseFirebase = !AppEnvironment.useDevMocks &&
+      (!AppEnvironment.hasExplicitUseFirebase ||
+          AppEnvironment.useFirebase ||
+          FirebaseConfig.useFirebase);
+
+  if (shouldUseFirebase) {
     try {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+      }
+      AppEnvironment.setFirebaseRuntimeActive(true);
       AppRepositories.instance.useFirebase();
     } catch (e) {
+      AppEnvironment.setFirebaseRuntimeActive(false);
       debugPrint('Firebase admin initialization notice: $e');
+    }
+  } else {
+    AppEnvironment.setFirebaseRuntimeActive(false);
+    if (AppEnvironment.useDevMocks) {
+      AppRepositories.instance.useLocalMocks(allowDevMocks: true);
     }
   }
 

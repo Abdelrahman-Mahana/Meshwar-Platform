@@ -77,6 +77,19 @@ class AppEnvironment {
     defaultValue: false,
   );
 
+  static const bool hasExplicitUseFirebase = bool.hasEnvironment(
+    'USE_FIREBASE',
+  );
+
+  static bool _runtimeFirebaseActive = false;
+
+  static bool get isFirebaseRuntimeActive =>
+      useFirebase || _runtimeFirebaseActive;
+
+  static void setFirebaseRuntimeActive(bool active) {
+    _runtimeFirebaseActive = active;
+  }
+
   static const bool rawUseDevMocks = bool.fromEnvironment(
     'USE_DEV_MOCKS',
     defaultValue: false,
@@ -107,7 +120,7 @@ class AppEnvironment {
   /// or whenever Firebase is enabled.
   static bool get useDevMocks => resolveUseDevMocks(
         flavor: flavor,
-        useFirebase: useFirebase,
+        useFirebase: isFirebaseRuntimeActive,
         requestedDevMocks: rawUseDevMocks,
       );
 
