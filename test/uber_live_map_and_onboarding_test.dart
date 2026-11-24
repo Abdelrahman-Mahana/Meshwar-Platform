@@ -18,6 +18,7 @@ import 'package:mashwar/state/board_provider.dart';
 import 'package:mashwar/state/parcels_provider.dart';
 import 'package:mashwar/state/rides_provider.dart';
 import 'package:mashwar/state/settings_provider.dart';
+import 'package:mashwar/state/worksite_provider.dart';
 
 void main() {
   Widget wrapApp(Widget child, {AuthProvider? auth, RidesProvider? rides, SettingsProvider? settings}) {
@@ -31,6 +32,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => BoardProvider()),
         ChangeNotifierProvider(create: (_) => AlertsProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
+        ChangeNotifierProvider(create: (_) => WorksiteProvider()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, s, _) => MaterialApp(
@@ -100,11 +102,11 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
-    // 1. WelcomeScreen renders live Qatar map card on mobile without errors
+    // 1. WelcomeScreen renders honest Qatar Worksite Supply onboarding without errors
     await tester.pumpWidget(wrapApp(const WelcomeScreen()));
     await tester.pumpAndSettle();
-    expect(find.byType(QatarLiveMapCanvas), findsOneWidget);
-    expect(find.text('خدمات ومشاوير حية · حماية Escrow'), findsOneWidget);
+    expect(find.text('توريد مواقع العمل والمشاريع في قطر'), findsOneWidget);
+    expect(find.text('المتابعة بالبريد الإلكتروني'), findsOneWidget);
 
     // 2. LocationPermissionScreen displays live Qatar preview card and advances to Notifications
     await tester.pumpWidget(wrapApp(const LocationPermissionScreen()));
@@ -124,7 +126,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('HomeScreen displays live animated Qatar map hero, corridor pills, and clean action cards across all viewports', (tester) async {
+  testWidgets('HomeScreen displays focused Worksite Supply hero and clean action CTAs across all viewports', (tester) async {
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
@@ -146,25 +148,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.byType(QatarLiveMapCanvas), findsOneWidget);
-      expect(find.text('أطلب خدمة أو مشوار'), findsOneWidget);
-      expect(find.text('أقدّم خدمة بطريقي'), findsOneWidget);
-      expect(find.text('وش الخدمة أو المشوار اللي محتاجه اليوم؟'), findsOneWidget);
+      expect(find.text('شنو تحتاج ينجز اليوم؟'), findsOneWidget);
+      expect(find.text('إنشاء طلب توريد'), findsOneWidget);
+      expect(find.text('تصفح الطلبات المتاحة'), findsOneWidget);
     }
-
-    // Interactive corridor tap updates RidesProvider live route
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1.0;
-    final rides = RidesProvider();
-    await tester.pumpWidget(wrapApp(const HomeScreen(), rides: rides));
-    await tester.pumpAndSettle();
-
-    final corridorPill = find.text('الدوحة ← لوسيل').first;
-    await tester.ensureVisible(corridorPill);
-    await tester.tap(corridorPill);
-    await tester.pumpAndSettle();
-    expect(rides.fromCity, 'الدوحة');
-    expect(rides.toCity, 'لوسيل');
-    expect(tester.takeException(), isNull);
   });
 }

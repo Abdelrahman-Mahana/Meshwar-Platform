@@ -1,70 +1,184 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
-import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
-import '../../core/widgets/mashwar_onboarding_shell.dart';
 import '../../state/auth_provider.dart';
-import 'otp_verification_screen.dart';
+import '../main_nav_shell.dart';
 import 'phone_input_screen.dart';
 
-/// Market-leading, minimalist Email input screen (Uber / inDrive standard).
-/// Responsive layout:
-/// - Wide / Desktop (>= 840px): 2-column split canvas (Left: Brand & Student/Enterprise benefits, Right: Email entry card)
-/// - Mobile (< 840px): Full-height balanced vertical distribution with Step Progress, Demo chip & Benefits card
+/// Real Email + Password Authentication screen supporting both Sign In
+/// (`AuthProvider.loginWithEmail`) and Create Account (`AuthProvider.registerWithEmail`),
+/// plus password reset (`AuthProvider.sendPasswordReset`).
 class EmailInputScreen extends StatefulWidget {
-  const EmailInputScreen({super.key});
+  final bool initialIsRegister;
+
+  const EmailInputScreen({
+    super.key,
+    this.initialIsRegister = false,
+  });
 
   @override
   State<EmailInputScreen> createState() => _EmailInputScreenState();
 }
 
 class _EmailInputScreenState extends State<EmailInputScreen> {
-  final TextEditingController _emailController = TextEditingController(text: 'user@mashwar.qa');
-  final FocusNode _focusNode = FocusNode();
-  String? _errorText;
-  bool _isFocused = false;
+  late bool _isRegister;
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
+  bool _obscurePassword = true;
+  String? _validationError;
+  String? _infoBanner;
 
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(() {
-      if (mounted) setState(() => _isFocused = _focusNode.hasFocus);
-    });
+    _isRegister = widget.initialIsRegister;
   }
 
   @override
   void dispose() {
+    _fullNameController.dispose();
+    _phoneController.dispose();
     _emailController.dispose();
-    _focusNode.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _handleSubmit(bool isAr) async {
+  Future<void> _handleSubmit(BuildContext context, bool isAr) async {
+    final auth = context.read<AuthProvider>();
+    auth.clearError();
+    setState(() {
+      _validationError = null;
+      _infoBanner = null;
+    });
+
     final email = _emailController.text.trim();
-    final validationError = AuthProvider.validateEmail(email);
-    if (validationError != null) {
+    final password = _passwordController.text;
+
+    final emailErr = AuthProvider.validateEmail(email);
+    if (emailErr != null) {
       setState(() {
-        _errorText = isAr ? validationError : 'Please enter a valid email address';
+        _validationError =
+            isAr ? emailErr : 'Please enter a valid email address.';
       });
       return;
     }
 
-    setState(() => _errorText = null);
+    if (!_isRegister) {
+      if (password.isEmpty) {
+        setState(() {
+          _validationError =
+              isAr ? 'يرجى إدخال كلمة المرور.' : 'Password is required.';
+        });
+        return;
+      }
 
-    final auth = context.read<AuthProvider>();
-    final success = await auth.sendEmailOtp(email);
-    if (success && mounted) {
-      Navigator.of(context).push(
-        MashwarPageRoute(
-          builder: (_) => OtpVerificationScreen(email: email),
-        ),
+      final ok = await auth.loginWithEmail(email, password);
+      if (!context.mounted) return;
+      if (ok && auth.isAuthenticated) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainNavShell()),
+          (route) => false,
+        );
+      }
+      return;
+    }
+
+    // Registration validation
+    final fullName = _fullNameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (fullName.length < 2) {
+      setState(() {
+        _validationError = isAr
+            ? 'يرجى إدخال الاسم الكامل (حرفان على الأقل).'
+            : 'Please enter your full name (at least 2 characters).';
+      });
+      return;
+    }
+
+    if (phone.isNotEmpty) {
+      final phoneErr = AuthProvider.validateQatarPhone(phone);
+      if (phoneErr != null) {
+        setState(() {
+          _validationError = isAr
+              ? phoneErr
+              : 'Phone must be 8 digits starting with 3, 5, 6, or 7.';
+        });
+        return;
+      }
+    }
+
+    if (password.length < 6) {
+      setState(() {
+        _validationError = isAr
+            ? 'كلمة المرور يجب أن تتكون من 6 أحرف أو أرقام على الأقل.'
+            : 'Password must be at least 6 characters.';
+      });
+      return;
+    }
+
+    if (confirmPassword != password) {
+      setState(() {
+        _validationError = isAr
+            ? 'كلمتا المرور غير متطابقتين.'
+            : 'Passwords do not match.';
+      });
+      return;
+    }
+
+    final ok = await auth.registerWithEmail(
+      email: email,
+      password: password,
+      fullName: fullName,
+      phone: phone.isNotEmpty ? phone : null,
+    );
+    if (!context.mounted) return;
+    if (ok && auth.isAuthenticated) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainNavShell()),
+        (route) => false,
       );
+    }
+  }
+
+  Future<void> _handleForgotPassword(BuildContext context, bool isAr) async {
+    final auth = context.read<AuthProvider>();
+    auth.clearError();
+    final email = _emailController.text.trim();
+    final emailErr = AuthProvider.validateEmail(email);
+    if (emailErr != null) {
+      setState(() {
+        _validationError = isAr
+            ? 'أدخل بريدك الإلكتروني أولاً لإرسال رابط استعادة كلمة المرور.'
+            : 'Enter a valid email address first to reset your password.';
+        _infoBanner = null;
+      });
+      return;
+    }
+
+    setState(() => _validationError = null);
+    final ok = await auth.sendPasswordReset(email);
+    if (!mounted) return;
+    if (ok) {
+      setState(() {
+        _infoBanner = isAr
+            ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى $email.'
+            : 'Password reset link sent to $email.';
+      });
     }
   }
 
@@ -72,262 +186,404 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final isAr = context.isArabic;
-    final hasError = _errorText != null && _errorText!.isNotEmpty;
+    final activeError = _validationError ?? auth.lastError;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
+        toolbarHeight: 46,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.navy),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
       ),
       body: SafeArea(
-        child: MashwarOnboardingShell(
-          isAr: isAr,
-          showcaseBadge: isAr ? 'للأفراد والشركات' : 'Personal & Teams',
-          showcaseTitle: isAr
-              ? 'حساب موثّق لخدماتك اليومية وتوريدات المواقع'
-              : 'Verified account for errands, site supplies & rides',
-          showcaseSubtitle: isAr
-              ? 'استلم فواتير الشراء المعتمدة وإيصالات الضمان المالي Escrow مباشرة على بريدك.'
-              : 'Receive approved store receipts & MASHWAR Escrow statements directly by email.',
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return _buildSingleLayout(context, auth, isAr, hasError, constraints);
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSingleLayout(
-    BuildContext context,
-    AuthProvider auth,
-    bool isAr,
-    bool hasError,
-    BoxConstraints constraints,
-  ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimens.space24,
-        vertical: AppDimens.space16,
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            MashwarFadeSlideIn(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 500),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.space24,
+                vertical: 8,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top: Onboarding Progress + Brand Identity Header with Step Indicator
-                  MashwarOnboardingStepBar(
-                    currentStep: 1,
-                    totalSteps: 4,
-                    isAr: isAr,
-                    stepTitle: isAr ? 'تأكيد البريد' : 'Email Verification',
+                  const BrandLogo(fontSize: 24),
+                  const SizedBox(height: 8),
+                  Text(
+                    _isRegister
+                        ? (isAr
+                            ? 'إنشاء حساب في مشوار قطر'
+                            : 'Create Your MASHWAR Account')
+                        : (isAr
+                            ? 'تسجيل الدخول بالبريد الإلكتروني'
+                            : 'Sign In with Email'),
+                    style: AppTypography.largeTitle().copyWith(fontSize: 22),
                   ),
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const BrandLogo(fontSize: 26),
-                      _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
-                    ],
+                  const SizedBox(height: 4),
+                  Text(
+                    _isRegister
+                        ? (isAr
+                            ? 'أنشئ حساباً حقيقياً لطلب توريد مواقع العمل أو التقدم كمزود معتمد.'
+                            : 'Register with your email and password to create worksite requests or verify as a provider.')
+                        : (isAr
+                            ? 'أدخل بريدك الإلكتروني وكلمة المرور للوصول إلى طلباتك ومواقعك.'
+                            : 'Enter your email address and password to access your worksite supply account.'),
+                    style: AppTypography.bodySecondary().copyWith(fontSize: 13),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
-                  // Title & Subtitle
-                  Text(
-                    isAr ? 'أدخل بريدك الإلكتروني' : 'Enter your email',
-                    style: AppTypography.largeTitle().copyWith(fontSize: 26),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isAr
-                        ? 'سنرسل لك رمز تحقق لتسجيل الدخول أو إنشاء حساب'
-                        : 'We will send you a verification code to log in or create an account',
-                    style: AppTypography.bodySecondary(),
+                  // Mode Segmented Switch (Sign In vs Create Account)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            key: const ValueKey('auth_mode_login_tab'),
+                            onTap: () {
+                              auth.clearError();
+                              setState(() {
+                                _isRegister = false;
+                                _validationError = null;
+                                _infoBanner = null;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: !_isRegister
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  isAr ? 'تسجيل الدخول' : 'Sign In',
+                                  style: AppTypography.bodySecondary(
+                                    color: !_isRegister
+                                        ? AppColors.navy
+                                        : AppColors.textSecondary,
+                                  ).copyWith(
+                                    fontWeight: !_isRegister
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            key: const ValueKey('auth_mode_register_tab'),
+                            onTap: () {
+                              auth.clearError();
+                              setState(() {
+                                _isRegister = true;
+                                _validationError = null;
+                                _infoBanner = null;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _isRegister
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  isAr ? 'إنشاء حساب' : 'Create Account',
+                                  style: AppTypography.bodySecondary(
+                                    color: _isRegister
+                                        ? AppColors.navy
+                                        : AppColors.textSecondary,
+                                  ).copyWith(
+                                    fontWeight: _isRegister
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 18),
 
-                  // Input Label
+                  if (activeError != null && activeError.isNotEmpty) ...[
+                    Container(
+                      key: const ValueKey('auth_error_banner'),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.dangerBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: AppColors.danger.withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.error_outline_rounded,
+                              color: AppColors.danger, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              activeError,
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  if (_infoBanner != null) ...[
+                    Container(
+                      key: const ValueKey('auth_info_banner'),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.tealSurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: AppColors.teal.withValues(alpha: 0.4)),
+                      ),
+                      child: Text(
+                        _infoBanner!,
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
+                  if (_isRegister) ...[
+                    Text(
+                      isAr ? 'الاسم الكامل *' : 'Full Name *',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      key: const ValueKey('auth_fullname_input'),
+                      controller: _fullNameController,
+                      decoration: InputDecoration(
+                        hintText: isAr ? 'م. فهد المري' : 'Eng. Fahad Al-Marri',
+                        prefixIcon: const Icon(Icons.person_outline_rounded,
+                            color: AppColors.navy),
+                      ),
+                      onChanged: (_) =>
+                          setState(() => _validationError = null),
+                    ),
+                    const SizedBox(height: 14),
+
+                    Text(
+                      isAr
+                          ? 'رقم الجوال القطري (+974 - اختياري)'
+                          : 'Qatar Mobile (+974 - Optional)',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: TextField(
+                        key: const ValueKey('auth_phone_optional_input'),
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          hintText: '55123456',
+                          prefixIcon: Icon(Icons.phone_iphone_rounded,
+                              color: AppColors.navy),
+                        ),
+                        onChanged: (_) =>
+                            setState(() => _validationError = null),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
                   Text(
-                    isAr ? 'البريد الإلكتروني' : 'Email Address',
-                    style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                    isAr ? 'البريد الإلكتروني *' : 'Email Address *',
+                    style: AppTypography.label(color: AppColors.navy)
+                        .copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 6),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextField(
+                      key: const ValueKey('auth_email_input'),
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        hintText: 'name@company.qa',
+                        prefixIcon: Icon(Icons.mail_outline_rounded,
+                            color: AppColors.navy),
+                      ),
+                      onChanged: (_) =>
+                          setState(() => _validationError = null),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
+                  Text(
+                    isAr ? 'كلمة المرور *' : 'Password *',
+                    style: AppTypography.label(color: AppColors.navy)
+                        .copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 6),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: TextField(
+                      key: const ValueKey('auth_password_input'),
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        hintText: '••••••••',
+                        prefixIcon: const Icon(Icons.lock_outline_rounded,
+                            color: AppColors.navy),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: AppColors.textSecondary,
+                          ),
+                          onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
+                      onChanged: (_) =>
+                          setState(() => _validationError = null),
+                    ),
+                  ),
+
+                  if (_isRegister) ...[
+                    const SizedBox(height: 14),
+                    Text(
+                      isAr ? 'تأكيد كلمة المرور *' : 'Confirm Password *',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 6),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: TextField(
+                        key: const ValueKey('auth_confirm_password_input'),
+                        controller: _confirmPasswordController,
+                        obscureText: _obscurePassword,
+                        decoration: const InputDecoration(
+                          hintText: '••••••••',
+                          prefixIcon: Icon(Icons.lock_reset_rounded,
+                              color: AppColors.navy),
+                        ),
+                        onChanged: (_) =>
+                            setState(() => _validationError = null),
+                      ),
+                    ),
+                  ] else ...[
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: TextButton(
+                        key: const ValueKey('auth_forgot_password_btn'),
+                        onPressed: () => _handleForgotPassword(context, isAr),
+                        child: Text(
+                          isAr ? 'نسيت كلمة المرور؟' : 'Forgot password?',
+                          style: AppTypography.label(color: AppColors.teal)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  if (AppEnvironment.useDevMocks) ...[
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      key: const ValueKey('email_dev_autofill_btn'),
+                      onPressed: () {
+                        setState(() {
+                          _emailController.text = 'engineer@mashwar.qa';
+                          _passwordController.text = 'pilot1234';
+                          if (_isRegister) {
+                            _fullNameController.text = 'م. فهد المري';
+                            _confirmPasswordController.text = 'pilot1234';
+                          }
+                        });
+                      },
+                      icon: const Icon(Icons.bolt_rounded,
+                          size: 16, color: AppColors.teal),
+                      label: Text(
+                        isAr
+                            ? 'تعبئة تجريبية (وضع التطوير فقط)'
+                            : 'Autofill Dev Credentials',
+                        style: AppTypography.label(color: AppColors.teal),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 12),
+                  MashwarButton(
+                    key: const ValueKey('auth_submit_btn'),
+                    text: _isRegister
+                        ? (isAr ? 'إنشاء حساب' : 'Create Account')
+                        : (isAr ? 'تسجيل الدخول' : 'Sign In'),
+                    isLoading: auth.isLoading,
+                    onPressed: () => _handleSubmit(context, isAr),
                   ),
                   const SizedBox(height: 8),
 
-                  // Email Input Card
-                  _buildEmailInputField(hasError: hasError, isAr: isAr),
-                  const SizedBox(height: 8),
-
-                  // Helper text / Error text
-                  _buildHelperOrError(hasError: hasError, isAr: isAr),
+                  if (auth.isDevMockAuthEnabled)
+                    Center(
+                      child: TextButton.icon(
+                        icon: const Icon(Icons.phone_iphone_rounded,
+                            size: 18, color: AppColors.navy),
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                                builder: (_) => const PhoneInputScreen()),
+                          );
+                        },
+                        label: Text(
+                          isAr
+                              ? 'المتابعة برقم الجوال بدلاً من ذلك'
+                              : 'Continue with phone instead',
+                          style: AppTypography.body(color: AppColors.navy)
+                              .copyWith(
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Text(
+                      isAr
+                          ? 'ملاحظة: تسجيل الدخول عبر رسائل SMS معطّل حالياً لحين ربط مزود رسائل معتمد.'
+                          : 'Note: SMS OTP login is disabled until an SMS provider is configured.',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySmall(),
+                    ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Bottom Actions Group
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Bottom Actions: Submit Button
-                MashwarButton(
-                  text: isAr ? 'إرسال الرمز' : 'Send Code',
-                  isLoading: auth.isLoading,
-                  onPressed: () => _handleSubmit(isAr),
-                ),
-                const SizedBox(height: 10),
-
-                // Switch to Phone
-                Center(
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.phone_iphone_rounded, size: 18, color: AppColors.navy),
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const PhoneInputScreen()),
-                      );
-                    },
-                    label: Text(
-                      isAr ? 'المتابعة برقم الجوال بدلاً من ذلك' : 'Continue with phone instead',
-                      style: AppTypography.body(color: AppColors.navy).copyWith(
-                        fontWeight: FontWeight.w700,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
-  }
-
-  Widget _buildStepBadge({required bool isAr, required int currentStep, required int totalSteps}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.navy.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
-        style: AppTypography.label(color: AppColors.navy).copyWith(
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmailInputField({required bool hasError, required bool isAr}) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      constraints: const BoxConstraints(minHeight: 56),
-      decoration: BoxDecoration(
-        color: _isFocused ? Colors.white : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(AppDimens.radiusField),
-        border: Border.all(
-          color: hasError
-              ? AppColors.danger
-              : (_isFocused ? AppColors.navy : AppColors.borderDisabled),
-          width: hasError ? 1.4 : (_isFocused ? 1.8 : 1.0),
-        ),
-        boxShadow: _isFocused && !hasError
-            ? [
-                BoxShadow(
-                  color: AppColors.navy.withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      child: Row(
-        children: [
-          Icon(
-            Icons.mail_outline_rounded,
-            color: _isFocused ? AppColors.navy : AppColors.textSecondary,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Directionality(
-              textDirection: TextDirection.ltr,
-              child: TextField(
-                controller: _emailController,
-                focusNode: _focusNode,
-                keyboardType: TextInputType.emailAddress,
-                style: AppTypography.body(color: AppColors.navy).copyWith(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'name@example.com',
-                  hintStyle: AppTypography.bodySecondary(
-                    color: AppColors.textSecondary.withValues(alpha: 0.7),
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  filled: false,
-                  contentPadding: EdgeInsets.zero,
-                  isDense: true,
-                ),
-                onChanged: (val) {
-                  setState(() => _errorText = null);
-                },
-              ),
-            ),
-          ),
-          if (_emailController.text.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.cancel_rounded, color: AppColors.textSecondary, size: 20),
-              onPressed: () {
-                setState(() {
-                  _emailController.clear();
-                  _errorText = null;
-                });
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHelperOrError({required bool hasError, required bool isAr}) {
-    if (hasError) {
-      return Row(
-        children: [
-          const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 14),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Text(
-              _errorText!,
-              style: AppTypography.label(color: AppColors.danger).copyWith(fontSize: 12),
-            ),
-          ),
-        ],
-      );
-    }
-    return const SizedBox.shrink();
   }
 }
