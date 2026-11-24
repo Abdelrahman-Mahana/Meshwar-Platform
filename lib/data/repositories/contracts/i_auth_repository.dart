@@ -1,12 +1,35 @@
 import '../../models/user_model.dart';
 
-/// Authentication & Identity Verification contract for MASHWAR.
+/// Typed bilingual authentication & account lifecycle exception.
 ///
-/// Note on Phone OTP in Qatar Pilot Phase 1:
-/// When an SMS OTP provider is not configured, [sendPhoneOtp] and
-/// [verifyPhoneOtp] explicitly throw [UnsupportedError] rather than silently
-/// succeeding or authenticating arbitrary codes.
+/// Maps Firebase Auth error codes (`billing-not-enabled`, `operation-not-allowed`,
+/// `quota-exceeded`, `invalid-verification-code`, `too-many-requests`, etc.) and
+/// `deleteUserAccount` server preconditions into actionable Arabic & English messages.
+class AuthException implements Exception {
+  final String code;
+  final String messageAr;
+  final String messageEn;
+  final bool suggestEmailFallback;
+
+  const AuthException({
+    required this.code,
+    required this.messageAr,
+    required this.messageEn,
+    this.suggestEmailFallback = false,
+  });
+
+  String localizedMessage({required bool isArabic}) =>
+      isArabic ? messageAr : messageEn;
+
+  @override
+  String toString() => '$messageAr | $messageEn';
+}
+
+/// Authentication & Identity Verification contract for MASHWAR.
 abstract class IAuthRepository {
+  /// Whether Phone SMS OTP can be initiated with the active repository.
+  bool get isPhoneOtpSupported => true;
+
   Future<bool> sendPhoneOtp(String phone);
 
   Future<UserModel> verifyPhoneOtp(String phone, String code);
@@ -36,6 +59,8 @@ abstract class IAuthRepository {
     required String idBackImage,
     required String selfieImage,
   });
+
+  Future<void> deleteAccount({String? reason});
 
   Future<void> signOut();
 }

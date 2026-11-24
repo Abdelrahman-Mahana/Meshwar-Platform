@@ -1,11 +1,14 @@
 import { getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 import {
+  DeleteUserAccountInput,
   acceptWorkOffer as acceptWorkOfferHandler,
   adminModerateWorkRequest as adminModerateWorkRequestHandler,
   adminReviewProvider as adminReviewProviderHandler,
   createWorkRequest as createWorkRequestHandler,
+  deleteUserAccount as deleteUserAccountHandler,
   recordPaymentStatus as recordPaymentStatusHandler,
   submitRequestRating as submitRequestRatingHandler,
   submitWorkOffer as submitWorkOfferHandler,
@@ -29,10 +32,14 @@ import {
 
 const FUNCTION_REGION = 'europe-west1';
 
-function getStore(): FirestoreStore {
+function ensureAdminApp(): void {
   if (getApps().length === 0) {
     initializeApp();
   }
+}
+
+function getStore(): FirestoreStore {
+  ensureAdminApp();
   return new FirestoreStore(getFirestore());
 }
 
@@ -114,3 +121,23 @@ export const adminModerateWorkRequest = wrapCallable<
   AdminModerateWorkRequestInput,
   Awaited<ReturnType<typeof adminModerateWorkRequestHandler>>
 >(adminModerateWorkRequestHandler);
+
+export const deleteUserAccount = wrapCallable<
+  DeleteUserAccountInput,
+  Awaited<ReturnType<typeof deleteUserAccountHandler>>
+>((store, context, input) =>
+  deleteUserAccountHandler(store, context, input, {
+    deleteAuthUser: async (uid: string) => {
+      ensureAdminApp();
+      try {
+        await getAuth().deleteUser(uid);
+      } catch (err) {
+        const code = (err as { code?: string } | null)?.code;
+        if (code === 'auth/user-not-found') {
+          return;
+        }
+        throw err;
+      }
+    },
+  }),
+);

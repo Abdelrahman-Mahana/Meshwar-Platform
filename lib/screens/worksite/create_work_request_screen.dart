@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/config/app_environment.dart';
@@ -9,6 +10,7 @@ import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../data/models/worksite_models.dart';
+import '../../data/services/media_upload_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/worksite_provider.dart';
 import 'provider_profile_screen.dart';
@@ -99,6 +101,11 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
   bool _requiresPurchaseReceipt = true;
 
   String? _stepValidationError;
+  bool _isUploadingReferencePhoto = false;
+  MediaUploadResult? _uploadedReferencePhoto;
+  String? _referenceUploadError;
+  late final String _draftUploadSessionId =
+      'draft_${DateTime.now().toUtc().millisecondsSinceEpoch}';
   WorksiteProvider? _fallbackWorksiteProvider;
 
   WorksiteProvider _resolveWorksite(BuildContext context) {
@@ -848,31 +855,197 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
         const SizedBox(height: 16),
 
         _buildFieldLabel(isAr
-            ? 'رابط صورة مرجعية للعينة / القطعة (اختياري)'
-            : 'Reference Item Photo URL (Optional)'),
+            ? 'صورة مرجعية للعينة / القطعة (اختياري · حتى 10MB)'
+            : 'Reference Item Photo (Optional · Max 10 MB)'),
         const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                key: const ValueKey('upload_reference_photo_btn'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.navy,
+                  side: const BorderSide(color: AppColors.teal),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                ),
+                onPressed: _isUploadingReferencePhoto
+                    ? null
+                    : () => _handlePickReferencePhoto(
+                          ImageSource.gallery,
+                          isAr,
+                        ),
+                icon: _isUploadingReferencePhoto
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.teal,
+                        ),
+                      )
+                    : const Icon(Icons.cloud_upload_outlined,
+                        size: 18, color: AppColors.teal),
+                label: Text(
+                  _isUploadingReferencePhoto
+                      ? (isAr ? 'جاري رفع الصورة...' : 'Uploading photo...')
+                      : (isAr ? 'رفع صورة مرجعية' : 'Upload Reference Photo'),
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              key: const ValueKey('capture_reference_photo_btn'),
+              tooltip: isAr ? 'التقاط بالكاميرا' : 'Take Photo',
+              icon: const Icon(Icons.photo_camera_outlined,
+                  color: AppColors.navy),
+              onPressed: _isUploadingReferencePhoto
+                  ? null
+                  : () => _handlePickReferencePhoto(ImageSource.camera, isAr),
+            ),
+          ],
+        ),
+        if (_uploadedReferencePhoto != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            key: const ValueKey('reference_photo_uploaded_pill'),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.tealSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(
+                    _uploadedReferencePhoto!.bytes,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 40,
+                      height: 40,
+                      color: Colors.white,
+                      child: const Icon(Icons.image_rounded,
+                          color: AppColors.teal, size: 20),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _uploadedReferencePhoto!.fileName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      Text(
+                        '${_uploadedReferencePhoto!.formattedSize} · ${_uploadedReferencePhoto!.mimeType}',
+                        style: AppTypography.label(
+                                color: AppColors.textSecondary)
+                            .copyWith(fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded,
+                      size: 18, color: AppColors.navy),
+                  tooltip: isAr ? 'إزالة الصورة' : 'Remove photo',
+                  onPressed: () {
+                    setState(() {
+                      _uploadedReferencePhoto = null;
+                      _referencePhotoController.clear();
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+        if (_referenceUploadError != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            key: const ValueKey('reference_photo_upload_error'),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.dangerBg,
+              borderRadius: BorderRadius.circular(10),
+              border:
+                  Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
+            ),
+            child: Text(
+              _referenceUploadError!,
+              style: AppTypography.label(color: AppColors.danger)
+                  .copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
         TextField(
           key: const ValueKey('create_step1_photo'),
           controller: _referencePhotoController,
           keyboardType: TextInputType.url,
           decoration: InputDecoration(
-            hintText: 'https://...',
-            prefixIcon:
-                const Icon(Icons.photo_camera_back_outlined, color: AppColors.navy),
-            suffixIcon: IconButton(
-              tooltip: isAr ? 'إرفاق نموذج صورة' : 'Attach sample reference URL',
-              icon: const Icon(Icons.attach_file_rounded, color: AppColors.teal),
-              onPressed: () {
-                setState(() {
-                  _referencePhotoController.text =
-                      'https://storage.mashwar.qa/reference/site_item_spec.jpg';
-                });
-              },
-            ),
+            hintText: isAr
+                ? 'أو الصق رابط الصورة المرجعية (https://...)'
+                : 'Or paste uploaded reference URL (https://...)',
+            prefixIcon: const Icon(Icons.photo_camera_back_outlined,
+                color: AppColors.navy),
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _handlePickReferencePhoto(
+    ImageSource source,
+    bool isAr,
+  ) async {
+    final auth = context.read<AuthProvider?>();
+    setState(() {
+      _isUploadingReferencePhoto = true;
+      _referenceUploadError = null;
+    });
+    try {
+      final uploaded =
+          await MediaUploadService.instance.pickAndUploadWorkRequestReference(
+        requestId: widget.initialDraft?.sourceRequestId ?? _draftUploadSessionId,
+        source: source,
+        allowDevMocks: auth?.isDevMockAuthEnabled ?? false,
+      );
+      if (!mounted) return;
+      setState(() {
+        _isUploadingReferencePhoto = false;
+        if (uploaded != null) {
+          _uploadedReferencePhoto = uploaded;
+          _referencePhotoController.text = uploaded.downloadUrl;
+          _stepValidationError = null;
+        }
+      });
+    } on MediaUploadException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isUploadingReferencePhoto = false;
+        _referenceUploadError = e.localizedMessage(isArabic: isAr);
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isUploadingReferencePhoto = false;
+        _referenceUploadError = isAr
+            ? 'تعذّر رفع الصورة المرجعية: $e'
+            : 'Failed to upload reference image: $e';
+      });
+    }
   }
 
   Widget _buildStep2(

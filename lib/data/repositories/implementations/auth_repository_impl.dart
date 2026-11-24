@@ -11,22 +11,27 @@ import '../contracts/i_auth_repository.dart';
 /// Never grants default `isVerified: true`, fake QIDs, or demo wallet balances.
 class DevMockAuthRepository implements IAuthRepository {
   static final RegExp _qatarQidRegex = RegExp(r'^[0-9]{11}$');
+  static final RegExp _qatarLocalPhoneRegex = RegExp(r'^[3567][0-9]{7}$');
 
   final bool? _allowDevMocks;
   final String expectedDevOtp;
+  final Future<void> Function(String uid, String? reason)? onDeleteAccountHook;
 
   UserModel? _currentUser;
   bool _signedIn;
   String? _pendingPhone;
   final List<String> passwordResetRequests = [];
+  final List<String> deletedAccountUids = [];
 
   DevMockAuthRepository({
     bool? allowDevMocks,
     UserModel? initialUser,
     bool startSignedIn = false,
     this.expectedDevOtp = '482911',
+    this.onDeleteAccountHook,
   })  : _allowDevMocks = allowDevMocks,
-        _currentUser = startSignedIn ? (initialUser ?? UserModel.empty) : initialUser,
+        _currentUser =
+            startSignedIn ? (initialUser ?? UserModel.empty) : initialUser,
         _signedIn = startSignedIn;
 
   /// Whether dev-mock auth actions are permitted under current environment rules.
@@ -40,6 +45,9 @@ class DevMockAuthRepository implements IAuthRepository {
     return _allowDevMocks ?? AppEnvironment.useDevMocks;
   }
 
+  @override
+  bool get isPhoneOtpSupported => isDevMockActive;
+
   void _ensureDevMockEnabled(String operation) {
     if (!isDevMockActive) {
       throw StateError(
@@ -49,14 +57,35 @@ class DevMockAuthRepository implements IAuthRepository {
     }
   }
 
+  static String _normalizeLocalQatarDigits(String raw) {
+    var cleaned = raw.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (cleaned.startsWith('+974')) {
+      cleaned = cleaned.substring(4);
+    } else if (cleaned.startsWith('00974')) {
+      cleaned = cleaned.substring(5);
+    } else if (cleaned.length == 11 && cleaned.startsWith('974')) {
+      cleaned = cleaned.substring(3);
+    }
+    return cleaned;
+  }
+
   @override
   Future<bool> sendPhoneOtp(String phone) async {
     if (!isDevMockActive) {
       throw UnsupportedError('Phone OTP requires configured SMS provider');
     }
-    final normalized = phone.trim();
+    final normalized = _normalizeLocalQatarDigits(phone);
     if (normalized.isEmpty) {
       throw ArgumentError.value(phone, 'phone', 'Phone number cannot be empty');
+    }
+    if (!_qatarLocalPhoneRegex.hasMatch(normalized)) {
+      throw const AuthException(
+        code: 'invalid-phone-number',
+        messageAr:
+            'رقم الجوال القطري يجب أن يتكون من 8 أرقام ويبدأ بـ 3 أو 5 أو 6 أو 7 (+974).',
+        messageEn:
+            'Qatar mobile number must be 8 digits starting with 3, 5, 6, or 7 (+974).',
+      );
     }
     _pendingPhone = normalized;
     return true;
@@ -70,7 +99,9 @@ class DevMockAuthRepository implements IAuthRepository {
     if (code.trim() != expectedDevOtp) {
       throw StateError('Invalid OTP verification code');
     }
-    final normalizedPhone = phone.trim().isNotEmpty ? phone.trim() : (_pendingPhone ?? '');
+    final normalizedPhone = phone.trim().isNotEmpty
+        ? _normalizeLocalQatarDigits(phone)
+        : (_pendingPhone ?? '');
     final existing = _currentUser;
     _currentUser = existing != null && existing.id.isNotEmpty
         ? existing.copyWith(phone: normalizedPhone)
@@ -92,7 +123,9 @@ class DevMockAuthRepository implements IAuthRepository {
       throw ArgumentError('Email and password are required');
     }
     final existing = _currentUser;
-    if (existing != null && existing.email == trimmedEmail && existing.id.isNotEmpty) {
+    if (existing != null &&
+        existing.email == trimmedEmail &&
+        existing.id.isNotEmpty) {
       _signedIn = true;
       return existing;
     }
@@ -212,6 +245,26 @@ class DevMockAuthRepository implements IAuthRepository {
   }
 
   @override
+  Future<void> deleteAccount({String? reason}) async {
+    _ensureDevMockEnabled('deleteAccount');
+    if (!await isSignedIn()) {
+      throw const AuthException(
+        code: 'unauthenticated',
+        messageAr: 'يرجى تسجيل الدخول لحذف الحساب.',
+        messageEn: 'Authentication is required to delete account.',
+      );
+    }
+    final uid = _currentUser!.id;
+    if (onDeleteAccountHook != null) {
+      await onDeleteAccountHook!(uid, reason);
+    }
+    deletedAccountUids.add(uid);
+    _signedIn = false;
+    _currentUser = null;
+    _pendingPhone = null;
+  }
+
+  @override
   Future<void> signOut() async {
     _signedIn = false;
     _currentUser = null;
@@ -227,5 +280,6 @@ class AuthRepositoryImpl extends DevMockAuthRepository {
     super.initialUser,
     super.startSignedIn,
     super.expectedDevOtp,
+    super.onDeleteAccountHook,
   });
 }

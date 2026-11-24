@@ -52,7 +52,23 @@ export interface HandlerDeps {
   now?: () => Date;
   idGenerator?: () => string;
   randomBytes?: (size: number) => Buffer;
+  deleteDoc?: (collection: string, id: string) => Promise<void>;
+  deleteAuthUser?: (uid: string) => Promise<void>;
 }
+
+export interface DeleteUserAccountInput {
+  reason?: unknown;
+}
+
+export const ACTIVE_ACCOUNT_DELETION_BLOCKING_STATUSES: ReadonlySet<WorkRequestStatus> =
+  new Set<WorkRequestStatus>([
+    'accepted',
+    'in_progress',
+    'picked_up',
+    'in_transit',
+    'delivered_pending_confirmation',
+    'disputed',
+  ]);
 
 const MAX_BUDGET_MINOR = 100_000_000;
 const MAX_ETA_MINUTES = 10_080; // 7 days
@@ -1458,4 +1474,213 @@ export async function adminModerateWorkRequest(
       auditLogId,
     };
   });
+}
+
+async function deleteDocFromStore(
+  store: DataStore,
+  collection: string,
+  id: string,
+  deps?: HandlerDeps,
+): Promise<void> {
+  if (deps?.deleteDoc) {
+    await deps.deleteDoc(collection, id);
+    return;
+  }
+
+  const candidate = store as unknown as {
+    delete?: (col: string, docId: string) => Promise<void>;
+    db?: {
+      collection: (col: string) => {
+        doc: (docId: string) => { delete: () => Promise<unknown> };
+      };
+    };
+    collections?: Map<string, Map<string, unknown>>;
+  };
+
+  if (typeof candidate.delete === 'function') {
+    await candidate.delete(collection, id);
+    return;
+  }
+
+  if (candidate.db && typeof candidate.db.collection === 'function') {
+    await candidate.db.collection(collection).doc(id).delete();
+    return;
+  }
+
+  if (candidate.collections instanceof Map) {
+    candidate.collections.get(collection)?.delete(id);
+    return;
+  }
+
+  throw new DomainError(
+    'failed-precondition',
+    `DataStore does not support document deletion for '${collection}/${id}'.`,
+  );
+}
+
+/**
+ * Self-service account deletion compliant with Qatar Personal Data Privacy Law No. 13 of 2016:
+ * - Requires authenticated caller (`context.uid`).
+ * - Rejects with `failed-precondition` if caller has any active `work_requests`
+ *   (`accepted`, `in_progress`, `picked_up`, `in_transit`, `delivered_pending_confirmation`, or `disputed`)
+ *   either as requester or assigned provider.
+ * - Cancels any open/unassigned requests owned by the user (`open`, `offer_received`, `offer_selected`),
+ *   records an immutable `admin_audit_logs` compliance entry, deletes personal profile docs
+ *   (`users/{uid}`, `provider_profiles/{uid}`, `provider_verifications/{uid}`, `business_profiles/{uid}`),
+ *   and deletes the Firebase Auth account via callback.
+ */
+export async function deleteUserAccount(
+  store: DataStore,
+  context: AuthContext,
+  input: DeleteUserAccountInput = {},
+  deps?: HandlerDeps,
+): Promise<{
+  uid: string;
+  deletedCollections: string[];
+  cancelledOpenRequestIds: string[];
+  auditLogId: string;
+  authUserDeleted: boolean;
+  deletedAtUtc: string;
+}> {
+  const uid = requireAuthUid(context);
+  const reason = optionalString(input?.reason, 'reason', 500);
+  const nowIso = nowDate(deps).toISOString();
+  const auditLogId = nextId('aud', deps);
+
+  const txOutcome = await store.runTransaction(async (tx) => {
+    const requesterRequests = await tx.query<WorkRequestDoc>('work_requests', [
+      { field: 'requesterId', op: '==', value: uid },
+    ]);
+    const providerRequests = await tx.query<WorkRequestDoc>('work_requests', [
+      { field: 'assignedProviderId', op: '==', value: uid },
+    ]);
+
+    const seenIds = new Set<string>();
+    const activeBlockingIds: string[] = [];
+    const activeBlockingStatuses: string[] = [];
+    const openOwnedRequests: WorkRequestDoc[] = [];
+
+    for (const match of [...requesterRequests, ...providerRequests]) {
+      if (seenIds.has(match.id)) continue;
+      seenIds.add(match.id);
+      const req = match.data;
+      if (ACTIVE_ACCOUNT_DELETION_BLOCKING_STATUSES.has(req.status)) {
+        activeBlockingIds.push(match.id);
+        activeBlockingStatuses.push(req.status);
+      } else if (
+        req.requesterId === uid &&
+        (req.status === 'open' ||
+          req.status === 'offer_received' ||
+          req.status === 'offer_selected')
+      ) {
+        openOwnedRequests.push(req);
+      }
+    }
+
+    if (activeBlockingIds.length > 0) {
+      throw new DomainError(
+        'failed-precondition',
+        `Cannot delete account while ${activeBlockingIds.length} active worksite request(s) exist (${activeBlockingStatuses.join(', ')}). Complete or resolve active requests first.`,
+        {
+          activeRequestIds: activeBlockingIds,
+          blockingStatuses: activeBlockingStatuses,
+        },
+      );
+    }
+
+    const userDoc = await tx.get<Record<string, unknown>>('users', uid);
+    const providerProfile = await tx.get<ProviderProfileDoc>('provider_profiles', uid);
+    const providerVerification = await tx.get<ProviderVerificationDoc>(
+      'provider_verifications',
+      uid,
+    );
+    const businessProfile = await tx.get<BusinessProfileDoc>('business_profiles', uid);
+    const adminStaff = await resolveActiveAdmin(tx, uid, MODERATION_ADMIN_ROLES);
+
+    const targetCollectionsToDelete: string[] = [];
+    if (userDoc) targetCollectionsToDelete.push('users');
+    if (providerProfile) targetCollectionsToDelete.push('provider_profiles');
+    if (providerVerification) targetCollectionsToDelete.push('provider_verifications');
+    if (businessProfile) targetCollectionsToDelete.push('business_profiles');
+
+    const cancelledOpenIds: string[] = [];
+    for (const openReq of openOwnedRequests) {
+      cancelledOpenIds.push(openReq.id);
+      await tx.update('work_requests', openReq.id, {
+        status: 'cancelled',
+        cancellationReason: 'Account deleted by requester.',
+        updatedAt: nowIso,
+      });
+      const cancelEvt = createEventDoc(deps, {
+        requestId: openReq.id,
+        actorId: uid,
+        actorRole: 'requester',
+        type: 'account_deleted_cancel',
+        fromStatus: openReq.status,
+        toStatus: 'cancelled',
+        note: 'Open request cancelled automatically upon requester account deletion.',
+        createdAt: nowIso,
+      });
+      await tx.set('request_events', cancelEvt.id, cancelEvt);
+    }
+
+    const auditDoc: AdminAuditLogDoc = {
+      id: auditLogId,
+      adminUid: uid,
+      adminRole: adminStaff?.role ?? 'compliance',
+      action: 'delete_user_account',
+      targetCollection: 'users',
+      targetEntityId: uid,
+      previousState: {
+        existedInCollections: targetCollectionsToDelete,
+        openRequestsCount: openOwnedRequests.length,
+      },
+      newState: {
+        deleted: true,
+        actorType: 'self_service_user',
+        deletedCollections: [
+          'users',
+          'provider_profiles',
+          'provider_verifications',
+          'business_profiles',
+        ],
+        cancelledOpenRequestIds: cancelledOpenIds,
+      },
+      reason: reason ?? 'User requested permanent account deletion.',
+      createdAt: nowIso,
+    };
+
+    await tx.set('admin_audit_logs', auditLogId, auditDoc);
+
+    return {
+      existedCollections: targetCollectionsToDelete,
+      cancelledOpenIds,
+    };
+  });
+
+  const collectionsToPurge = [
+    'users',
+    'provider_profiles',
+    'provider_verifications',
+    'business_profiles',
+  ] as const;
+
+  for (const col of collectionsToPurge) {
+    await deleteDocFromStore(store, col, uid, deps);
+  }
+
+  let authUserDeleted = false;
+  if (deps?.deleteAuthUser) {
+    await deps.deleteAuthUser(uid);
+    authUserDeleted = true;
+  }
+
+  return {
+    uid,
+    deletedCollections: [...collectionsToPurge],
+    cancelledOpenRequestIds: txOutcome.cancelledOpenIds,
+    auditLogId,
+    authUserDeleted,
+    deletedAtUtc: nowIso,
+  };
 }

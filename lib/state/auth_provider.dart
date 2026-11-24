@@ -5,6 +5,9 @@ import '../data/models/user_model.dart';
 import '../data/repositories/app_repositories.dart';
 import '../data/repositories/contracts/i_auth_repository.dart';
 
+export '../data/repositories/contracts/i_auth_repository.dart'
+    show AuthException;
+
 enum AuthStatus {
   unauthenticated,
   phoneEntered,
@@ -32,6 +35,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isLocked = false;
   bool _isLoading = false;
   String? _lastError;
+  AuthException? _lastAuthException;
 
   final List<Map<String, dynamic>> _walletTransactions;
 
@@ -78,6 +82,10 @@ class AuthProvider extends ChangeNotifier {
         useFirebase: AppEnvironment.useFirebase,
       );
 
+  /// Whether Phone SMS OTP (+974) can be initiated via Firebase Auth or explicit dev-mock mode.
+  bool get isPhoneAuthAvailable =>
+      isDevMockAuthEnabled || _repo.isPhoneOtpSupported;
+
   AuthStatus get status => _status;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   UserModel get user => _user;
@@ -90,11 +98,32 @@ class AuthProvider extends ChangeNotifier {
   bool get isLocked => _isLocked;
   bool get isLoading => _isLoading;
   String? get lastError => _lastError;
+  AuthException? get lastAuthException => _lastAuthException;
+  bool get shouldSuggestEmailFallback =>
+      _lastAuthException?.suggestEmailFallback ?? false;
+
+  String? localizedError({required bool isArabic}) {
+    if (_lastAuthException != null) {
+      return _lastAuthException!.localizedMessage(isArabic: isArabic);
+    }
+    return _lastError;
+  }
 
   void clearError() {
-    if (_lastError != null) {
+    if (_lastError != null || _lastAuthException != null) {
       _lastError = null;
+      _lastAuthException = null;
       notifyListeners();
+    }
+  }
+
+  void _recordException(Object error) {
+    if (error is AuthException) {
+      _lastAuthException = error;
+      _lastError = error.toString();
+    } else {
+      _lastAuthException = null;
+      _lastError = error.toString();
     }
   }
 
@@ -139,6 +168,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> restoreSession() async {
     _isLoading = true;
     _lastError = null;
+    _lastAuthException = null;
     notifyListeners();
 
     try {
@@ -168,7 +198,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     } catch (e) {
-      _lastError = e.toString();
+      _recordException(e);
       _user = UserModel.empty;
       _status = AuthStatus.unauthenticated;
       _isLoading = false;
@@ -182,11 +212,13 @@ class AuthProvider extends ChangeNotifier {
     final trimmedEmail = email.trim();
     final emailErr = validateEmail(trimmedEmail);
     if (emailErr != null) {
+      _lastAuthException = null;
       _lastError = emailErr;
       notifyListeners();
       return false;
     }
     if (password.isEmpty) {
+      _lastAuthException = null;
       _lastError = 'Password is required';
       notifyListeners();
       return false;
@@ -194,6 +226,7 @@ class AuthProvider extends ChangeNotifier {
 
     _isLoading = true;
     _lastError = null;
+    _lastAuthException = null;
     notifyListeners();
 
     try {
@@ -210,7 +243,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _lastError = e.toString();
+      _recordException(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -227,11 +260,13 @@ class AuthProvider extends ChangeNotifier {
     final trimmedEmail = email.trim();
     final emailErr = validateEmail(trimmedEmail);
     if (emailErr != null) {
+      _lastAuthException = null;
       _lastError = emailErr;
       notifyListeners();
       return false;
     }
     if (password.length < 6) {
+      _lastAuthException = null;
       _lastError = 'Password must be at least 6 characters';
       notifyListeners();
       return false;
@@ -239,6 +274,7 @@ class AuthProvider extends ChangeNotifier {
 
     _isLoading = true;
     _lastError = null;
+    _lastAuthException = null;
     notifyListeners();
 
     try {
@@ -257,7 +293,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _lastError = e.toString();
+      _recordException(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -268,6 +304,7 @@ class AuthProvider extends ChangeNotifier {
     final trimmedEmail = email.trim();
     final emailErr = validateEmail(trimmedEmail);
     if (emailErr != null) {
+      _lastAuthException = null;
       _lastError = emailErr;
       notifyListeners();
       return false;
@@ -275,6 +312,7 @@ class AuthProvider extends ChangeNotifier {
 
     _isLoading = true;
     _lastError = null;
+    _lastAuthException = null;
     notifyListeners();
 
     try {
@@ -283,7 +321,7 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _lastError = e.toString();
+      _recordException(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -291,35 +329,70 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> sendOtp(String phone) async {
+    final cleanPhone = phone.trim();
     _isLoading = true;
     _lastError = null;
+    _lastAuthException = null;
     notifyListeners();
 
     if (!isDevMockAuthEnabled) {
       try {
-        final ok = await _repo.sendPhoneOtp(phone.trim());
+        final ok = await _repo.sendPhoneOtp(cleanPhone);
         _isLoading = false;
         if (ok) {
-          _phoneNumber = phone.trim();
+          _phoneNumber = cleanPhone;
           _authMethod = 'phone';
           _status = AuthStatus.phoneEntered;
+          _otpAttemptsLeft = 3;
+          _isLocked = false;
           _resendCountdown = 59;
           _startCountdown();
         }
         notifyListeners();
         return ok;
       } catch (e) {
-        _lastError = e.toString();
+        if (e is UnsupportedError) {
+          _lastAuthException = const AuthException(
+            code: 'sms-provider-unavailable',
+            suggestEmailFallback: true,
+            messageAr:
+                'خدمة رسائل التحقق SMS (+974) غير مفعّلة في هذه البيئة حالياً. يرجى المتابعة بالبريد الإلكتروني وكلمة المرور.',
+            messageEn:
+                'SMS OTP (+974) is not configured in this environment. Please continue with Email & Password sign-in.',
+          );
+          _lastError = _lastAuthException.toString();
+        } else {
+          _recordException(e);
+        }
         _isLoading = false;
         notifyListeners();
         return false;
       }
     }
 
+    final localCheck = validateQatarPhone(
+      cleanPhone.startsWith('+974') ? cleanPhone.substring(4) : cleanPhone,
+    );
+    if (localCheck != null) {
+      _lastAuthException = const AuthException(
+        code: 'invalid-phone-number',
+        messageAr:
+            'الرقم يجب أن يتكون من 8 أرقام ويبدأ بـ 3 أو 5 أو 6 أو 7 (+974).',
+        messageEn:
+            'Phone must be 8 digits starting with 3, 5, 6, or 7 (+974).',
+      );
+      _lastError = _lastAuthException.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
     await Future.delayed(const Duration(milliseconds: 50));
-    _phoneNumber = phone.trim();
+    _phoneNumber = cleanPhone;
     _authMethod = 'phone';
     _status = AuthStatus.phoneEntered;
+    _otpAttemptsLeft = 3;
+    _isLocked = false;
     _isLoading = false;
     _resendCountdown = 59;
     _startCountdown();
@@ -330,10 +403,12 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> sendEmailOtp(String email) async {
     _isLoading = true;
     _lastError = null;
+    _lastAuthException = null;
     notifyListeners();
 
     if (!isDevMockAuthEnabled) {
-      _lastError = 'Email OTP requires a configured email OTP provider; use email/password sign-in.';
+      _lastError =
+          'Email OTP requires a configured email OTP provider; use email/password sign-in.';
       _isLoading = false;
       notifyListeners();
       return false;
@@ -361,6 +436,7 @@ class AuthProvider extends ChangeNotifier {
   }) async {
     _isLoading = true;
     _lastError = null;
+    _lastAuthException = null;
     notifyListeners();
 
     if (!isDevMockAuthEnabled) {
@@ -374,7 +450,9 @@ class AuthProvider extends ChangeNotifier {
     _email = email.trim();
     _authMethod = 'google';
     _user = _user.copyWith(
-      id: _user.id.isNotEmpty ? _user.id : 'dev_google_${email.trim().hashCode.abs()}',
+      id: _user.id.isNotEmpty
+          ? _user.id
+          : 'dev_google_${email.trim().hashCode.abs()}',
       fullName: displayName.trim(),
       email: email.trim(),
       avatarUrl: avatarUrl,
@@ -402,13 +480,22 @@ class AuthProvider extends ChangeNotifier {
   /// NEVER accepts arbitrary 6-digit codes outside explicit dev-mock mode.
   Future<bool> verifyOtp(String code) async {
     if (_isLocked) {
-      _lastError = 'OTP verification temporarily locked';
+      _lastAuthException = const AuthException(
+        code: 'too-many-requests',
+        suggestEmailFallback: true,
+        messageAr:
+            'تم إيقاف محاولات التحقق مؤقتاً لتكرار الخطأ. يمكنك المتابعة بالبريد الإلكتروني وكلمة المرور.',
+        messageEn:
+            'OTP attempts are temporarily locked. You can sign in with Email & Password instead.',
+      );
+      _lastError = _lastAuthException.toString();
       notifyListeners();
       return false;
     }
 
     _isLoading = true;
     _lastError = null;
+    _lastAuthException = null;
     notifyListeners();
 
     final trimmedCode = code.trim();
@@ -420,12 +507,31 @@ class AuthProvider extends ChangeNotifier {
           trimmedCode,
         );
         _user = verifiedUser;
-        _status = AuthStatus.otpVerified;
+        if (verifiedUser.phone.isNotEmpty) {
+          _phoneNumber = verifiedUser.phone;
+        }
+        // If returning user already has a saved full name, enter authenticated directly;
+        // otherwise transition to otpVerified so ProfileSetupScreen completes onboarding.
+        _status = verifiedUser.fullName.trim().isNotEmpty
+            ? AuthStatus.authenticated
+            : AuthStatus.otpVerified;
         _isLoading = false;
         notifyListeners();
         return true;
       } catch (e) {
-        _lastError = e.toString();
+        if (e is UnsupportedError) {
+          _lastAuthException = const AuthException(
+            code: 'sms-provider-unavailable',
+            suggestEmailFallback: true,
+            messageAr:
+                'خدمة التحقق عبر SMS غير مفعّلة حالياً. يرجى تسجيل الدخول بالبريد الإلكتروني وكلمة المرور.',
+            messageEn:
+                'SMS OTP is unavailable in this environment. Please sign in with Email & Password.',
+          );
+          _lastError = _lastAuthException.toString();
+        } else {
+          _recordException(e);
+        }
       }
 
       _isLoading = false;
@@ -445,6 +551,11 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } else {
+      _lastAuthException = const AuthException(
+        code: 'invalid-verification-code',
+        messageAr: 'رمز التحقق غير صحيح.',
+        messageEn: 'Invalid verification code.',
+      );
       _lastError = 'Invalid verification code';
       _otpAttemptsLeft--;
       if (_otpAttemptsLeft <= 0) {
@@ -482,7 +593,9 @@ class AuthProvider extends ChangeNotifier {
 
     final resolvedId = _user.id.isNotEmpty
         ? _user.id
-        : (isDevMockAuthEnabled ? 'dev_usr_${DateTime.now().millisecondsSinceEpoch}' : '');
+        : (isDevMockAuthEnabled
+            ? 'dev_usr_${DateTime.now().millisecondsSinceEpoch}'
+            : '');
 
     _user = UserModel(
       id: resolvedId,
@@ -549,7 +662,7 @@ class AuthProvider extends ChangeNotifier {
       }
       return true;
     } catch (e) {
-      _lastError = e.toString();
+      _recordException(e);
       notifyListeners();
       return false;
     }
@@ -726,6 +839,69 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Permanently deletes the signed-in user's account via server `deleteUserAccount`
+  /// (or dev-mock repository when explicitly enabled), rejecting when active
+  /// worksite requests exist.
+  Future<bool> deleteAccount({
+    String? reason,
+    Iterable<String>? activeBlockingRequestIds,
+  }) async {
+    if (activeBlockingRequestIds != null &&
+        activeBlockingRequestIds.isNotEmpty) {
+      _lastAuthException = const AuthException(
+        code: 'failed-precondition',
+        messageAr:
+            'لا يمكن حذف الحساب حالياً لوجود طلبات توريد نشطة مرتبطة بحسابك. يرجى إتمامها أو تسويتها أولاً.',
+        messageEn:
+            'Cannot delete account while you have active worksite supply requests.',
+      );
+      _lastError = _lastAuthException.toString();
+      notifyListeners();
+      return false;
+    }
+
+    if (!isAuthenticated && _user.id.trim().isEmpty) {
+      _lastAuthException = const AuthException(
+        code: 'unauthenticated',
+        messageAr: 'يرجى تسجيل الدخول أولاً لحذف الحساب.',
+        messageEn: 'Please sign in before deleting your account.',
+      );
+      _lastError = _lastAuthException.toString();
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _lastError = null;
+    _lastAuthException = null;
+    notifyListeners();
+
+    try {
+      final repoSignedIn = await _repo.isSignedIn();
+      if (repoSignedIn || !isDevMockAuthEnabled) {
+        await _repo.deleteAccount(reason: reason);
+      }
+      _resendTimer?.cancel();
+      _user = UserModel.empty;
+      _phoneNumber = '';
+      _email = null;
+      _status = AuthStatus.unauthenticated;
+      _otpAttemptsLeft = 3;
+      _isLocked = false;
+      _lastError = null;
+      _lastAuthException = null;
+      _walletTransactions.clear();
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _recordException(e);
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     _isLoading = true;
     notifyListeners();
@@ -740,6 +916,7 @@ class AuthProvider extends ChangeNotifier {
       _otpAttemptsLeft = 3;
       _isLocked = false;
       _lastError = null;
+      _lastAuthException = null;
       _walletTransactions.clear();
       _isLoading = false;
       notifyListeners();
