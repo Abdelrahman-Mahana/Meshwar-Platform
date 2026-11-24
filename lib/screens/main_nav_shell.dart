@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/config/app_environment.dart';
 import '../core/constants/app_colors.dart';
 import '../core/constants/app_dimens.dart';
 import '../core/constants/app_typography.dart';
+import '../core/localization/app_strings.dart';
 import '../core/widgets/brand_logo.dart';
 import '../core/widgets/mashwar_animations.dart';
 import '../core/widgets/mashwar_badge.dart';
 import '../core/widgets/mashwar_button.dart';
 import '../data/mock_data.dart';
 import '../data/models/user_model.dart';
+import '../data/models/worksite_models.dart';
 import '../state/auth_provider.dart';
 import '../state/rides_provider.dart';
 import '../state/parcels_provider.dart';
 import '../state/settings_provider.dart';
+import '../state/worksite_provider.dart';
 import 'home/home_screen.dart';
 import 'board/board_screen.dart';
 import 'trip/active_trip_screen.dart';
@@ -33,22 +37,74 @@ import 'account/account_extra_screens.dart';
 import 'account/legal_and_backend_screens.dart';
 import 'board/board_extra_screens.dart';
 import 'escrow/service_escrow_screen.dart';
+import 'worksite/create_work_request_screen.dart';
+import 'worksite/provider_profile_screen.dart';
+import 'worksite/work_request_details_screen.dart';
+import 'worksite/work_requests_feed_screen.dart';
 
 class MainNavShell extends StatefulWidget {
   const MainNavShell({super.key});
+
+  static bool switchToTab(BuildContext context, int tabIndex) {
+    final state = context.findAncestorStateOfType<_MainNavShellState>();
+    if (state == null) return false;
+    state.setTab(tabIndex);
+    return true;
+  }
 
   @override
   State<MainNavShell> createState() => _MainNavShellState();
 }
 
 class _MainNavShellState extends State<MainNavShell> {
+  static const bool _isMvpWorksiteOnly =
+      AppEnvironment.enableWorksiteSupply &&
+      !AppEnvironment.enablePassengerRides;
+
   int _currentIndex = 0;
 
-  // Segment state for Orders / Requests Tab
+  // Segment state for Orders / Activity Tab
   bool _isActiveOrders = true;
   int _ordersFilterIndex = 0; // 0: All, 1: Mobility/Travel, 2: Errands, 3: Logistics/Cargo
   bool _messagesUnreadOnly = false;
   final TextEditingController _messagesSearchController = TextEditingController();
+  WorksiteProvider? _fallbackWorksiteProvider;
+  bool _didAttemptInitialMvpSync = false;
+
+  void setTab(int index) {
+    if (!mounted) return;
+    setState(() => _currentIndex = index);
+  }
+
+  WorksiteProvider _resolveWorksite(BuildContext context, AuthProvider auth) {
+    final provided = context.watch<WorksiteProvider?>();
+    if (provided != null) return provided;
+    return _fallbackWorksiteProvider ??= WorksiteProvider(
+      initialUserId: auth.user.id.isNotEmpty ? auth.user.id : null,
+      initialUserName: auth.user.fullName.isNotEmpty ? auth.user.fullName : null,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _didAttemptInitialMvpSync) return;
+      _didAttemptInitialMvpSync = true;
+      final ws = context.read<WorksiteProvider?>();
+      final auth = context.read<AuthProvider?>();
+      if (ws != null) {
+        final uid = ws.currentUserId ?? auth?.user.id ?? '';
+        if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
+          ws.loadRequests();
+        }
+        if (uid.isNotEmpty && ws.providerProfile == null) {
+          ws.loadProviderProfile(uid);
+          ws.loadSavedWorksites(uid);
+        }
+      }
+    });
+  }
 
   Widget _buildNavIconPill(IconData icon, {bool active = false}) {
     if (!active) return Icon(icon, size: 22);
@@ -65,6 +121,7 @@ class _MainNavShellState extends State<MainNavShell> {
   @override
   void dispose() {
     _messagesSearchController.dispose();
+    _fallbackWorksiteProvider?.dispose();
     super.dispose();
   }
 
@@ -74,15 +131,132 @@ class _MainNavShellState extends State<MainNavShell> {
     final rides = context.watch<RidesProvider>();
     final parcels = context.watch<ParcelsProvider>();
     final settings = context.watch<SettingsProvider>();
+    final worksite = _resolveWorksite(context, auth);
     final isAr = settings.isArabic;
 
-    final List<Widget> pages = [
-      const HomeScreen(),
-      const BoardScreen(),
-      _buildMyOrdersTab(context, rides, parcels, isAr),
-      _buildMessagesTab(context, isAr),
-      _buildAccountTab(context, auth, settings),
-    ];
+    final List<Widget> pages = _isMvpWorksiteOnly
+        ? [
+            const HomeScreen(),
+            const WorkRequestsFeedScreen(embeddedInTab: true),
+            _buildMvpActivityTab(context, worksite, auth, isAr),
+            _buildMvpAccountTab(context, worksite, auth, settings),
+          ]
+        : [
+            const HomeScreen(),
+            const BoardScreen(),
+            _buildMyOrdersTab(context, rides, parcels, isAr),
+            _buildMessagesTab(context, isAr),
+            _buildAccountTab(context, auth, settings),
+          ];
+
+    final safeIndex = _currentIndex.clamp(0, pages.length - 1);
+
+    final List<NavigationRailDestination> railDestinations = _isMvpWorksiteOnly
+        ? [
+            NavigationRailDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home_rounded),
+              label: Text(isAr ? 'الرئيسية' : 'Home'),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.fact_check_outlined),
+              selectedIcon: const Icon(Icons.fact_check_rounded),
+              label: Text(isAr ? 'الطلبات' : 'Requests'),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.assignment_outlined),
+              selectedIcon: const Icon(Icons.assignment_rounded),
+              label: Text(isAr ? 'نشاطي' : 'My Activity'),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.person_outline_rounded),
+              selectedIcon: const Icon(Icons.person_rounded),
+              label: Text(isAr ? 'حسابي' : 'Account'),
+            ),
+          ]
+        : [
+            NavigationRailDestination(
+              icon: const Icon(Icons.home_outlined),
+              selectedIcon: const Icon(Icons.home_rounded),
+              label: Text(isAr ? 'الرئيسية' : 'Home'),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.explore_outlined),
+              selectedIcon: const Icon(Icons.explore_rounded),
+              label: Text(isAr ? 'اللوحة' : 'Board'),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.assignment_outlined),
+              selectedIcon: const Icon(Icons.assignment_rounded),
+              label: Text(isAr ? 'طلباتي' : 'My Requests'),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.chat_bubble_outline_rounded),
+              selectedIcon: const Icon(Icons.chat_bubble_rounded),
+              label: Text(isAr ? 'الرسائل' : 'Messages'),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.person_outline_rounded),
+              selectedIcon: const Icon(Icons.person_rounded),
+              label: Text(isAr ? 'حسابي' : 'Account'),
+            ),
+          ];
+
+    final List<BottomNavigationBarItem> bottomItems = _isMvpWorksiteOnly
+        ? [
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.home_outlined),
+              activeIcon: _buildNavIconPill(Icons.home_rounded, active: true),
+              label: isAr ? 'الرئيسية' : 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.fact_check_outlined),
+              activeIcon:
+                  _buildNavIconPill(Icons.fact_check_rounded, active: true),
+              label: isAr ? 'الطلبات' : 'Requests',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.assignment_outlined),
+              activeIcon:
+                  _buildNavIconPill(Icons.assignment_rounded, active: true),
+              label: isAr ? 'نشاطي' : 'My Activity',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.person_outline_rounded),
+              activeIcon: _buildNavIconPill(Icons.person_rounded, active: true),
+              label: isAr ? 'حسابي' : 'Account',
+            ),
+          ]
+        : [
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.home_outlined),
+              activeIcon: _buildNavIconPill(Icons.home_rounded, active: true),
+              label: isAr ? 'الرئيسية' : 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.explore_outlined),
+              activeIcon:
+                  _buildNavIconPill(Icons.explore_rounded, active: true),
+              label: isAr ? 'اللوحة' : 'Board',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.assignment_outlined),
+              activeIcon:
+                  _buildNavIconPill(Icons.assignment_rounded, active: true),
+              label: isAr ? 'طلباتي' : 'My Requests',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.chat_bubble_outline_rounded),
+              activeIcon:
+                  _buildNavIconPill(Icons.chat_bubble_rounded, active: true),
+              label: isAr ? 'الرسائل' : 'Messages',
+            ),
+            BottomNavigationBarItem(
+              icon: _buildNavIconPill(Icons.person_outline_rounded),
+              activeIcon: _buildNavIconPill(Icons.person_rounded, active: true),
+              label: isAr ? 'حسابي' : 'Account',
+            ),
+          ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -95,21 +269,25 @@ class _MainNavShellState extends State<MainNavShell> {
             body: Row(
               children: [
                 NavigationRail(
-                  selectedIndex: _currentIndex,
-                  onDestinationSelected: (index) => setState(() => _currentIndex = index),
+                  selectedIndex: safeIndex,
+                  onDestinationSelected: (index) =>
+                      setState(() => _currentIndex = index),
                   extended: isExtended,
                   minWidth: 80,
                   minExtendedWidth: 220,
                   backgroundColor: Colors.white,
                   indicatorColor: AppColors.navy.withValues(alpha: 0.08),
-                  selectedIconTheme: const IconThemeData(color: AppColors.navy, size: 22),
-                  unselectedIconTheme: const IconThemeData(color: AppColors.textSecondary, size: 22),
+                  selectedIconTheme:
+                      const IconThemeData(color: AppColors.navy, size: 22),
+                  unselectedIconTheme: const IconThemeData(
+                      color: AppColors.textSecondary, size: 22),
                   selectedLabelTextStyle: AppTypography.body().copyWith(
                     fontWeight: FontWeight.w800,
                     color: AppColors.navy,
                     fontSize: 13,
                   ),
-                  unselectedLabelTextStyle: AppTypography.bodySecondary().copyWith(fontSize: 13),
+                  unselectedLabelTextStyle:
+                      AppTypography.bodySecondary().copyWith(fontSize: 13),
                   leading: Padding(
                     padding: EdgeInsets.symmetric(
                       vertical: 20,
@@ -123,62 +301,45 @@ class _MainNavShellState extends State<MainNavShell> {
                     child: Align(
                       alignment: Alignment.bottomCenter,
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 20, left: 12, right: 12),
+                        padding: const EdgeInsets.only(
+                            bottom: 20, left: 12, right: 12),
                         child: isExtended
                             ? OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.navy,
-                                  side: const BorderSide(color: Color(0xFFE5E5EA)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  side: const BorderSide(
+                                      color: Color(0xFFE5E5EA)),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
                                 ),
                                 onPressed: () => settings.toggleLanguage(),
-                                icon: const Icon(Icons.language_rounded, size: 18),
+                                icon: const Icon(Icons.language_rounded,
+                                    size: 18),
                                 label: Text(
                                   isAr ? 'English' : 'العربية',
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13),
                                 ),
                               )
                             : IconButton(
                                 tooltip: isAr ? 'English' : 'العربية',
-                                icon: const Icon(Icons.language_rounded, color: AppColors.navy),
+                                icon: const Icon(Icons.language_rounded,
+                                    color: AppColors.navy),
                                 onPressed: () => settings.toggleLanguage(),
                               ),
                       ),
                     ),
                   ),
-                  destinations: [
-                    NavigationRailDestination(
-                      icon: const Icon(Icons.home_outlined),
-                      selectedIcon: const Icon(Icons.home_rounded),
-                      label: Text(isAr ? 'الرئيسية' : 'Home'),
-                    ),
-                    NavigationRailDestination(
-                      icon: const Icon(Icons.explore_outlined),
-                      selectedIcon: const Icon(Icons.explore_rounded),
-                      label: Text(isAr ? 'اللوحة' : 'Board'),
-                    ),
-                    NavigationRailDestination(
-                      icon: const Icon(Icons.assignment_outlined),
-                      selectedIcon: const Icon(Icons.assignment_rounded),
-                      label: Text(isAr ? 'طلباتي' : 'My Requests'),
-                    ),
-                    NavigationRailDestination(
-                      icon: const Icon(Icons.chat_bubble_outline_rounded),
-                      selectedIcon: const Icon(Icons.chat_bubble_rounded),
-                      label: Text(isAr ? 'الرسائل' : 'Messages'),
-                    ),
-                    NavigationRailDestination(
-                      icon: const Icon(Icons.person_outline_rounded),
-                      selectedIcon: const Icon(Icons.person_rounded),
-                      label: Text(isAr ? 'حسابي' : 'Account'),
-                    ),
-                  ],
+                  destinations: railDestinations,
                 ),
-                const VerticalDivider(width: 1, thickness: 1, color: Color(0xFFE5E5EA)),
+                const VerticalDivider(
+                    width: 1, thickness: 1, color: Color(0xFFE5E5EA)),
                 Expanded(
                   child: IndexedStack(
-                    index: _currentIndex,
+                    index: safeIndex,
                     children: pages,
                   ),
                 ),
@@ -189,7 +350,7 @@ class _MainNavShellState extends State<MainNavShell> {
 
         return Scaffold(
           body: IndexedStack(
-            index: _currentIndex,
+            index: safeIndex,
             children: pages,
           ),
           bottomNavigationBar: Container(
@@ -207,42 +368,740 @@ class _MainNavShellState extends State<MainNavShell> {
               ],
             ),
             child: BottomNavigationBar(
-              currentIndex: _currentIndex,
+              currentIndex: safeIndex,
               onTap: (index) => setState(() => _currentIndex = index),
-              selectedLabelStyle: AppTypography.label().copyWith(fontWeight: FontWeight.w800, fontSize: 11),
-              unselectedLabelStyle: AppTypography.label().copyWith(fontWeight: FontWeight.w600, fontSize: 11),
+              selectedLabelStyle: AppTypography.label()
+                  .copyWith(fontWeight: FontWeight.w800, fontSize: 11),
+              unselectedLabelStyle: AppTypography.label()
+                  .copyWith(fontWeight: FontWeight.w600, fontSize: 11),
               selectedItemColor: AppColors.navy,
               unselectedItemColor: const Color(0xFF8E8E93),
               backgroundColor: Colors.white,
               elevation: 0,
               type: BottomNavigationBarType.fixed,
-              items: [
-                BottomNavigationBarItem(
-                  icon: _buildNavIconPill(Icons.home_outlined),
-                  activeIcon: _buildNavIconPill(Icons.home_rounded, active: true),
-                  label: isAr ? 'الرئيسية' : 'Home',
+              items: bottomItems,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ==========================================
+  // MVP TAB 3: نشاطي (My Activity — Real Worksite Requests Only)
+  // ==========================================
+  Widget _buildMvpActivityTab(
+    BuildContext context,
+    WorksiteProvider worksite,
+    AuthProvider auth,
+    bool isAr,
+  ) {
+    final uid = worksite.currentUserId ??
+        (auth.user.id.isNotEmpty ? auth.user.id : null);
+    final myRequests = uid == null
+        ? const <WorkRequest>[]
+        : worksite.allLoadedRequests
+            .where((r) => r.requesterId == uid || r.assignedProviderId == uid)
+            .toList();
+
+    final activeList = myRequests
+        .where((r) => !WorkRequestStatusMachine.isTerminal(r.status))
+        .toList();
+    final completedList = myRequests
+        .where((r) => WorkRequestStatusMachine.isTerminal(r.status))
+        .toList();
+    final shownList = _isActiveOrders ? activeList : completedList;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFCFCFD),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const MashwarPinIcon(size: 18),
+            const SizedBox(width: 6),
+            Text(
+              isAr ? 'نشاطي' : 'My Activity',
+              style: AppTypography.title(),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            tooltip: isAr ? 'تحديث' : 'Refresh',
+            icon: const Icon(Icons.refresh_rounded, color: AppColors.navy),
+            onPressed: worksite.isLoading ? null : () => worksite.loadRequests(),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 960),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppDimens.space16, 12, AppDimens.space16, 8),
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            key: const ValueKey('activity_segment_active'),
+                            onTap: () => setState(() => _isActiveOrders = true),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: _isActiveOrders
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  isAr
+                                      ? 'الطلبات النشطة (${activeList.length})'
+                                      : 'Active (${activeList.length})',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.bodySecondary(
+                                    color: _isActiveOrders
+                                        ? AppColors.navy
+                                        : AppColors.textSecondary,
+                                  ).copyWith(
+                                    fontWeight: _isActiveOrders
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            key: const ValueKey('activity_segment_completed'),
+                            onTap: () =>
+                                setState(() => _isActiveOrders = false),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              decoration: BoxDecoration(
+                                color: !_isActiveOrders
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  isAr
+                                      ? 'المكتملة والسابقة (${completedList.length})'
+                                      : 'Completed (${completedList.length})',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.bodySecondary(
+                                    color: !_isActiveOrders
+                                        ? AppColors.navy
+                                        : AppColors.textSecondary,
+                                  ).copyWith(
+                                    fontWeight: !_isActiveOrders
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                    fontSize: 12.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                BottomNavigationBarItem(
-                  icon: _buildNavIconPill(Icons.explore_outlined),
-                  activeIcon: _buildNavIconPill(Icons.explore_rounded, active: true),
-                  label: isAr ? 'اللوحة' : 'Board',
-                ),
-                BottomNavigationBarItem(
-                  icon: _buildNavIconPill(Icons.assignment_outlined),
-                  activeIcon: _buildNavIconPill(Icons.assignment_rounded, active: true),
-                  label: isAr ? 'طلباتي' : 'My Requests',
-                ),
-                BottomNavigationBarItem(
-                  icon: _buildNavIconPill(Icons.chat_bubble_outline_rounded),
-                  activeIcon: _buildNavIconPill(Icons.chat_bubble_rounded, active: true),
-                  label: isAr ? 'الرسائل' : 'Messages',
-                ),
-                BottomNavigationBarItem(
-                  icon: _buildNavIconPill(Icons.person_outline_rounded),
-                  activeIcon: _buildNavIconPill(Icons.person_rounded, active: true),
-                  label: isAr ? 'حسابي' : 'Account',
+                Expanded(
+                  child: shownList.isEmpty
+                      ? Center(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(AppDimens.space24),
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 400),
+                              child: Container(
+                                padding:
+                                    const EdgeInsets.all(AppDimens.space24),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                      color: AppColors.borderDisabled),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.assignment_outlined,
+                                        size: 40, color: AppColors.navy),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      _isActiveOrders
+                                          ? (isAr
+                                              ? 'لا توجد طلبات توريد نشطة حالياً'
+                                              : 'No Active Supply Requests')
+                                          : (isAr
+                                              ? 'لا توجد طلبات مكتملة سابقة'
+                                              : 'No Completed Requests Yet'),
+                                      textAlign: TextAlign.center,
+                                      style: AppTypography.title()
+                                          .copyWith(fontSize: 16),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      isAr
+                                          ? 'أنشئ طلب توريد جديد لموقع عملك أو تصفح الطلبات المتاحة في قطر.'
+                                          : 'Create a new worksite supply request or browse open requests in Qatar.',
+                                      textAlign: TextAlign.center,
+                                      style: AppTypography.bodySecondary(),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    MashwarButton(
+                                      text: isAr
+                                          ? 'إنشاء طلب توريد'
+                                          : 'Create a Request',
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const CreateWorkRequestScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(AppDimens.space16),
+                          itemCount: shownList.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final req = shownList[index];
+                            final isMyReq = req.requesterId == uid;
+                            final areaLabel = AppStrings.translateCity(
+                                req.municipality,
+                                isArabic: isAr);
+
+                            return Container(
+                              key: ValueKey('activity_card_${req.id}'),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border:
+                                    Border.all(color: AppColors.borderDisabled),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    spacing: 8,
+                                    runSpacing: 6,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.sand,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          isMyReq
+                                              ? (isAr
+                                                  ? 'طلبي'
+                                                  : 'My Request')
+                                              : (isAr
+                                                  ? 'مهمة مسندة لي'
+                                                  : 'Assigned Job'),
+                                          style: AppTypography.label(
+                                                  color: AppColors.navy)
+                                              .copyWith(
+                                                  fontWeight: FontWeight.w800),
+                                        ),
+                                      ),
+                                      MashwarBadge(
+                                        type: req.status ==
+                                                WorkRequestStatus.completed
+                                            ? BadgeType.verified
+                                            : BadgeType.confirmed,
+                                        customLabel:
+                                            req.status.label(isArabic: isAr),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    req.title,
+                                    style: AppTypography.title()
+                                        .copyWith(fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  MashwarRouteTimeline(
+                                    from: req.pickupLocation,
+                                    to: '${req.dropoffWorksite} · $areaLabel',
+                                    compact: true,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Wrap(
+                                    alignment: WrapAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      Text(
+                                        req.effectiveTotalMinor
+                                            .format(isArabic: isAr),
+                                        style: AppTypography.body(
+                                                color: AppColors.teal)
+                                            .copyWith(
+                                                fontWeight: FontWeight.w800),
+                                      ),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 6,
+                                        children: [
+                                          if (isMyReq)
+                                            OutlinedButton.icon(
+                                              key: ValueKey(
+                                                  'activity_reorder_${req.id}'),
+                                              onPressed: () {
+                                                final draft = worksite
+                                                    .buildReorderDraft(req);
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        CreateWorkRequestScreen(
+                                                      initialDraft: draft,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              icon: const Icon(
+                                                  Icons.replay_rounded,
+                                                  size: 16),
+                                              label: Text(isAr
+                                                  ? 'إعادة طلب'
+                                                  : 'Quick Reorder'),
+                                            ),
+                                          ElevatedButton(
+                                            key: ValueKey(
+                                                'activity_details_${req.id}'),
+                                            onPressed: () {
+                                              Navigator.of(context).push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      WorkRequestDetailsScreen(
+                                                    requestId: req.id,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            child: Text(isAr
+                                                ? 'التفاصيل'
+                                                : 'Details'),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                 ),
               ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ==========================================
+  // MVP TAB 4: حسابي (Honest Account, Provider Verification, Legal & Real Logout)
+  // ==========================================
+  Widget _buildMvpAccountTab(
+    BuildContext context,
+    WorksiteProvider worksite,
+    AuthProvider auth,
+    SettingsProvider settings,
+  ) {
+    final isAr = settings.isArabic;
+    final user = auth.user;
+    final prov = worksite.providerProfile;
+    final uid = worksite.currentUserId ?? user.id;
+
+    final displayName = user.fullName.trim().isNotEmpty
+        ? user.fullName.trim()
+        : ((user.email != null && user.email!.isNotEmpty)
+            ? user.email!
+            : (isAr ? 'مستخدم مشوار' : 'MASHWAR Member'));
+
+    final realRating =
+        (prov != null && prov.rating > 0) ? prov.rating : user.rating;
+    final myReqCount = uid.isEmpty
+        ? 0
+        : worksite.allLoadedRequests
+            .where((r) => r.requesterId == uid)
+            .length;
+    final completedJobsCount = prov?.completedJobsCount ?? 0;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFCFCFD),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        title: Text(isAr ? 'حسابي' : 'Account', style: AppTypography.title()),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined, color: AppColors.navy),
+            tooltip: isAr ? 'الإعدادات' : 'Settings',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 820),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimens.space20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Honest Identity Summary (Zero fake balances or unverified badges)
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.borderDisabled),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(
+                                color: AppColors.gold,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  displayName[0].toUpperCase(),
+                                  style:
+                                      AppTypography.title(color: AppColors.navy)
+                                          .copyWith(fontSize: 22),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          displayName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: AppTypography.title()
+                                              .copyWith(fontSize: 18),
+                                        ),
+                                      ),
+                                      if (worksite.isApprovedProvider ||
+                                          user.isVerified) ...[
+                                        const SizedBox(width: 6),
+                                        const Icon(Icons.verified_rounded,
+                                            color: AppColors.teal, size: 18),
+                                      ],
+                                    ],
+                                  ),
+                                  if (user.email != null &&
+                                      user.email!.isNotEmpty)
+                                    Text(user.email!,
+                                        style: AppTypography.bodySecondary()),
+                                  if (user.phone.isNotEmpty)
+                                    Text(user.phone,
+                                        style: AppTypography.label()),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        const Divider(
+                            height: 1, color: AppColors.borderDisabled),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildStatColumn(
+                                '$myReqCount',
+                                isAr ? 'طلباتي' : 'My Requests',
+                              ),
+                            ),
+                            _buildStatDivider(),
+                            Expanded(
+                              child: _buildStatColumn(
+                                '$completedJobsCount',
+                                isAr ? 'توريدات مكتملة' : 'Completed Jobs',
+                              ),
+                            ),
+                            _buildStatDivider(),
+                            Expanded(
+                              child: _buildStatColumn(
+                                realRating > 0
+                                    ? '${realRating.toStringAsFixed(1)} ★'
+                                    : '—',
+                                isAr ? 'التقييم' : 'Rating',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Worksite Supply & Provider Verification Group
+                  Material(
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                      side: const BorderSide(color: AppColors.borderDisabled),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        _buildMenuItem(
+                          icon: Icons.verified_user_outlined,
+                          iconBg: AppColors.tealSurface,
+                          iconColor: AppColors.teal,
+                          title: isAr
+                              ? 'ملف المزود وتوثيق البطاقة القطرية (QID)'
+                              : 'Provider Profile & QID Verification',
+                          badge: prov != null
+                              ? MashwarBadge(
+                                  type: prov.approvalStatus ==
+                                          ProviderApprovalStatus.approved
+                                      ? BadgeType.verified
+                                      : (prov.approvalStatus ==
+                                              ProviderApprovalStatus.rejected
+                                          ? BadgeType.rejected
+                                          : BadgeType.pending),
+                                  customLabel: prov.approvalStatus
+                                      .label(isArabic: isAr),
+                                )
+                              : null,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ProviderProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        const Divider(
+                            height: 1, color: AppColors.borderDisabled),
+                        _buildMenuItem(
+                          icon: Icons.factory_outlined,
+                          iconBg: AppColors.sand,
+                          iconColor: AppColors.qatarMaroon,
+                          title: isAr
+                              ? 'مواقع العمل المحفوظة'
+                              : 'Saved Worksites',
+                          trailingText: '${worksite.savedWorksites.length}',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ProviderProfileScreen(
+                                  focusSavedWorksites: true,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const Divider(
+                            height: 1, color: AppColors.borderDisabled),
+                        _buildMenuItem(
+                          icon: Icons.person_outline_rounded,
+                          iconBg: AppColors.infoBg,
+                          iconColor: AppColors.info,
+                          title: isAr
+                              ? 'الملف الشخصي وتعديل البيانات'
+                              : 'Personal Profile',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const UserProfileScreen()),
+                            );
+                          },
+                        ),
+                        const Divider(
+                            height: 1, color: AppColors.borderDisabled),
+                        _buildMenuItem(
+                          icon: Icons.settings_outlined,
+                          iconBg: AppColors.chipInactiveBg,
+                          iconColor: AppColors.navy,
+                          title: isAr
+                              ? 'إعدادات التطبيق واللغة'
+                              : 'App Settings & Language',
+                          trailingText: isAr ? 'العربية' : 'English',
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const SettingsScreen()),
+                            );
+                          },
+                        ),
+                        const Divider(
+                            height: 1, color: AppColors.borderDisabled),
+                        _buildMenuItem(
+                          icon: Icons.gavel_outlined,
+                          iconBg: AppColors.chipInactiveBg,
+                          iconColor: AppColors.navy,
+                          title: isAr
+                              ? 'الشروط القانونية والإفصاحات التنظيمية'
+                              : 'Legal Terms & Regulatory Scope',
+                          onTap: () =>
+                              _showPilotLegalDisclaimersSheet(context, isAr),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Honest Pilot Scope Card
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.sand,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.35)),
+                    ),
+                    child: Text(
+                      AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
+                      style: AppTypography.bodySmall(color: AppColors.navy),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  MashwarButton(
+                    key: const ValueKey('mvp_logout_btn'),
+                    text: isAr ? 'تسجيل الخروج' : 'Log Out',
+                    variant: MashwarButtonVariant.danger,
+                    isLoading: auth.isLoading,
+                    onPressed: () async {
+                      await auth.logout();
+                      if (!context.mounted) return;
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                            builder: (_) => const WelcomeScreen()),
+                        (route) => false,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPilotLegalDisclaimersSheet(BuildContext context, bool isAr) {
+    final notices = AppEnvironment.allLegalDisclaimers(isArabic: isAr);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimens.space20),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    isAr
+                        ? 'نطاق المرحلة التجريبية والإفصاحات النظامية'
+                        : 'Pilot Scope & Regulatory Disclosures',
+                    style: AppTypography.title().copyWith(fontSize: 18),
+                  ),
+                  const SizedBox(height: 12),
+                  ...notices.map(
+                    (n) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.slateBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.slateBorder),
+                        ),
+                        child: Text(
+                          n,
+                          style: AppTypography.bodySmall(color: AppColors.navy),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  MashwarButton(
+                    text: isAr
+                        ? 'عرض سياسة الخصوصية والشروط الكاملة'
+                        : 'Open Full Legal & Privacy Terms',
+                    variant: MashwarButtonVariant.secondary,
+                    onPressed: () {
+                      Navigator.of(sheetCtx).pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const LegalComplianceScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );

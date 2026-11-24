@@ -8,6 +8,8 @@ import 'package:mashwar/core/theme/app_theme.dart';
 import 'package:mashwar/screens/board/post_ad_screen.dart';
 import 'package:mashwar/screens/escrow/service_escrow_screen.dart';
 import 'package:mashwar/screens/home/home_screen.dart';
+import 'package:mashwar/screens/worksite/create_work_request_screen.dart';
+import 'package:mashwar/screens/worksite/work_requests_feed_screen.dart';
 import 'package:mashwar/state/admin_provider.dart';
 import 'package:mashwar/state/alerts_provider.dart';
 import 'package:mashwar/state/auth_provider.dart';
@@ -15,6 +17,7 @@ import 'package:mashwar/state/board_provider.dart';
 import 'package:mashwar/state/parcels_provider.dart';
 import 'package:mashwar/state/rides_provider.dart';
 import 'package:mashwar/state/settings_provider.dart';
+import 'package:mashwar/state/worksite_provider.dart';
 
 void main() {
   Widget wrapWithProviders(Widget child, {SettingsProvider? settings}) {
@@ -28,6 +31,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => BoardProvider()),
         ChangeNotifierProvider(create: (_) => AlertsProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
+        ChangeNotifierProvider(create: (_) => WorksiteProvider()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, s, _) => MaterialApp(
@@ -47,27 +51,19 @@ void main() {
   }
 
   group('Universal Qatari Community Services & Bilateral Escrow Tests', () {
-    testWidgets('HomeScreen displays balanced 6-service grid and Bilateral Escrow banner navigation', (tester) async {
+    testWidgets('HomeScreen displays focused Worksite Supply MVP prompt and primary/secondary CTAs', (tester) async {
       await tester.pumpWidget(wrapWithProviders(const HomeScreen()));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // Balanced 6 services (No carpooling-only bias)
-      expect(find.text('شراء وتوصيل بفاتورة'), findsWidgets);
-      expect(find.text('توريد مواقع ومهندسين'), findsWidgets);
-      expect(find.text('جلب أوراق وأمانات'), findsWidgets);
-      expect(find.text('مشاوير يومية وحضانات'), findsWidgets);
-      expect(find.text('سفر ومقاعد شاغرة'), findsWidgets);
-      expect(find.text('نقل معدات وبضائع'), findsWidgets);
+      expect(find.text('شنو تحتاج ينجز اليوم؟'), findsOneWidget);
+      expect(find.text('إنشاء طلب توريد'), findsOneWidget);
+      expect(find.text('تصفح الطلبات المتاحة'), findsOneWidget);
+      expect(find.text('خدمة توريد مواقع العمل والمشاريع'), findsOneWidget);
 
-      // Bilateral Escrow Banner opens ServiceEscrowScreen
-      await tester.ensureVisible(find.text('استعرض آلية الضمان والحماية'));
+      await tester.tap(find.text('تصفح الطلبات المتاحة'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('استعرض آلية الضمان والحماية'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(ServiceEscrowScreen), findsOneWidget);
-      expect(find.text('الضمان المالي وحماية الطرفين'), findsOneWidget);
+      expect(find.byType(WorkRequestsFeedScreen), findsOneWidget);
     });
 
     testWidgets('ServiceEscrowScreen handles role toggle, receipt approval, OTP release & responsive viewports', (tester) async {
@@ -122,33 +118,19 @@ void main() {
       expect(find.textContaining('شكراً! تم تسجيل تقييمك'), findsOneWidget);
     });
 
-    testWidgets('HomeScreen map expand toggle & Dual-Path Service Quick-Launch Sheet open pre-filled PostAdScreen', (tester) async {
+    testWidgets('HomeScreen Worksite Supply category shortcut opens pre-selected CreateWorkRequestScreen', (tester) async {
       await tester.pumpWidget(wrapWithProviders(const HomeScreen()));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // Map expand / collapse toggle
-      expect(find.text('تكبير الخريطة'), findsOneWidget);
-      await tester.tap(find.text('تكبير الخريطة'));
+      final electricalBtn = find.text('كهرباء وكابلات');
+      await tester.ensureVisible(electricalBtn);
       await tester.pumpAndSettle();
-      expect(find.text('تصغير'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-
-      // Tap service tile -> Dual-Path Sheet -> Request Service -> PostAdScreen pre-selected on Worksite Supply
-      final siteTile = find.text('توريد مواقع ومهندسين').first;
-      await tester.ensureVisible(siteTile);
-      await tester.pumpAndSettle();
-      await tester.tap(siteTile);
+      await tester.tap(electricalBtn);
       await tester.pumpAndSettle();
 
-      expect(find.text('اطلب هذه الخدمة الآن'), findsOneWidget);
-      expect(find.text('تصفح العروض والطلبات المتاحة'), findsOneWidget);
-
-      await tester.tap(find.text('اطلب هذه الخدمة الآن'));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(PostAdScreen), findsOneWidget);
-      expect(find.text('تفاصيل البضاعة والتوريد'), findsOneWidget);
+      expect(find.byType(CreateWorkRequestScreen), findsOneWidget);
+      expect(find.text('إنشاء طلب توريد موقع'), findsOneWidget);
     });
 
     testWidgets('PostAdScreen renders Qatari phrasing (من وين؟) and 1-tap quick templates', (tester) async {

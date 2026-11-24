@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -11,10 +12,12 @@ import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/board_ad_model.dart';
+import '../../data/models/worksite_models.dart';
 import '../../state/auth_provider.dart';
 import '../../state/rides_provider.dart';
 import '../../state/board_provider.dart';
 import '../../state/admin_provider.dart';
+import '../../state/worksite_provider.dart';
 import '../search/search_results_screen.dart';
 import '../booking/booking_confirmation_screen.dart';
 import '../driver/driver_onboarding_screens.dart';
@@ -25,6 +28,10 @@ import '../board/board_screen.dart';
 import '../board/make_offer_sheet.dart';
 import '../board/post_ad_screen.dart';
 import '../escrow/service_escrow_screen.dart';
+import '../worksite/create_work_request_screen.dart';
+import '../worksite/provider_profile_screen.dart';
+import '../worksite/work_request_details_screen.dart';
+import '../worksite/work_requests_feed_screen.dart';
 import 'city_search_modal.dart';
 import 'date_time_picker_sheet.dart';
 
@@ -36,18 +43,67 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const bool _isMvpWorksiteOnly =
+      AppEnvironment.enableWorksiteSupply &&
+      !AppEnvironment.enablePassengerRides;
+
   BoardAdType _homeCategoryFilter = BoardAdType.all;
   int _homeIntentFilter = 0; // 0 = all, 1 = requests, 2 = provider offers
   bool _isMapExpanded = false;
   double _swapTurns = 0.0;
 
+  String? _selectedSavedWorksiteId;
+  bool _didAttemptInitialLoad = false;
+  WorksiteProvider? _fallbackWorksiteProvider;
+
+  WorksiteProvider _resolveWorksite(BuildContext context, AuthProvider auth) {
+    final provided = context.watch<WorksiteProvider?>();
+    if (provided != null) return provided;
+    return _fallbackWorksiteProvider ??= WorksiteProvider(
+      initialUserId: auth.user.id.isNotEmpty ? auth.user.id : null,
+      initialUserName: auth.user.fullName.isNotEmpty ? auth.user.fullName : null,
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _didAttemptInitialLoad) return;
+      _didAttemptInitialLoad = true;
+      final ws = context.read<WorksiteProvider?>();
+      final auth = context.read<AuthProvider?>();
+      if (ws != null) {
+        if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
+          ws.loadRequests();
+        }
+        final uid = ws.currentUserId ?? auth?.user.id ?? '';
+        if (uid.isNotEmpty && ws.savedWorksites.isEmpty) {
+          ws.loadSavedWorksites(uid);
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _fallbackWorksiteProvider?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final rides = context.watch<RidesProvider>();
-    final board = context.watch<BoardProvider>();
+    final worksite = _resolveWorksite(context, auth);
     final admin = context.watch<AdminProvider?>();
     final isAr = context.isArabic;
+
+    if (_isMvpWorksiteOnly) {
+      return _buildMvpWorksiteHome(context, auth, worksite, admin, isAr);
+    }
+
+    final rides = context.watch<RidesProvider>();
+    final board = context.watch<BoardProvider>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCFCFD),
@@ -199,6 +255,916 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
+    );
+  }
+
+  // ===========================================================================
+  // FOCUSED QATAR WORKSITE SUPPLY MVP HOME SCREEN (ZERO FAKE DATA / ZERO NOISE)
+  // ===========================================================================
+  Widget _buildMvpWorksiteHome(
+    BuildContext context,
+    AuthProvider auth,
+    WorksiteProvider worksite,
+    AdminProvider? admin,
+    bool isAr,
+  ) {
+    final savedSites = worksite.savedWorksites;
+    SavedWorksite? activeSite;
+    if (savedSites.isNotEmpty) {
+      activeSite = savedSites.firstWhere(
+        (s) => s.id == _selectedSavedWorksiteId,
+        orElse: () => savedSites.firstWhere(
+          (s) => s.isDefault,
+          orElse: () => savedSites.first,
+        ),
+      );
+    }
+
+    final uid = worksite.currentUserId ??
+        (auth.user.id.isNotEmpty ? auth.user.id : null);
+    final allLoaded = worksite.allLoadedRequests;
+    final myRecent = uid == null
+        ? const <WorkRequest>[]
+        : allLoaded
+            .where((r) => r.requesterId == uid || r.assignedProviderId == uid)
+            .toList();
+    final recentToShow =
+        (myRecent.isNotEmpty ? myRecent : allLoaded).take(4).toList();
+
+    final openOffersCount = uid == null
+        ? 0
+        : allLoaded
+            .where((r) =>
+                r.requesterId == uid &&
+                r.status == WorkRequestStatus.offerReceived)
+            .fold<int>(0, (sum, r) => sum + r.offerCount);
+
+    final firstName = auth.user.fullName.trim().isNotEmpty
+        ? auth.user.fullName.trim().split(' ').first
+        : (isAr ? 'مرحباً' : 'Member');
+
+    const pilotAreas = [
+      'الدوحة',
+      'المنطقة الصناعية',
+      'لوسيل',
+      'الوكرة',
+      'الخور',
+      'الريان',
+      'مسيعيد',
+    ];
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFCFCFD),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= 840;
+            final isUltraCompact = constraints.maxWidth < 360;
+            final hPad = isWide
+                ? AppDimens.space32
+                : (isUltraCompact ? 14.0 : AppDimens.space20);
+
+            return SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: hPad,
+                vertical: AppDimens.space16,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: isWide ? 1040 : 720),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const QatarSaduAccentBar(height: 4, borderRadius: 4),
+                      const SizedBox(height: 12),
+
+                      // 1. Clean Top Header (Zero fake wallet balance, real profile avatar)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                if (!isUltraCompact) ...[
+                                  Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.qatarMaroonSurface,
+                                      borderRadius: BorderRadius.circular(11),
+                                      border: Border.all(
+                                        color: AppColors.qatarMaroon
+                                            .withValues(alpha: 0.25),
+                                      ),
+                                    ),
+                                    child: const Center(
+                                      child: MashwarPinIcon(size: 22),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                ],
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isAr
+                                            ? 'مشوار قطر · توريد المواقع'
+                                            : 'MASHWAR Qatar · Worksite Supply',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.bodySecondary()
+                                            .copyWith(fontSize: 11.5),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              firstName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: AppTypography.title()
+                                                  .copyWith(
+                                                fontSize:
+                                                    isUltraCompact ? 16 : 18,
+                                              ),
+                                            ),
+                                          ),
+                                          if (auth.user.isVerified ||
+                                              worksite.isApprovedProvider) ...[
+                                            const SizedBox(width: 4),
+                                            const Icon(
+                                              Icons.verified_rounded,
+                                              size: 16,
+                                              color: AppColors.teal,
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: isAr ? 'الإشعارات' : 'Notifications',
+                                icon: const Icon(
+                                  Icons.notifications_none_rounded,
+                                  color: AppColors.navy,
+                                  size: 22,
+                                ),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const NotificationsCenterScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                              InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const UserProfileScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: isUltraCompact ? 38 : 42,
+                                  height: isUltraCompact ? 38 : 42,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.gold,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white, width: 2),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      auth.user.fullName.isNotEmpty
+                                          ? auth.user.fullName[0]
+                                          : 'ع',
+                                      style: AppTypography.title(
+                                          color: AppColors.navy),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 2. Hero Card: "What do you need done today?" + Saved Worksite Chip + Primary/Secondary CTAs
+                      Container(
+                        padding: EdgeInsets.all(isUltraCompact ? 16 : 22),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(22),
+                          border: Border.all(color: AppColors.borderDisabled),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.navy.withValues(alpha: 0.05),
+                              blurRadius: 18,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.spaceBetween,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.sand,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color:
+                                          AppColors.gold.withValues(alpha: 0.4),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isAr
+                                        ? 'توريد ومشتريات مواقع العمل · قطر (QAR)'
+                                        : 'Qatar Worksite Supply · Priced in QAR',
+                                    style: AppTypography.label(
+                                            color: AppColors.navy)
+                                        .copyWith(fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                                // Saved Worksite selector chip
+                                InkWell(
+                                  key: const ValueKey(
+                                      'home_saved_worksite_chip'),
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: () => _showSavedWorksitePicker(
+                                      context, worksite, isAr),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.tealSurface,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: AppColors.teal
+                                            .withValues(alpha: 0.35),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.location_on_outlined,
+                                          size: 15,
+                                          color: AppColors.teal,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            activeSite != null
+                                                ? activeSite.label
+                                                : (isAr
+                                                    ? 'اختر موقع عمل محفوظ'
+                                                    : 'Select Saved Worksite'),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTypography.label(
+                                                    color: AppColors.teal)
+                                                .copyWith(
+                                                    fontWeight:
+                                                        FontWeight.w800),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 2),
+                                        const Icon(
+                                          Icons.keyboard_arrow_down_rounded,
+                                          size: 16,
+                                          color: AppColors.teal,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              isAr
+                                  ? 'شنو تحتاج ينجز اليوم؟'
+                                  : 'What do you need done today?',
+                              style: AppTypography.largeTitle().copyWith(
+                                fontSize: isUltraCompact ? 22 : 26,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              isAr
+                                  ? 'اطلب توريد العدد والمواد وقطع الغيار لموقع عملك بفاتورة شراء موثّقة ورمز تسليم من 6 خانات، أو تصفح الطلبات المتاحة كمزود معتمد.'
+                                  : 'Request tools, electrical/plumbing parts, and site materials with verified store invoices and 6-char handover codes, or browse open requests as an approved provider.',
+                              style: AppTypography.bodySecondary(),
+                            ),
+                            const SizedBox(height: 18),
+                            if (isWide)
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: MashwarButton(
+                                      key: const ValueKey(
+                                          'home_create_request_cta'),
+                                      text: isAr
+                                          ? 'إنشاء طلب توريد'
+                                          : 'Create a Request',
+                                      icon: const Icon(Icons.add_task_rounded,
+                                          color: Colors.white, size: 19),
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                CreateWorkRequestScreen(
+                                              initialSavedWorksite: activeSite,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 2,
+                                    child: MashwarButton(
+                                      key: const ValueKey(
+                                          'home_browse_requests_cta'),
+                                      text: isAr
+                                          ? 'تصفح الطلبات المتاحة'
+                                          : 'Browse Available Requests',
+                                      variant: MashwarButtonVariant.secondary,
+                                      icon: const Icon(
+                                          Icons.fact_check_outlined,
+                                          color: AppColors.navy,
+                                          size: 19),
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const WorkRequestsFeedScreen(),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              )
+                            else ...[
+                              MashwarButton(
+                                key: const ValueKey('home_create_request_cta'),
+                                text: isAr
+                                    ? 'إنشاء طلب توريد'
+                                    : 'Create a Request',
+                                icon: const Icon(Icons.add_task_rounded,
+                                    color: Colors.white, size: 19),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => CreateWorkRequestScreen(
+                                        initialSavedWorksite: activeSite,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 10),
+                              MashwarButton(
+                                key:
+                                    const ValueKey('home_browse_requests_cta'),
+                                text: isAr
+                                    ? 'تصفح الطلبات المتاحة'
+                                    : 'Browse Available Requests',
+                                variant: MashwarButtonVariant.secondary,
+                                icon: const Icon(Icons.fact_check_outlined,
+                                    color: AppColors.navy, size: 19),
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          const WorkRequestsFeedScreen(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 3. Worksite Supply Entry Card + Quick Supply Categories
+                      Container(
+                        key: const ValueKey('home_worksite_supply_card'),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color:
+                                AppColors.qatarMaroon.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.qatarMaroonSurface,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.engineering_rounded,
+                                    color: AppColors.qatarMaroon,
+                                    size: 22,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isAr
+                                            ? 'خدمة توريد مواقع العمل والمشاريع'
+                                            : 'Worksite Supply & Hardware Coordination',
+                                        style: AppTypography.title()
+                                            .copyWith(fontSize: 16),
+                                      ),
+                                      Text(
+                                        isAr
+                                            ? 'اختر فئة المواد لفتح نموذج الطلب المباشر'
+                                            : 'Pick a supply category to start a request',
+                                        style: AppTypography.bodySmall(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ('electrical', isAr ? 'كهرباء وكابلات' : 'Electrical'),
+                                ('plumbing', isAr ? 'سباكة ومواسير' : 'Plumbing'),
+                                ('hardware', isAr ? 'عدد ومسامير' : 'Hardware'),
+                                ('safety_ppe', isAr ? 'سلامة مهنية PPE' : 'Safety PPE'),
+                                ('civil_materials', isAr ? 'مواد بناء' : 'Civil Materials'),
+                              ].map((cat) {
+                                return OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    side: const BorderSide(
+                                        color: AppColors.borderDisabled),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => CreateWorkRequestScreen(
+                                          initialSavedWorksite: activeSite,
+                                          initialSupplyCategory: cat.$1,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    cat.$2,
+                                    style: AppTypography.label(
+                                            color: AppColors.navy)
+                                        .copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 4. Real Notifications Summary Strip
+                      Container(
+                        key: const ValueKey('home_notifications_summary'),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: openOffersCount > 0
+                              ? AppColors.tealSurface
+                              : AppColors.slateBg,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: openOffersCount > 0
+                                ? AppColors.teal.withValues(alpha: 0.35)
+                                : AppColors.slateBorder,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              openOffersCount > 0
+                                  ? Icons.notifications_active_outlined
+                                  : Icons.notifications_none_rounded,
+                              size: 18,
+                              color: openOffersCount > 0
+                                  ? AppColors.teal
+                                  : AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                openOffersCount > 0
+                                    ? (isAr
+                                        ? 'لديك $openOffersCount عروض جديدة بانتظار المراجعة على طلباتك.'
+                                        : 'You have $openOffersCount new offer(s) awaiting review on your requests.')
+                                    : (isAr
+                                        ? 'ملخص التنبيهات: لا توجد تنبيهات غير مقروءة حالياً.'
+                                        : 'Notifications summary: No unread alerts right now.'),
+                                style: AppTypography.label(
+                                        color: AppColors.navy)
+                                    .copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // 5. Real Recent Requests & Current Activity + 1-Tap Quick Reorder
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isAr
+                                  ? 'الطلبات الحالية والأخيرة'
+                                  : 'Recent & Active Requests',
+                              style:
+                                  AppTypography.title().copyWith(fontSize: 18),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const WorkRequestsFeedScreen(),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              isAr ? 'عرض الكل' : 'View All',
+                              style: AppTypography.label(
+                                      color: AppColors.qatarMaroon)
+                                  .copyWith(fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (worksite.isLoading && recentToShow.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: CircularProgressIndicator(
+                                color: AppColors.navy),
+                          ),
+                        )
+                      else if (recentToShow.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.borderDisabled),
+                          ),
+                          child: Text(
+                            isAr
+                                ? 'لا توجد طلبات مسجلة بعد. ابدأ بإنشاء طلب التوريد الأول لموقع عملك.'
+                                : 'No worksite requests yet. Create your first supply request above.',
+                            textAlign: TextAlign.center,
+                            style: AppTypography.bodySecondary(),
+                          ),
+                        )
+                      else
+                        ...recentToShow.map((req) {
+                          final areaLabel = AppStrings.translateCity(
+                              req.municipality,
+                              isArabic: isAr);
+                          return Container(
+                            key: ValueKey('home_recent_req_${req.id}'),
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border:
+                                  Border.all(color: AppColors.borderDisabled),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Wrap(
+                                  alignment: WrapAlignment.spaceBetween,
+                                  spacing: 8,
+                                  runSpacing: 6,
+                                  children: [
+                                    MashwarBadge(
+                                      type: req.status ==
+                                              WorkRequestStatus.completed
+                                          ? BadgeType.verified
+                                          : BadgeType.confirmed,
+                                      customLabel:
+                                          req.status.label(isArabic: isAr),
+                                    ),
+                                    Text(
+                                      req.effectiveTotalMinor
+                                          .format(isArabic: isAr),
+                                      style: AppTypography.body(
+                                              color: AppColors.teal)
+                                          .copyWith(
+                                              fontWeight: FontWeight.w800),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  req.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.title()
+                                      .copyWith(fontSize: 15.5),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${req.pickupLocation} → ${req.dropoffWorksite} ($areaLabel)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.bodySmall(),
+                                ),
+                                const SizedBox(height: 10),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 6,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      key: ValueKey(
+                                          'home_quick_reorder_${req.id}'),
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.teal,
+                                        side: const BorderSide(
+                                            color: AppColors.teal),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 6),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      onPressed: () {
+                                        final draft =
+                                            worksite.buildReorderDraft(req);
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                CreateWorkRequestScreen(
+                                              initialDraft: draft,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(Icons.replay_rounded,
+                                          size: 15),
+                                      label: Text(
+                                        isAr
+                                            ? 'إعادة طلب سريعة'
+                                            : 'Quick Reorder',
+                                        style: AppTypography.label(
+                                                color: AppColors.teal)
+                                            .copyWith(
+                                                fontWeight: FontWeight.w800),
+                                      ),
+                                    ),
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 6),
+                                        minimumSize: Size.zero,
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                WorkRequestDetailsScreen(
+                                              requestId: req.id,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        isAr
+                                            ? 'عرض التفاصيل'
+                                            : 'View Details',
+                                        style: AppTypography.label(
+                                                color: AppColors.navy)
+                                            .copyWith(
+                                                fontWeight: FontWeight.w800),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      const SizedBox(height: 16),
+
+                      // 6. Compact Supporting Qatar Supply Areas Card (No dominating map, zero fake cars)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.sand,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.gold.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.map_outlined,
+                                    size: 18, color: AppColors.navy),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    isAr
+                                        ? 'نطاق التغطية في دولة قطر'
+                                        : 'Qatar Pilot Supply Areas',
+                                    style: AppTypography.body(
+                                            color: AppColors.navy)
+                                        .copyWith(fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: pilotAreas.map((area) {
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => WorkRequestsFeedScreen(
+                                          initialArea: area,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                          color: AppColors.borderDisabled),
+                                    ),
+                                    child: Text(
+                                      AppStrings.translateCity(area,
+                                          isArabic: isAr),
+                                      style: AppTypography.label(
+                                              color: AppColors.navy)
+                                          .copyWith(
+                                              fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              AppEnvironment.pilotScopeDisclaimer(
+                                  isArabic: isAr),
+                              style: AppTypography.bodySmall(
+                                  color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showSavedWorksitePicker(
+    BuildContext context,
+    WorksiteProvider worksite,
+    bool isAr,
+  ) {
+    final sites = worksite.savedWorksites;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppDimens.space20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  isAr
+                      ? 'اختيار موقع العمل الافتراضي'
+                      : 'Select Active Worksite',
+                  style: AppTypography.title().copyWith(fontSize: 18),
+                ),
+                const SizedBox(height: 12),
+                if (sites.isEmpty)
+                  Text(
+                    isAr
+                        ? 'لا توجد مواقع محفوظة بعد. أضف موقع مشروعك لتعبئة الطلبات تلقائياً.'
+                        : 'No saved worksites yet. Add your project site for 1-tap request prefill.',
+                    style: AppTypography.bodySecondary(),
+                  )
+                else
+                  ...sites.map(
+                    (site) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.location_on_rounded,
+                          color: AppColors.teal),
+                      title: Text(site.label),
+                      subtitle: Text(
+                          '${AppStrings.translateCity(site.municipality, isArabic: isAr)} · ${site.zoneOrStreet}'),
+                      onTap: () {
+                        setState(() => _selectedSavedWorksiteId = site.id);
+                        Navigator.of(sheetCtx).pop();
+                      },
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                MashwarButton(
+                  text: isAr
+                      ? 'إضافة / إدارة مواقع العمل'
+                      : 'Add / Manage Saved Worksites',
+                  variant: MashwarButtonVariant.secondary,
+                  onPressed: () {
+                    Navigator.of(sheetCtx).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ProviderProfileScreen(
+                          focusSavedWorksites: true,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -26,6 +26,7 @@ import 'package:mashwar/screens/safety/safety_screens.dart';
 import 'package:mashwar/screens/search/search_results_screen.dart';
 import 'package:mashwar/screens/settings/settings_screen.dart';
 import 'package:mashwar/screens/wallet/wallet_screen.dart';
+import 'package:mashwar/screens/board/board_screen.dart';
 import 'package:mashwar/screens/board/post_ad_screen.dart';
 import 'package:mashwar/state/admin_provider.dart';
 import 'package:mashwar/state/alerts_provider.dart';
@@ -34,6 +35,7 @@ import 'package:mashwar/state/board_provider.dart';
 import 'package:mashwar/state/parcels_provider.dart';
 import 'package:mashwar/state/rides_provider.dart';
 import 'package:mashwar/state/settings_provider.dart';
+import 'package:mashwar/state/worksite_provider.dart';
 
 void main() {
   group('Backend Data Models Serialization & API Layer Tests', () {
@@ -127,6 +129,7 @@ void main() {
           ChangeNotifierProvider(create: (_) => BoardProvider()),
           ChangeNotifierProvider(create: (_) => AlertsProvider()),
           ChangeNotifierProvider(create: (_) => AdminProvider()),
+          ChangeNotifierProvider(create: (_) => WorksiteProvider()),
         ],
         child: Consumer<SettingsProvider>(
           builder: (context, s, _) => MaterialApp(
@@ -232,10 +235,8 @@ void main() {
       expect(find.text('تشارك مقاعد مناطق قطر'), findsNothing);
       expect(find.text('شحن طرود بالكود'), findsNothing);
 
-      // 2. BoardScreen has single plus icon + 'انشر إعلان' label (not '+ انشر إعلان')
-      await tester.pumpWidget(wrapWithProviders(const MainNavShell()));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('اللوحة'));
+      // 2. BoardScreen (deferred behind feature flag) still has single plus icon + 'انشر إعلان' label
+      await tester.pumpWidget(wrapWithProviders(const BoardScreen()));
       await tester.pumpAndSettle();
       expect(find.text('انشر إعلان'), findsOneWidget);
       expect(find.text('+ انشر إعلان'), findsNothing);
@@ -254,15 +255,19 @@ void main() {
     testWidgets('Regression: BoardScreen, WalletScreen (AR & EN), AccountTab, DriverOnboarding, ProhibitedItemsSheet, and ShareTripBottomSheet render with zero layout or type errors', (tester) async {
       final settings = SettingsProvider();
 
-      // 1. BoardScreen renders all cards with zero infinite-width button exceptions
+      // 1. BoardScreen & MainNavShell 4-tab MVP render with zero layout exceptions
+      await tester.pumpWidget(wrapWithProviders(const BoardScreen(), settings: settings));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
       await tester.pumpWidget(wrapWithProviders(const MainNavShell(), settings: settings));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('اللوحة'));
+      await tester.tap(find.text('الطلبات').first);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
       // 2. AccountTab renders all ListTile groups with proper Material ancestors
-      await tester.tap(find.text('حسابي'));
+      await tester.tap(find.text('حسابي').first);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
@@ -366,7 +371,7 @@ void main() {
         tester.view.physicalSize = size;
         tester.view.devicePixelRatio = 1.0;
 
-        // 1. MainNavShell and navigate across all 5 tabs
+        // 1. MainNavShell and navigate across all 4 MVP tabs
         await tester.pumpWidget(wrapWithProviders(const MainNavShell()));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
@@ -379,8 +384,8 @@ void main() {
           expect(find.byType(NavigationRail), findsNothing);
         }
 
-        for (final tabLabel in ['اللوحة', 'طلباتي', 'الرسائل', 'حسابي']) {
-          await tester.tap(find.text(tabLabel));
+        for (final tabLabel in ['الطلبات', 'نشاطي', 'حسابي', 'الرئيسية']) {
+          await tester.tap(find.text(tabLabel).first);
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
         }
