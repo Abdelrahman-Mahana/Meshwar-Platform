@@ -1,0 +1,120 @@
+rules_version = '2';
+
+// ==============================================================================
+// MASHWAR — Cloud Storage Security Rules (Worksite Supply MVP)
+// ==============================================================================
+// Enforces:
+// - Authenticated-only reads and uploads (default deny on all unmatched paths)
+// - Maximum file size <= 10 MB
+// - Strict image/* MIME content-type validation on uploads
+// - Private owner-or-admin access for provider QID & verification documents
+// - Participant-scoped access for work_requests reference & invoice images
+// ==============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.get('admin', false) == true ||
+        request.auth.token.get('role', '') in ['admin', 'superAdmin'] ||
+        (
+          firestore.exists(/databases/(default)/documents/admin_staff/$(request.auth.uid)) &&
+          firestore.get(/databases/(default)/documents/admin_staff/$(request.auth.uid)).data.isActive == true
+        )
+      );
+    }
+
+    function isApprovedProvider() {
+      return isSignedIn() &&
+        firestore.exists(/databases/(default)/documents/provider_profiles/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/provider_profiles/$(request.auth.uid)).data.approvalStatus == 'approved';
+    }
+
+    function isValidImageUpload() {
+      return request.resource != null &&
+        request.resource.size > 0 &&
+        request.resource.size <= 10 * 1024 * 1024 &&
+        request.resource.contentType is string &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    function workRequestExists(requestId) {
+      return firestore.exists(/databases/(default)/documents/work_requests/$(requestId));
+    }
+
+    function workRequestData(requestId) {
+      return firestore.get(/databases/(default)/documents/work_requests/$(requestId)).data;
+    }
+
+    function isWorkRequestParticipant(requestId) {
+      return isSignedIn() &&
+        workRequestExists(requestId) && (
+          workRequestData(requestId).requesterId == request.auth.uid ||
+          workRequestData(requestId).assignedProviderId == request.auth.uid ||
+          isAdmin()
+        );
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Private Provider KYC / QID Verification Media
+    // Only the submitting provider (uid) and active admins may read;
+    // only the owning user may upload valid images (<= 10 MB).
+    match /provider_verifications/{uid}/{file} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update: if isSignedIn() &&
+        request.auth.uid == uid &&
+        isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // Worksite Supply Reference Photos (uploaded by request owner)
+    // Readable by participants, admins, or approved providers inspecting open requests.
+    match /work_requests/{requestId}/reference/{file} {
+      allow read: if isSignedIn() &&
+        workRequestExists(requestId) && (
+          isWorkRequestParticipant(requestId) ||
+          (
+            isApprovedProvider() &&
+            workRequestData(requestId).status in ['open', 'offer_received']
+          )
+        );
+      allow create, update: if isSignedIn() &&
+        workRequestExists(requestId) &&
+        workRequestData(requestId).requesterId == request.auth.uid &&
+        isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // Worksite Supply Store Invoices / Purchase Receipts (uploaded by assigned approved provider)
+    // Readable strictly by the requester, assigned provider, or admin.
+    match /work_requests/{requestId}/invoices/{file} {
+      allow read: if isWorkRequestParticipant(requestId);
+      allow create, update: if isSignedIn() &&
+        workRequestExists(requestId) &&
+        workRequestData(requestId).assignedProviderId == request.auth.uid &&
+        isApprovedProvider() &&
+        isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // Optional Manual Bank Transfer Proof Images (uploaded by requester)
+    // Readable strictly by the requester, assigned provider, or admin.
+    match /work_requests/{requestId}/payment_proofs/{file} {
+      allow read: if isWorkRequestParticipant(requestId);
+      allow create, update: if isSignedIn() &&
+        workRequestExists(requestId) &&
+        workRequestData(requestId).requesterId == request.auth.uid &&
+        isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+  }
+}
