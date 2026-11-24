@@ -10,7 +10,7 @@ Self-contained, bilingual (**Arabic RTL / English LTR**) investor & Startup Qata
 5. **Competitive Positioning Matrix & Technical Due Diligence** — 7-row comparison vs Uber/Karwa, Aramex/Q-Post, and WhatsApp groups + cursor-spotlight engineering cards (`8` `AppRepositories` contracts, `1,539` Firestore security rules across `18` collections, `90/90` automated tests, CI/CD & `/health.json`).
 6. **Investor Data Room (36-Month Operating Model)** — Scenario (`Base` / `Stress -30%`) and Currency (`USD` / `QAR @ 3.64`) switches driving TAM/SAM/SOM cards (`$272.50M` / `$59.95M` / `$3.02M GMV`), 3 interactive SVG charts, interactive Corridor Simulator, 3-Year P&L table, and QDB tranches (`$450K`).
 7. **Founder Spotlight & Doha Hiring Roadmap** — Abdelrahman Mahana's solo full-stack engineering track record + Tranche 1–3 Doha hires.
-8. **Cross-Platform App Access, Live Portal Launch & Investor Inquiry Form** — TestFlight / Android APK / live Consumer Web (`http://localhost:8080/`) / 12-Module Admin & DevOps (`http://localhost:8080/admin/`) + investor inquiry form.
+8. **Cross-Platform App Access, Live Portal Launch & Investor Inquiry Form** — TestFlight / Android APK / live Consumer Web (`http://localhost:8080/`) / 13-Module Admin & DevOps (`http://localhost:8080/admin/`) + Firebase-connected investor inquiry form (`js/firebase-contact.js` -> Cloud Firestore `investor_inquiries` in `mashwar-qatar-2026-ec99d` + instant email alerts to `abdelrahmanmahana01@gmail.com`).
 
 ## Local Preview
 Run `run_landing_page.bat` from the repository root, or run:

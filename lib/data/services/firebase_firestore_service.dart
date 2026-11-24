@@ -20,6 +20,7 @@ class FirestoreCollections {
   static const String disputes = 'disputes';
   static const String featureFlags = 'feature_flags';
   static const String adminStaff = 'admin_staff';
+  static const String investorInquiries = 'investor_inquiries';
 
   /// Path to a specific user's document
   static String userDoc(String userId) => '$users/$userId';
@@ -43,7 +44,7 @@ class FirebaseConfig {
   /// Target Firestore Project ID
   static const String projectId = String.fromEnvironment(
     'FIREBASE_PROJECT_ID',
-    defaultValue: 'meshwar-platform',
+    defaultValue: 'mashwar-qatar-2026-ec99d',
   );
 
   /// Target Firebase Region

@@ -2226,6 +2226,17 @@ input[type="range"] {
   display: block;
 }
 
+.form-status--error {
+  background: #FFF1F2;
+  color: #9F1239;
+  border: 1px solid rgba(190, 18, 60, 0.22);
+}
+
+#investor-submit-btn:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
 /* ==========================================================================
    Footer & Modal
    ========================================================================== */

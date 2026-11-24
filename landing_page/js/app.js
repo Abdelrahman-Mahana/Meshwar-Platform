@@ -327,15 +327,7 @@
       });
     }
 
-    const form = document.getElementById("investor-form");
-    const status = document.getElementById("investor-form-status");
-    if (form && status) {
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        status.classList.add("is-visible");
-        form.reset();
-      });
-    }
+    // Investor contact submission is handled by js/firebase-contact.js (Firestore + email alerts).
   }
 
   function init() {

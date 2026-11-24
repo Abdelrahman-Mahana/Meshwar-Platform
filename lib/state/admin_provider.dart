@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import '../data/api/mashwar_api_client.dart';
 import '../data/mock_data.dart';
 import '../data/models/admin_platform_models.dart';
 import '../data/models/board_ad_model.dart';
 import '../data/repositories/app_repositories.dart';
+import '../data/services/firebase_firestore_service.dart';
 
 enum AdminRole {
   superAdmin,   // مشرف أول: كامل الصلاحيات والإعدادات والـ DevOps
@@ -331,6 +334,15 @@ class AdminProvider extends ChangeNotifier {
       shortEn: 'Metrics',
     ),
     AdminModuleSpec(
+      index: 12,
+      groupAr: 'القيادة والتحليلات',
+      groupEn: 'Command & Analytics',
+      titleAr: 'طلبات المستثمرين',
+      titleEn: 'Investor Inquiries',
+      shortAr: 'المستثمرون',
+      shortEn: 'Inquiries',
+    ),
+    AdminModuleSpec(
       index: 8,
       groupAr: 'التشغيل والسوق',
       groupEn: 'Marketplace Ops',
@@ -492,7 +504,11 @@ class AdminProvider extends ChangeNotifier {
       case AdminRole.reviewAdmin:
         return index == 0 || index == 1;
       case AdminRole.supportAdmin:
-        return index == 0 || index == 2 || index == 3 || index == 4;
+        return index == 0 ||
+            index == 2 ||
+            index == 3 ||
+            index == 4 ||
+            index == 12;
       case AdminRole.financeAdmin:
         return index == 0 || index == 3 || index == 7 || index == 8 || index == 10;
       case AdminRole.devopsAdmin:
@@ -2314,6 +2330,171 @@ class AdminProvider extends ChangeNotifier {
       }
     }
 
+    if (canAccessMenu(12)) {
+      for (final inq in _inquiries) {
+        if (inq.fullName.toLowerCase().contains(q) ||
+            inq.organization.toLowerCase().contains(q) ||
+            inq.email.toLowerCase().contains(q) ||
+            inq.inquiryType.toLowerCase().contains(q) ||
+            inq.shortRef.toLowerCase().contains(q)) {
+          results.add(
+            AdminCommandSearchResult(
+              targetMenuIndex: 12,
+              title: '${inq.fullName} (${inq.organization})',
+              subtitle: '${inq.email} · #${inq.shortRef}',
+              categoryTag: isAr ? 'مستثمر' : 'Inquiry',
+            ),
+          );
+        }
+      }
+    }
+
     return results.take(12).toList();
+  }
+
+  // Landing Page Investor & Partner Inquiries (Firebase investor_inquiries)
+  bool _isSyncingInquiries = false;
+  String? _inquiriesSyncStatus;
+  List<AdminInvestorInquiry> _inquiries = [
+    const AdminInvestorInquiry(
+      id: 'qdb2026a1',
+      fullName: 'طارق المنصور / Tariq Al-Mansoor',
+      organization: 'Startup Qatar / QDB Venture',
+      email: 'tariq.mansoor@qdb.qa',
+      phone: '+974 5512 8840',
+      inquiryType: 'جلسة عرض ومراجعة النموذج المالي (Startup Qatar / VC)',
+      notes: 'مراجعة أرقام M21 التعادل وخطة استقطاب المنفذين بالمنطقة الصناعية.',
+      lang: 'ar',
+      source: 'landing_page',
+      pageUrl: 'https://mashwar-qatar.vercel.app/#contact',
+      status: 'new',
+      createdAtIso: '2026-11-24T14:10:00Z',
+    ),
+    const AdminInvestorInquiry(
+      id: 'qstp2026b2',
+      fullName: 'Nadia Al-Kuwari',
+      organization: 'QSTP Incubation & Tech Review',
+      email: 'n.alkuwari@qstp.org.qa',
+      phone: '+974 4454 7120',
+      inquiryType: 'Request iOS TestFlight / Android APK Build',
+      notes: 'Requested reviewer TestFlight invite and Firebase security rules walk-through.',
+      lang: 'en',
+      source: 'landing_page',
+      pageUrl: 'https://mashwar-qatar.vercel.app/#contact',
+      status: 'contacted',
+      createdAtIso: '2026-11-23T11:25:00Z',
+    ),
+    const AdminInvestorInquiry(
+      id: 'b2b2026c3',
+      fullName: 'م. خالد العطية',
+      organization: 'شركة المدار للمقاولات - لوسيل',
+      email: 'khaled@almadar-contracting.qa',
+      phone: '+974 5031 2290',
+      inquiryType: 'شراكة تجارية وتوريد مواقع في قطر (B2B Pilot)',
+      notes: 'توريد قطع غيار ومعدات خفيفة يومياً بين المنطقة الصناعية ولوسيل.',
+      lang: 'ar',
+      source: 'landing_page',
+      pageUrl: 'https://mashwar-qatar.vercel.app/#contact',
+      status: 'new',
+      createdAtIso: '2026-11-22T09:40:00Z',
+    ),
+  ];
+
+  bool get isSyncingInquiries => _isSyncingInquiries;
+  String? get inquiriesSyncStatus => _inquiriesSyncStatus;
+  List<AdminInvestorInquiry> get inquiries => _inquiries;
+  int get newInquiriesCount =>
+      _inquiries.where((inq) => inq.status == 'new').length;
+
+  void addInquiryRecord(AdminInvestorInquiry item) {
+    _inquiries = [
+      item,
+      ..._inquiries.where((existing) => existing.id != item.id),
+    ];
+    _recordAudit(
+      action: 'تسجيل طلب تواصل جديد',
+      target: '${item.fullName} (${item.organization})',
+      beforeAfter: 'جديد (#${item.shortRef})',
+    );
+    notifyListeners();
+  }
+
+  Future<void> syncInquiriesFromFirestore() async {
+    _isSyncingInquiries = true;
+    notifyListeners();
+
+    try {
+      if (Firebase.apps.isEmpty) {
+        _inquiriesSyncStatus =
+            'وضع المعاينة المحلية — افتح Firestore Console لاستعراض السجلات المباشرة في ${FirebaseConfig.projectId}';
+        return;
+      }
+
+      final snapshot = await FirebaseFirestore.instance
+          .collection(FirestoreCollections.investorInquiries)
+          .orderBy('createdAtIso', descending: true)
+          .limit(100)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final cloudItems = snapshot.docs.map((doc) {
+          final data = Map<String, dynamic>.from(doc.data());
+          data['id'] = doc.id;
+          return AdminInvestorInquiry.fromJson(data);
+        }).toList();
+        _inquiries = cloudItems;
+        _inquiriesSyncStatus =
+            'تمت المزامنة مع ${FirebaseConfig.projectId}: ${cloudItems.length} سجل مباشر';
+      } else {
+        _inquiriesSyncStatus =
+            'متصل بـ ${FirebaseConfig.projectId} — لا توجد طلبات سحابية محفوظة بعد';
+      }
+
+      _recordAudit(
+        action: 'مزامنة طلبات المستثمرين من Firebase',
+        target: FirestoreCollections.investorInquiries,
+        beforeAfter: 'عدد السجلات: ${_inquiries.length}',
+      );
+    } catch (e) {
+      _inquiriesSyncStatus =
+          'يتطلب القراءة المباشرة من Firestore جلسة مشرف مصادقة (isAdmin) أو المراجعة من Firebase Console.';
+    } finally {
+      _isSyncingInquiries = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateInquiryStatus(
+    String inquiryId,
+    String newStatus, {
+    String? note,
+  }) async {
+    final idx = _inquiries.indexWhere((i) => i.id == inquiryId);
+    if (idx == -1) return;
+
+    final prev = _inquiries[idx];
+    final updated = prev.copyWith(status: newStatus, notes: note);
+    _inquiries[idx] = updated;
+
+    _recordAudit(
+      action: 'تحديث حالة طلب مستثمر',
+      target: '${prev.fullName} (#${prev.shortRef})',
+      beforeAfter: '${prev.status} ← $newStatus',
+    );
+    notifyListeners();
+
+    if (Firebase.apps.isNotEmpty) {
+      try {
+        await FirebaseFirestore.instance
+            .collection(FirestoreCollections.investorInquiries)
+            .doc(inquiryId)
+            .update({
+          'status': newStatus,
+          if (note != null) 'notes': note,
+        });
+      } catch (_) {
+        // Keep local UI responsive when operating without privileged Firebase Auth token.
+      }
+    }
   }
 }

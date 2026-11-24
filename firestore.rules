@@ -267,6 +267,14 @@ rules_version = '2';
 //             role (required), isActive (required), uid, permissions,
 //             createdBy, updatedBy, createdAt, updatedAt
 //
+// 19. investor_inquiries/{inquiryId}
+//     Public investor & partnership inquiry leads submitted from the MASHWAR landing page
+//     or web app (admin-readable only to protect visitor PII).
+//     Fields: id (required, immutable), fullName (required), organization (required),
+//             email (required, immutable), inquiryType (required), source (required),
+//             status (required), createdAtIso (required), createdAt (required, immutable),
+//             phone, notes, lang, pageUrl
+//
 // ==============================================================================
 
 service cloud.firestore {
@@ -959,6 +967,36 @@ service cloud.firestore {
         validOptionalTimestamp(data, 'updatedAt');
     }
 
+    // Validator for investor_inquiries/{inquiryId}
+    function isValidInvestorInquiry(data) {
+      let allowed = [
+        'id', 'fullName', 'organization', 'email', 'phone', 'inquiryType',
+        'notes', 'lang', 'source', 'pageUrl', 'status', 'createdAtIso', 'createdAt'
+      ];
+      let required = [
+        'id', 'fullName', 'organization', 'email', 'inquiryType',
+        'source', 'status', 'createdAtIso', 'createdAt'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 6, 128) &&
+        validString(data.fullName, 2, 120) &&
+        validString(data.organization, 1, 160) &&
+        data.email is string &&
+        data.email.size() >= 5 &&
+        data.email.size() <= 160 &&
+        data.email.matches('^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$') &&
+        validString(data.inquiryType, 2, 200) &&
+        data.source in ['landing_page', 'web_app'] &&
+        data.status in ['new', 'contacted', 'archived'] &&
+        validString(data.createdAtIso, 10, 40) &&
+        data.createdAt is timestamp &&
+        (!('phone' in data) || (data.phone is string && data.phone.size() <= 30)) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+        (!('lang' in data) || data.lang in ['ar', 'en']) &&
+        (!('pageUrl' in data) || (data.pageUrl is string && data.pageUrl.size() <= 300));
+    }
+
     // ==========================================================================
     // Default Deny Root Matcher
     // ==========================================================================
@@ -1532,6 +1570,29 @@ service cloud.firestore {
       allow update: if isAdmin() &&
         isValidAdminStaff(request.resource.data) &&
         areImmutableFieldsUnchanged(['id', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 19. Investor & Partnership Inquiries: investor_inquiries/{inquiryId}
+    // ==========================================================================
+    match /investor_inquiries/{inquiryId} {
+      // Read: Restricted strictly to administrators to prevent scraping visitor PII/leads
+      allow get, list: if isAdmin();
+
+      // Create: Publicly creatable from the MASHWAR landing page without user auth,
+      // strictly schema-validated with status locked to 'new' and server timestamp
+      allow create: if request.resource.data.id == inquiryId &&
+        isValidInvestorInquiry(request.resource.data) &&
+        request.resource.data.status == 'new' &&
+        request.resource.data.createdAt == request.time;
+
+      // Update: Administrators only, preserving immutable fields
+      allow update: if isAdmin() &&
+        isValidInvestorInquiry(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'email', 'createdAt']);
+
+      // Delete: Administrators only
       allow delete: if isAdmin();
     }
 

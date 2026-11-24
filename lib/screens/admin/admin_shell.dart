@@ -13,6 +13,7 @@ import 'admin_devops_sre_screen.dart';
 import 'admin_disputes_screen.dart';
 import 'admin_driver_verifications_screen.dart';
 import 'admin_escrow_finance_screen.dart';
+import 'admin_inquiries_screen.dart';
 import 'admin_login_screen.dart';
 import 'admin_rides_parcels_screen.dart';
 import 'admin_services_catalog_screen.dart';
@@ -45,6 +46,7 @@ class _AdminShellState extends State<AdminShell> {
     9: Icons.map_rounded,
     10: Icons.account_balance_wallet_rounded,
     11: Icons.terminal_rounded,
+    12: Icons.mark_email_unread_rounded,
   };
 
   @override
@@ -247,6 +249,8 @@ class _AdminShellState extends State<AdminShell> {
         return const AdminEscrowFinanceScreen();
       case 11:
         return const AdminDevOpsSreScreen();
+      case 12:
+        return const AdminInquiriesScreen();
       default:
         return AdminDashboardScreen(onJumpToModule: (idx) => _navigateToModule(idx, admin, isAr));
     }
@@ -482,6 +486,10 @@ class _AdminShellState extends State<AdminShell> {
                       } else if (mod.index == 10 && pendingEscrowCount > 0) {
                         badgeCount = pendingEscrowCount;
                         badgeBg = AppColors.teal;
+                        badgeText = Colors.white;
+                      } else if (mod.index == 12 && admin.newInquiriesCount > 0) {
+                        badgeCount = admin.newInquiriesCount;
+                        badgeBg = AppColors.coral;
                         badgeText = Colors.white;
                       }
 

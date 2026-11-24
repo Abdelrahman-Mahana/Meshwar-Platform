@@ -684,3 +684,88 @@ class AdminCommandSearchResult {
     required this.categoryTag,
   });
 }
+
+class AdminInvestorInquiry {
+  final String id;
+  final String fullName;
+  final String organization;
+  final String email;
+  final String phone;
+  final String inquiryType;
+  final String notes;
+  final String lang;
+  final String source;
+  final String pageUrl;
+  final String status; // 'new' | 'contacted' | 'archived'
+  final String createdAtIso;
+
+  const AdminInvestorInquiry({
+    required this.id,
+    required this.fullName,
+    required this.organization,
+    required this.email,
+    this.phone = '',
+    required this.inquiryType,
+    this.notes = '',
+    this.lang = 'ar',
+    this.source = 'landing_page',
+    this.pageUrl = '',
+    this.status = 'new',
+    required this.createdAtIso,
+  });
+
+  String get shortRef =>
+      id.length >= 6 ? id.substring(0, 6).toUpperCase() : id.toUpperCase();
+
+  AdminInvestorInquiry copyWith({
+    String? status,
+    String? notes,
+  }) {
+    return AdminInvestorInquiry(
+      id: id,
+      fullName: fullName,
+      organization: organization,
+      email: email,
+      phone: phone,
+      inquiryType: inquiryType,
+      notes: notes ?? this.notes,
+      lang: lang,
+      source: source,
+      pageUrl: pageUrl,
+      status: status ?? this.status,
+      createdAtIso: createdAtIso,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'fullName': fullName,
+        'organization': organization,
+        'email': email,
+        'phone': phone,
+        'inquiryType': inquiryType,
+        'notes': notes,
+        'lang': lang,
+        'source': source,
+        'pageUrl': pageUrl,
+        'status': status,
+        'createdAtIso': createdAtIso,
+      };
+
+  factory AdminInvestorInquiry.fromJson(Map<String, dynamic> json) {
+    return AdminInvestorInquiry(
+      id: (json['id'] ?? '').toString(),
+      fullName: (json['fullName'] ?? '').toString(),
+      organization: (json['organization'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      phone: (json['phone'] ?? '').toString(),
+      inquiryType: (json['inquiryType'] ?? '').toString(),
+      notes: (json['notes'] ?? '').toString(),
+      lang: (json['lang'] ?? 'ar').toString(),
+      source: (json['source'] ?? 'landing_page').toString(),
+      pageUrl: (json['pageUrl'] ?? '').toString(),
+      status: (json['status'] ?? 'new').toString(),
+      createdAtIso: (json['createdAtIso'] ?? '').toString(),
+    );
+  }
+}

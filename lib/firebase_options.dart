@@ -47,29 +47,29 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_WEB_API_KEY', defaultValue: 'AIzaSyDemoKeyMeshwarWebPlatform2026'),
-    appId: '1:109482019482:web:784109482019482abc',
-    messagingSenderId: '109482019482',
-    projectId: 'meshwar-platform',
-    authDomain: 'meshwar-platform.firebaseapp.com',
-    storageBucket: 'meshwar-platform.appspot.com',
-    measurementId: 'G-MESHWAR2026',
+    apiKey: String.fromEnvironment('FIREBASE_WEB_API_KEY', defaultValue: 'AIzaSyB-wPAJ3Dy4cMkuyaRcnYCh6kn6kk5vzTc'),
+    appId: '1:820084343406:web:ad6ce9779a06584bd35c7f',
+    messagingSenderId: '820084343406',
+    projectId: 'mashwar-qatar-2026-ec99d',
+    authDomain: 'mashwar-qatar-2026-ec99d.firebaseapp.com',
+    storageBucket: 'mashwar-qatar-2026-ec99d.firebasestorage.app',
+    measurementId: 'G-S2DSLPL6RB',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_ANDROID_API_KEY', defaultValue: 'AIzaSyDemoKeyMeshwarAndroidApp2026'),
-    appId: '1:109482019482:android:629482019482def',
-    messagingSenderId: '109482019482',
-    projectId: 'meshwar-platform',
-    storageBucket: 'meshwar-platform.appspot.com',
+    apiKey: String.fromEnvironment('FIREBASE_ANDROID_API_KEY', defaultValue: 'AIzaSyB-wPAJ3Dy4cMkuyaRcnYCh6kn6kk5vzTc'),
+    appId: '1:820084343406:android:629482019482def',
+    messagingSenderId: '820084343406',
+    projectId: 'mashwar-qatar-2026-ec99d',
+    storageBucket: 'mashwar-qatar-2026-ec99d.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: 'AIzaSyDemoKeyMeshwariosApp2026'),
-    appId: '1:109482019482:ios:839482019482ghi',
-    messagingSenderId: '109482019482',
-    projectId: 'meshwar-platform',
-    storageBucket: 'meshwar-platform.appspot.com',
+    apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: 'AIzaSyB-wPAJ3Dy4cMkuyaRcnYCh6kn6kk5vzTc'),
+    appId: '1:820084343406:ios:839482019482ghi',
+    messagingSenderId: '820084343406',
+    projectId: 'mashwar-qatar-2026-ec99d',
+    storageBucket: 'mashwar-qatar-2026-ec99d.firebasestorage.app',
     iosBundleId: 'eg.mashwar.app',
   );
 }

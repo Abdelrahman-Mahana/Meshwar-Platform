@@ -173,13 +173,52 @@ void main() {
       expect(admin.canAccessMenu(11), true);
       expect(admin.canAccessMenu(10), false);
 
+      admin.setActiveRole(AdminRole.supportAdmin);
+      expect(admin.canAccessMenu(12), true);
+
       admin.setActiveRole(AdminRole.superAdmin);
       final escrowHits = admin.searchGlobal('#QA-8492', true);
       expect(escrowHits.any((r) => r.targetMenuIndex == 10), true);
+
+      final inquiryHits = admin.searchGlobal('qdb.qa', true);
+      expect(inquiryHits.any((r) => r.targetMenuIndex == 12), true);
+    });
+
+    test('Firebase Investor Inquiries Lifecycle, Filtering & Status Updates', () async {
+      final beforeCount = admin.inquiries.length;
+      final beforeNew = admin.newInquiriesCount;
+
+      admin.addInquiryRecord(
+        const AdminInvestorInquiry(
+          id: 'inq_test_99',
+          fullName: 'Dr. Hamad Al-Thani',
+          organization: 'Doha Ventures',
+          email: 'hamad@dohaventures.qa',
+          phone: '+97455001122',
+          inquiryType: 'Investor Briefing & 3-Year Model Walkthrough',
+          notes: 'Interested in QDB tranche schedule',
+          lang: 'en',
+          source: 'landing_page',
+          createdAtIso: '2026-11-24T18:00:00Z',
+        ),
+      );
+
+      expect(admin.inquiries.length, beforeCount + 1);
+      expect(admin.newInquiriesCount, beforeNew + 1);
+      expect(admin.inquiries.first.shortRef, 'INQ_TE');
+
+      await admin.updateInquiryStatus('inq_test_99', 'contacted', note: 'Sent deck & model');
+      final updated = admin.inquiries.firstWhere((e) => e.id == 'inq_test_99');
+      expect(updated.status, 'contacted');
+      expect(updated.notes, 'Sent deck & model');
+      expect(admin.newInquiriesCount, beforeNew);
+
+      await admin.syncInquiriesFromFirestore();
+      expect(admin.inquiriesSyncStatus, isNotNull);
     });
   });
 
-  group('All 12 Admin & DevOps Screens Multi-Viewport Zero-Overflow Tests', () {
+  group('All 13 Admin & DevOps Screens Multi-Viewport Zero-Overflow Tests', () {
     Future<void> pumpModule(
       WidgetTester tester, {
       required int moduleIndex,
@@ -226,15 +265,15 @@ void main() {
     };
 
     for (final entry in viewports.entries) {
-      testWidgets('All 12 Modules render with zero overflow on ${entry.key}', (tester) async {
-        for (int idx = 0; idx < 12; idx++) {
+      testWidgets('All 13 Modules render with zero overflow on ${entry.key}', (tester) async {
+        for (int idx = 0; idx < 13; idx++) {
           await pumpModule(tester, moduleIndex: idx, viewport: entry.value);
         }
       });
     }
 
     testWidgets('Dark NOC Mode & English LTR render cleanly on Desktop and Mobile', (tester) async {
-      for (final idx in [0, 8, 9, 10, 11]) {
+      for (final idx in [0, 8, 9, 10, 11, 12]) {
         await pumpModule(
           tester,
           moduleIndex: idx,
