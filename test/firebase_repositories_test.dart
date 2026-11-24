@@ -6,6 +6,9 @@ import 'package:mashwar/data/repositories/contracts/i_board_repository.dart';
 import 'package:mashwar/data/repositories/contracts/i_parcels_repository.dart';
 import 'package:mashwar/data/repositories/contracts/i_wallet_repository.dart';
 import 'package:mashwar/data/repositories/contracts/i_chat_repository.dart';
+import 'package:mashwar/data/repositories/contracts/i_provider_repository.dart';
+import 'package:mashwar/data/repositories/contracts/i_worksite_repository.dart';
+import 'package:mashwar/data/repositories/implementations/provider_repository_impl.dart';
 
 void main() {
   group('AppRepositories Factory & DI Tests', () {
@@ -18,6 +21,8 @@ void main() {
       expect(repos.parcels, isA<IParcelsRepository>());
       expect(repos.wallet, isA<IWalletRepository>());
       expect(repos.chat, isA<IChatRepository>());
+      expect(repos.providers, isA<IProviderRepository>());
+      expect(repos.worksite, isA<IWorksiteRepository>());
     });
 
     test('useLocalMocks initializes all mock repositories', () {
@@ -30,6 +35,25 @@ void main() {
       expect(repos.parcels, isNotNull);
       expect(repos.wallet, isNotNull);
       expect(repos.chat, isNotNull);
+      expect(repos.providers, isA<IProviderRepository>());
+      expect(repos.worksite, isA<IWorksiteRepository>());
+    });
+
+    test('Explicit dev-mock worksite and provider repositories coordinate cleanly', () async {
+      final repos = AppRepositories.instance;
+      repos.useLocalMocks(allowDevMocks: true);
+
+      final pilotSupplier = await repos.providers.getProviderProfile(
+        ProviderRepositoryImpl.pilotApprovedProviderId,
+      );
+      expect(pilotSupplier, isNotNull);
+      expect(pilotSupplier!.canAcceptWorksiteJobs, isTrue);
+
+      final openRequests = await repos.worksite.listRequests();
+      expect(openRequests, isNotEmpty);
+
+      // Reset to default gated mocks after explicit dev test
+      repos.useLocalMocks();
     });
 
     test('Local mock rides repository searches rides', () async {
