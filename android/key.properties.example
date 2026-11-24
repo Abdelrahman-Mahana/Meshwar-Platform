@@ -1,0 +1,9 @@
+# MASHWAR Android Upload Keystore Properties (Template)
+# Copy this file to `android/key.properties` (gitignored) or generate automatically via:
+#   powershell -ExecutionPolicy Bypass -File scripts/generate_upload_keystore.ps1
+# NEVER commit `android/key.properties` or `*.jks` / `*.keystore` files to Git.
+
+storePassword=REPLACE_WITH_UPLOAD_KEYSTORE_PASSWORD
+keyPassword=REPLACE_WITH_UPLOAD_KEY_PASSWORD
+keyAlias=upload
+storeFile=upload-keystore.jks

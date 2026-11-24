@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:mashwar/data/api/api_endpoints.dart';
 import 'package:mashwar/data/api/mashwar_api_client.dart';
+import 'package:mashwar/firebase_options.dart';
 import 'package:mashwar/data/mock_data.dart';
 import 'package:mashwar/data/models/board_ad_model.dart';
 import 'package:mashwar/data/models/location_item.dart';
@@ -39,6 +40,21 @@ import 'package:mashwar/state/worksite_provider.dart';
 
 void main() {
   group('Backend Data Models Serialization & API Layer Tests', () {
+    test('DefaultFirebaseOptions uses real registered Qatar Android & iOS native App IDs and Bundle ID', () {
+      expect(DefaultFirebaseOptions.android.projectId, 'mashwar-qatar-2026-ec99d');
+      expect(
+        DefaultFirebaseOptions.android.appId,
+        '1:820084343406:android:a9e464e38a988eddd35c7f',
+      );
+      expect(DefaultFirebaseOptions.ios.projectId, 'mashwar-qatar-2026-ec99d');
+      expect(
+        DefaultFirebaseOptions.ios.appId,
+        '1:820084343406:ios:5073f983643cc020d35c7f',
+      );
+      expect(DefaultFirebaseOptions.ios.iosBundleId, 'qa.mashwar.app');
+      expect(DefaultFirebaseOptions.ios.iosBundleId, isNot('eg.mashwar.app'));
+    });
+
     test('UserModel toJson / fromJson / copyWith roundtrip', () {
       final original = MockData.currentUser;
       final json = original.toJson();
@@ -148,25 +164,52 @@ void main() {
       );
     }
 
-    testWidgets('LegalComplianceScreen renders all 3 compliance tabs in Arabic & English', (tester) async {
+    testWidgets('LegalComplianceScreen renders all 3 honest Qatar compliance tabs in Arabic & English without false wallet/carpooling claims', (tester) async {
       final settings = SettingsProvider();
       await tester.pumpWidget(wrapWithProviders(const LegalComplianceScreen(), settings: settings));
       await tester.pumpAndSettle();
 
-      expect(find.text('الشروط القانونية والترخيص'), findsOneWidget);
+      // Arabic Tab 1: Worksite Supply Pilot Terms & cash_on_delivery / bank_transfer_manual
+      expect(find.text('الشروط القانونية والامتثال التنظيمي'), findsOneWidget);
       expect(find.text('شروط الخدمة'), findsOneWidget);
       expect(find.text('حماية البيانات'), findsOneWidget);
-      expect(find.text('امتثال وزارة النقل'), findsOneWidget);
+      expect(find.text('الحدود التنظيمية والعلامة'), findsOneWidget);
+      expect(find.textContaining('cash_on_delivery'), findsWidgets);
+      expect(find.textContaining('bank_transfer_manual'), findsWidgets);
+      expect(find.textContaining('SkipCash'), findsNothing);
+      expect(find.textContaining('Fawran'), findsNothing);
 
-      await tester.tap(find.text('امتثال وزارة النقل'));
+      // Arabic Tab 2: Qatar PDPL Law No. 13 of 2016 + account deletion rights
+      await tester.tap(find.text('حماية البيانات'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('متوافق مع ضوابط النقل الذكي التشاركي'), findsOneWidget);
+      expect(find.textContaining('قانون حماية خصوصية البيانات الشخصية رقم 13 لسنة 2016'), findsOneWidget);
+      expect(find.textContaining('حذف حسابه'), findsOneWidget);
 
-      // Switch to English
+      // Arabic Tab 3: Regulatory Boundaries & MASHWAR MoCI trademark notice
+      await tester.tap(find.text('الحدود التنظيمية والعلامة'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('الإفصاح التنظيمي وحدود المرحلة التجريبية'), findsOneWidget);
+      expect(find.textContaining('وزارة التجارة والصناعة'), findsWidgets);
+
+      // Switch to English and verify all 3 tabs
       settings.setLocale(const Locale('en', 'US'));
       await tester.pumpAndSettle();
-      expect(find.text('Legal Terms & MoT License'), findsOneWidget);
-      expect(find.text('MoT Compliance'), findsOneWidget);
+      expect(find.text('Legal Terms & Regulatory Compliance'), findsOneWidget);
+      expect(find.text('Regulatory & Trademark'), findsOneWidget);
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Qatar MoCI Single Window'), findsOneWidget);
+
+      await tester.tap(find.text('Data Privacy'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Qatar Personal Data Privacy Law (PDPL) No. 13 of 2016'), findsOneWidget);
+      expect(find.textContaining('Account Deletion Rights'), findsOneWidget);
+
+      await tester.tap(find.text('Terms of Service'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('MASHWAR Worksite Supply Pilot Terms'), findsOneWidget);
+      expect(find.textContaining('SkipCash'), findsNothing);
+      expect(find.textContaining('Fawran'), findsNothing);
     });
 
     testWidgets('BackendReadinessScreen renders JSON schema and executes live endpoint test', (tester) async {

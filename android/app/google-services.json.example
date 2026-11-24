@@ -1,0 +1,30 @@
+{
+  "_comment": "Sanitized template. Run `powershell -ExecutionPolicy Bypass -File scripts/fetch_firebase_configs.ps1` to generate gitignored `android/app/google-services.json`.",
+  "project_info": {
+    "project_number": "820084343406",
+    "project_id": "mashwar-qatar-2026-ec99d",
+    "storage_bucket": "mashwar-qatar-2026-ec99d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:820084343406:android:a9e464e38a988eddd35c7f",
+        "android_client_info": {
+          "package_name": "com.mashwar.app.mashwar"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REPLACE_WITH_FIREBASE_ANDROID_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

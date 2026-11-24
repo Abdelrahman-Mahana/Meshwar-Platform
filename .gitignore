@@ -60,3 +60,16 @@ firestore-debug.log
 .env.*
 !.env.example
 
+# Native Firebase client configs & release signing secrets
+android/key.properties
+android/app/key.properties
+!android/key.properties.example
+*.jks
+*.keystore
+android/app/google-services.json
+!android/app/google-services.json.example
+ios/Runner/GoogleService-Info.plist
+!ios/Runner/GoogleService-Info.plist.example
+!*.example
+
+
