@@ -26,6 +26,18 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>https</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>MASHWAR requires camera access to capture Qatar ID (QID) verification documents, worksite material reference photos, store invoices, and payment receipts.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>MASHWAR requires photo library write access to save order receipts, store invoices, and handover confirmation records to your device.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>MASHWAR requires photo library access to attach Qatar ID (QID) KYC documents, worksite supply photos, store invoices, and bank transfer proofs.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

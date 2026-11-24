@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -15,7 +16,7 @@ import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 import '../system/system_screens.dart';
 
-/// 1. Legal, Privacy & Ministry of Transport Compliance Screen
+/// 1. Legal Terms, Qatar PDPL Data Privacy & Regulatory Boundaries Screen
 class LegalComplianceScreen extends StatelessWidget {
   final int initialTabIndex;
   const LegalComplianceScreen({super.key, this.initialTabIndex = 0});
@@ -33,7 +34,7 @@ class LegalComplianceScreen extends StatelessWidget {
           backgroundColor: const Color(0xFFFCFCFD),
           appBar: AppBar(
             title: Text(
-              isAr ? 'الشروط القانونية والترخيص' : 'Legal Terms & MoT License',
+              isAr ? 'الشروط القانونية والامتثال التنظيمي' : 'Legal Terms & Regulatory Compliance',
               style: AppTypography.title(),
             ),
             backgroundColor: Colors.white,
@@ -54,7 +55,7 @@ class LegalComplianceScreen extends StatelessWidget {
               tabs: [
                 Tab(text: isAr ? 'شروط الخدمة' : 'Terms of Service'),
                 Tab(text: isAr ? 'حماية البيانات' : 'Data Privacy'),
-                Tab(text: isAr ? 'امتثال وزارة النقل' : 'MoT Compliance'),
+                Tab(text: isAr ? 'الحدود التنظيمية والعلامة' : 'Regulatory & Trademark'),
               ],
             ),
           ),
@@ -62,7 +63,7 @@ class LegalComplianceScreen extends StatelessWidget {
             children: [
               _buildTermsTab(isAr),
               _buildPrivacyTab(isAr),
-              _buildMoTComplianceTab(isAr),
+              _buildRegulatoryBoundariesTab(isAr),
             ],
           ),
         ),
@@ -75,36 +76,46 @@ class LegalComplianceScreen extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimens.space16),
       children: [
         _buildInfoCard(
-          icon: Icons.gavel_outlined,
-          title: isAr ? 'اتفاقية الاستخدام لمنصة مشوار (MASHWAR)' : 'MASHWAR Platform Terms of Use',
-          subtitle: isAr ? 'آخر تحديث: يونيو 2026 - ساري في دولة قطر' : 'Last Updated: June 2026 - Valid in State of Qatar',
+          icon: Icons.handyman_outlined,
+          title: isAr
+              ? 'شروط المرحلة التجريبية لتوريد مواقع العمل (MASHWAR)'
+              : 'MASHWAR Worksite Supply Pilot Terms',
+          subtitle: isAr
+              ? 'نطاق المرحلة الأولى (MVP) — ساري في دولة قطر'
+              : 'Phase 1 MVP Pilot Scope — State of Qatar',
           points: isAr
               ? const [
-                  'منصة مشوار هي منصة تقنية لتنظيم تشارك الركوب (Carpooling) وتوصيل الطرود الخفيفة بين المسافرين على نفس المسار بين مناطق ومدن دولة قطر.',
-                  'يلتزم جميع السائقين والركاب بتقديم بيانات هوية صحيحة ومطابقة للبطاقة الشخصية القطرية (QID) السارية.',
-                  'يُحظر تماماً استخدام التطبيق في نقل المواد المحظورة قانوناً أو تجاوز عدد المقاعد المحدد في استمارة المركبة.',
-                  'تخضع سياسة الإلغاء واسترداد المبالغ في المحفظة لضوابط الوقت المعلن قبل انطلاق الرحلة (مجاني قبل 24 ساعة من الانطلاق).',
+                  'تعمل منصة مشوار في مرحلتها التجريبية الأولى كمنصة تقنية لتنسيق طلبات توريد مستلزمات ومواد مواقع العمل والورش داخل بلديات دولة قطر الثماني.',
+                  'يشترط لتقديم عروض التوريد أو تنفيذ الطلبات استكمال توثيق البطاقة الشخصية القطرية المكونة من 11 رقماً (QID) واعتماد حساب المزود من إدارة الامتثال.',
+                  'يُحظر تماماً طلب أو نقل أي مواد محظورة قانوناً أو خطرة، ويلتزم المزود بإرفاق صورة فاتورة الشراء عند التوريد متى تطلب الطلب ذلك.',
+                  'يُوثق التسليم الفعلي في موقع العمل حصرياً عبر رمز التسليم الأحادي المكون من 6 محارف والخاص بصاحب الطلب (بحد أقصى 5 محاولات وصلاحية 24 ساعة).',
                 ]
               : const [
-                  'MASHWAR is a technology platform connecting inter-area travelers in Qatar for shared rides (Carpooling) and light parcel delivery along the same corridor.',
-                  'All drivers and passengers must provide valid Qatar ID (QID) details.',
-                  'Transporting prohibited items or exceeding the licensed seat capacity is strictly forbidden.',
-                  'Cancellations and wallet refunds follow the published schedule (free up to 24 hours before departure).',
+                  'MASHWAR Phase 1 MVP operates solely as a technology coordination platform for worksite supplies, hardware, and site material errands across Qatar\'s 8 municipalities.',
+                  'Providers submitting offers or fulfilling orders must complete 11-digit Qatar ID (QID) verification and hold active compliance approval.',
+                  'Requesting or transporting unlawful or hazardous materials is strictly prohibited; providers must attach store purchase invoices where applicable.',
+                  'On-site delivery completion is verified via the requester\'s single-use 6-character handover code (enforced server-side with a 5-attempt cap and 24-hour expiry).',
                 ],
         ),
         const SizedBox(height: AppDimens.space16),
         _buildInfoCard(
-          icon: Icons.account_balance_wallet_outlined,
-          title: isAr ? 'الرسوم والمدفوعات الرقمية' : 'Fees & Digital Payments',
-          subtitle: isAr ? 'تكامل المحفظة مع فوراً (Fawran) وQPay وSkipCash وApple Pay' : 'Integrated with Fawran, QPay, SkipCash & Apple Pay',
+          icon: Icons.payments_outlined,
+          title: isAr
+              ? 'التسعير وطرق التسوية في المرحلة التجريبية'
+              : 'Pilot Pricing & Settlement Methods',
+          subtitle: isAr
+              ? 'الدفع عند الاستلام (cash_on_delivery) أو التحويل البنكي اليدوي (bank_transfer_manual)'
+              : 'Direct settlement only: cash_on_delivery or bank_transfer_manual',
           points: isAr
               ? const [
-                  'رسوم الخدمة والمنصة محددة بشفافية كاملة بالريال القطري (ر.ق) قبل تأكيد الحجز.',
-                  'تُحفظ مبالغ الحجز الإلكتروني في حساب ضامن (Escrow) ولا يتم تحويلها للسائق إلا بعد تأكيد إتمام الرحلة أو تسليم الطرد برمز OTP.',
+                  'تُعرض جميع الميزانيات وعروض التوريد بالريال القطري (QAR) بشفافية كاملة قبل قبول العرض.',
+                  'تقتصر طرق التسوية المعتمدة في المرحلة التجريبية على الدفع النقدي عند الاستلام (cash_on_delivery) أو التحويل البنكي اليدوي المباشر (bank_transfer_manual) مع إرفاق صورة إيصال التحويل للتوثيق.',
+                  'لا تحتفظ منصة مشوار بأي أرصدة محافظ رقمية مسبقة الدفع ولا تقدم خدمة الضمان المالي (Escrow) أو تحصيل البطاقات البنكية داخل التطبيق في هذه المرحلة.',
                 ]
               : const [
-                  'Platform service fees are transparently displayed in QAR prior to booking confirmation.',
-                  'Digital payments are held in escrow and released to the driver only after trip completion or 4-digit OTP parcel handover.',
+                  'All request budgets and supplier offers are quoted transparently in Qatari Riyals (QAR) prior to offer acceptance.',
+                  'Pilot settlement is strictly limited to Cash on Delivery (cash_on_delivery) or direct Manual Bank Transfer (bank_transfer_manual) with uploaded transfer proof.',
+                  'MASHWAR does not hold stored-value wallet balances, process in-app card/PSP payments, or act as an escrow custodian during Phase 1.',
                 ],
         ),
       ],
@@ -117,27 +128,31 @@ class LegalComplianceScreen extends StatelessWidget {
       children: [
         _buildInfoCard(
           icon: Icons.privacy_tip_outlined,
-          title: isAr ? 'قانون حماية خصوصية البيانات الشخصية رقم 13 لسنة 2016' : 'Qatar Personal Data Privacy Law No. 13 of 2016',
-          subtitle: isAr ? 'التزام كامل بمعايير التشفير والخصوصية في دولة قطر' : 'Full compliance with Qatar NCSA encryption & KYC privacy standards',
+          title: isAr
+              ? 'قانون حماية خصوصية البيانات الشخصية رقم 13 لسنة 2016'
+              : 'Qatar Personal Data Privacy Law (PDPL) No. 13 of 2016',
+          subtitle: isAr
+              ? 'ضوابط الخصوصية وحقوق أصحاب البيانات في دولة قطر'
+              : 'Data protection safeguards & data subject rights in Qatar',
           points: isAr
               ? const [
-                  'تُشفر صور البطاقات الشخصية القطرية (QID) ورخص القيادة بتقنية AES-256 وتُستخدم حصرياً للتحقق من الهوية والأمان (KYC).',
-                  'لا تتم مشاركة رقم الجوال الكامل بين الأطراف إلا بعد تأكيد الحجز الفعلي للرحلة أو الطرد.',
-                  'بيانات الموقع الجغرافي الحي (Live GPS) تُفعل فقط أثناء الرحلة النشطة أو عند استخدام زر استغاثة الطوارئ SOS (999).',
-                  'يحق للمستخدم طلب تصدير بياناته أو حذف حسابه نهائياً من الخوادم بشرط عدم وجود رحلات أو التزامات مالية معلقة.',
+                  'تُجمع البيانات الأساسية (الاسم، البريد الإلكتروني، رقم الجوال +974) وصور البطاقة الشخصية القطرية (QID) بموافقة صريحة ولأغراض التحقق من الهوية وتنفيذ طلبات التوريد فقط.',
+                  'تُعزل وثائق التحقق (provider_verifications) بصلاحيات وصول مقيدة للمستخدم نفسه وفريق الامتثال المخول فقط، وتُحفظ رموز التسليم بصيغة تجزئة مشفرة (Salted SHA-256).',
+                  'تُشارك تفاصيل الموقع والتواصل بين صاحب الطلب والمزود المعتمد المكلف بالطلب النشط فقط، وتُستضاف البيانات عبر بنية سحابية مشفرة أثناء النقل والتخزين (europe-west1).',
+                  'حق حذف الحساب والبيانات: يحق للمستخدم طلب تصحيح بياناته أو حذف حسابه وملفات التوثيق نهائياً من داخل التطبيق فور عدم وجود طلبات نشطة أو نزاعات قائمة.',
                 ]
               : const [
-                  'Qatar ID (QID) and driver license images are AES-256 encrypted and used exclusively for KYC verification.',
-                  'Mobile numbers are masked until a ride or parcel booking is officially confirmed.',
-                  'Live GPS location sharing is active only during an ongoing trip or when Emergency SOS (999) is triggered.',
-                  'Users may export their data or permanently delete their account when no active rides or balances are pending.',
+                  'Account details (name, email, +974 phone) and 11-digit Qatar ID (QID) KYC images are collected with explicit consent strictly for identity verification and worksite order fulfillment.',
+                  'KYC records (provider_verifications) are isolated under strict owner/admin-only access rules, and handover codes are stored solely as salted SHA-256 hashes.',
+                  'Contact and site location details are shared strictly between the requester and the assigned approved provider on encrypted cloud infrastructure (europe-west1).',
+                  'Account Deletion Rights: Users may update their profile or permanently delete their account and KYC records in-app once any active or disputed worksite orders are closed.',
                 ],
         ),
       ],
     );
   }
 
-  Widget _buildMoTComplianceTab(bool isAr) {
+  Widget _buildRegulatoryBoundariesTab(bool isAr) {
     return ListView(
       padding: const EdgeInsets.all(AppDimens.space16),
       children: [
@@ -149,22 +164,23 @@ class LegalComplianceScreen extends StatelessWidget {
             border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.verified_user, color: AppColors.teal, size: 32),
+              const Icon(Icons.info_outline_rounded, color: AppColors.teal, size: 30),
               const SizedBox(width: AppDimens.space12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isAr ? 'متوافق مع ضوابط النقل الذكي التشاركي' : 'Compliant with Smart Shared Mobility Regulations',
+                      isAr
+                          ? 'الإفصاح التنظيمي وحدود المرحلة التجريبية'
+                          : 'Regulatory Disclosure & Pilot Scope Boundaries',
                       style: AppTypography.title(color: AppColors.teal).copyWith(fontSize: 16),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      isAr
-                          ? 'مرخص لتنظيم تشارك تكلفة التنقل بين مناطق قطر (Peer-to-Peer Cost Sharing)'
-                          : 'Licensed for inter-area peer-to-peer travel cost sharing in Qatar',
+                      AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
                       style: AppTypography.bodySecondary(color: AppColors.textPrimary),
                     ),
                   ],
@@ -175,19 +191,40 @@ class LegalComplianceScreen extends StatelessWidget {
         ),
         const SizedBox(height: AppDimens.space16),
         _buildInfoCard(
-          icon: Icons.directions_car_filled_outlined,
-          title: isAr ? 'ضوابط السائقين والمركبات المسجلة' : 'Registered Driver & Vehicle Controls',
-          subtitle: isAr ? 'معايير وزارة المواصلات وإدارة المرور في قطر' : 'MOT Qatar & General Directorate of Traffic standards',
+          icon: Icons.policy_outlined,
+          title: isAr
+              ? 'الخدمات المؤجلة لحين استكمال التراخيص (MoT / QCB)'
+              : 'Deferred Modules Pending Licensing (MoT / QCB)',
+          subtitle: isAr
+              ? 'معطّلة برمجياً بالكامل في إصدار المرحلة الأولى'
+              : 'Hard-disabled in Phase 1 software configuration',
           points: isAr
-              ? const [
-                  'التحقق الآلي واليدوي من سريان رخصة القيادة الخاصة ورخصة تسيير المركبة.',
-                  'تحديد سقف مساهمة المقعد بما يتناسب مع مسافة الطريق وتكلفة الوقود الفعلية دون تحويل المركبة لسيارة أجرة تجارية.',
-                  'دعم خيار "مقصورة سيدات فقط" لتعزيز الأمان والخصوصية على خطوط السفر الطويلة.',
+              ? [
+                  AppEnvironment.passengerTransportNoticeAr,
+                  AppEnvironment.paymentsEscrowNoticeAr,
                 ]
-              : const [
-                  'Automated and manual verification of private driver licenses and vehicle registration cards.',
-                  'Seat cost contribution caps aligned with corridor distance and fuel sharing.',
-                  'Dedicated "Ladies Only" cabin option for enhanced safety and comfort on intercity routes.',
+              : [
+                  AppEnvironment.passengerTransportNoticeEn,
+                  AppEnvironment.paymentsEscrowNoticeEn,
+                ],
+        ),
+        const SizedBox(height: AppDimens.space16),
+        _buildInfoCard(
+          icon: Icons.workspace_premium_outlined,
+          title: isAr
+              ? 'إشعار العلامة التجارية — وزارة التجارة والصناعة (MoCI)'
+              : 'Trademark Notice — Qatar MoCI Single Window',
+          subtitle: isAr
+              ? 'العلامة التجارية «مشوار / MASHWAR» (الفئات 35 و39 و42)'
+              : 'MASHWAR / مشوار Brand Filing (Nice Classes 35, 39 & 42)',
+          points: isAr
+              ? [
+                  'تخضع إجراءات البحث وإيداع العلامة التجارية «مشوار / MASHWAR» في دولة قطر لضوابط إدارة حماية الملكية الفكرية بوزارة التجارة والصناعة عبر النافذة الواحدة (الفئات 35 و39 و42).',
+                  AppEnvironment.trademarkNoticeAr,
+                ]
+              : [
+                  'Clearance search and filing for the MASHWAR / مشوار mark in the State of Qatar are governed by the Ministry of Commerce and Industry (MoCI) Single Window IP framework (Nice Classes 35, 39, and 42).',
+                  AppEnvironment.trademarkNoticeEn,
                 ],
         ),
       ],

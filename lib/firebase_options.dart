@@ -57,19 +57,19 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_ANDROID_API_KEY', defaultValue: 'AIzaSyB-wPAJ3Dy4cMkuyaRcnYCh6kn6kk5vzTc'),
-    appId: '1:820084343406:android:629482019482def',
+    apiKey: String.fromEnvironment('FIREBASE_ANDROID_API_KEY', defaultValue: 'AIzaSyB_tgAC4f2OjV3OwmJZ1Q7fouvyhv6oRW0'),
+    appId: '1:820084343406:android:a9e464e38a988eddd35c7f',
     messagingSenderId: '820084343406',
     projectId: 'mashwar-qatar-2026-ec99d',
     storageBucket: 'mashwar-qatar-2026-ec99d.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: 'AIzaSyB-wPAJ3Dy4cMkuyaRcnYCh6kn6kk5vzTc'),
-    appId: '1:820084343406:ios:839482019482ghi',
+    apiKey: String.fromEnvironment('FIREBASE_IOS_API_KEY', defaultValue: 'AIzaSyCy0dC_cxZv8Ofwzqk0snBRQD-v0OoqGCw'),
+    appId: '1:820084343406:ios:5073f983643cc020d35c7f',
     messagingSenderId: '820084343406',
     projectId: 'mashwar-qatar-2026-ec99d',
     storageBucket: 'mashwar-qatar-2026-ec99d.firebasestorage.app',
-    iosBundleId: 'eg.mashwar.app',
+    iosBundleId: 'qa.mashwar.app',
   );
 }
