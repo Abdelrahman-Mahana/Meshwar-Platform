@@ -916,7 +916,7 @@
             </div>
           </div>
 
-          <div class="investor-form-card">
+          <div id="contact" class="investor-form-card">
             <h3 data-i18n="form_title">طلب غرفة البيانات وجدولة عرض استثماري</h3>
             <p data-i18n="form_sub">احصل على المرفقات المالية الكاملة وروابط تثبيت التطبيق على جوالك مباشرةً.</p>
 
@@ -943,6 +943,10 @@
                   <input id="inv-email" type="email" required placeholder="name@fund.qa" />
                 </div>
                 <div class="form-field">
+                  <label for="inv-phone" data-i18n="f_phone">رقم الهاتف / واتساب (اختياري)</label>
+                  <input id="inv-phone" type="tel" dir="ltr" maxlength="30" placeholder="+974 5000 0000" />
+                </div>
+                <div class="form-field form-field--full">
                   <label for="inv-interest" data-i18n="f_interest">نوع الطلب</label>
                   <select id="inv-interest">
                     <option data-i18n="f_opt_1">جلسة عرض ومراجعة النموذج المالي (Startup Qatar / VC)</option>
@@ -955,12 +959,15 @@
                   <textarea id="inv-notes" placeholder="..."></textarea>
                 </div>
               </div>
+              <input id="inv-website" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
               <div style="margin-top:16px">
-                <button class="btn btn--teal" type="submit" style="width:100%" data-i18n="f_submit">إرسال طلب التواصل</button>
+                <button id="investor-submit-btn" class="btn btn--teal" type="submit" style="width:100%" data-i18n="f_submit">إرسال طلب التواصل</button>
               </div>
-              <div id="investor-form-status" class="form-status" role="status" data-i18n="f_success">
-                تم تسجيل طلبك بنجاح! يمكنك أيضاً التواصل مباشرة عبر البريد abdelrahmanmahana01@gmail.com أو الهاتف +201007938491.
+              <div id="investor-form-status" class="form-status" role="status">
+                <span data-i18n="f_success">تم استلام طلبك وحفظه بنجاح في Firebase! يمكنك أيضاً التواصل مباشرة عبر البريد abdelrahmanmahana01@gmail.com أو الهاتف +201007938491.</span>
+                <strong id="investor-form-ref" style="margin-inline-start:6px"></strong>
               </div>
+              <div id="investor-form-error" class="form-status form-status--error" role="alert"></div>
             </form>
           </div>
         </div>
@@ -1015,5 +1022,6 @@
   <script src="./js/i18n.js"></script>
   <script src="./js/charts.js"></script>
   <script src="./js/app.js"></script>
+  <script type="module" src="./js/firebase-contact.js"></script>
 </body>
 </html>

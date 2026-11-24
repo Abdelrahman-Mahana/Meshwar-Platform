@@ -295,14 +295,19 @@ window.MASHWAR_I18N = {
     f_name: "الاسم الكامل",
     f_org: "الجهة / الصندوق الاستثماري",
     f_email: "البريد الإلكتروني المهني",
+    f_phone: "رقم الهاتف / واتساب (اختياري)",
     f_interest: "نوع الطلب",
     f_opt_1: "جلسة عرض ومراجعة النموذج المالي (Startup Qatar / VC)",
     f_opt_2: "الحصول على رابط TestFlight / Android APK للمعاينة",
     f_opt_3: "شراكة تجارية وتوريد مواقع في قطر (B2B Pilot)",
     f_notes: "ملاحظات إضافية",
     f_submit: "إرسال طلب التواصل",
+    f_sending: "جاري إرسال طلبك وتأمينه...",
+    f_err_validation: "يرجى التأكد من إدخال الاسم والجهة وبريد إلكتروني صحيح قبل الإرسال.",
+    f_err:
+      "تعذر حفظ الطلب حالياً. يرجى مراسلتنا مباشرة على abdelrahmanmahana01@gmail.com أو +201007938491.",
     f_success:
-      "تم تسجيل طلبك بنجاح! يمكنك أيضاً التواصل مباشرة عبر البريد abdelrahmanmahana01@gmail.com أو الهاتف +201007938491.",
+      "تم استلام طلبك وحفظه بنجاح في Firebase! يمكنك أيضاً التواصل مباشرة عبر البريد abdelrahmanmahana01@gmail.com أو الهاتف +201007938491.",
 
     modal_dl_t: "معاينة تطبيق مشوار ولوحة الإدارة للمستثمرين والمراجعين",
     modal_dl_d:
@@ -607,14 +612,19 @@ window.MASHWAR_I18N = {
     f_name: "Full Name",
     f_org: "Organization / Fund",
     f_email: "Work Email",
+    f_phone: "Phone / WhatsApp (Optional)",
     f_interest: "Inquiry Type",
     f_opt_1: "Investor Briefing & 3-Year Model Walkthrough",
     f_opt_2: "Request iOS TestFlight / Android APK Build",
     f_opt_3: "Qatar B2B & Site Supply Logistics Pilot",
     f_notes: "Message / Notes",
     f_submit: "Send Inquiry",
+    f_sending: "Sending and securing your inquiry...",
+    f_err_validation: "Please provide a valid name, organization, and email address before submitting.",
+    f_err:
+      "Unable to save your inquiry right now. Please contact abdelrahmanmahana01@gmail.com or +201007938491 directly.",
     f_success:
-      "Request recorded! You can also reach Abdelrahman Mahana directly via abdelrahmanmahana01@gmail.com or +201007938491.",
+      "Your inquiry is saved in Firebase! You can also reach Abdelrahman Mahana directly via abdelrahmanmahana01@gmail.com or +201007938491.",
 
     modal_dl_t: "MASHWAR Consumer & 12-Module Admin Reviewer Build",
     modal_dl_d:
