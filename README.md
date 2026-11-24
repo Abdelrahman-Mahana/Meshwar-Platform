@@ -1,186 +1,172 @@
-# مشوار (MASHWAR) — المنصة الذكية لتبادل وقضاء المشاوير والمصالح اليومية
+# مشوار (MASHWAR) — Qatar Worksite Supply & Field Procurement MVP
 
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white" alt="Dart" />
-  <img src="https://img.shields.io/badge/Tests-65%2F65%20Passing-success" alt="Tests" />
-  <img src="https://img.shields.io/badge/Analysis-0%20Issues-brightgreen" alt="Analyzer" />
-  <img src="https://img.shields.io/badge/Architecture-Clean%20Layered-orange" alt="Architecture" />
-  <img src="https://img.shields.io/badge/Responsive-Mobile%20%7C%20Tablet%20%7C%20Web-blue" alt="Responsive" />
+  <img src="https://img.shields.io/badge/Firebase-mashwar--qatar--2026--ec99d-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
+  <img src="https://img.shields.io/badge/Cloud%20Functions-v2%20(Node%2020%20TS)-4285F4" alt="Cloud Functions v2" />
+  <img src="https://img.shields.io/badge/Market-Qatar%20(QAR)-8A1538" alt="Qatar QAR" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
 
 <p align="center">
-  <b>"خدمتك ومشوارك في نفس الطريق — منفعة متبادلة، أمان موثّق بالرقم القومي، وتوفير للوقت والجهد"</b><br/>
-  <i>أول منصة مصرية خدمية وتشاركية مفتوحة لقضاء كافة المشاوير والمصالح اليومية ونقل البضائع والأمانات والسفر التشاركي</i>
+  <b>منصة تنسيق توريد مستلزمات ومشتريات مواقع العمل في دولة قطر</b><br/>
+  <i>Qatar B2B / Contractor Worksite Supply Coordination — Verified Providers, Invoice Proof & Cryptographic Handover Verification</i>
 </p>
 
 ---
 
-## 💡 الفكرة والجوهر: اقتصاد التشارك الخدمي اليومي (The Core Philosophy)
+## 1. Product Overview (نظرة عامة على المنتج — المرحلة التجريبية الأولى)
 
-تطبيق **مشوار (MASHWAR)** ليس مجرد تطبيق سفريات أو طرود، بل هو **منصة خدمية متكاملة لتبادل وقضاء المشاوير والمصالح اليومية** لجميع فئات المواطنين والتجار والمسافرين في كل محافظات ومراكز وقرى مصر.
+**MASHWAR (مشوار)** Phase 1 MVP is a focused **Worksite Supply & Urgent Field Material Coordination** platform built for contractors, site engineers, maintenance teams, and approved supply runners operating across the **State of Qatar**.
 
-تقوم فكرة المنصة على معادلة ذكية وبسيطة من **المنفعة المتبادلة (Win-Win Model)**:
-- **طرف يحتاج خدمة أو مشوار (طالب الخدمة):** يوفر على نفسه عناء السفر، ضياع يوم عمل كامل، مشقة الانتظار في المواصلات، أو تعطل مصالحه. ينزل إعلاناً بطلبه والمقابل المادي المقترح.
-- **طرف قادر على تنفيذ الخدمة (مقدم الخدمة / المسافر):** يستغل تحركه، سفره بسيارته، أو مساره اليومي ليقضي مصلحة لأخيه المواطن ويحقق دخلاً إضافياً ومقابلاً مادياً عادلاً.
+Instead of losing skilled technician hours on traffic runs to hardware stores and wholesale yards, a site requester posts a structured supply order (items, specifications, pickup store/zone, target worksite, and QAR budget). Admin-approved providers submit transparent offers, procure the items with store invoice proof, deliver them to the worksite, and complete the job only after verifying a single-use 6-character handover code with the site contact.
+
+### Core Qatar Corridors & Hubs
+- **Supply Origins:** Doha Industrial Area (`المنطقة الصناعية`), Salwa Road hardware yards, Al Wakrah supply depots, Al Rayyan wholesale stores.
+- **Worksite Destinations:** Doha (`الدوحة`), Lusail (`لوسيل`), Al Rayyan (`الريان`), Al Wakrah (`الوكرة`), Al Khor (`الخور`), Mesaieed (`مسيعيد`), Ras Laffan (`رأس لفان`), Umm Salal (`أم صلال`), Al Daayen (`الضعاين`), and Al Shahaniya (`الشيحانية`).
 
 ```mermaid
 flowchart LR
-    A["👤 طالب الخدمة<br/>(يوفر وقته ومجهوده ويقضي مصلحته)"] <-->|"منفعة متبادلة عادلة<br/>بتوثيق الهوية وحماية OTP"| B["🚗 مقدم الخدمة / المسافر<br/>(يقضي المشوار في طريقه ويستفيد مادياً)"]
+    R["🏗️ Site Engineer / Requester<br/>Posts QAR supply request"] --> O["🚚 Approved Provider<br/>Submits offer (QID-verified)"]
+    O --> A["🔐 Offer Accepted<br/>6-char salted SHA-256 code minted"]
+    A --> F["🧾 Procurement & Transit<br/>Store invoice attached"]
+    F --> H["✅ Site Handover Verified<br/>Single-use code completes order"]
 ```
 
 ---
 
-## 🌍 سيناريوهات وأمثلة حية من واقع الحياة اليومية (Real-World Use Cases)
+## 2. MVP Scope, Deferred Features & Regulatory / Trademark Notice
 
-تغطي المنصة مختلف المشاوير والخدمات التي يحتاجها المواطن يومياً بكل مرونة، ومنها على سبيل المثال:
+### Active Phase 1 Scope (`AppEnvironment` Flags)
+ Controlled centrally in [`lib/core/config/app_environment.dart`](lib/core/config/app_environment.dart):
 
-### 1. 🛍️ الشراء وتوصيل الاحتياجات (Buying & Everyday Errands)
-- **الموقف:** شخص في بيته، أو تاجر في محله، ومحتاج حد يشتري له مستلزمات معينة، أدوية ضرورية، طلبات خاصة، أو بضاعة عاجلة من مكان بعيد داخل مدينته أو من مركز مجاور.
-- **الحل عبر مشوار:** ينزل إعلاناً: *"أنا في المكان الفلاني ومحتاج حد يشتري لي كذا وكذا من المكان الفلاني ويجيبه في الوقت كذا"* -> يتلقى عروضاً من أشخاص قريبين، ينفذ أحدهم المشوار ويوصل الطلب ويحاسبه بمقابل مادي.
+| Capability | Flag | Phase 1 Status | Rationale |
+| :--- | :--- | :---: | :--- |
+| **Worksite Supply Coordination** | `enableWorksiteSupply` | **`true` (Active)** | Core B2B/site procurement & delivery coordination in Qatar (`QAR`). |
+| **Passenger Rides** | `enablePassengerRides` | `false` (Deferred) | Deferred pending Qatar Ministry of Transport (MoT) passenger transport licensing. |
+| **Paid Carpooling** | `enableCarpooling` | `false` (Deferred) | Deferred pending Qatar MoT shared-mobility regulatory approval. |
+| **Commercial Heavy Cargo** | `enableCommercialCargo` | `false` (Deferred) | Deferred pending commercial freight/transport licensing. |
+| **In-App Digital Wallet** | `enableDigitalWallet` | `false` (Deferred) | Deferred pending Qatar Central Bank (QCB) stored-value & PSP compliance. |
+| **Automated Escrow Custody** | `enableEscrowClaims` | `false` (Deferred) | Deferred pending QCB-compliant escrow custody & licensed PSP integration. |
+| **AI Matching & Super-App Modules** | — | Deferred | Multi-category super-app flows remain disabled behind feature flags in Phase 1. |
 
-### 2. 📄 قضاء المصالح وجلب الأوراق بين المحافظات (Cross-Governorate Services)
-- **الموقف:** مواطن مقيم في **كفر الشيخ** أو **بلطيم** أو **الإسكندرية** أو **الصعيد**، ومحتاج ورقة رسمية من وزارة أو جهة معينة بالقاهرة، أو محتاج استلام مستند عاجل من هناك.
-- **الحل عبر مشوار:** بدل أن يسافر للقاهرة يوماً كاملاً ويتحمل مصاريف وتعب وتضييع يوم شغل، ينزل إعلاناً على التطبيق -> أي شخص متواجد بالقاهرة ومسافر في طريقه إلى كفر الشيخ أو بلطيم يتواصل معه، يجلب له الورقة أو المستند بأمان ويسلمه له عند وصوله ويستلم مقابله المادي المتفق عليه.
+> **Pilot Settlement Model:** Phase 1 supports **`cash_on_delivery`** (Cash on Delivery at the worksite) and **`bank_transfer_manual`** (Manual Bank Transfer with uploaded transfer proof verified by operations staff: `unpaid -> transfer_proof_submitted -> verified_settled`). No customer funds are held in automated in-app wallet custody.
 
-### 3. 🚗 السفر التشاركي عند أزمة المواصلات (Shared Travel & Empty Seats)
-- **من منظور الراكب:** مسافر من كفر الشيخ إلى القاهرة ومفيش عربيات متوفرة في الموقف أو المواصلات مقطوعة ومزدحمة -> يفتح التطبيق ويشوف مين من أهل بلده مسافر بعربيته الخاصة في نفس التوقيت ومعاه كراسي فاضية ويحجز ويسافر معاه باحترام وراحة.
-- **من منظور صاحب السيارة:** شخص مسافر بسيارته من محافظة لمحافظة وعنده 3 مقاعد شاغرة -> ينزل إعلاناً بالموعد وسعر الكرسي، يحجز معه مسافرون في نفس الاتجاه -> يتقاسم معهم تكلفة البنزين والكارتة ويحقق عائداً يغطي مصاريف سفره، ويفيد ركاباً محتاجين مواصلة مريحة.
-
-### 4. 📦 لوجستيات وتوريد البضائع للمحلات (Shop Cargo & Supplies)
-- **الموقف:** صاحب محل أو ورشة محتاج كرتونة بضاعة أو قطع غيار أو خامات عاجلة من مورد في القاهرة أو طنطا أو الإسكندرية.
-- **الحل عبر مشوار:** يطلب عبر التطبيق نقل وتوريد البضاعة لموقعه مباشرة، ويستلمها في نفس اليوم مع مسافر موثوق بسرعة أكبر وأوفر بكثير من شركات الشحن التقليدية.
-
-### 5. 📍 المشاوير والانتقالات المحلية المباشرة (On-Demand Local Transport)
-- **الموقف:** مواطن في منطقة ريفية، قرية، عزبة، أو طريق فرعي لا تتوفر فيه مواصلات عامة أو غير متاح توكتوك في ذلك التوقيت.
-- **الحل عبر مشوار:** ينزل طلباً بموقعه ووجهته، يتوجه إليه أقرب سائق أو شخص متاح يقضي له مشواره ويوصله بأمان بمقابل عادل.
-
-> **💡 القاعدة العامة:** المنصة غير مقتصرة على خدمة واحدة؛ **أي خدمة، أي مشوار، أو أي مصلحة يومية بين طرفين** يمكن الاتفاق عليها وإنجازها عبر مشوار بكل سلاسة وأمان.
+### Legal, Regulatory & Trademark Readiness Notice
+- **No Transport or Financial Custody License Held:** The repository owner holds **no** passenger transport or commercial freight license from the Qatar Ministry of Transport (MoT) and **no** Payment Service Provider (PSP), e-money wallet, or financial escrow license from the Qatar Central Bank (QCB). Regulated transport and custodial payment modules are disabled in code (`false`) until formal licensing and licensed partner onboarding are completed.
+- **Trademark Clearance Prerequisite:** Commercial use of the **MASHWAR / مشوار** name and mark in the State of Qatar requires independent legal trademark search and registration with the Ministry of Commerce and Industry (MoCI). Any third-party institutions or payment networks referenced in deferred legacy modules remain the property of their respective owners with no implied partnership or endorsement.
 
 ---
 
-## 🛡️ منظومة الأمان والتوثيق وحفظ حقوق الطرفين (Trust & Security)
+## 3. Implemented Technical Architecture
 
-لأن المنصة تتعامل مع مصالح وخدمات وأمانات حقيقية، تم بناء بيئة أمان متكاملة تحمي حق المواطن والمسافر على حد سواء:
+### Runtime Flavors & Fail-Closed Mock Boundary
+Configured via compile-time `--dart-define` parameters (see [`.env.example`](.env.example)):
+- `APP_ENV`: `development` | `staging` | `production` (parsed into `AppFlavor`).
+- `USE_FIREBASE`: `true` | `false` (connects `AppRepositories.instance.useFirebase()` to Firebase project `mashwar-qatar-2026-ec99d` in `europe-west1`).
+- `USE_DEV_MOCKS`: `true` | `false` — **strictly gated** by `AppEnvironment.resolveUseDevMocks` so local dev mocks can **only** activate when `APP_ENV == 'development'` and `USE_FIREBASE == false`. Staging and production builds fail closed to `ServiceUnavailableScreen` with retry if Firebase is disabled or unreachable, never leaking mock users or fake balances.
 
-| ركيزة الأمان | آلية العمل والضمان |
-| :--- | :--- |
-| **🪪 توثيق البطاقة الشخصية (National ID)** | رفع ومراجعة بطاقة الرقم القومي ورقم الهاتف للطرفين قبل تنفيذ المعاملات، لضمان الهوية والمساءلة القانونية التامة. |
-| **🔢 كود التسليم الرقمي الآمن (4-Digit OTP)** | لا يتم تسليم أي ورقة رسمية، بضاعة، أو أمانة، ولا تُعتبر الخدمة منتهية إلا بعد مطابقة كود OTP السري بين المسلّم والمستلم. |
-| **🔒 دردشة مشفرة وخصوصية تامة** | نظام مراسلة داخلي مشفر يحفظ خصوصية أرقام الهواتف الشخصية من الظهور للعامة. |
-| **🚨 مركز السلامة وزر الطوارئ (SOS Hub)** | إمكانية مشاركة خط السير الحي مع العائلة بنقرة واحدة والاتصال الفوري بجهات الطوارئ. |
-| **⭐ تقييمات وسمعة حقيقية** | تقييم متبادل بعد كل خدمة يعكس مصداقية الطرفين ويشجع على التعامل الراقي. |
+### Qatar Domain & Financial Standards
+- **Integer Minor-Unit Currency (`MoneyMinor`):** All MVP financial fields (`budgetMinor`, `estimatedItemsCostMinor`, `maxItemsCapMinor`, `deliveryFeeBudgetMinor`, `agreedAmountMinor`, `agreedFeeMinor`, `totalAmountMinor`, `serviceFeeMinor`) use integer minor units (`1 QAR = 100 dirhams`, e.g., `15000` = `150.00 QAR` / `150 ر.ق`) with zero floating-point `double` arithmetic.
+- **Qatar Identity & Phone Validation:** Providers submit an **11-digit Qatar ID (QID)** (`^[0-9]{11}$`); Qatar mobile numbers validate against 8-digit Ooredoo/Vodafone Qatar prefixes (`+974` `[3567]xxxxxxx`).
+- **Cryptographic Handover Verification:** When a requester accepts an offer, `acceptWorkOffer` generates a 6-character unambiguous alphanumeric code (`[A-HJ-NP-Z2-9]`), hashes it with a 128-bit per-request salt (`SHA-256(salt + ':' + code)`), stores the digest in server-only `work_request_secrets/{requestId}` (`allow read, write: if false;`), and exposes the plaintext code exclusively to the requester via `work_request_handover_view/{requestId}`. `verifyHandoverAndComplete` enforces constant-time comparison (`crypto.timingSafeEqual`), a **5-attempt limit**, **24-hour TTL**, and **single-use** completion.
 
----
-
-## 📱 مميزات التطبيق وتجربة الاستخدام (Key App Features)
-
-### 📢 اللوحة المجتمعية بنظام المبادلة الذكية (Dual-Intent Community Board)
-- **أنا أطلب خدمة / مشوار:** مخصص لمن يحتاج قضاء مصلحة، شراء طلب، نقل بضاعة، حجز مقعد، أو مشوار محلي.
-- **أنا مسافر / أقدم خدمة:** مخصص لمن يسافر ولديه سيارة أو مقاعد خالية، أو مستعد لتقديم خدمة وتوصيل طلب في طريقه.
-- **بطاقة خط السير المتصلة العصرية (Connected Route Card):** تصميم انسيابي وأنيق لحقول الانطلاق والوصول، زر تبديل فوري (`⇅`)، وقائمة سريعة تغطي كافة محافظات ومراكز مصر الـ 27.
-
-### 🎨 واجهة مستخدم إنتربرايز نقية (Uber-Style Minimalist UI)
-- أسطح بيضاء نقية (`#FFFFFF`) وظلال هادئة وخلو تام من البهرجة أو الإيموجي المشتتة.
-- تم حذف كافة الأشرطة واللافتات المكررة لتبدأ كل شاشة مباشرة بوظيفتها الأساسية وتسهل الاستخدام على كل الفئات العمرية.
-
-### 📐 تصميم متجاوب لجميع الشاشات (Full Responsive Multi-Viewport)
-- يعمل بسلاسة كاملة على كافة أحجام الشاشات:
-  - الهواتف الذكية الضيقة والعادية (320px إلى 414px).
-  - الأجهزة اللوحية (Tablets 768px).
-  - شاشات الويب والكمبيوتر الكبيرة (1280px وما فوق).
-- شاشات تسجيل دخول وترحيب موحدة في منتصف الشاشة بدون تشوهات عرض.
-
-### ⚙️ إعدادات ذكية ومركز إشعارات متطور (Settings & Notifications Hub)
-- التحكم الكامل في إشعارات الرحلات والطرود وعروض اللوحة القريبة في نطاق 50 كم.
-- قسم مدمج لإدارة **تنبيهاتي للمسارات المتابعة (My Route Alerts)** مع عداد ذكي بالتنبيهات المفعلة.
-
----
-
-## 🏗️ الهيكلية المعمارية للمشروع (Architecture & Codebase)
-
-تم بناء المشروع وفق مبادئ **Clean Layered Architecture** مع فصل تام بين طبقات العرض والمنطق والبيانات:
-
+### Repository Layout
 ```text
-lib/
-├── core/                  # Design Tokens, AppTheme, Typography, Dimens, Global Widgets
-│   ├── constants/         # AppColors, AppTypography, AppDimens
-│   ├── localization/      # AppStrings, Translation Helpers (AR / EN)
-│   ├── theme/             # Light AppTheme (Cairo Font, Minimal Enterprise)
-│   └── widgets/           # MashwarButton, MashwarTextField, MashwarBadge, RouteMapView
-├── data/                  # Models & Mock Repositories
-│   ├── models/            # UserModel, RideModel, ParcelModel, BoardAdModel, RouteAlertModel
-│   └── mock_data.dart     # Comprehensive Egyptian Scenarios (27 Governorates)
-├── state/                 # State Management (MultiProvider)
-│   ├── auth_provider.dart       # User Session, National ID Verification & Login State
-│   ├── rides_provider.dart      # Ride Booking, Seat Management & Pricing
-│   ├── parcels_provider.dart    # Parcel Transits & OTP Lifecycle
-│   ├── board_provider.dart      # Community Ads, Offer Negotiation & Intent Filtering
-│   ├── alerts_provider.dart     # Route Alerts & Notification Toggles
-│   ├── settings_provider.dart   # Language (RTL/LTR) & Push Preference Controls
-│   └── admin_provider.dart      # User Ban, KYC Verification & Dispute Resolution
-├── screens/               # Feature-Driven Screens
-│   ├── auth/              # Welcome, Phone Input (+20), Email Auth, OTP & Profile Setup
-│   ├── home/              # Main Hub, Quick Search & Safety Pillars
-│   ├── board/             # Community Board, Post Ad (Dual-Intent), Make Offer
-│   ├── alerts/            # My Alerts Screen (Route Corridor Notification Management)
-│   ├── ride_details/      # Passenger/Driver Perspectives, Seat Selection, Map Route
-│   ├── parcel/            # Send Parcel, OTP Verification Dialog, Prohibited Items
-│   ├── settings/          # Uber-Style Sectioned Settings & Smart Notification Hub
-│   ├── wallet/            # InstaPay, Vodafone Cash, Cash Settlements & Receipts
-│   ├── safety/            # SOS Safety Center, Live Trip Sharing & Police/Ambulance Hotlines
-│   └── admin/             # Full Desktop/Web Admin Control Panel & Audit Logs
-├── admin_main.dart        # Entrypoint for Admin Web Control Center
-└── main.dart              # Entrypoint for Passenger, Driver & Service App
+├── .env.example                 # Environment & --dart-define template (zero secrets)
+├── firebase.json                # Firestore, Cloud Functions v2 (nodejs20), Storage & Emulator ports
+├── firestore.rules              # 2,475-line ruleset (Collections 1–19 preserved + MVP Collections 20–29)
+├── firestore.indexes.json       # 14 composite indexes (incl. Worksite Supply queries)
+├── storage.rules                # Private KYC & participant-scoped invoice/proof image rules (<=10 MB)
+├── functions/                   # Firebase Cloud Functions v2 (TypeScript, europe-west1)
+│   ├── src/
+│   │   ├── types.ts             # Domain types, DTOs & error codes
+│   │   ├── stateMachine.ts      # WorkRequest & PaymentSettlement state transition guards
+│   │   ├── handoverCrypto.ts    # CSPRNG 6-char code + salted constant-time SHA-256 verification
+│   │   ├── store.ts             # Transactional Firestore & in-memory test store adapter
+│   │   ├── handlers.ts          # 9 transactional business & admin moderation handlers
+│   │   └── index.ts             # Cloud Functions v2 HTTPS onCall exports
+│   └── test/
+│       └── backend_security.test.mjs  # Node security & state-machine test suite (10 tests)
+├── lib/
+│   ├── core/config/             # AppEnvironment, AppFlavor, feature flags & legal disclaimers
+│   ├── data/
+│   │   ├── models/              # worksite_models.dart (MoneyMinor, WorkRequest, WorkOffer, etc.), user_model.dart
+│   │   ├── repositories/        # Contracts + Firebase & dev-gated local implementations + AppRepositories DI
+│   │   └── services/            # firebase_firestore_service.dart (Callable HTTP v2 client), google_maps_service.dart (Qatar catalog)
+│   ├── state/                   # WorksiteProvider, AuthProvider, AdminProvider, SettingsProvider
+│   ├── screens/                 # Customer Worksite Supply flows, Auth, Admin Portal (incl. Module 13 Worksite Ops)
+│   ├── main.dart                # Customer & embedded route entrypoint
+│   └── admin_main.dart          # Standalone Enterprise Admin Web entrypoint (Firebase staff auth guarded)
+└── docs/
+    ├── MVP_BASELINE_AUDIT.md    # Pre-implementation baseline audit (preserved reference)
+    └── backend/                 # Aligned architecture, schema, API, security, setup & testing docs
 ```
 
 ---
 
-## 🧪 الاختبارات والجودة (Automated Tests & Quality)
+## 4. Running & Verifying Locally
 
-المشروع مدعوم بحزمة اختبارات آلية شاملة تغطي كافة وظائف العمل، تجاوب الشاشات، وتدفقات الأمان:
+### Prerequisites
+- **Flutter SDK** `3.x` (verified on `Flutter 3.47.9` / `Dart 3.x`)
+- **Node.js** `20+` (verified on `v24.19.0`) for `functions/` build and tests
+- *(For full local Firebase Emulator Suite only)*: Java JRE/JDK `11+` (`21 LTS` recommended) and global `firebase-tools`
 
-```bash
-# تشغيل جميع الاختبارات الآلية (65 اختباراً ناجحاً بنسبة 100%)
-flutter test
-
-# التحقق من جودة الكود والتحليل الساكن
-flutter analyze
-```
-
-**النتائج الحالية:**
-- **`flutter test`:** 65/65 passed (`All tests passed!`).
-- **`flutter analyze`:** `No issues found! (0 warnings, 0 errors)`.
-
----
-
-## 🚦 تشغيل المشروع محلياً (Running Locally)
-
-### المتطلبات
-- Flutter SDK (3.x أو أحدث)
-- متصفح ويب حديث أو محاكي Android / iOS
-
-### 1. تثبيت الاعتماديات
-```bash
+### 1. Install Dependencies
+```powershell
 flutter pub get
+Push-Location functions; npm install; Pop-Location
 ```
 
-### 2. تشغيل تطبيق المواطنين والخدمات الأساسي
-```bash
-flutter run -d web-server --web-port 8080 --web-hostname localhost
-```
-افتح المتصفح على: [http://localhost:8080](http://localhost:8080)
+### 2. Run Customer App
+```powershell
+# Local development with explicit dev mock data (APP_ENV=development & USE_FIREBASE=false)
+flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
 
-### 3. تشغيل لوحة تحكم الإدارة (Admin Control Center)
-```bash
-flutter run -t lib/admin_main.dart -d web-server --web-port 8081 --web-hostname localhost
+# Connected to Firebase project mashwar-qatar-2026-ec99d
+flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=true
 ```
-افتح المتصفح على: [http://localhost:8081](http://localhost:8081)
+
+### 3. Run Admin Operations Portal (`Module 13: Worksite Supply Ops`)
+```powershell
+# Dev-mock staff mode (local testing only)
+flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
+
+# Live Firebase staff auth mode (verifies active Firestore admin_staff/{uid} record)
+flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=staging --dart-define=USE_FIREBASE=true
+```
+
+### 4. Run Static Analysis & Automated Tests
+```powershell
+flutter analyze
+flutter test
+Push-Location functions; npm run build; npm test; Pop-Location
+```
 
 ---
 
-## 📄 الترخيص (License)
+## 5. Known Environment & Pilot Blockers
 
-هذا المشروع مرخص بموجب رخصة **MIT**.  
-جميع الحقوق محفوظة © 2026 **مشوار (MASHWAR)**.
+1. **Host JVM & Firebase CLI Absent:** On the current build workstation, `java` (JRE/JDK) and global `firebase` CLI (`firebase-tools`) are not installed in `PATH`. Consequently, `functions/` security handlers are verified via `node --test` (`10/10` passing) and Dart repositories/providers are verified via `flutter test`, while live JVM Firestore/Storage Emulator rule execution requires installing Java 21 LTS + `firebase-tools`.
+2. **Phone SMS OTP Disabled:** `FirebaseAuthRepository.sendPhoneOtp` / `verifyPhoneOtp` explicitly throw `UnsupportedError('Phone OTP requires configured SMS provider')` outside dev-mock mode until an SMS gateway / Firebase Phone Auth quota is provisioned for `+974`. **Email + Password** authentication is the active pilot sign-in method.
+3. **Native Mobile Packaging:** `android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`, production Android keystore signing, and native binary file-picker uploads (`firebase_storage` / `image_picker`) remain prerequisites before native Google Play / App Store submission.
+
+---
+
+## 6. Documentation Index
+- [Backend Architecture](docs/backend/ARCHITECTURE.md)
+- [Cloud Firestore Database Schema (Collections 1–29)](docs/backend/DATABASE_SCHEMA.md)
+- [Callable Cloud Functions v2 & State Machine API](docs/backend/API_AND_FUNCTIONS.md)
+- [Security Architecture, Rules & Governance](docs/backend/SECURITY.md)
+- [Firebase & Local Emulator Setup](docs/backend/FIREBASE_SETUP.md)
+- [Google Maps & Qatar Geo-Catalog Setup](docs/backend/GOOGLE_MAPS_SETUP.md)
+- [Implementation Status Matrix](docs/backend/IMPLEMENTATION_STATUS.md)
+- [Testing & Verification Report](docs/backend/TESTING_REPORT.md)
+- [Interactive Controls Matrix](docs/backend/INTERACTIVE_CONTROLS_MATRIX.md)
+
+---
+
+## License
+
+Released under the **MIT License**. © 2026 MASHWAR (مشوار).
