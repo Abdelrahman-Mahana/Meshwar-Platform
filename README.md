@@ -76,32 +76,36 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 ```text
 ├── .env.example                 # Environment & --dart-define template (zero secrets)
 ├── firebase.json                # Firestore, Cloud Functions v2 (nodejs20), Storage & Emulator ports
-├── firestore.rules              # 2,475-line ruleset (Collections 1–19 preserved + MVP Collections 20–29)
+├── firestore.rules              # 2,344-line AST-optimized ruleset (Collections 1–19 + MVP Collections 20–29)
 ├── firestore.indexes.json       # 14 composite indexes (incl. Worksite Supply queries)
 ├── storage.rules                # Private KYC & participant-scoped invoice/proof image rules (<=10 MB)
+├── scripts/                     # Local automation (run_emulators_tests.ps1, fetch_firebase_configs.ps1, generate_upload_keystore.ps1)
 ├── functions/                   # Firebase Cloud Functions v2 (TypeScript, europe-west1)
 │   ├── src/
 │   │   ├── types.ts             # Domain types, DTOs & error codes
 │   │   ├── stateMachine.ts      # WorkRequest & PaymentSettlement state transition guards
 │   │   ├── handoverCrypto.ts    # CSPRNG 6-char code + salted constant-time SHA-256 verification
 │   │   ├── store.ts             # Transactional Firestore & in-memory test store adapter
-│   │   ├── handlers.ts          # 9 transactional business & admin moderation handlers
-│   │   └── index.ts             # Cloud Functions v2 HTTPS onCall exports
+│   │   ├── handlers.ts          # 10 transactional business, account erasure & admin moderation handlers
+│   │   └── index.ts             # Cloud Functions v2 HTTPS onCall exports (incl. deleteUserAccount)
 │   └── test/
-│       └── backend_security.test.mjs  # Node security & state-machine test suite (10 tests)
+│       ├── backend_security.test.mjs  # Node security & state-machine test suite (11/11 passing)
+│       └── emulator_rules.test.mjs    # Live Firestore & Storage Emulator rules suite (9/9 passing)
 ├── lib/
 │   ├── core/config/             # AppEnvironment, AppFlavor, feature flags & legal disclaimers
 │   ├── data/
 │   │   ├── models/              # worksite_models.dart (MoneyMinor, WorkRequest, WorkOffer, etc.), user_model.dart
-│   │   ├── repositories/        # Contracts + Firebase & dev-gated local implementations + AppRepositories DI
-│   │   └── services/            # firebase_firestore_service.dart (Callable HTTP v2 client), google_maps_service.dart (Qatar catalog)
+│   │   ├── repositories/        # Contracts + Firebase (+974 Phone & Email Auth) & dev-gated local implementations
+│   │   └── services/            # firebase_firestore_service.dart (Callable HTTP v2), media_upload_service.dart (Storage), google_maps_service.dart
 │   ├── state/                   # WorksiteProvider, AuthProvider, AdminProvider, SettingsProvider
-│   ├── screens/                 # Customer Worksite Supply flows, Auth, Admin Portal (incl. Module 13 Worksite Ops)
+│   ├── screens/                 # Customer Worksite Supply flows, Auth, Safety (url_launcher), Legal (PDPL), Admin Portal (Module 13)
 │   ├── main.dart                # Customer & embedded route entrypoint
 │   └── admin_main.dart          # Standalone Enterprise Admin Web entrypoint (Firebase staff auth guarded)
 └── docs/
-    ├── MVP_BASELINE_AUDIT.md    # Pre-implementation baseline audit (preserved reference)
-    └── backend/                 # Aligned architecture, schema, API, security, setup & testing docs
+    ├── MVP_BASELINE_AUDIT.md                  # Pre-implementation baseline audit (preserved reference)
+    ├── MVP_IMPLEMENTATION_REPORT.md           # Full MVP engineering & verification report
+    ├── QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md # MoCI trademark, +974 SMS, PDPL & mobile store release playbook
+    └── backend/                               # Aligned architecture, schema, API, security, setup & testing docs
 ```
 
 ---
@@ -111,12 +115,17 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 ### Prerequisites
 - **Flutter SDK** `3.x` (verified on `Flutter 3.47.9` / `Dart 3.x`)
 - **Node.js** `20+` (verified on `v24.19.0`) for `functions/` build and tests
-- *(For full local Firebase Emulator Suite only)*: Java JRE/JDK `11+` (`21 LTS` recommended) and global `firebase-tools`
+- **OpenJDK `21 LTS`** (`21.0.13.1`, discoverable via `$env:JAVA_HOME` or `$env:LOCALAPPDATA\Programs\OpenJDK21`) and **`firebase-tools`** (`15.37.0+`) for the live Firestore & Storage Emulator test suite and Android keystore tooling
 
-### 1. Install Dependencies
+### 1. Install Dependencies & Provision Local Ignored Native Configs
 ```powershell
 flutter pub get
 Push-Location functions; npm install; Pop-Location
+
+# Optional (for native Android/iOS builds): fetch gitignored google-services.json & GoogleService-Info.plist
+# and generate gitignored android/upload-keystore.jks + android/key.properties
+powershell -ExecutionPolicy Bypass -File scripts/fetch_firebase_configs.ps1
+powershell -ExecutionPolicy Bypass -File scripts/generate_upload_keystore.ps1
 ```
 
 ### 2. Run Customer App
@@ -137,24 +146,31 @@ flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=development -
 flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=staging --dart-define=USE_FIREBASE=true
 ```
 
-### 4. Run Static Analysis & Automated Tests
+### 4. Run Static Analysis, Unit/Widget Suites & Live Emulator Security Tests
 ```powershell
-flutter analyze
-flutter test
-Push-Location functions; npm run build; npm test; Pop-Location
+flutter analyze --no-pub
+flutter test --no-pub                                           # 136/136 passing
+Push-Location functions; npm run build; npm test; Pop-Location  # 11/11 passing
+powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1  # 9/9 live Firestore + Storage suites passing
+flutter build web --release                                     # Production web bundle
 ```
 
 ---
 
-## 5. Known Environment & Pilot Blockers
+## 5. Remaining External & Pre-Launch Operational Gates
 
-1. **Host JVM & Firebase CLI Absent:** On the current build workstation, `java` (JRE/JDK) and global `firebase` CLI (`firebase-tools`) are not installed in `PATH`. Consequently, `functions/` security handlers are verified via `node --test` (`10/10` passing) and Dart repositories/providers are verified via `flutter test`, while live JVM Firestore/Storage Emulator rule execution requires installing Java 21 LTS + `firebase-tools`.
-2. **Phone SMS OTP Disabled:** `FirebaseAuthRepository.sendPhoneOtp` / `verifyPhoneOtp` explicitly throw `UnsupportedError('Phone OTP requires configured SMS provider')` outside dev-mock mode until an SMS gateway / Firebase Phone Auth quota is provisioned for `+974`. **Email + Password** authentication is the active pilot sign-in method.
-3. **Native Mobile Packaging:** `android/app/google-services.json`, `ios/Runner/GoogleService-Info.plist`, production Android keystore signing, and native binary file-picker uploads (`firebase_storage` / `image_picker`) remain prerequisites before native Google Play / App Store submission.
+All in-repository MVP code, security rules, media upload pipelines, `+974` Phone Auth integration, `deleteUserAccount` erasure, native Firebase app registrations (`1:820084343406:android:a9e464e38a988eddd35c7f`, `1:820084343406:ios:5073f983643cc020d35c7f`, `1:820084343406:web:ad6ce9779a06584bd35c7f`), release signing configs, and live emulator suites are implemented and verified. Remaining gates are external operational/legal steps documented in [`docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md`](docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md):
+
+1. **Firebase Console SMS Billing, App Attestation & Live `+974` SIM Verification:** `+974` Firebase Phone Auth (`signInWithPhoneNumber` on Web, `verifyPhoneNumber` on Android/iOS) is wired with bilingual fallback to Email + Password, but live SMS delivery requires upgrading `mashwar-qatar-2026-ec99d` to the Firebase Blaze plan, enabling Phone Auth with a Qatar-only (`+974`) SMS region allowlist, registering Android SHA-1/SHA-256 fingerprints + iOS APNs `.p8` key + reCAPTCHA Enterprise, and verifying OTP delivery on physical Ooredoo/Vodafone Qatar SIMs.
+2. **Signed Native Store Artifacts & Store Console Review:** Release Gradle signing (`android/app/build.gradle.kts` + `proguard-rules.pro`), iOS `qa.mashwar.app` bundle/privacy strings (`ios/Runner/Info.plist`), and local provisioning scripts (`fetch_firebase_configs.ps1`, `generate_upload_keystore.ps1`) are ready, while building production `.aab` / `.ipa` store binaries requires an Android SDK release host and macOS/Xcode Apple Developer signing host, plus Google Play Console / App Store Connect review.
+3. **Qatar MoCI Trademark Clearance:** Complete prior-art search and Nice Classes 35, 39, and 42 trademark registration for **MASHWAR / مشوار** via the Qatar Ministry of Commerce and Industry (MoCI) Single Window (`investor.sw.gov.qa`) prior to public commercial launch.
+4. **Qatar MoT & QCB Regulatory Authorization (Deferred Phase 2 Flags):** Keep `enablePassengerRides`, `enableCarpooling`, `enableCommercialCargo`, `enableDigitalWallet`, and `enableEscrowClaims` set to `false` until formal Ministry of Transport (MoT) permits and Qatar Central Bank (QCB) PSP/escrow authorizations are obtained.
 
 ---
 
 ## 6. Documentation Index
+- [MVP Implementation & Verification Report](docs/MVP_IMPLEMENTATION_REPORT.md)
+- [Qatar Compliance, Trademark & Mobile Release Playbook](docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md)
 - [Backend Architecture](docs/backend/ARCHITECTURE.md)
 - [Cloud Firestore Database Schema (Collections 1–29)](docs/backend/DATABASE_SCHEMA.md)
 - [Callable Cloud Functions v2 & State Machine API](docs/backend/API_AND_FUNCTIONS.md)
