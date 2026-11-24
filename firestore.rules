@@ -217,6 +217,56 @@ rules_version = '2';
 // 11. admin_audit_logs/{logId}
 //     Internal security audit log for admin operations (read/write restricted to admin claim).
 //
+// 12. platform_config/{configId}
+//     Runtime platform configuration, broadcast banners, and operational thresholds.
+//     Fields: id, key, value, nameAr, nameEn, unitAr, unitEn, descriptionAr, descriptionEn,
+//             broadcastBanner, bannerAr, bannerEn, bannerActive, bannerType,
+//             maintenanceMode, maintenanceMessageAr, maintenanceMessageEn,
+//             minAppVersion, thresholds (map), isActive, updatedBy, createdAt, updatedAt
+//
+// 13. service_catalog/{serviceId}
+//     Dynamic catalog of MASHWAR services (carpooling, parcels, errands, etc.).
+//     Fields: id (required, immutable), nameAr (required), nameEn (required),
+//             isActive (required), code, descriptionAr, descriptionEn, category,
+//             iconName, iconUrl, baseFee, minPrice, maxPrice, commissionPct,
+//             escrowRequired, requiresDriverVerification, sortOrder, updatedBy,
+//             createdAt, updatedAt
+//
+// 14. corridors/{corridorId}
+//     Managed intercity & intra-city transport corridors with pricing guardrails.
+//     Fields: id (required, immutable), fromCity (required), toCity (required),
+//             isActive (required), nameAr, nameEn, governorate, distanceKm,
+//             estimatedMinutes, suggestedPrice, minPrice, maxPrice, parcelBaseFee,
+//             isPopular, sortOrder, updatedBy, createdAt, updatedAt
+//
+// 15. escrow_holds/{escrowId}
+//     Bilateral service & parcel escrow holds locked until OTP handover or arbitration.
+//     Fields: id (required, immutable), amount (required), status (required),
+//             referenceId, referenceType, requesterId, providerId, payerId, payeeId,
+//             participantIds, serviceFee, itemBudget, currency, fundingChannel,
+//             otpCode, receiptApproved, receiptImageUrl, notes, disputeId,
+//             releasedBy, createdAt, updatedAt, releasedAt
+//
+// 16. disputes/{disputeId}
+//     User, ride, parcel, and escrow dispute tickets for Trust & Safety review.
+//     Fields: id (required, immutable), type (required), category (required),
+//             complainantId (required, immutable), complainantName (required),
+//             status (required), respondentId, againstName, referenceId,
+//             parcelOrRideDetails, description, evidenceUrls, assignedTo, timeline,
+//             resolutionDecision, internalNote, resolvedBy, createdAt, updatedAt, resolvedAt
+//
+// 17. feature_flags/{flagId}
+//     Runtime feature toggles and phased rollout configuration.
+//     Fields: id (required, immutable), key (required, immutable), enabled (required),
+//             nameAr, nameEn, description, rolloutPercentage, allowedRoles,
+//             targetEnvironments, minAppVersion, updatedBy, createdAt, updatedAt
+//
+// 18. admin_staff/{staffId}
+//     Administrative staff directory and RBAC role assignments (admin-only).
+//     Fields: id (required, immutable), name (required), email (required),
+//             role (required), isActive (required), uid, permissions,
+//             createdBy, updatedBy, createdAt, updatedAt
+//
 // ==============================================================================
 
 service cloud.firestore {
@@ -310,6 +360,11 @@ service cloud.firestore {
         'emergencyContactPhone',
         'walletBalance'
       ]);
+    }
+
+    // Validate optional timestamp: if present and non-null, must be a timestamp
+    function validOptionalTimestamp(data, field) {
+      return !(field in data) || data[field] == null || data[field] is timestamp;
     }
 
     // ==========================================================================
@@ -662,6 +717,246 @@ service cloud.firestore {
         ) ||
         isAdmin()
       );
+    }
+
+    // Helper for escrow participant verification
+    function isEscrowParticipant(data) {
+      return isAuthenticated() && (
+        ('requesterId' in data && data.requesterId == request.auth.uid) ||
+        ('providerId' in data && data.providerId == request.auth.uid) ||
+        ('payerId' in data && data.payerId == request.auth.uid) ||
+        ('payeeId' in data && data.payeeId == request.auth.uid) ||
+        ('participantIds' in data && data.participantIds is list && request.auth.uid in data.participantIds)
+      );
+    }
+
+    // Helper for dispute party verification (complainant or respondent)
+    function isDisputeParty(data) {
+      return isAuthenticated() && (
+        ('complainantId' in data && data.complainantId == request.auth.uid) ||
+        ('respondentId' in data && data.respondentId == request.auth.uid)
+      );
+    }
+
+    // Validator for platform_config/{configId}
+    function isValidPlatformConfig(data) {
+      let allowed = [
+        'id', 'key', 'value', 'nameAr', 'nameEn', 'unitAr', 'unitEn',
+        'descriptionAr', 'descriptionEn', 'broadcastBanner', 'bannerAr',
+        'bannerEn', 'bannerActive', 'bannerType', 'maintenanceMode',
+        'maintenanceMessageAr', 'maintenanceMessageEn', 'minAppVersion',
+        'thresholds', 'isActive', 'updatedBy', 'createdAt', 'updatedAt'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        data.keys().size() >= 1 &&
+        validOptionalString(data, 'id', 1, 128) &&
+        validOptionalString(data, 'key', 1, 100) &&
+        (!('value' in data) || data.value == null || (data.value is string && data.value.size() <= 500) || data.value is number || data.value is bool) &&
+        validOptionalString(data, 'nameAr', 1, 150) &&
+        validOptionalString(data, 'nameEn', 1, 150) &&
+        validOptionalString(data, 'unitAr', 1, 30) &&
+        validOptionalString(data, 'unitEn', 1, 30) &&
+        validOptionalString(data, 'descriptionAr', 0, 500) &&
+        validOptionalString(data, 'descriptionEn', 0, 500) &&
+        validOptionalString(data, 'broadcastBanner', 0, 500) &&
+        validOptionalString(data, 'bannerAr', 0, 500) &&
+        validOptionalString(data, 'bannerEn', 0, 500) &&
+        (!('bannerActive' in data) || data.bannerActive == null || data.bannerActive is bool) &&
+        (!('bannerType' in data) || data.bannerType == null || data.bannerType in ['info', 'warning', 'alert', 'promo', 'maintenance']) &&
+        (!('maintenanceMode' in data) || data.maintenanceMode == null || data.maintenanceMode is bool) &&
+        validOptionalString(data, 'maintenanceMessageAr', 0, 500) &&
+        validOptionalString(data, 'maintenanceMessageEn', 0, 500) &&
+        validOptionalString(data, 'minAppVersion', 1, 30) &&
+        (!('thresholds' in data) || data.thresholds == null || (data.thresholds is map && data.thresholds.keys().size() <= 50)) &&
+        (!('isActive' in data) || data.isActive == null || data.isActive is bool) &&
+        validOptionalString(data, 'updatedBy', 1, 128) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for service_catalog/{serviceId}
+    function isValidServiceCatalogItem(data) {
+      let allowed = [
+        'id', 'code', 'nameAr', 'nameEn', 'descriptionAr', 'descriptionEn',
+        'category', 'iconName', 'iconUrl', 'baseFee', 'minPrice', 'maxPrice',
+        'commissionPct', 'escrowRequired', 'requiresDriverVerification',
+        'isActive', 'sortOrder', 'updatedBy', 'createdAt', 'updatedAt'
+      ];
+      let required = ['id', 'nameAr', 'nameEn', 'isActive'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.nameAr, 1, 100) &&
+        validString(data.nameEn, 1, 100) &&
+        data.isActive is bool &&
+        validOptionalString(data, 'code', 1, 64) &&
+        validOptionalString(data, 'descriptionAr', 0, 500) &&
+        validOptionalString(data, 'descriptionEn', 0, 500) &&
+        validOptionalString(data, 'category', 1, 64) &&
+        validOptionalString(data, 'iconName', 1, 64) &&
+        validOptionalUrl(data, 'iconUrl') &&
+        (!('baseFee' in data) || data.baseFee == null || (data.baseFee is number && data.baseFee >= 0 && data.baseFee <= 100000)) &&
+        (!('minPrice' in data) || data.minPrice == null || (data.minPrice is number && data.minPrice >= 0 && data.minPrice <= 100000)) &&
+        (!('maxPrice' in data) || data.maxPrice == null || (data.maxPrice is number && data.maxPrice >= 0 && data.maxPrice <= 100000)) &&
+        (!('commissionPct' in data) || data.commissionPct == null || (data.commissionPct is number && data.commissionPct >= 0 && data.commissionPct <= 100)) &&
+        (!('escrowRequired' in data) || data.escrowRequired == null || data.escrowRequired is bool) &&
+        (!('requiresDriverVerification' in data) || data.requiresDriverVerification == null || data.requiresDriverVerification is bool) &&
+        (!('sortOrder' in data) || data.sortOrder == null || (data.sortOrder is int && data.sortOrder >= 0 && data.sortOrder <= 10000)) &&
+        validOptionalString(data, 'updatedBy', 1, 128) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for corridors/{corridorId}
+    function isValidCorridor(data) {
+      let allowed = [
+        'id', 'nameAr', 'nameEn', 'fromCity', 'toCity', 'governorate',
+        'distanceKm', 'estimatedMinutes', 'suggestedPrice', 'minPrice',
+        'maxPrice', 'parcelBaseFee', 'isActive', 'isPopular', 'sortOrder',
+        'updatedBy', 'createdAt', 'updatedAt'
+      ];
+      let required = ['id', 'fromCity', 'toCity', 'isActive'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.fromCity, 1, 100) &&
+        validString(data.toCity, 1, 100) &&
+        data.isActive is bool &&
+        validOptionalString(data, 'nameAr', 1, 120) &&
+        validOptionalString(data, 'nameEn', 1, 120) &&
+        validOptionalString(data, 'governorate', 1, 60) &&
+        (!('distanceKm' in data) || data.distanceKm == null || (data.distanceKm is number && data.distanceKm >= 0 && data.distanceKm <= 5000)) &&
+        (!('estimatedMinutes' in data) || data.estimatedMinutes == null || (data.estimatedMinutes is int && data.estimatedMinutes >= 0 && data.estimatedMinutes <= 2000)) &&
+        (!('suggestedPrice' in data) || data.suggestedPrice == null || (data.suggestedPrice is number && data.suggestedPrice >= 0 && data.suggestedPrice <= 50000)) &&
+        (!('minPrice' in data) || data.minPrice == null || (data.minPrice is number && data.minPrice >= 0 && data.minPrice <= 50000)) &&
+        (!('maxPrice' in data) || data.maxPrice == null || (data.maxPrice is number && data.maxPrice >= 0 && data.maxPrice <= 50000)) &&
+        (!('parcelBaseFee' in data) || data.parcelBaseFee == null || (data.parcelBaseFee is number && data.parcelBaseFee >= 0 && data.parcelBaseFee <= 10000)) &&
+        (!('isPopular' in data) || data.isPopular == null || data.isPopular is bool) &&
+        (!('sortOrder' in data) || data.sortOrder == null || (data.sortOrder is int && data.sortOrder >= 0 && data.sortOrder <= 10000)) &&
+        validOptionalString(data, 'updatedBy', 1, 128) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for escrow_holds/{escrowId}
+    function isValidEscrowHold(data) {
+      let allowed = [
+        'id', 'referenceId', 'referenceType', 'requesterId', 'providerId',
+        'payerId', 'payeeId', 'participantIds', 'amount', 'serviceFee',
+        'itemBudget', 'currency', 'fundingChannel', 'status', 'otpCode',
+        'receiptApproved', 'receiptImageUrl', 'notes', 'disputeId',
+        'releasedBy', 'createdAt', 'updatedAt', 'releasedAt'
+      ];
+      let required = ['id', 'amount', 'status'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        data.amount is number && data.amount >= 0 && data.amount <= 100000 &&
+        data.status in ['pending', 'held', 'locked', 'disputed', 'frozen', 'released', 'refunded', 'cancelled'] &&
+        validOptionalString(data, 'referenceId', 1, 128) &&
+        (!('referenceType' in data) || data.referenceType == null || data.referenceType in ['ride', 'parcel', 'errand', 'board_ad', 'service']) &&
+        validOptionalString(data, 'requesterId', 1, 128) &&
+        validOptionalString(data, 'providerId', 1, 128) &&
+        validOptionalString(data, 'payerId', 1, 128) &&
+        validOptionalString(data, 'payeeId', 1, 128) &&
+        (!('participantIds' in data) || data.participantIds == null || (data.participantIds is list && data.participantIds.size() >= 1 && data.participantIds.size() <= 10)) &&
+        (!('serviceFee' in data) || data.serviceFee == null || (data.serviceFee is number && data.serviceFee >= 0 && data.serviceFee <= 50000)) &&
+        (!('itemBudget' in data) || data.itemBudget == null || (data.itemBudget is number && data.itemBudget >= 0 && data.itemBudget <= 100000)) &&
+        validOptionalString(data, 'currency', 1, 10) &&
+        validOptionalString(data, 'fundingChannel', 1, 50) &&
+        validOptionalString(data, 'otpCode', 4, 8) &&
+        (!('receiptApproved' in data) || data.receiptApproved == null || data.receiptApproved is bool) &&
+        validOptionalUrl(data, 'receiptImageUrl') &&
+        validOptionalString(data, 'notes', 0, 1000) &&
+        validOptionalString(data, 'disputeId', 1, 128) &&
+        validOptionalString(data, 'releasedBy', 1, 128) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt') &&
+        validOptionalTimestamp(data, 'releasedAt');
+    }
+
+    // Validator for disputes/{disputeId}
+    function isValidDispute(data) {
+      let allowed = [
+        'id', 'type', 'category', 'complainantId', 'complainantName',
+        'respondentId', 'againstName', 'referenceId', 'parcelOrRideDetails',
+        'description', 'evidenceUrls', 'status', 'assignedTo', 'timeline',
+        'resolutionDecision', 'internalNote', 'resolvedBy',
+        'createdAt', 'updatedAt', 'resolvedAt'
+      ];
+      let required = ['id', 'type', 'category', 'complainantId', 'complainantName', 'status'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        data.type in ['parcel', 'user', 'ride', 'escrow', 'service', 'طرد', 'مستخدم', 'رحلة'] &&
+        validString(data.category, 1, 100) &&
+        validString(data.complainantId, 1, 128) &&
+        validString(data.complainantName, 2, 100) &&
+        data.status in ['open', 'underReview', 'resolved', 'closed', 'rejected', 'مفتوح', 'قيد المراجعة', 'محلول'] &&
+        validOptionalString(data, 'respondentId', 1, 128) &&
+        validOptionalString(data, 'againstName', 1, 100) &&
+        validOptionalString(data, 'referenceId', 1, 128) &&
+        validOptionalString(data, 'parcelOrRideDetails', 0, 500) &&
+        validOptionalString(data, 'description', 0, 2000) &&
+        (!('evidenceUrls' in data) || data.evidenceUrls == null || (data.evidenceUrls is list && data.evidenceUrls.size() <= 10)) &&
+        validOptionalString(data, 'assignedTo', 1, 128) &&
+        (!('timeline' in data) || data.timeline == null || (data.timeline is list && data.timeline.size() <= 50)) &&
+        validOptionalString(data, 'resolutionDecision', 0, 500) &&
+        validOptionalString(data, 'internalNote', 0, 1000) &&
+        validOptionalString(data, 'resolvedBy', 1, 128) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt') &&
+        validOptionalTimestamp(data, 'resolvedAt');
+    }
+
+    // Validator for feature_flags/{flagId}
+    function isValidFeatureFlag(data) {
+      let allowed = [
+        'id', 'key', 'nameAr', 'nameEn', 'description', 'enabled',
+        'rolloutPercentage', 'allowedRoles', 'targetEnvironments',
+        'minAppVersion', 'updatedBy', 'createdAt', 'updatedAt'
+      ];
+      let required = ['id', 'key', 'enabled'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validString(data.key, 1, 100) &&
+        data.enabled is bool &&
+        validOptionalString(data, 'nameAr', 1, 100) &&
+        validOptionalString(data, 'nameEn', 1, 100) &&
+        validOptionalString(data, 'description', 0, 500) &&
+        (!('rolloutPercentage' in data) || data.rolloutPercentage == null || (data.rolloutPercentage is number && data.rolloutPercentage >= 0 && data.rolloutPercentage <= 100)) &&
+        (!('allowedRoles' in data) || data.allowedRoles == null || (data.allowedRoles is list && data.allowedRoles.size() <= 20)) &&
+        (!('targetEnvironments' in data) || data.targetEnvironments == null || (data.targetEnvironments is list && data.targetEnvironments.size() <= 10)) &&
+        validOptionalString(data, 'minAppVersion', 1, 30) &&
+        validOptionalString(data, 'updatedBy', 1, 128) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for admin_staff/{staffId}
+    function isValidAdminStaff(data) {
+      let allowed = [
+        'id', 'uid', 'name', 'email', 'role', 'isActive',
+        'permissions', 'createdBy', 'updatedBy', 'createdAt', 'updatedAt'
+      ];
+      let required = ['id', 'name', 'email', 'role', 'isActive'];
+      return hasOnlyAllowedFields(data, allowed) &&
+        hasRequiredFields(data, required) &&
+        validString(data.id, 1, 128) &&
+        validOptionalString(data, 'uid', 1, 128) &&
+        validString(data.name, 2, 100) &&
+        data.email is string &&
+        data.email.size() >= 5 &&
+        data.email.size() <= 100 &&
+        data.email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$') &&
+        data.role in ['superAdmin', 'reviewAdmin', 'supportAdmin', 'compliance', 'operations'] &&
+        data.isActive is bool &&
+        (!('permissions' in data) || data.permissions == null || (data.permissions is list && data.permissions.size() <= 30)) &&
+        validOptionalString(data, 'createdBy', 1, 128) &&
+        validOptionalString(data, 'updatedBy', 1, 128) &&
+        validOptionalTimestamp(data, 'createdAt') &&
+        validOptionalTimestamp(data, 'updatedAt');
     }
 
     // ==========================================================================
@@ -1092,6 +1387,152 @@ service cloud.firestore {
       allow read, create: if isAdmin();
       // Immutable audit log: updates and deletes are forbidden
       allow update, delete: if false;
+    }
+
+    // ==========================================================================
+    // 12. Platform Runtime Config: platform_config/{configId}
+    // ==========================================================================
+    match /platform_config/{configId} {
+      // Read: Authenticated clients sync runtime banners & operational thresholds
+      allow read: if isAuthenticated();
+
+      // Write (Create / Update / Delete): Administrators only with schema validation
+      allow create: if isAdmin() && isValidPlatformConfig(request.resource.data);
+      allow update: if isAdmin() &&
+        isValidPlatformConfig(request.resource.data) &&
+        areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 13. Service Catalog: service_catalog/{serviceId}
+    // ==========================================================================
+    match /service_catalog/{serviceId} {
+      // Read: Any authenticated user can browse active platform services
+      allow read: if isAuthenticated();
+
+      // Write: Administrators only
+      allow create: if isAdmin() &&
+        request.resource.data.id == serviceId &&
+        isValidServiceCatalogItem(request.resource.data);
+      allow update: if isAdmin() &&
+        isValidServiceCatalogItem(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 14. Transport Corridors: corridors/{corridorId}
+    // ==========================================================================
+    match /corridors/{corridorId} {
+      // Read: Any authenticated user can view active corridors & pricing bounds
+      allow read: if isAuthenticated();
+
+      // Write: Administrators only
+      allow create: if isAdmin() &&
+        request.resource.data.id == corridorId &&
+        isValidCorridor(request.resource.data);
+      allow update: if isAdmin() &&
+        isValidCorridor(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 15. Service & Parcel Escrow Holds: escrow_holds/{escrowId}
+    // ==========================================================================
+    match /escrow_holds/{escrowId} {
+      // Get: Involved escrow participants or administrators only
+      allow get: if isAdmin() || isEscrowParticipant(resource.data);
+
+      // List: Administrators only (prevents scraping financial holds)
+      allow list: if isAdmin();
+
+      // Create: Authenticated user participating in the escrow hold (cannot pre-release)
+      allow create: if isAuthenticated() &&
+        request.resource.data.id == escrowId &&
+        isValidEscrowHold(request.resource.data) &&
+        (
+          isAdmin() ||
+          (
+            isEscrowParticipant(request.resource.data) &&
+            request.resource.data.status in ['pending', 'held', 'locked'] &&
+            (!('releasedBy' in request.resource.data) || request.resource.data.releasedBy == null) &&
+            (!('releasedAt' in request.resource.data) || request.resource.data.releasedAt == null)
+          )
+        );
+
+      // Update / Delete: Administrators (or backend Admin SDK) only
+      allow update: if isAdmin() &&
+        isValidEscrowHold(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 16. Disputes & Safety Reports: disputes/{disputeId}
+    // ==========================================================================
+    match /disputes/{disputeId} {
+      // Get: Complainant, respondent, or administrators only
+      allow get: if isAdmin() || isDisputeParty(resource.data);
+
+      // List: Administrators only (prevents enumerating user disputes)
+      allow list: if isAdmin();
+
+      // Create: Authenticated complainant filing an open dispute under their own UID
+      allow create: if isAuthenticated() &&
+        request.resource.data.id == disputeId &&
+        isValidDispute(request.resource.data) &&
+        (
+          isAdmin() ||
+          (
+            request.resource.data.complainantId == request.auth.uid &&
+            request.resource.data.status in ['open', 'مفتوح'] &&
+            (!('assignedTo' in request.resource.data) || request.resource.data.assignedTo == null) &&
+            (!('resolutionDecision' in request.resource.data) || request.resource.data.resolutionDecision == null) &&
+            (!('internalNote' in request.resource.data) || request.resource.data.internalNote == null) &&
+            (!('resolvedBy' in request.resource.data) || request.resource.data.resolvedBy == null) &&
+            (!('resolvedAt' in request.resource.data) || request.resource.data.resolvedAt == null)
+          )
+        );
+
+      // Update / Delete: Administrators only
+      allow update: if isAdmin() &&
+        isValidDispute(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'complainantId', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 17. DevOps Feature Flags: feature_flags/{flagId}
+    // ==========================================================================
+    match /feature_flags/{flagId} {
+      // Read: Authenticated clients evaluate enabled flags & rollouts
+      allow read: if isAuthenticated();
+
+      // Write: Administrators only
+      allow create: if isAdmin() &&
+        request.resource.data.id == flagId &&
+        isValidFeatureFlag(request.resource.data);
+      allow update: if isAdmin() &&
+        isValidFeatureFlag(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'key', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // ==========================================================================
+    // 18. Admin Staff Directory & RBAC: admin_staff/{staffId}
+    // ==========================================================================
+    match /admin_staff/{staffId} {
+      // Read & Write: Restricted strictly to administrators
+      allow read: if isAdmin();
+      allow create: if isAdmin() &&
+        request.resource.data.id == staffId &&
+        isValidAdminStaff(request.resource.data);
+      allow update: if isAdmin() &&
+        isValidAdminStaff(request.resource.data) &&
+        areImmutableFieldsUnchanged(['id', 'createdAt']);
+      allow delete: if isAdmin();
     }
 
   }

@@ -40,15 +40,19 @@ class MashwarAdminWebApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, _) {
+      child: Consumer2<SettingsProvider, AdminProvider>(
+        builder: (context, settings, admin, _) {
+          final isDark = admin.isDarkMode;
+          final baseTheme = AppTheme.lightTheme;
+
           return MaterialApp(
             title: settings.isArabic
-                ? 'مشوار · لوحة تحكم العمليات والإدارة المركزية'
-                : 'MASHWAR · Central Operations & Admin Portal',
+                ? 'مشوار · مركز القيادة والإدارة والـ DevOps'
+                : 'MASHWAR · Enterprise Command & DevOps Portal',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme.copyWith(
-              scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+            themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+            theme: baseTheme.copyWith(
+              scaffoldBackgroundColor: const Color(0xFFF4F6FA),
               appBarTheme: const AppBarTheme(
                 backgroundColor: AppColors.navy,
                 elevation: 0,
@@ -59,8 +63,31 @@ class MashwarAdminWebApp extends StatelessWidget {
                 color: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                ),
+              ),
+            ),
+            darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
+              scaffoldBackgroundColor: const Color(0xFF0A1422),
+              colorScheme: const ColorScheme.dark(
+                primary: AppColors.gold,
+                secondary: Color(0xFF2DD4BF),
+                surface: Color(0xFF102033),
+                error: Color(0xFFF87171),
+              ),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFF091320),
+                elevation: 0,
+                centerTitle: false,
+                iconTheme: IconThemeData(color: Colors.white),
+              ),
+              cardTheme: CardThemeData(
+                color: const Color(0xFF102033),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: const BorderSide(color: Color(0xFF24405F), width: 1.0),
                 ),
               ),
             ),
@@ -76,15 +103,7 @@ class MashwarAdminWebApp extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            home: Consumer<AdminProvider>(
-              builder: (context, admin, _) {
-                // If already logged in, show AdminShell; otherwise show official login screen (Page 68)
-                if (admin.isLoggedIn) {
-                  return const AdminShell();
-                }
-                return const AdminLoginScreen();
-              },
-            ),
+            home: admin.isLoggedIn ? const AdminShell() : const AdminLoginScreen(),
           );
         },
       ),

@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_typography.dart';
-import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
-import 'admin_dashboard_screen.dart';
-import 'admin_driver_verifications_screen.dart';
-import 'admin_users_screen.dart';
-import 'admin_rides_parcels_screen.dart';
-import 'admin_disputes_screen.dart';
-import 'admin_settings_screen.dart';
 import 'admin_audit_log_screen.dart';
-import 'admin_staff_screen.dart';
+import 'admin_corridors_geo_screen.dart';
+import 'admin_dashboard_screen.dart';
+import 'admin_devops_sre_screen.dart';
+import 'admin_disputes_screen.dart';
+import 'admin_driver_verifications_screen.dart';
+import 'admin_escrow_finance_screen.dart';
 import 'admin_login_screen.dart';
+import 'admin_rides_parcels_screen.dart';
+import 'admin_services_catalog_screen.dart';
+import 'admin_settings_screen.dart';
+import 'admin_staff_screen.dart';
+import 'admin_users_screen.dart';
+import 'widgets/admin_ui_kit.dart';
 
 class AdminShell extends StatefulWidget {
   final int initialIndex;
@@ -26,38 +32,20 @@ class AdminShell extends StatefulWidget {
 class _AdminShellState extends State<AdminShell> {
   late int _selectedIndex;
 
-  final List<String> _menuTitlesAr = [
-    'لوحة الأرقام',
-    'توثيق السائقين',
-    'المستخدمون',
-    'الرحلات والطرود',
-    'البلاغات والنزاعات',
-    'الإعدادات',
-    'الموظفون',
-    'سجل التدقيق',
-  ];
-
-  final List<String> _menuTitlesEn = [
-    'Metrics Dashboard',
-    'Driver Verifications',
-    'Users',
-    'Rides & Parcels',
-    'Disputes & Reports',
-    'Settings',
-    'Staff & Roles',
-    'Audit Log',
-  ];
-
-  final List<IconData> _menuIcons = [
-    Icons.dashboard_rounded,
-    Icons.verified_user_rounded,
-    Icons.people_alt_rounded,
-    Icons.directions_car_rounded,
-    Icons.report_problem_rounded,
-    Icons.settings_suggest_rounded,
-    Icons.badge_rounded,
-    Icons.receipt_long_rounded,
-  ];
+  static const Map<int, IconData> _moduleIcons = {
+    0: Icons.dashboard_rounded,
+    1: Icons.verified_user_rounded,
+    2: Icons.people_alt_rounded,
+    3: Icons.directions_car_rounded,
+    4: Icons.report_problem_rounded,
+    5: Icons.settings_suggest_rounded,
+    6: Icons.badge_rounded,
+    7: Icons.receipt_long_rounded,
+    8: Icons.grid_view_rounded,
+    9: Icons.map_rounded,
+    10: Icons.account_balance_wallet_rounded,
+    11: Icons.terminal_rounded,
+  };
 
   @override
   void initState() {
@@ -65,9 +53,39 @@ class _AdminShellState extends State<AdminShell> {
     _selectedIndex = widget.initialIndex;
   }
 
+  void _navigateToModule(int index, AdminProvider admin, bool isAr, {bool closeDrawer = false}) {
+    if (!admin.canAccessMenu(index)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isAr
+                ? 'هذه الشاشة مقصورة على أدوار إدارية أخرى وفق سياسة الصلاحيات.'
+                : 'Access restricted for your current staff role.',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    setState(() => _selectedIndex = index);
+    if (closeDrawer) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _openSpotlight(BuildContext context, AdminProvider admin, bool isAr) {
+    showDialog(
+      context: context,
+      builder: (_) => AdminCommandPaletteDialog(
+        onNavigate: (idx) => _navigateToModule(idx, admin, isAr),
+      ),
+    );
+  }
+
   void _showNotificationsDialog(BuildContext context, AdminProvider admin, bool isAr) {
     final pendingDrivers = admin.driverRequests.where((r) => r.status == 'قيد المراجعة').length;
     final openDisputes = admin.disputes.where((d) => d.status == 'مفتوح').length;
+    final frozenEscrows = admin.escrowItems.where((e) => e.status == 'frozen').length;
 
     showDialog(
       context: context,
@@ -84,9 +102,11 @@ class _AdminShellState extends State<AdminShell> {
               child: const Icon(Icons.notifications_active_rounded, color: AppColors.coral, size: 22),
             ),
             const SizedBox(width: 12),
-            Text(
-              isAr ? 'الإشعارات والعمليات العاجلة' : 'Operations Alerts',
-              style: AppTypography.title().copyWith(fontSize: 16),
+            Expanded(
+              child: Text(
+                isAr ? 'الإشعارات والعمليات العاجلة' : 'Operations Alerts',
+                style: AppTypography.title().copyWith(fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -104,16 +124,16 @@ class _AdminShellState extends State<AdminShell> {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               subtitle: Text(
-                isAr ? 'بحاجة لمراجعة البطاقة الشخصية القطرية (QID) ورخص القيادة' : 'Requires Qatar ID (QID) & License checks',
+                isAr ? 'بحاجة لمراجعة QID ورخص القيادة' : 'Requires QID & license checks',
                 style: const TextStyle(fontSize: 11),
               ),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.of(ctx).pop();
-                setState(() => _selectedIndex = 1);
+                _navigateToModule(1, admin, isAr);
               },
             ),
-            const Divider(height: 16),
+            const Divider(height: 12),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
@@ -121,17 +141,17 @@ class _AdminShellState extends State<AdminShell> {
                 child: const Icon(Icons.warning_amber_rounded, color: AppColors.coral, size: 20),
               ),
               title: Text(
-                isAr ? '$openDisputes بلاغات مفتوحة' : '$openDisputes open disputes & reports',
+                isAr ? '$openDisputes بلاغات مفتوحة · $frozenEscrows ضمان مجمد' : '$openDisputes open disputes · $frozenEscrows frozen escrows',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               subtitle: Text(
-                isAr ? 'تتطلب إسناداً لموظف دعم وحلاً عاجلاً' : 'Requires staff assignment & resolution',
+                isAr ? 'تتطلب مراجعة وحسماً عبر الضمان المالي' : 'Requires arbitration & Escrow settlement',
                 style: const TextStyle(fontSize: 11),
               ),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () {
                 Navigator.of(ctx).pop();
-                setState(() => _selectedIndex = 4);
+                _navigateToModule(4, admin, isAr);
               },
             ),
           ],
@@ -146,20 +166,17 @@ class _AdminShellState extends State<AdminShell> {
     );
   }
 
-  Widget _getSelectedView(AdminProvider admin, bool isAr) {
+  Widget _getSelectedView(AdminProvider admin, bool isAr, AdminThemeTokens t) {
     if (!admin.canAccessMenu(_selectedIndex)) {
       return Center(
         child: Container(
           constraints: const BoxConstraints(maxWidth: 480),
-          padding: const EdgeInsets.all(32),
-          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(28),
+          margin: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: t.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 16, offset: const Offset(0, 4)),
-            ],
+            border: Border.all(color: t.border),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -168,31 +185,31 @@ class _AdminShellState extends State<AdminShell> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: AppColors.coral.withValues(alpha: 0.1),
+                  color: AppColors.coral.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.lock_person_rounded, size: 36, color: AppColors.coral),
+                child: const Icon(Icons.lock_person_rounded, size: 34, color: AppColors.coral),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               Text(
                 isAr ? 'الصفحة غير متاحة لدورك الحالي' : 'Access Restricted for Current Role',
-                style: AppTypography.title().copyWith(fontSize: 18),
+                style: TextStyle(color: t.textPrimary, fontSize: 18, fontWeight: FontWeight.w800),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               Text(
                 isAr
                     ? 'دورك الإداري الحالي مخصص لأقسام محددة فقط وفق سياسة الصلاحيات. تواصل مع المشرف الأول لطلب صلاحيات إضافية.'
-                    : 'Your current staff role is restricted to specific operational sections per role-based access policy.',
-                style: AppTypography.body(color: AppColors.textSecondary),
+                    : 'Your current staff role is scoped to specific operational sections.',
+                style: TextStyle(color: t.textSecondary, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.navy,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 icon: const Icon(Icons.dashboard_rounded, size: 18),
@@ -207,7 +224,7 @@ class _AdminShellState extends State<AdminShell> {
 
     switch (_selectedIndex) {
       case 0:
-        return const AdminDashboardScreen();
+        return AdminDashboardScreen(onJumpToModule: (idx) => _navigateToModule(idx, admin, isAr));
       case 1:
         return const AdminDriverVerificationsScreen();
       case 2:
@@ -222,8 +239,16 @@ class _AdminShellState extends State<AdminShell> {
         return const AdminStaffScreen();
       case 7:
         return const AdminAuditLogScreen();
+      case 8:
+        return const AdminServicesCatalogScreen();
+      case 9:
+        return const AdminCorridorsGeoScreen();
+      case 10:
+        return const AdminEscrowFinanceScreen();
+      case 11:
+        return const AdminDevOpsSreScreen();
       default:
-        return const AdminDashboardScreen();
+        return AdminDashboardScreen(onJumpToModule: (idx) => _navigateToModule(idx, admin, isAr));
     }
   }
 
@@ -235,6 +260,10 @@ class _AdminShellState extends State<AdminShell> {
         return isAr ? 'مشرف مراجعة' : 'Review Admin';
       case AdminRole.supportAdmin:
         return isAr ? 'مشرف دعم' : 'Support Admin';
+      case AdminRole.financeAdmin:
+        return isAr ? 'مشرف مالية وضمان' : 'Finance & Escrow';
+      case AdminRole.devopsAdmin:
+        return isAr ? 'مهندس DevOps' : 'DevOps & SRE';
     }
   }
 
@@ -246,11 +275,28 @@ class _AdminShellState extends State<AdminShell> {
         return 'ر';
       case AdminRole.supportAdmin:
         return 'د';
+      case AdminRole.financeAdmin:
+        return 'ض';
+      case AdminRole.devopsAdmin:
+        return 'S';
     }
   }
 
   PopupMenuItem<AdminRole> _buildRoleMenuItem(AdminRole role, bool isAr, AdminRole currentRole) {
     final isSel = role == currentRole;
+    String desc;
+    switch (role) {
+      case AdminRole.superAdmin:
+        desc = isAr ? 'كامل الصلاحيات + DevOps والمالية' : 'Full Command Center access';
+      case AdminRole.reviewAdmin:
+        desc = isAr ? 'توثيق السائقين والـ QID فقط' : 'Driver & QID KYC only';
+      case AdminRole.supportAdmin:
+        desc = isAr ? 'المستخدمون، الطلبات والنزاعات' : 'Users, Orders & Disputes';
+      case AdminRole.financeAdmin:
+        desc = isAr ? 'الضمان المالي، البوابات والخدمات' : 'Escrow, Gateways & Pricing';
+      case AdminRole.devopsAdmin:
+        desc = isAr ? 'SRE، الأعلام البرمجية والمحاور' : 'Infra SRE, Flags & Corridors';
+    }
     return PopupMenuItem<AdminRole>(
       value: role,
       child: Row(
@@ -268,18 +314,385 @@ class _AdminShellState extends State<AdminShell> {
                 _getRoleLabel(role, isAr),
                 style: TextStyle(
                   fontWeight: isSel ? FontWeight.bold : FontWeight.normal,
-                  color: isSel ? AppColors.navy : Colors.black87,
+                  color: isSel ? AppColors.navy : null,
                 ),
               ),
-              Text(
-                role == AdminRole.superAdmin
-                    ? (isAr ? 'كل شيء + الإعدادات والموظفون' : 'Full access & settings')
-                    : role == AdminRole.reviewAdmin
-                        ? (isAr ? 'توثيق السائقين فقط' : 'Driver verifications only')
-                        : (isAr ? 'المستخدمون والنزاعات' : 'Users & disputes only'),
-                style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
-              ),
+              Text(desc, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebar({
+    required BuildContext context,
+    required AdminProvider admin,
+    required SettingsProvider settings,
+    required bool isAr,
+    required bool isCollapsed,
+    required bool closeOnSelect,
+    required int pendingDriversCount,
+    required int openDisputesCount,
+    required int pendingEscrowCount,
+  }) {
+    final double width = isCollapsed ? 76 : 268;
+    String? lastGroup;
+
+    return Container(
+      width: width,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.navy, Color(0xFF071627)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Brand Header (Preserves 'مشوار · الإدارة' and 'لوحة تحكم النظام')
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 12 : 18, vertical: 18),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFF1E3A58))),
+            ),
+            child: Column(
+              crossAxisAlignment: isCollapsed ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: isCollapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [AppColors.gold, Color(0xFFE08D0B)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'م',
+                          style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w900, fontSize: 18),
+                        ),
+                      ),
+                    ),
+                    if (!isCollapsed) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isAr ? 'مشوار · الإدارة' : 'MASHWAR · Admin',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                letterSpacing: 0.2,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              isAr ? 'لوحة تحكم النظام' : 'Control Panel',
+                              style: const TextStyle(color: Color(0xFF8FA3B8), fontSize: 11),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!closeOnSelect)
+                        IconButton(
+                          tooltip: isAr ? 'طي القائمة الجانبية' : 'Collapse sidebar',
+                          icon: const Icon(Icons.menu_open_rounded, color: Color(0xFF94A3B8), size: 18),
+                          onPressed: admin.toggleSidebarCollapsed,
+                        ),
+                    ],
+                  ],
+                ),
+                if (isCollapsed && !closeOnSelect) ...[
+                  const SizedBox(height: 8),
+                  IconButton(
+                    tooltip: isAr ? 'توسيع القائمة' : 'Expand sidebar',
+                    icon: const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
+                    onPressed: admin.toggleSidebarCollapsed,
+                  ),
+                ],
+                if (!isCollapsed) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const MashwarLivePulseDot(color: Color(0xFF10B981), size: 7),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            isAr
+                                ? '${admin.activeEnvironment.toUpperCase()} · الأنظمة 99.9%'
+                                : '${admin.activeEnvironment.toUpperCase()} · 99.9% Healthy',
+                            style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 10, fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Grouped 12-Module Menu
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              children: [
+                for (final mod in AdminProvider.modulesCatalog) ...[
+                  Builder(
+                    builder: (context) {
+                      final groupName = isAr ? mod.groupAr : mod.groupEn;
+                      final showGroupHeader = !isCollapsed && groupName != lastGroup;
+                      lastGroup = groupName;
+
+                      final isSelected = _selectedIndex == mod.index;
+                      final canAccess = admin.canAccessMenu(mod.index);
+                      final icon = _moduleIcons[mod.index] ?? Icons.extension_rounded;
+                      final title = isAr ? mod.titleAr : mod.titleEn;
+
+                      int? badgeCount;
+                      Color badgeBg = AppColors.gold;
+                      Color badgeText = AppColors.navy;
+                      if (mod.index == 1 && pendingDriversCount > 0) {
+                        badgeCount = pendingDriversCount;
+                      } else if (mod.index == 4 && openDisputesCount > 0) {
+                        badgeCount = openDisputesCount;
+                        badgeBg = AppColors.coral;
+                        badgeText = Colors.white;
+                      } else if (mod.index == 10 && pendingEscrowCount > 0) {
+                        badgeCount = pendingEscrowCount;
+                        badgeBg = AppColors.teal;
+                        badgeText = Colors.white;
+                      }
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (showGroupHeader)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
+                              child: Text(
+                                groupName,
+                                style: const TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: isCollapsed ? 8 : 10, vertical: 2),
+                            child: Tooltip(
+                              message: isCollapsed ? title : '',
+                              child: Material(
+                                color: isSelected ? const Color(0xFF1E3A58) : Colors.transparent,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                clipBehavior: Clip.antiAlias,
+                                child: isCollapsed
+                                    ? InkWell(
+                                        onTap: () => _navigateToModule(
+                                          mod.index,
+                                          admin,
+                                          isAr,
+                                          closeDrawer: closeOnSelect,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 11),
+                                          child: Stack(
+                                            alignment: Alignment.center,
+                                            children: [
+                                              Icon(
+                                                canAccess ? icon : Icons.lock_outline_rounded,
+                                                color: isSelected
+                                                    ? AppColors.gold
+                                                    : canAccess
+                                                        ? const Color(0xFF94A3B8)
+                                                        : const Color(0xFF5A7188),
+                                                size: 21,
+                                              ),
+                                              if (badgeCount != null)
+                                                Positioned(
+                                                  top: 0,
+                                                  right: 14,
+                                                  child: Container(
+                                                    width: 8,
+                                                    height: 8,
+                                                    decoration: BoxDecoration(
+                                                      color: badgeBg,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      )
+                                    : ListTile(
+                                        dense: true,
+                                        visualDensity: const VisualDensity(vertical: -1),
+                                        leading: Icon(
+                                          canAccess ? icon : Icons.lock_outline_rounded,
+                                          color: isSelected
+                                              ? AppColors.gold
+                                              : canAccess
+                                                  ? const Color(0xFF94A3B8)
+                                                  : const Color(0xFF5A7188),
+                                          size: 19,
+                                        ),
+                                        title: Text(
+                                          title,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: isSelected
+                                                ? Colors.white
+                                                : canAccess
+                                                    ? const Color(0xFFCDD6DF)
+                                                    : const Color(0xFF6C8299),
+                                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                            fontSize: 12.5,
+                                          ),
+                                        ),
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (badgeCount != null && badgeCount > 0)
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                decoration: BoxDecoration(
+                                                  color: badgeBg,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: Text(
+                                                  '$badgeCount',
+                                                  style: TextStyle(
+                                                    color: badgeText,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                              ),
+                                            if (!canAccess) ...[
+                                              const SizedBox(width: 4),
+                                              const Icon(Icons.lock_rounded, size: 13, color: Color(0xFF5A7188)),
+                                            ],
+                                          ],
+                                        ),
+                                        onTap: () => _navigateToModule(
+                                          mod.index,
+                                          admin,
+                                          isAr,
+                                          closeDrawer: closeOnSelect,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Footer Controls
+          Container(
+            padding: EdgeInsets.all(isCollapsed ? 8 : 14),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFF1E3A58))),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: isCollapsed
+                  ? Column(
+                      children: [
+                        IconButton(
+                          tooltip: isAr ? 'تبديل اللغة' : 'Switch Language',
+                          icon: const Icon(Icons.language_rounded, color: AppColors.teal, size: 20),
+                          onPressed: () => settings.setLocale(isAr ? const Locale('en', 'US') : const Locale('ar', 'QA')),
+                        ),
+                        IconButton(
+                          tooltip: isAr ? 'الوضع الداكن/الفاتح' : 'Toggle Theme',
+                          icon: Icon(admin.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded, color: AppColors.gold, size: 20),
+                          onPressed: admin.toggleDarkMode,
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        ListTile(
+                          dense: true,
+                          visualDensity: const VisualDensity(vertical: -2),
+                          leading: Icon(
+                            admin.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                            color: AppColors.gold,
+                            size: 19,
+                          ),
+                          title: Text(
+                            admin.isDarkMode
+                                ? (isAr ? 'الوضع الفاتح القياسي' : 'Light Workspace')
+                                : (isAr ? 'الوضع الليلي NOC' : 'Dark NOC Mode'),
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                          ),
+                          onTap: admin.toggleDarkMode,
+                        ),
+                        ListTile(
+                          dense: true,
+                          visualDensity: const VisualDensity(vertical: -2),
+                          leading: const Icon(Icons.language_rounded, color: AppColors.teal, size: 19),
+                          title: Text(
+                            isAr ? 'English (US)' : 'العربية (قطر)',
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                          onTap: () => settings.setLocale(isAr ? const Locale('en', 'US') : const Locale('ar', 'QA')),
+                        ),
+                        ListTile(
+                          dense: true,
+                          visualDensity: const VisualDensity(vertical: -2),
+                          leading: const Icon(Icons.logout_rounded, color: AppColors.coral, size: 19),
+                          title: Text(
+                            isAr ? 'تسجيل الخروج' : 'Log Out',
+                            style: const TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                          onTap: () {
+                            admin.logout();
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
+                              (route) => false,
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'MASHWAR Command v2.4.0 · قطر 🇶🇦',
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 10),
+                        ),
+                      ],
+                    ),
+            ),
           ),
         ],
       ),
@@ -290,489 +703,521 @@ class _AdminShellState extends State<AdminShell> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final admin = context.watch<AdminProvider>();
+    final t = AdminThemeTokens.of(context);
     final isAr = settings.isArabic;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isDesktop = screenWidth >= 900;
 
     final pendingDriversCount = admin.driverRequests.where((r) => r.status == 'قيد المراجعة').length;
     final openDisputesCount = admin.disputes.where((d) => d.status == 'مفتوح').length;
+    final pendingEscrowCount = admin.escrowItems.where((e) => e.status == 'frozen' || e.status == 'receipt_pending').length;
 
-    final sidebar = Container(
-      width: 260,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.navy, Color(0xFF091E33)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header Logo & System Identity (Pages 69-77)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFF1E3A58))),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.gold,
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.gold.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'م',
-                          style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w900, fontSize: 18),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isAr ? 'مشوار · الإدارة' : 'MASHWAR · Admin',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                          Text(
-                            isAr ? 'لوحة تحكم النظام' : 'Control Panel',
-                            style: const TextStyle(color: Color(0xFF8FA3B8), fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                // Operational status pill
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 7,
-                        height: 7,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          isAr ? 'الخوادم تعمل بنسبة 99.9%' : 'All Systems Operational',
-                          style: const TextStyle(color: Color(0xFFD1D5DB), fontSize: 10, fontWeight: FontWeight.w600),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Menu Items
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              itemCount: _menuTitlesAr.length,
-              itemBuilder: (context, index) {
-                final isSelected = _selectedIndex == index;
-                final title = isAr ? _menuTitlesAr[index] : _menuTitlesEn[index];
-                final icon = _menuIcons[index];
-                final canAccess = admin.canAccessMenu(index);
-
-                // Badge counts for pending reviews
-                int? badgeCount;
-                Color badgeBg = AppColors.gold;
-                Color badgeText = AppColors.navy;
-
-                if (index == 1 && pendingDriversCount > 0) {
-                  badgeCount = pendingDriversCount;
-                  badgeBg = AppColors.gold;
-                  badgeText = AppColors.navy;
-                } else if (index == 4 && openDisputesCount > 0) {
-                  badgeCount = openDisputesCount;
-                  badgeBg = AppColors.coral;
-                  badgeText = Colors.white;
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  child: Material(
-                    color: isSelected ? const Color(0xFF1E3A58) : Colors.transparent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: ListTile(
-                      dense: true,
-                      leading: Icon(
-                        canAccess ? icon : Icons.lock_outline_rounded,
-                        color: isSelected
-                            ? AppColors.gold
-                            : canAccess
-                                ? const Color(0xFF94A3B8)
-                                : const Color(0xFF5A7188),
-                        size: 20,
-                      ),
-                      title: Text(
-                        title,
-                        style: TextStyle(
-                          color: isSelected
-                              ? Colors.white
-                              : canAccess
-                                  ? const Color(0xFFCDD6DF)
-                                  : const Color(0xFF6C8299),
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                          fontSize: 13,
-                        ),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (badgeCount != null && badgeCount > 0)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: badgeBg,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '$badgeCount',
-                                style: TextStyle(
-                                  color: badgeText,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          if (!canAccess) ...[
-                            const SizedBox(width: 6),
-                            const Icon(Icons.lock_rounded, size: 14, color: Color(0xFF5A7188)),
-                          ],
-                        ],
-                      ),
-                      onTap: () {
-                        if (!canAccess) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                isAr
-                                    ? 'هذه الشاشة مقصورة على أدوار إدارية أخرى وفق سياسة الصلاحيات.'
-                                    : 'Access restricted for your current staff role.',
-                              ),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                          return;
-                        }
-                        setState(() => _selectedIndex = index);
-                        if (!isDesktop) Navigator.of(context).pop();
-                      },
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Return to Mobile App & Language Switch
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFF1E3A58))),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: Column(
-                children: [
-                  ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.language_rounded, color: AppColors.teal, size: 20),
-                    title: Text(
-                      isAr ? 'English (US)' : 'العربية (قطر)',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
-                    onTap: () {
-                      settings.setLocale(isAr ? const Locale('en', 'US') : const Locale('ar', 'QA'));
-                    },
-                  ),
-                  ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.logout_rounded, color: AppColors.coral, size: 20),
-                    title: Text(
-                      isAr ? 'تسجيل الخروج' : 'Log Out',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                    ),
-                    onTap: () {
-                      context.read<AdminProvider>().logout();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const AdminLoginScreen()),
-                        (route) => false,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'مشوار v2.4.0 · قطر 🇶🇦',
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    final currentMod = AdminProvider.modulesCatalog.firstWhere(
+      (m) => m.index == _selectedIndex,
+      orElse: () => AdminProvider.modulesCatalog.first,
     );
+    final currentTitle = isAr ? currentMod.titleAr : currentMod.titleEn;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: isDesktop
-          ? null
-          : AppBar(
-              backgroundColor: AppColors.navy,
-              elevation: 0,
-              iconTheme: const IconThemeData(color: Colors.white),
-              title: Row(
-                children: [
-                  const BrandLogo(fontSize: 20, isLight: true),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '· ${isAr ? _menuTitlesAr[_selectedIndex] : _menuTitlesEn[_selectedIndex]}',
-                      style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                IconButton(
-                  tooltip: isAr ? 'التنبيهات العاجلة' : 'Alerts',
-                  icon: Badge(
-                    label: Text('${pendingDriversCount + openDisputesCount}'),
-                    isLabelVisible: (pendingDriversCount + openDisputesCount) > 0,
-                    child: const Icon(Icons.notifications_none_rounded, color: Colors.white),
-                  ),
-                  onPressed: () => _showNotificationsDialog(context, admin, isAr),
-                ),
-              ],
-            ),
-      drawer: isDesktop ? null : Drawer(child: sidebar),
-      body: Row(
-        children: [
-          if (isDesktop) sidebar,
-          Expanded(
-            child: Column(
-              children: [
-                // Top Global Bar (Responsive & Adaptive)
-                Container(
-                  height: 64,
-                  padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 12),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: isDesktop
-                            ? (screenWidth - 260 - 48).clamp(0.0, double.infinity)
-                            : (screenWidth - 24).clamp(0.0, double.infinity),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
+            _openSpotlight(context, admin, isAr),
+        const SingleActivator(LogicalKeyboardKey.keyK, meta: true): () =>
+            _openSpotlight(context, admin, isAr),
+      },
+      child: Focus(
+        autofocus: false,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final isWideDesktop = width >= 1080;
+            final isTabletRail = width >= 680 && width < 1080;
+            final isMobile = width < 680;
+
+            return Scaffold(
+              backgroundColor: t.scaffoldBg,
+              appBar: isMobile
+                  ? AppBar(
+                      backgroundColor: AppColors.navy,
+                      elevation: 0,
+                      titleSpacing: 4,
+                      iconTheme: const IconThemeData(color: Colors.white),
+                      title: Row(
                         children: [
-                          if (isDesktop) ...[
-                            Row(
-                              children: [
-                                Icon(_menuIcons[_selectedIndex], color: AppColors.navy, size: 22),
-                                const SizedBox(width: 10),
-                                Text(
-                                  isAr ? _menuTitlesAr[_selectedIndex] : _menuTitlesEn[_selectedIndex],
-                                  style: AppTypography.title().copyWith(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.navy,
-                                  ),
-                                ),
-                              ],
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: AppColors.gold,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(width: 24),
-                          ],
-
-                          // Filter & Role Controls (Always accessible)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Notification Action Button
-                              IconButton(
-                                tooltip: isAr ? 'التنبيهات والعمليات' : 'Notifications',
-                                icon: Badge(
-                                  label: Text('${pendingDriversCount + openDisputesCount}'),
-                                  isLabelVisible: (pendingDriversCount + openDisputesCount) > 0,
-                                  child: const Icon(Icons.notifications_none_rounded, color: AppColors.navy, size: 22),
+                            child: const Center(
+                              child: Text(
+                                'م',
+                                style: TextStyle(
+                                  color: AppColors.navy,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 15,
                                 ),
-                                onPressed: () => _showNotificationsDialog(context, admin, isAr),
                               ),
-                              const SizedBox(width: 8),
-
-                              // Period filter chips (Pages 69-76)
-                              Consumer<AdminProvider>(
-                                builder: (context, admin, _) {
-                                  final periods = isAr ? ['اليوم', '7 أيام', '30 يوم'] : ['Today', '7 Days', '30 Days'];
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${isAr ? "مشوار" : "MASHWAR"} · $currentTitle',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      actions: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          tooltip: isAr ? 'بحث سريع' : 'Search',
+                          icon: const Icon(Icons.search_rounded, color: Colors.white, size: 20),
+                          onPressed: () => _openSpotlight(context, admin, isAr),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          tooltip: isAr ? 'التنبيهات' : 'Alerts',
+                          icon: Badge(
+                            label: Text('${pendingDriversCount + openDisputesCount}'),
+                            isLabelVisible: (pendingDriversCount + openDisputesCount) > 0,
+                            child: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 20),
+                          ),
+                          onPressed: () => _showNotificationsDialog(context, admin, isAr),
+                        ),
+                        if (Navigator.of(context).canPop())
+                          IconButton(
+                            visualDensity: VisualDensity.compact,
+                            tooltip: isAr ? 'العودة للتطبيق' : 'Back to App',
+                            icon: const Icon(Icons.exit_to_app_rounded, color: AppColors.gold, size: 20),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        const SizedBox(width: 6),
+                      ],
+                    )
+                  : null,
+              drawer: isWideDesktop
+                  ? null
+                  : Drawer(
+                      child: _buildSidebar(
+                        context: context,
+                        admin: admin,
+                        settings: settings,
+                        isAr: isAr,
+                        isCollapsed: false,
+                        closeOnSelect: true,
+                        pendingDriversCount: pendingDriversCount,
+                        openDisputesCount: openDisputesCount,
+                        pendingEscrowCount: pendingEscrowCount,
+                      ),
+                    ),
+              body: Row(
+                children: [
+                  if (isWideDesktop)
+                    _buildSidebar(
+                      context: context,
+                      admin: admin,
+                      settings: settings,
+                      isAr: isAr,
+                      isCollapsed: admin.isSidebarCollapsed,
+                      closeOnSelect: false,
+                      pendingDriversCount: pendingDriversCount,
+                      openDisputesCount: openDisputesCount,
+                      pendingEscrowCount: pendingEscrowCount,
+                    )
+                  else if (isTabletRail)
+                    _buildSidebar(
+                      context: context,
+                      admin: admin,
+                      settings: settings,
+                      isAr: isAr,
+                      isCollapsed: true,
+                      closeOnSelect: false,
+                      pendingDriversCount: pendingDriversCount,
+                      openDisputesCount: openDisputesCount,
+                      pendingEscrowCount: pendingEscrowCount,
+                    ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        // Global Command Top Bar
+                        Container(
+                          width: double.infinity,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isMobile ? 12 : 20,
+                            vertical: isMobile ? 8 : 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: t.headerBg,
+                            border: Border(bottom: BorderSide(color: t.border)),
+                          ),
+                          child: isMobile
+                              ? Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  alignment: WrapAlignment.spaceBetween,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    // Compact Period Switcher
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: t.surfaceMuted,
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(color: t.border, width: 0.8),
+                                      ),
+                                      padding: const EdgeInsets.all(2),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          for (int i = 0; i < 3; i++)
+                                            Builder(
+                                              builder: (_) {
+                                                final periods = isAr ? ['اليوم', '7 أيام', '30 يوم'] : ['Today', '7 Days', '30 Days'];
+                                                final isSel = (i == 1 && admin.currentPeriod.contains('7')) ||
+                                                    (i == 0 && (admin.currentPeriod == 'اليوم' || admin.currentPeriod == 'Today')) ||
+                                                    (i == 2 && admin.currentPeriod.contains('30'));
+                                                return GestureDetector(
+                                                  onTap: () => admin.setPeriod(periods[i]),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                                    decoration: BoxDecoration(
+                                                      color: isSel ? AppColors.navy : Colors.transparent,
+                                                      borderRadius: BorderRadius.circular(14),
+                                                    ),
+                                                    child: Text(
+                                                      periods[i],
+                                                      style: TextStyle(
+                                                        fontSize: 10.5,
+                                                        fontWeight: FontWeight.w700,
+                                                        color: isSel ? Colors.white : t.textPrimary,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                        ],
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.all(3),
-                                    child: Row(
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        for (int i = 0; i < periods.length; i++) ...[
-                                          GestureDetector(
-                                            onTap: () => admin.setPeriod(periods[i]),
-                                            child: Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                              decoration: BoxDecoration(
-                                                color: (i == 1 && admin.currentPeriod.contains('7')) ||
-                                                        (i == 0 && (admin.currentPeriod == 'اليوم' || admin.currentPeriod == 'Today')) ||
-                                                        (i == 2 && admin.currentPeriod.contains('30'))
-                                                    ? AppColors.navy
-                                                    : Colors.transparent,
-                                                borderRadius: BorderRadius.circular(16),
+                                        InkWell(
+                                          onTap: admin.toggleDarkMode,
+                                          borderRadius: BorderRadius.circular(14),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: BoxDecoration(
+                                              color: t.surfaceMuted,
+                                              borderRadius: BorderRadius.circular(14),
+                                              border: Border.all(color: t.border, width: 0.8),
+                                            ),
+                                            child: Icon(
+                                              admin.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                                              color: admin.isDarkMode ? AppColors.gold : t.textPrimary,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        PopupMenuButton<AdminRole>(
+                                          tooltip: isAr ? 'تبديل الدور الإداري' : 'Switch Role',
+                                          onSelected: (newRole) {
+                                            admin.setActiveRole(newRole);
+                                            if (!admin.canAccessMenu(_selectedIndex)) {
+                                              setState(() => _selectedIndex = 0);
+                                            }
+                                          },
+                                          itemBuilder: (ctx) => [
+                                            for (final role in AdminRole.values)
+                                              _buildRoleMenuItem(role, isAr, admin.activeRole),
+                                          ],
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                            decoration: BoxDecoration(
+                                              color: t.surfaceMuted,
+                                              borderRadius: BorderRadius.circular(16),
+                                              border: Border.all(color: t.border, width: 0.8),
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                CircleAvatar(
+                                                  radius: 10,
+                                                  backgroundColor: AppColors.navy,
+                                                  child: Text(
+                                                    _getRoleInitial(admin.activeRole),
+                                                    style: const TextStyle(color: AppColors.gold, fontSize: 9.5, fontWeight: FontWeight.bold),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 5),
+                                                Text(
+                                                  _getRoleLabel(admin.activeRole, isAr),
+                                                  style: TextStyle(color: t.textPrimary, fontSize: 10.5, fontWeight: FontWeight.w700),
+                                                ),
+                                                Icon(Icons.arrow_drop_down_rounded, size: 15, color: t.textSecondary),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                )
+                              : LayoutBuilder(
+                            builder: (ctx, topConstraints) {
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(minWidth: topConstraints.maxWidth),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (isTabletRail)
+                                            Builder(
+                                              builder: (scaffoldCtx) => IconButton(
+                                                tooltip: isAr ? 'فتح القائمة الكاملة' : 'Open full menu',
+                                                icon: Icon(Icons.menu_rounded, color: t.textPrimary),
+                                                onPressed: () => Scaffold.of(scaffoldCtx).openDrawer(),
                                               ),
-                                              child: Text(
-                                                periods[i],
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: (i == 1 && admin.currentPeriod.contains('7')) ||
-                                                          (i == 0 && (admin.currentPeriod == 'اليوم' || admin.currentPeriod == 'Today')) ||
-                                                          (i == 2 && admin.currentPeriod.contains('30'))
-                                                      ? Colors.white
-                                                      : AppColors.navy,
+                                            ),
+                                          Icon(_moduleIcons[_selectedIndex] ?? Icons.dashboard_rounded,
+                                              color: t.accentPrimary, size: 20),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            currentTitle,
+                                            style: TextStyle(
+                                              fontSize: isMobile ? 14 : 17,
+                                              fontWeight: FontWeight.w800,
+                                              color: t.textPrimary,
+                                            ),
+                                          ),
+                                          if (!isMobile) ...[
+                                            const SizedBox(width: 14),
+                                            InkWell(
+                                              onTap: () => _openSpotlight(context, admin, isAr),
+                                              borderRadius: BorderRadius.circular(10),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: t.surfaceAlt,
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  border: Border.all(color: t.border),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(Icons.search_rounded, size: 15, color: t.textSecondary),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      isAr ? 'بحث سريع (Ctrl+K)' : 'Quick Jump (Ctrl+K)',
+                                                      style: TextStyle(color: t.textSecondary, fontSize: 11, fontWeight: FontWeight.w600),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ),
-                                          ),
+                                          ],
                                         ],
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 12),
-
-                              // Role Selector Staff Pill (Pages 69 & 77)
-                              PopupMenuButton<AdminRole>(
-                                tooltip: isAr ? 'تبديل الدور الإداري التجريبي' : 'Switch Simulated Admin Role',
-                                onSelected: (newRole) {
-                                  admin.setActiveRole(newRole);
-                                  if (!admin.canAccessMenu(_selectedIndex)) {
-                                    setState(() => _selectedIndex = 0);
-                                  }
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        isAr
-                                            ? 'تم تبديل الدور الإداري إلى: ${_getRoleLabel(newRole, true)}'
-                                            : 'Role switched to: ${_getRoleLabel(newRole, false)}',
                                       ),
-                                      backgroundColor: AppColors.navy,
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                                itemBuilder: (ctx) => [
-                                  _buildRoleMenuItem(AdminRole.superAdmin, isAr, admin.activeRole),
-                                  _buildRoleMenuItem(AdminRole.reviewAdmin, isAr, admin.activeRole),
-                                  _buildRoleMenuItem(AdminRole.supportAdmin, isAr, admin.activeRole),
-                                ],
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 12,
-                                        backgroundColor: admin.activeRole == AdminRole.superAdmin
-                                            ? AppColors.navy
-                                            : admin.activeRole == AdminRole.reviewAdmin
-                                                ? AppColors.teal
-                                                : AppColors.gold,
-                                        child: Text(
-                                          _getRoleInitial(admin.activeRole),
-                                          style: TextStyle(
-                                            color: admin.activeRole == AdminRole.supportAdmin ? AppColors.navy : Colors.white,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
+                                      const SizedBox(width: 12),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (!isMobile)
+                                            IconButton(
+                                              tooltip: isAr ? 'تبديل الوضع الليلي/الفاتح' : 'Toggle Dark/Light Mode',
+                                              icon: Icon(
+                                                admin.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                                                color: admin.isDarkMode ? AppColors.gold : t.textPrimary,
+                                                size: 20,
+                                              ),
+                                              onPressed: admin.toggleDarkMode,
+                                            ),
+                                          if (!isMobile)
+                                            IconButton(
+                                              tooltip: isAr ? 'التنبيهات' : 'Alerts',
+                                              icon: Badge(
+                                                label: Text('${pendingDriversCount + openDisputesCount}'),
+                                                isLabelVisible: (pendingDriversCount + openDisputesCount) > 0,
+                                                child: Icon(Icons.notifications_none_rounded, color: t.textPrimary, size: 20),
+                                              ),
+                                              onPressed: () => _showNotificationsDialog(context, admin, isAr),
+                                            ),
+                                          const SizedBox(width: 6),
+                                          // Period Switcher
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: t.surfaceMuted,
+                                              borderRadius: BorderRadius.circular(18),
+                                              border: Border.all(color: t.border, width: 0.8),
+                                            ),
+                                            padding: const EdgeInsets.all(2),
+                                            child: Row(
+                                              children: [
+                                                for (int i = 0; i < 3; i++)
+                                                  Builder(
+                                                    builder: (_) {
+                                                      final periods = isAr ? ['اليوم', '7 أيام', '30 يوم'] : ['Today', '7 Days', '30 Days'];
+                                                      final isSel = (i == 1 && admin.currentPeriod.contains('7')) ||
+                                                          (i == 0 && (admin.currentPeriod == 'اليوم' || admin.currentPeriod == 'Today')) ||
+                                                          (i == 2 && admin.currentPeriod.contains('30'));
+                                                      return GestureDetector(
+                                                        onTap: () => admin.setPeriod(periods[i]),
+                                                        child: Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                                          decoration: BoxDecoration(
+                                                            color: isSel ? AppColors.navy : Colors.transparent,
+                                                            borderRadius: BorderRadius.circular(14),
+                                                          ),
+                                                          child: Text(
+                                                            periods[i],
+                                                            style: TextStyle(
+                                                              fontSize: 11,
+                                                              fontWeight: FontWeight.w700,
+                                                              color: isSel ? Colors.white : t.textPrimary,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
+                                          const SizedBox(width: 8),
+                                          // 5-Role RBAC Switcher
+                                          PopupMenuButton<AdminRole>(
+                                            tooltip: isAr ? 'تبديل الدور الإداري' : 'Switch Role',
+                                            onSelected: (newRole) {
+                                              admin.setActiveRole(newRole);
+                                              if (!admin.canAccessMenu(_selectedIndex)) {
+                                                setState(() => _selectedIndex = 0);
+                                              }
+                                            },
+                                            itemBuilder: (ctx) => [
+                                              for (final role in AdminRole.values)
+                                                _buildRoleMenuItem(role, isAr, admin.activeRole),
+                                            ],
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                                              decoration: BoxDecoration(
+                                                color: t.surfaceMuted,
+                                                borderRadius: BorderRadius.circular(18),
+                                                border: Border.all(color: t.border, width: 0.8),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  CircleAvatar(
+                                                    radius: 11,
+                                                    backgroundColor: AppColors.navy,
+                                                    child: Text(
+                                                      _getRoleInitial(admin.activeRole),
+                                                      style: const TextStyle(color: AppColors.gold, fontSize: 10, fontWeight: FontWeight.bold),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Text(
+                                                    _getRoleLabel(admin.activeRole, isAr),
+                                                    style: TextStyle(color: t.textPrimary, fontSize: 11, fontWeight: FontWeight.w700),
+                                                  ),
+                                                  Icon(Icons.arrow_drop_down_rounded, size: 16, color: t.textSecondary),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          if (!isMobile && Navigator.of(context).canPop()) ...[
+                                            const SizedBox(width: 8),
+                                            OutlinedButton.icon(
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: t.accentPrimary,
+                                                side: BorderSide(color: t.border),
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                              ),
+                                              icon: const Icon(Icons.arrow_back_rounded, size: 15),
+                                              label: Text(isAr ? 'التطبيق' : 'App', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                              onPressed: () => Navigator.of(context).pop(),
+                                            ),
+                                          ],
+                                        ],
                                       ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _getRoleLabel(admin.activeRole, isAr),
-                                        style: AppTypography.label().copyWith(fontWeight: FontWeight.w700),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.arrow_drop_down_rounded, size: 16, color: AppColors.textSecondary),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                        ],
-                      ),
+                        ),
+
+                        // Mobile Quick-Jump Strip (1-tap module switcher on small screens)
+                        if (isMobile)
+                          Container(
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: t.surface,
+                              border: Border(bottom: BorderSide(color: t.border)),
+                            ),
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              children: AdminProvider.modulesCatalog
+                                  .where((m) => admin.canAccessMenu(m.index))
+                                  .map((m) {
+                                final isSel = _selectedIndex == m.index;
+                                return Padding(
+                                  padding: const EdgeInsetsDirectional.only(end: 8),
+                                  child: Material(
+                                    color: isSel ? AppColors.navy : t.surfaceAlt,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                      side: BorderSide(color: isSel ? AppColors.navy : t.border),
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: InkWell(
+                                      onTap: () => _navigateToModule(m.index, admin, isAr),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        child: Center(
+                                          child: Text(
+                                            isAr ? m.shortAr : m.shortEn,
+                                            style: TextStyle(
+                                              color: isSel ? Colors.white : t.textPrimary,
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+
+                        // Active Screen Content
+                        Expanded(
+                          child: _getSelectedView(admin, isAr, t),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-
-                // Selected Tab Body
-                Expanded(
-                  child: _getSelectedView(admin, isAr),
-                ),
-              ],
-            ),
-          ),
-        ],
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

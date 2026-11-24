@@ -24,6 +24,7 @@ class MakeOfferSheet extends StatefulWidget {
 
 class _MakeOfferSheetState extends State<MakeOfferSheet> {
   bool _isMakingOffer = false;
+  String _selectedChannel = 'fawran';
   late TextEditingController _priceController;
   late TextEditingController _noteController;
   String? _priceError;
@@ -56,8 +57,9 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
   }
 
   void _openChat(BuildContext context, bool isAr) {
-    Navigator.of(context).pop();
-    Navigator.of(context).push(
+    final nav = Navigator.of(context);
+    nav.pop();
+    nav.push(
       MaterialPageRoute(
         builder: (_) => ChatScreen(
           driverName: widget.ad.authorName,
@@ -196,6 +198,31 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                   ],
                 ),
                 const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.escrowGreen,
+                      backgroundColor: AppColors.escrowSurface,
+                      side: BorderSide(color: AppColors.escrowGreen.withValues(alpha: 0.45)),
+                      padding: const EdgeInsets.symmetric(vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.verified_user_rounded, size: 18),
+                    label: Text(
+                      isAr ? 'افتح شاشة الضمان وكود OTP' : 'Open Bilateral Escrow & OTP',
+                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 12.5, fontFamily: 'Cairo'),
+                    ),
+                    onPressed: () {
+                      final nav = Navigator.of(context);
+                      nav.pop();
+                      nav.push(
+                        MaterialPageRoute(builder: (_) => ServiceEscrowScreen(ad: currentAd)),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 6),
                 Center(
                   child: TextButton.icon(
                     style: TextButton.styleFrom(foregroundColor: AppColors.danger),
@@ -307,6 +334,47 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                   ),
                 ),
                 const SizedBox(height: 14),
+                Text(
+                  isAr ? 'قناة الدفع / الاستلام المضمونة' : 'Protected Payment / Payout Channel',
+                  style: AppTypography.label(),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    ('fawran', isAr ? 'فوراً Fawran' : 'Fawran'),
+                    ('qpay', isAr ? 'QPay / هميان' : 'QPay'),
+                    ('wallet', isAr ? 'محفظة مشوار' : 'Wallet'),
+                    ('skipcash', 'SkipCash'),
+                  ].map((ch) {
+                    final sel = _selectedChannel == ch.$1;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => setState(() => _selectedChannel = ch.$1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: sel ? AppColors.escrowSurface : const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: sel ? AppColors.escrowGreen : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: Text(
+                          ch.$2,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            color: sel ? AppColors.escrowGreen : AppColors.navy,
+                            fontFamily: 'Cairo',
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 14),
                 MashwarTextField(
                   controller: _noteController,
                   label: isAr ? 'رسالة أو ملاحظة لصاحب الإعلان' : 'Message / Note to Author',
@@ -402,8 +470,9 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                 InkWell(
                   borderRadius: BorderRadius.circular(14),
                   onTap: () {
-                    Navigator.of(context).pop();
-                    Navigator.of(context).push(
+                    final nav = Navigator.of(context);
+                    nav.pop();
+                    nav.push(
                       MaterialPageRoute(builder: (_) => ServiceEscrowScreen(ad: currentAd)),
                     );
                   },

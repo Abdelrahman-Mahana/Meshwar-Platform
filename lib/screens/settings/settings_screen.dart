@@ -11,6 +11,8 @@ import '../../data/models/user_model.dart';
 import '../../state/alerts_provider.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
+import '../../state/admin_provider.dart';
+import '../admin/admin_shell.dart';
 import '../account/account_extra_screens.dart';
 import '../account/legal_and_backend_screens.dart';
 import '../alerts/my_alerts_screen.dart';
@@ -654,6 +656,31 @@ class SettingsScreen extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const LegalComplianceScreen(initialTabIndex: 2),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildIndentedDivider(),
+                  _buildSettingsTile(
+                    icon: Icons.admin_panel_settings_rounded,
+                    iconColor: AppColors.qatarMaroon,
+                    title: isAr ? 'لوحة التحكم المركزية والـ DevOps' : 'Central Admin & DevOps Portal',
+                    subtitle: isAr ? 'إدارة الخدمات الست، الضمان المالي، المحاور وFeature Flags' : 'Services, Bilateral Escrow, Corridors & SRE Console',
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
+                    onTap: () {
+                      final existingAdmin = context.read<AdminProvider?>();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => existingAdmin != null
+                              ? const AdminShell()
+                              : ChangeNotifierProvider(
+                                  create: (_) => AdminProvider(),
+                                  child: const AdminShell(),
+                                ),
                         ),
                       );
                     },

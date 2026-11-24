@@ -18,12 +18,14 @@ class PostAdScreen extends StatefulWidget {
   final bool initialIsOffer;
   final BoardAdType? initialCategory;
   final int? initialIntent;
+  final int? initialPresetIndex;
 
   const PostAdScreen({
     super.key,
     this.initialIsOffer = false,
     this.initialCategory,
     this.initialIntent,
+    this.initialPresetIndex,
   });
 
   @override
@@ -34,6 +36,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
   late BoardAdType _selectedCategory;
   int _intentIndex = 0; // 0 = أنا أطلب خدمة (Requests), 1 = أنا أقدم خدمة / مسافر (Offers)
   bool _isSubmitted = false;
+  bool _didApplyInitialPreset = false;
   String? _formError;
 
   // Form Controllers
@@ -59,12 +62,12 @@ class _PostAdScreenState extends State<PostAdScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialIntent != null) {
+    if (widget.initialCategory != null) {
+      _selectedCategory = widget.initialCategory!;
+      _intentIndex = widget.initialIntent ?? (widget.initialCategory == BoardAdType.rideOffer ? 1 : 0);
+    } else if (widget.initialIntent != null) {
       _intentIndex = widget.initialIntent!;
       _selectedCategory = _intentIndex == 1 ? BoardAdType.rideOffer : BoardAdType.rideRequest;
-    } else if (widget.initialCategory != null) {
-      _selectedCategory = widget.initialCategory!;
-      _intentIndex = widget.initialCategory == BoardAdType.rideOffer ? 1 : 0;
     } else if (widget.initialIsOffer) {
       _selectedCategory = BoardAdType.rideOffer;
       _intentIndex = 1;
@@ -74,6 +77,15 @@ class _PostAdScreenState extends State<PostAdScreen> {
     }
     if (_selectedCategory == BoardAdType.parcelRequest || _selectedCategory == BoardAdType.goodsDelivery) {
       _requiresReceiptProof = true;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_didApplyInitialPreset && widget.initialPresetIndex != null) {
+      _didApplyInitialPreset = true;
+      _applyQuickPreset(widget.initialPresetIndex!, context.isArabic);
     }
   }
 
@@ -691,6 +703,37 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                 style: const TextStyle(fontSize: 11.5, color: AppColors.navy, height: 1.4),
                               ),
                             ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Reassuring Zero-Upfront-Charge Escrow Preview Strip
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.sand,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.flash_on_rounded, color: AppColors.qatarMaroon, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isAr
+                                ? 'النشر مجاني 100% · يُحجز المبلغ في ضمان مشوار عبر فوراً Fawran أو QPay فقط عند قبولك للعرض.'
+                                : 'Posting is 100% free · Funds lock in MASHWAR Escrow via Fawran / QPay only when you accept an offer.',
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.navy,
+                              fontFamily: 'Cairo',
+                            ),
                           ),
                         ),
                       ],

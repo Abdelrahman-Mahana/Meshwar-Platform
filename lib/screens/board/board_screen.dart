@@ -16,7 +16,14 @@ import 'post_ad_screen.dart';
 import '../escrow/service_escrow_screen.dart';
 
 class BoardScreen extends StatefulWidget {
-  const BoardScreen({super.key});
+  const BoardScreen({
+    super.key,
+    this.initialType,
+    this.initialIntentFilter = 0,
+  });
+
+  final BoardAdType? initialType;
+  final int initialIntentFilter;
 
   @override
   State<BoardScreen> createState() => _BoardScreenState();
@@ -25,7 +32,21 @@ class BoardScreen extends StatefulWidget {
 class _BoardScreenState extends State<BoardScreen> {
   bool _isSearchOpen = false;
   int _intentFilter = 0; // 0 = All, 1 = Requests, 2 = Offers
+  bool _escrowOnly = false;
   final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _intentFilter = widget.initialIntentFilter;
+    if (widget.initialType != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          context.read<BoardProvider>().setSelectedType(widget.initialType!);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -161,11 +182,14 @@ class _BoardScreenState extends State<BoardScreen> {
     final board = context.watch<BoardProvider>();
     final isAr = context.isArabic;
     final baseAds = board.filteredAds;
-    final ads = _intentFilter == 0
+    final intentFiltered = _intentFilter == 0
         ? baseAds
         : _intentFilter == 1
             ? baseAds.where((ad) => !ad.isOfferCard).toList()
             : baseAds.where((ad) => ad.isOfferCard).toList();
+    final ads = _escrowOnly
+        ? intentFiltered.where((ad) => ad.hasEscrowProtection).toList()
+        : intentFiltered;
 
     final activeMyAdsCount = board.myAds
         .where((a) => a.status != BoardAdStatus.completed && a.status != BoardAdStatus.expired)
@@ -467,6 +491,8 @@ class _BoardScreenState extends State<BoardScreen> {
                                         Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
+                                            _buildEscrowOnlyFilterChip(isAr),
+                                            const SizedBox(width: 8),
                                             _buildRadiusButton(context, board, isAr),
                                             if (sentOffersCount > 0) ...[
                                               const SizedBox(width: 12),
@@ -482,10 +508,14 @@ class _BoardScreenState extends State<BoardScreen> {
                                     children: [
                                       _buildIntentSegmentedControl(isAr),
                                       const SizedBox(height: 6),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      Wrap(
+                                        alignment: WrapAlignment.spaceBetween,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        spacing: 8,
+                                        runSpacing: 6,
                                         children: [
-                                          Flexible(child: _buildRadiusButton(context, board, isAr)),
+                                          _buildEscrowOnlyFilterChip(isAr),
+                                          _buildRadiusButton(context, board, isAr),
                                           if (sentOffersCount > 0)
                                             _buildSentOffersLink(context, sentOffersCount, isAr),
                                         ],
@@ -673,9 +703,9 @@ class _BoardScreenState extends State<BoardScreen> {
 
   Widget _buildIntentSegmentedControl(bool isAr, {bool fillWidth = true}) {
     final segments = [
-      (0, isAr ? 'الكل' : 'Everything'),
-      (1, isAr ? 'طلبات الخدمات والمشاوير' : 'Requests'),
-      (2, isAr ? 'عروض المنفّذين والمسافرين' : 'Providers Offers'),
+      (0, isAr ? 'الكل' : 'All'),
+      (1, isAr ? 'طلبات الخدمة' : 'Requests'),
+      (2, isAr ? 'عروض المنفّذين' : 'Offers'),
     ];
 
     return Container(
@@ -726,6 +756,44 @@ class _BoardScreenState extends State<BoardScreen> {
           );
           return fillWidth ? Expanded(child: tile) : Flexible(fit: FlexFit.loose, child: tile);
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildEscrowOnlyFilterChip(bool isAr) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => setState(() => _escrowOnly = !_escrowOnly),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: _escrowOnly ? AppColors.escrowGreen : AppColors.escrowSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: _escrowOnly ? AppColors.escrowGreen : AppColors.escrowGreen.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.verified_user_rounded,
+              size: 13,
+              color: _escrowOnly ? Colors.white : AppColors.escrowGreen,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              isAr ? 'مضمون بـ Escrow' : 'Escrow Safe',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: _escrowOnly ? Colors.white : AppColors.escrowGreen,
+                fontFamily: 'Cairo',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

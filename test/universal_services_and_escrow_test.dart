@@ -113,6 +113,42 @@ void main() {
       await tester.tap(find.text('تأكيد الكود وتحرير المستحقات'));
       await tester.pumpAndSettle();
       expect(find.textContaining('تم التسليم وتحرير مبلغ الضمان بنجاح'), findsOneWidget);
+
+      // 4. Interactive post-completion star rating
+      await tester.ensureVisible(find.text('إرسال'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('إرسال'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('شكراً! تم تسجيل تقييمك'), findsOneWidget);
+    });
+
+    testWidgets('HomeScreen map expand toggle & Dual-Path Service Quick-Launch Sheet open pre-filled PostAdScreen', (tester) async {
+      await tester.pumpWidget(wrapWithProviders(const HomeScreen()));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Map expand / collapse toggle
+      expect(find.text('تكبير الخريطة'), findsOneWidget);
+      await tester.tap(find.text('تكبير الخريطة'));
+      await tester.pumpAndSettle();
+      expect(find.text('تصغير'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Tap service tile -> Dual-Path Sheet -> Request Service -> PostAdScreen pre-selected on Worksite Supply
+      final siteTile = find.text('توريد مواقع ومهندسين').first;
+      await tester.ensureVisible(siteTile);
+      await tester.pumpAndSettle();
+      await tester.tap(siteTile);
+      await tester.pumpAndSettle();
+
+      expect(find.text('اطلب هذه الخدمة الآن'), findsOneWidget);
+      expect(find.text('تصفح العروض والطلبات المتاحة'), findsOneWidget);
+
+      await tester.tap(find.text('اطلب هذه الخدمة الآن'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PostAdScreen), findsOneWidget);
+      expect(find.text('تفاصيل البضاعة والتوريد'), findsOneWidget);
     });
 
     testWidgets('PostAdScreen renders Qatari phrasing (من وين؟) and 1-tap quick templates', (tester) async {

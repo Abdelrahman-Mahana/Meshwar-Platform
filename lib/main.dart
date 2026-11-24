@@ -14,6 +14,8 @@ import 'state/board_provider.dart';
 import 'state/alerts_provider.dart';
 import 'state/admin_provider.dart';
 import 'screens/splash_screen.dart';
+import 'screens/admin/admin_shell.dart';
+import 'screens/admin/admin_login_screen.dart';
 import 'data/repositories/app_repositories.dart';
 import 'data/services/firebase_firestore_service.dart';
 
@@ -37,8 +39,25 @@ Future<void> main() async {
 class MashwarApp extends StatelessWidget {
   const MashwarApp({super.key});
 
+  bool _shouldBootAdminPortal() {
+    try {
+      final base = Uri.base;
+      final frag = base.fragment.toLowerCase();
+      final path = base.path.toLowerCase();
+      final portal = base.queryParameters['portal']?.toLowerCase();
+      return portal == 'admin' ||
+          frag.startsWith('/admin') ||
+          path.endsWith('/admin') ||
+          path.contains('/admin/');
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final openAdminAtBoot = _shouldBootAdminPortal();
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
@@ -49,8 +68,8 @@ class MashwarApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AlertsProvider()),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
-      child: Consumer<SettingsProvider>(
-        builder: (context, settings, child) {
+      child: Consumer2<SettingsProvider, AdminProvider>(
+        builder: (context, settings, admin, child) {
           return MaterialApp(
             title: settings.isArabic
                 ? 'مشوار | خدمات ومشاوير قطر بالضمان'
@@ -65,11 +84,14 @@ class MashwarApp extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            home: const SplashScreen(),
+            routes: {
+              '/admin': (_) => const AdminShell(),
+              '/admin-login': (_) => const AdminLoginScreen(),
+            },
+            home: openAdminAtBoot ? const AdminShell() : const SplashScreen(),
           );
         },
       ),
     );
   }
 }
-

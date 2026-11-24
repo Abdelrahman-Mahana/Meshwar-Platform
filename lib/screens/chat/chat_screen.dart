@@ -7,6 +7,7 @@ import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../state/settings_provider.dart';
+import '../escrow/service_escrow_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String driverName;
@@ -50,17 +51,17 @@ class _ChatScreenState extends State<ChatScreen> {
   ];
 
   final List<String> _quickChipsAr = [
-    'أنا عند نقطة الركوب الآن',
-    'الطريق مزدحم 5 دقائق وأصل',
-    'معي حقيبة سفر متوسطة',
-    'أرتدي قميصاً كحلياً',
+    'أنا عند نقطة الالتقاء الآن',
+    'أرفقت صورة الفاتورة في الضمان',
+    'شاركني الموقع الدقيق',
+    'جاهز للتسليم ومطابقة كود OTP',
   ];
 
   final List<String> _quickChipsEn = [
-    'I arrived at pickup spot',
-    'Traffic delay, 5 mins away',
-    'I have 1 medium luggage',
-    'I am wearing a navy shirt',
+    'I arrived at meetup spot',
+    'Uploaded store receipt to Escrow',
+    'Share exact location',
+    'Ready to settle with 4-digit OTP',
   ];
 
   void _sendMessage([String? quickText]) {
@@ -204,7 +205,7 @@ class _ChatScreenState extends State<ChatScreen> {
             constraints: const BoxConstraints(maxWidth: 720),
             child: Column(
               children: [
-                // Trip Route Context + 1-Tap Location Share Strip
+                // Trip Route Context + 1-Tap Location Share & Escrow Shortcut Strip
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: const BoxDecoration(
@@ -228,14 +229,47 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
+                      MashwarPressable(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MashwarPageRoute(builder: (_) => const ServiceEscrowScreen()),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.escrowSurface,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.verified_user_rounded, size: 13, color: AppColors.escrowGreen),
+                              const SizedBox(width: 4),
+                              Text(
+                                isAr ? 'الضمان و OTP' : 'Escrow',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.escrowGreen,
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       MashwarPressable(
                         borderRadius: BorderRadius.circular(10),
                         onTap: () => _sendMessage(
                           isAr ? 'تمت مشاركة نقطة الالتقاء الحالية عبر الخريطة.' : 'Shared current pickup location via map.',
                         ),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                           decoration: BoxDecoration(
                             color: AppColors.tealSurface,
                             borderRadius: BorderRadius.circular(10),
@@ -247,9 +281,9 @@ class _ChatScreenState extends State<ChatScreen> {
                               const Icon(Icons.my_location_rounded, size: 13, color: AppColors.teal),
                               const SizedBox(width: 4),
                               Text(
-                                isAr ? 'مشاركة موقعي' : 'Share Location',
+                                isAr ? 'مشاركة موقعي' : 'Share Map',
                                 style: const TextStyle(
-                                  fontSize: 11,
+                                  fontSize: 10.5,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.teal,
                                   fontFamily: 'Cairo',

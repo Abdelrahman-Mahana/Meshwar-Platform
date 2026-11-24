@@ -12,6 +12,7 @@ import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../state/settings_provider.dart';
+import '../chat/chat_screen.dart';
 
 /// Bilateral Anti-Fraud & Smart Service Escrow Screen ("نظام ضمان مشوار لحفظ حق الطرفين").
 ///
@@ -38,6 +39,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
   bool _receiptApproved = false;
   bool _escrowReleased = false;
   bool _disputeFrozen = false;
+  String _fundingChannel = 'fawran';
+  int _selectedStars = 5;
+  bool _ratingSubmitted = false;
   final TextEditingController _otpController = TextEditingController();
   String? _otpError;
 
@@ -634,6 +638,50 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             isHighlight: true,
           ),
           const SizedBox(height: 10),
+          Text(
+            isAr ? 'وسيلة الحجز والتسوية المعتمدة' : 'Escrow Funding & Payout Channel',
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w800,
+              color: AppColors.navy,
+              fontFamily: 'Cairo',
+            ),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              ('fawran', isAr ? 'فوراً Fawran' : 'Fawran'),
+              ('qpay', isAr ? 'QPay / هميان' : 'QPay'),
+              ('wallet', isAr ? 'محفظة مشوار' : 'Wallet'),
+              ('skipcash', 'SkipCash'),
+            ].map((ch) {
+              final sel = _fundingChannel == ch.$1;
+              return InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () => setState(() => _fundingChannel = ch.$1),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: sel ? AppColors.navy : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: sel ? AppColors.navy : const Color(0xFFD6CBB5)),
+                  ),
+                  child: Text(
+                    ch.$2,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: sel ? AppColors.gold : AppColors.navy,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
@@ -658,8 +706,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                         ? (isAr ? 'تم تحرير المستحقات بالكامل بعد مطابقة OTP' : 'Escrow settled after OTP match')
                         : (_escrowLocked
                             ? (isAr
-                                ? 'محجوز عبر فوراً Fawran / محفظة مشوار (جاهز للتنفيذ)'
-                                : 'Locked via Fawran / Wallet — Ready to execute')
+                                ? 'محجوز عبر ${_fundingChannel.toUpperCase()} / محفظة مشوار (جاهز للتنفيذ)'
+                                : 'Locked via ${_fundingChannel.toUpperCase()} / Wallet — Ready')
                             : (isAr ? 'في انتظار تأمين المبلغ' : 'Awaiting Escrow Lock')),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -847,6 +895,16 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    _buildMiniReceiptTag(isAr ? 'فاتورة #QA-8492' : 'Invoice #QA-8492'),
+                    _buildMiniReceiptTag(isAr ? 'صورة الغرض مرفقة ✓' : 'Item Photo ✓'),
+                    _buildMiniReceiptTag(isAr ? 'ختم توثيق QID' : 'QID Stamped'),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 SizedBox(
                   height: 36,
                   child: ElevatedButton.icon(
@@ -881,7 +939,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             ),
           ),
 
-          // Step 4: Live GPS Tracking Preview
+          // Step 4: Enlarged Live GPS Tracking Preview + Direct Chat Shortcut
           _buildStageRow(
             number: '4',
             isDone: _receiptApproved,
@@ -891,21 +949,88 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                 : '${context.trCity(ad.fromCity)} → ${context.trCity(ad.toCity)}',
           ),
           Container(
-            height: 112,
+            height: 156,
             margin: const EdgeInsetsDirectional.only(start: 34, bottom: 12),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
-            child: QatarLiveMapCanvas(
-              style: QatarMapStyle.routeFocused,
-              activeFromCity: ad.fromCity,
-              activeToCity: ad.toCity,
-              borderRadius: 13,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                QatarLiveMapCanvas(
+                  style: QatarMapStyle.routeFocused,
+                  activeFromCity: ad.fromCity,
+                  activeToCity: ad.toCity,
+                  borderRadius: 13,
+                ),
+                PositionedDirectional(
+                  top: 8,
+                  start: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.94),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      isAr ? 'الوصول المتوقع ~22 د' : 'ETA ~22 min',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.navy,
+                        fontFamily: 'Cairo',
+                      ),
+                    ),
+                  ),
+                ),
+                PositionedDirectional(
+                  top: 8,
+                  end: 8,
+                  child: Material(
+                    color: AppColors.navy,
+                    borderRadius: BorderRadius.circular(10),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MashwarPageRoute(
+                            builder: (_) => ChatScreen(
+                              driverName: ad.authorName,
+                              driverCar: ad.timeText,
+                              tripRoute: context.trRoute(ad.route),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.chat_bubble_outline_rounded, size: 12, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              isAr ? 'محادثة' : 'Chat',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
-          // Step 5: 4-Digit OTP Settlement
+          // Step 5: 4-Digit OTP Settlement + Interactive Post-Completion Star Rating
           _buildStageRow(
             number: '5',
             isDone: _escrowReleased,
@@ -925,22 +1050,103 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
               ),
             ),
             child: _escrowReleased
-                ? Row(
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(Icons.verified_rounded, color: AppColors.escrowGreen, size: 24),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          isAr
-                              ? 'تم التسليم وتحرير مبلغ الضمان بنجاح! شكراً لاستخدامك حماية مشوار.'
-                              : 'Handover complete & Escrow released! Protected by MASHWAR.',
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.escrowGreen,
-                            fontFamily: 'Cairo',
+                      Row(
+                        children: [
+                          const Icon(Icons.verified_rounded, color: AppColors.escrowGreen, size: 24),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              isAr
+                                  ? 'تم التسليم وتحرير مبلغ الضمان بنجاح! شكراً لاستخدامك حماية مشوار.'
+                                  : 'Handover complete & Escrow released! Protected by MASHWAR.',
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.escrowGreen,
+                                fontFamily: 'Cairo',
+                              ),
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
+                        child: _ratingSubmitted
+                            ? Row(
+                                children: [
+                                  const Icon(Icons.star_rounded, color: AppColors.gold, size: 18),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      isAr
+                                          ? 'شكراً! تم تسجيل تقييمك ($_selectedStars / 5 ★)'
+                                          : 'Thank you! Rating ($_selectedStars / 5 ★) recorded.',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.navy,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Wrap(
+                                alignment: WrapAlignment.spaceBetween,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  Text(
+                                    isAr ? 'قيّم تجربتك مع الطرف الآخر:' : 'Rate your experience:',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.navy,
+                                      fontFamily: 'Cairo',
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: List.generate(5, (i) {
+                                      final star = i + 1;
+                                      return GestureDetector(
+                                        onTap: () => setState(() => _selectedStars = star),
+                                        child: Icon(
+                                          star <= _selectedStars ? Icons.star_rounded : Icons.star_border_rounded,
+                                          size: 20,
+                                          color: AppColors.gold,
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    ),
+                                    onPressed: () => setState(() => _ratingSubmitted = true),
+                                    child: Text(
+                                      isAr ? 'إرسال' : 'Submit',
+                                      style: const TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.teal,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                     ],
                   )
@@ -1064,6 +1270,26 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           ),
           if (trailingAction != null) trailingAction,
         ],
+      ),
+    );
+  }
+
+  Widget _buildMiniReceiptTag(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFDDE3EC)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.navy,
+          fontFamily: 'Cairo',
+        ),
       ),
     );
   }

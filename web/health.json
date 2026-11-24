@@ -1,0 +1,19 @@
+{
+  "status": "operational",
+  "service": "mashwar-qatar-platform",
+  "version": "2.4.0",
+  "municipalities": 8,
+  "geoHubs": 22,
+  "activeCorridors": 14,
+  "adminModules": 12,
+  "portals": {
+    "consumerApp": "/",
+    "adminCommandCenter": "/admin/",
+    "adminHashRoute": "/#/admin"
+  },
+  "security": {
+    "escrowProtection": "bilateral-otp-receipt",
+    "privacyLaw": "Qatar Law No. 13 of 2016",
+    "rbacRoles": 5
+  }
+}

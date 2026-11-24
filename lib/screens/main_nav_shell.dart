@@ -1140,45 +1140,40 @@ class _MainNavShellState extends State<MainNavShell> {
                 style: AppTypography.bodySecondary().copyWith(fontSize: 13),
               ),
 
-              // OTP Guarantee Box if active
+              // Visual 3-Step Escrow & Execution Progress Strip
               if (otpCode != null) ...[
                 const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.tealSurface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(11),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: Wrap(
-                    spacing: 6,
-                    runSpacing: 2,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(Icons.lock_outline_rounded, size: 15, color: AppColors.teal),
-                      Text(
-                        isAr ? 'كود أمان التسليم:' : 'Security OTP:',
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.navy,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.navy,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          otpCode,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.gold,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
+                      Wrap(
+                        alignment: WrapAlignment.spaceBetween,
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: [
+                          _buildOrderStepPill(
+                            isAr ? '1. الضمان محجوز' : '1. Escrow Locked',
+                            true,
+                            AppColors.escrowGreen,
                           ),
-                        ),
+                          _buildOrderStepPill(
+                            isAr ? '2. الفاتورة / التنفيذ' : '2. Active',
+                            true,
+                            AppColors.teal,
+                          ),
+                          _buildOrderStepPill(
+                            isAr ? '3. كود OTP: $otpCode' : '3. OTP: $otpCode',
+                            false,
+                            AppColors.navy,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1198,6 +1193,29 @@ class _MainNavShellState extends State<MainNavShell> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildOrderStepPill(String label, bool done, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          done ? Icons.check_circle_rounded : Icons.lock_outline_rounded,
+          size: 13,
+          color: color,
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w800,
+            color: color,
+            fontFamily: 'Cairo',
+          ),
+        ),
+      ],
     );
   }
 

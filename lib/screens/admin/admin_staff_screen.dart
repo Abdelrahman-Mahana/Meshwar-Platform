@@ -1,12 +1,11 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
-import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
+import 'widgets/admin_ui_kit.dart';
 
 class AdminStaffScreen extends StatefulWidget {
   const AdminStaffScreen({super.key});
@@ -16,21 +15,21 @@ class AdminStaffScreen extends StatefulWidget {
 }
 
 class _AdminStaffScreenState extends State<AdminStaffScreen> {
-  void _showAddStaffDialog(BuildContext context) {
+  void _showAddStaffDialog(BuildContext context, bool isAr) {
     final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
     AdminRole selectedRole = AdminRole.reviewAdmin;
-    final isAr = context.read<SettingsProvider>().isArabic;
     final admin = context.read<AdminProvider>();
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radiusCard)),
-            title: Text(isAr ? 'إضافة موظف جديد' : 'Add New Staff Member'),
-            content: Column(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radiusCard)),
+          title: Text(isAr ? 'إضافة موظف جديد' : 'Add New Staff Member'),
+          content: SizedBox(
+            width: 440,
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -38,13 +37,7 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                   controller: nameCtrl,
                   decoration: InputDecoration(
                     labelText: isAr ? 'اسم الموظف' : 'Staff Name',
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -52,398 +45,282 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                   controller: emailCtrl,
                   decoration: InputDecoration(
                     labelText: isAr ? 'البريد الإلكتروني' : 'Email Address',
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Text(isAr ? 'الدور والصلاحيات:' : 'Role & Scope:', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 14),
                 DropdownButtonFormField<AdminRole>(
                   initialValue: selectedRole,
                   decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    labelText: isAr ? 'الدور والصلاحيات' : 'Role & Scope',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
                   ),
-                  items: [
-                    DropdownMenuItem(
-                      value: AdminRole.reviewAdmin,
-                      child: Text(isAr ? 'مشرف مراجعة (توثيق السائقين فقط)' : 'Review Admin (Driver Verification)'),
-                    ),
-                    DropdownMenuItem(
-                      value: AdminRole.supportAdmin,
-                      child: Text(isAr ? 'مشرف دعم (المستخدمون والنزاعات)' : 'Support Admin (Users & Disputes)'),
-                    ),
-                    DropdownMenuItem(
-                      value: AdminRole.superAdmin,
-                      child: Text(isAr ? 'مشرف أول (كل الصلاحيات والإعدادات)' : 'Super Admin (Full Access & Settings)'),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setDialogState(() => selectedRole = val);
+                  items: AdminRole.values.map((role) {
+                    final dummy = AdminStaffMember(id: '', name: '', email: '', role: role);
+                    return DropdownMenuItem(
+                      value: role,
+                      child: Text(isAr ? dummy.roleTitleAr : dummy.roleTitleEn),
+                    );
+                  }).toList(),
+                  onChanged: (v) {
+                    if (v != null) setDialogState(() => selectedRole = v);
                   },
                 ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(isAr ? 'إلغاء' : 'Cancel'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.navy,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  final name = nameCtrl.text.trim();
-                  final email = emailCtrl.text.trim();
-                  if (name.isNotEmpty && email.isNotEmpty) {
-                    admin.addStaff(name, email, selectedRole);
-                    Navigator.of(ctx).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(isAr ? 'تمت إضافة الموظف بنجاح' : 'Staff member created successfully'),
-                        backgroundColor: AppColors.teal,
-                      ),
-                    );
-                  }
-                },
-                child: Text(isAr ? 'حفظ الموظف' : 'Save Staff'),
-              ),
-            ],
-          );
-        },
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(isAr ? 'إلغاء' : 'Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
+              onPressed: () {
+                final name = nameCtrl.text.trim();
+                final email = emailCtrl.text.trim();
+                if (name.isEmpty || email.isEmpty) return;
+                admin.addStaff(name, email, selectedRole);
+                Navigator.of(ctx).pop();
+              },
+              child: Text(isAr ? 'حفظ الموظف' : 'Save Staff'),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _showEditStaffDialog(BuildContext context, AdminStaffMember staff) {
+  void _showEditStaffDialog(BuildContext context, AdminStaffMember staff, bool isAr) {
     AdminRole selectedRole = staff.role;
     bool isActive = staff.isActive;
-    final isAr = context.read<SettingsProvider>().isArabic;
     final admin = context.read<AdminProvider>();
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radiusCard)),
-            title: Text(isAr ? 'تعديل صلاحيات: ${staff.name}' : 'Edit Permissions: ${staff.name}'),
-            content: Column(
+        builder: (context, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radiusCard)),
+          title: Text(isAr ? 'تعديل صلاحيات: ${staff.name}' : 'Edit Permissions: ${staff.name}'),
+          content: SizedBox(
+            width: 440,
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${isAr ? "البريد الإلكتروني" : "Email"}: ${staff.email}',
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  isAr ? 'الدور والصلاحيات:' : 'Role & Scope:',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                const SizedBox(height: 8),
+                Text('${isAr ? "البريد:" : "Email:"} ${staff.email}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                const SizedBox(height: 14),
                 DropdownButtonFormField<AdminRole>(
                   initialValue: selectedRole,
                   decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    labelText: isAr ? 'الدور والصلاحيات' : 'Role',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
                   ),
-                  items: [
-                    DropdownMenuItem(
-                      value: AdminRole.reviewAdmin,
-                      child: Text(isAr ? 'مشرف مراجعة (توثيق السائقين)' : 'Review Admin (Driver Verification)'),
-                    ),
-                    DropdownMenuItem(
-                      value: AdminRole.supportAdmin,
-                      child: Text(isAr ? 'مشرف دعم (المستخدمون والنزاعات)' : 'Support Admin (Users & Disputes)'),
-                    ),
-                    DropdownMenuItem(
-                      value: AdminRole.superAdmin,
-                      child: Text(isAr ? 'مشرف أول (كل الصلاحيات)' : 'Super Admin (Full Privileges)'),
-                    ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) setDialogState(() => selectedRole = val);
+                  items: AdminRole.values.map((role) {
+                    final dummy = AdminStaffMember(id: '', name: '', email: '', role: role);
+                    return DropdownMenuItem(
+                      value: role,
+                      child: Text(isAr ? dummy.roleTitleAr : dummy.roleTitleEn),
+                    );
+                  }).toList(),
+                  onChanged: (v) {
+                    if (v != null) setDialogState(() => selectedRole = v);
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    isAr ? 'الحساب نشط' : 'Active Account',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  subtitle: Text(
-                    isAr ? 'تعطيل الحساب يمنع الموظف من تسجيل الدخول فوراً' : 'Disabling prevents employee from signing in',
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                  ),
+                  title: Text(isAr ? 'الحساب نشط' : 'Active Account', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   value: isActive,
                   activeThumbColor: AppColors.teal,
-                  onChanged: (val) => setDialogState(() => isActive = val),
+                  onChanged: (v) => setDialogState(() => isActive = v),
                 ),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(isAr ? 'إلغاء' : 'Cancel'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.navy,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  admin.editStaff(staff.id, newRole: selectedRole, isActive: isActive);
-                  Navigator.of(ctx).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(isAr ? 'تم تحديث صلاحيات وحالة الموظف' : 'Staff role and status updated'),
-                      backgroundColor: AppColors.teal,
-                    ),
-                  );
-                },
-                child: Text(isAr ? 'حفظ التعديلات' : 'Save Changes'),
-              ),
-            ],
-          );
-        },
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(isAr ? 'إلغاء' : 'Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
+              onPressed: () {
+                admin.editStaff(staff.id, newRole: selectedRole, isActive: isActive);
+                Navigator.of(ctx).pop();
+              },
+              child: Text(isAr ? 'حفظ التعديلات' : 'Save Changes'),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  bool _roleHasAccess(AdminRole role, int idx) {
+    switch (role) {
+      case AdminRole.superAdmin:
+        return true;
+      case AdminRole.reviewAdmin:
+        return idx == 0 || idx == 1;
+      case AdminRole.supportAdmin:
+        return idx == 0 || idx == 2 || idx == 3 || idx == 4;
+      case AdminRole.financeAdmin:
+        return idx == 0 || idx == 3 || idx == 7 || idx == 8 || idx == 10;
+      case AdminRole.devopsAdmin:
+        return idx == 0 || idx == 5 || idx == 7 || idx == 8 || idx == 9 || idx == 11;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final admin = context.watch<AdminProvider>();
+    final t = AdminThemeTokens.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimens.space24),
+    return AdminPageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header action bar (Page 77 - Responsive Wrap)
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.navy,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          AdminSectionCard(
+            child: Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  isAr ? 'إدارة فريق العمل (${admin.staff.length} موظفين) و 5 مستويات RBAC' : 'Staff Directory (${admin.staff.length}) & 5-Tier RBAC',
+                  style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
                 ),
-                icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                label: Text(isAr ? 'إضافة موظف' : 'Add Staff Member', style: const TextStyle(fontWeight: FontWeight.bold)),
-                onPressed: () => _showAddStaffDialog(context),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  isAr ? '${admin.staff.length} موظفين' : '${admin.staff.length} Staff',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.navy),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppDimens.space16),
-
-          // Staff Table (Page 77)
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
+                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
+                  label: Text(isAr ? 'إضافة موظف' : 'Add Staff Member'),
+                  onPressed: () => _showAddStaffDialog(context, isAr),
                 ),
               ],
             ),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final double minW = math.max(constraints.maxWidth, 850.0);
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(minWidth: minW),
-                    child: DataTable(
-                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-                  dataRowMinHeight: 64,
-                  dataRowMaxHeight: 64,
-                  columns: [
-                    DataColumn(label: Text(isAr ? 'الاسم' : 'Staff Name', style: const TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text(isAr ? 'البريد' : 'Email Address', style: const TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text(isAr ? 'الدور' : 'Role', style: const TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text(isAr ? 'الحالة' : 'Status', style: const TextStyle(fontWeight: FontWeight.bold))),
-                    DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
-                  ],
-                  rows: admin.staff.map((s) {
-                    return DataRow(
-                      cells: [
-                        DataCell(
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 15,
-                                backgroundColor: AppColors.gold,
-                                child: Text(
-                                  s.name.isNotEmpty ? s.name[0] : 'م',
-                                  style: const TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(s.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                            ],
+          ),
+          const SizedBox(height: 16),
+          AdminSectionCard(
+            padding: const EdgeInsets.all(14),
+            child: AdminAdaptiveDataView<AdminStaffMember>(
+              items: admin.staff,
+              minTableWidth: 800,
+              columns: [
+                DataColumn(label: Text(isAr ? 'الاسم' : 'Name')),
+                DataColumn(label: Text(isAr ? 'البريد' : 'Email')),
+                DataColumn(label: Text(isAr ? 'الدور' : 'Role')),
+                DataColumn(label: Text(isAr ? 'الحالة' : 'Status')),
+                DataColumn(label: Text(isAr ? 'الإجراء' : 'Action')),
+              ],
+              buildRow: (s) => DataRow(
+                cells: [
+                  DataCell(
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 15,
+                          backgroundColor: AppColors.gold,
+                          child: Text(
+                            s.name.isNotEmpty ? s.name[0] : 'م',
+                            style: const TextStyle(color: AppColors.navy, fontWeight: FontWeight.bold, fontSize: 12),
                           ),
                         ),
-                        DataCell(Text(s.email, style: const TextStyle(fontFamily: 'monospace', fontSize: 12))),
-                        DataCell(
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Text(
-                              isAr ? s.roleTitleAr : s.roleTitleEn,
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.navy),
-                            ),
+                        const SizedBox(width: 10),
+                        Text(s.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ),
+                  DataCell(Text(s.email, style: const TextStyle(fontFamily: 'monospace', fontSize: 12))),
+                  DataCell(Text(isAr ? s.roleTitleAr : s.roleTitleEn, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
+                  DataCell(
+                    MashwarBadge(
+                      type: s.isActive ? BadgeType.verified : BadgeType.rejected,
+                      customLabel: s.isActive ? (isAr ? 'نشط' : 'Active') : (isAr ? 'موقوف' : 'Inactive'),
+                    ),
+                  ),
+                  DataCell(
+                    s.role == AdminRole.superAdmin
+                        ? const Text('—')
+                        : OutlinedButton(
+                            onPressed: () => _showEditStaffDialog(context, s, isAr),
+                            child: Text(isAr ? 'تعديل' : 'Edit', style: const TextStyle(fontSize: 12)),
                           ),
-                        ),
-                        DataCell(
-                          MashwarBadge(
-                            type: s.isActive ? BadgeType.verified : BadgeType.rejected,
-                            customLabel: s.isActive ? (isAr ? 'نشط' : 'Active') : (isAr ? 'موقوف' : 'Inactive'),
-                          ),
-                        ),
-                        DataCell(
-                          s.role == AdminRole.superAdmin
-                              ? const Text('—', style: TextStyle(color: AppColors.textSecondary))
-                              : OutlinedButton(
-                                  onPressed: () => _showEditStaffDialog(context, s),
-                                  child: Text(isAr ? 'تعديل' : 'Edit', style: const TextStyle(fontSize: 12)),
-                                ),
+                  ),
+                ],
+              ),
+              buildMobileCard: (ctx, s) => Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: t.surfaceAlt,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: t.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: Text(s.name, style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800))),
+                        MashwarBadge(
+                          type: s.isActive ? BadgeType.verified : BadgeType.rejected,
+                          customLabel: s.isActive ? (isAr ? 'نشط' : 'Active') : (isAr ? 'موقوف' : 'Inactive'),
                         ),
                       ],
-                    );
-                  }).toList(),
+                    ),
+                    const SizedBox(height: 4),
+                    Text('${s.email} · ${isAr ? s.roleTitleAr : s.roleTitleEn}', style: TextStyle(color: t.textSecondary, fontSize: 11)),
+                    if (s.role != AdminRole.superAdmin)
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: TextButton(
+                          onPressed: () => _showEditStaffDialog(context, s, isAr),
+                          child: Text(isAr ? 'تعديل الصلاحية' : 'Edit Role'),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
-          ),
-
-          const SizedBox(height: AppDimens.space20),
-
-          // Permissions Reference Box (Page 77)
-          Container(
-            padding: const EdgeInsets.all(AppDimens.space16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
             ),
+          ),
+          const SizedBox(height: 16),
+
+          // Visual 12-Module x 5-Role Permissions Matrix
+          AdminSectionCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isAr ? 'شجرة الصلاحيات والأدوار (Permissions Matrix):' : 'Permissions & Role Matrix:',
-                  style: AppTypography.title().copyWith(fontSize: 14),
+                  isAr ? 'مصفوفة الصلاحيات التفصيلية (12 قسم × 5 أدوار)' : 'Interactive RBAC Matrix (12 Modules × 5 Roles)',
+                  style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
                 ),
-                const SizedBox(height: 8),
-                _buildRoleDesc(
-                  isAr ? 'مشرف أول (Super Admin):' : 'Super Admin:',
-                  isAr ? 'كل الصلاحيات في النظام + تعديل الإعدادات الحاكمة وإدارة الموظفين والتدقيق.' : 'Full system privileges + settings modification, staff management, and audit inspection.',
-                ),
-                const SizedBox(height: 6),
-                _buildRoleDesc(
-                  isAr ? 'مشرف مراجعة (Review Admin):' : 'Review Admin:',
-                  isAr ? 'فحص ومراجعة مستندات السائقين (البطاقة، الرخص، السيلفي) وقبول أو رفض التوثيق فقط.' : 'Review and verify driver identity and vehicle documents (ID, licenses, selfie).',
-                ),
-                const SizedBox(height: 6),
-                _buildRoleDesc(
-                  isAr ? 'مشرف دعم (Support Admin):' : 'Support Admin:',
-                  isAr ? 'إدارة المستخدمين، حل البلاغات والنزاعات، رفع الإيقاف، والحظر الإداري المسبب.' : 'User management, handling complaints and disputes, lifting suspensions, and enforcing bans.',
+                const SizedBox(height: 12),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor: WidgetStateProperty.all(t.tableHeaderBg),
+                    columns: [
+                      DataColumn(label: Text(isAr ? 'القسم' : 'Module', style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text(isAr ? 'مشرف أول' : 'Super', style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text(isAr ? 'مراجعة' : 'Review', style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text(isAr ? 'دعم' : 'Support', style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text(isAr ? 'مالية' : 'Finance', style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.bold))),
+                      DataColumn(label: Text('DevOps', style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.bold))),
+                    ],
+                    rows: AdminProvider.modulesCatalog.map((m) {
+                      return DataRow(
+                        cells: [
+                          DataCell(Text(isAr ? m.titleAr : m.titleEn, style: TextStyle(color: t.textPrimary, fontSize: 12, fontWeight: FontWeight.w700))),
+                          for (final role in AdminRole.values)
+                            DataCell(
+                              Icon(
+                                _roleHasAccess(role, m.index) ? Icons.check_circle_rounded : Icons.remove_circle_outline_rounded,
+                                size: 18,
+                                color: _roleHasAccess(role, m.index) ? t.accentTeal : t.textSecondary.withValues(alpha: 0.4),
+                              ),
+                            ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoleDesc(String title, String desc) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 2),
-            child: Icon(Icons.check_circle_outline_rounded, color: AppColors.teal, size: 16),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                style: const TextStyle(fontSize: 12, height: 1.5),
-                children: [
-                  TextSpan(
-                    text: '$title ',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy),
-                  ),
-                  TextSpan(
-                    text: desc,
-                    style: const TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
             ),
           ),
         ],

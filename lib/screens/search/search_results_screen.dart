@@ -149,7 +149,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(AppDimens.space20, 0, AppDimens.space20, 8),
                         child: Container(
-                          height: 112,
+                          height: 148,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(color: const Color(0xFFE2E8F0)),

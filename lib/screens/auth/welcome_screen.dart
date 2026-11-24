@@ -266,21 +266,23 @@ class WelcomeScreen extends StatelessWidget {
                   SizedBox(height: isCompact ? 10 : 14),
                   if (showMobileMapCard) ...[
                     Container(
-                      height: isCompact ? 114 : 168,
+                      height: constraints.maxHeight >= 720
+                          ? 244.0
+                          : (constraints.maxHeight >= 600 ? 190.0 : 136.0),
                       width: double.infinity,
                       clipBehavior: Clip.antiAlias,
                       decoration: BoxDecoration(
                         color: AppColors.navy,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(22),
                         border: Border.all(
-                          color: AppColors.qatarMaroon.withValues(alpha: 0.45),
-                          width: 1.2,
+                          color: AppColors.qatarMaroon.withValues(alpha: 0.48),
+                          width: 1.3,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.navy.withValues(alpha: 0.16),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
+                            color: AppColors.navy.withValues(alpha: 0.18),
+                            blurRadius: 20,
+                            offset: const Offset(0, 7),
                           ),
                         ],
                       ),
@@ -291,13 +293,14 @@ class WelcomeScreen extends StatelessWidget {
                             style: QatarMapStyle.darkExecutive,
                             activeFromCity: 'الدوحة',
                             activeToCity: 'لوسيل',
-                            borderRadius: 19,
+                            borderRadius: 21,
+                            bottomOverlayInset: 36,
                           ),
                           const Positioned(
                             top: 0,
                             left: 0,
                             right: 0,
-                            child: QatarSaduAccentBar(height: 4, borderRadius: 0),
+                            child: QatarSaduAccentBar(height: 4.5, borderRadius: 0),
                           ),
                           PositionedDirectional(
                             top: 12,
@@ -332,6 +335,30 @@ class WelcomeScreen extends StatelessWidget {
                                     ),
                                   ],
                                 ),
+                              ),
+                            ),
+                          ),
+                          PositionedDirectional(
+                            bottom: 8,
+                            start: 10,
+                            end: 10,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0A1D2E).withValues(alpha: 0.88),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+                              ),
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 10,
+                                runSpacing: 4,
+                                children: [
+                                  _buildLegendDot(AppColors.gold, isAr ? 'مقاعد ومشاوير' : 'Rides'),
+                                  _buildLegendDot(AppColors.teal, isAr ? 'شراء وأمانات' : 'Errands'),
+                                  _buildLegendDot(AppColors.qatarMaroon, isAr ? 'توريد مواقع' : 'Site Supply'),
+                                ],
                               ),
                             ),
                           ),
@@ -392,6 +419,29 @@ class WelcomeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLegendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 9.5,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Cairo',
+          ),
+        ),
+      ],
     );
   }
 

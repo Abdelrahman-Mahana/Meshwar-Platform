@@ -260,6 +260,24 @@ class _QatarLiveMapPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(w, y), gridPaint);
     }
 
+    // Subtle Arabian Gulf wave contour arcs
+    final wavePaint = Paint()
+      ..color = isDark
+          ? AppColors.teal.withValues(alpha: 0.16)
+          : Colors.white.withValues(alpha: 0.55)
+      ..strokeWidth = 1.1
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    for (int i = 0; i < 4; i++) {
+      final wy = h * (0.18 + i * 0.19);
+      final wx = w * (0.76 + (i % 2) * 0.05);
+      final wave = Path()
+        ..moveTo(wx, wy)
+        ..quadraticBezierTo(wx + w * 0.05, wy - 4, wx + w * 0.10, wy)
+        ..quadraticBezierTo(wx + w * 0.14, wy + 4, wx + w * 0.18, wy);
+      canvas.drawPath(wave, wavePaint);
+    }
+
     // 2. Authentic Qatar Peninsula Silhouette Polygon
     final peninsula = Path()
       ..moveTo(w * 0.42, h * 0.06)
@@ -324,6 +342,40 @@ class _QatarLiveMapPainter extends CustomPainter {
     canvas.drawOval(
       Rect.fromCenter(center: Offset(w * 0.61, h * 0.40), width: w * 0.06, height: h * 0.05),
       parkPaint,
+    );
+
+    // Subtle Pearl-Qatar & Lusail marine crescent + western sand dune contours
+    canvas.drawCircle(
+      Offset(w * 0.68, h * 0.46),
+      isCompact ? 3.5 : 4.8,
+      Paint()..color = isDark ? const Color(0xFF143554) : const Color(0xFFFDFBF6),
+    );
+    canvas.drawCircle(
+      Offset(w * 0.68, h * 0.46),
+      isCompact ? 3.5 : 4.8,
+      Paint()
+        ..color = isDark ? AppColors.teal.withValues(alpha: 0.45) : const Color(0xFF9AC5DC)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+    final dunePaint = Paint()
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.045)
+          : const Color(0xFFD8CEB8).withValues(alpha: 0.55)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.22, h * 0.42)
+        ..quadraticBezierTo(w * 0.28, h * 0.39, w * 0.34, h * 0.43),
+      dunePaint,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(w * 0.24, h * 0.72)
+        ..quadraticBezierTo(w * 0.30, h * 0.69, w * 0.36, h * 0.73),
+      dunePaint,
     );
 
     // 3. Arterial Qatar Highway Corridors (Dual-casing Uber cartography)
@@ -398,6 +450,15 @@ class _QatarLiveMapPainter extends CustomPainter {
       canvas.drawPath(p, roadCorePaint);
     }
 
+    // Glowing highway interchange junctions
+    for (final jPt in [doha, lusail, rayyan, wakrah, industrial]) {
+      canvas.drawCircle(
+        jPt,
+        isCompact ? 3.4 : 4.2,
+        Paint()..color = AppColors.gold.withValues(alpha: isDark ? 0.25 : 0.20),
+      );
+    }
+
     // 4. Highlighted Active Corridor Route (between fromCity and toCity)
     final fromHub = _resolveHub(activeFromCity, fallback: _qatarHubs[3]);
     final toHub = _resolveHub(activeToCity, fallback: _qatarHubs[1]);
@@ -441,13 +502,15 @@ class _QatarLiveMapPainter extends CustomPainter {
       _drawAnimatedFlowDashes(canvas, activeCorridor, progress);
     }
 
-    // 5. Smoothly Moving Multi-Service Vehicles on Qatar Expressways (Rides, Couriers & Site Supply)
+    // 5. 8 Smoothly Moving Multi-Service Vehicles across Qatar Expressways
     final specs = <_VehicleSpec>[
-      _VehicleSpec(path: roadCoastalNorth, speed: 1.0, phase: 0.12, role: _MapVehicleRole.ride),
-      _VehicleSpec(path: roadCoastalNorth, speed: 1.0, phase: 0.64, role: _MapVehicleRole.siteSupply, reverse: true),
-      _VehicleSpec(path: roadSouthCoast, speed: 1.0, phase: 0.28, role: _MapVehicleRole.ride),
-      _VehicleSpec(path: roadSouthCoast, speed: 1.0, phase: 0.80, role: _MapVehicleRole.courier, reverse: true),
+      _VehicleSpec(path: roadCoastalNorth, speed: 1.0, phase: 0.08, role: _MapVehicleRole.ride),
+      _VehicleSpec(path: roadCoastalNorth, speed: 1.0, phase: 0.56, role: _MapVehicleRole.siteSupply, reverse: true),
+      _VehicleSpec(path: roadNorth, speed: 1.0, phase: 0.34, role: _MapVehicleRole.courier),
+      _VehicleSpec(path: roadSouthCoast, speed: 1.0, phase: 0.22, role: _MapVehicleRole.ride),
+      _VehicleSpec(path: roadSouthCoast, speed: 1.0, phase: 0.76, role: _MapVehicleRole.courier, reverse: true),
       _VehicleSpec(path: roadWestDukhan, speed: 1.0, phase: 0.42, role: _MapVehicleRole.ride),
+      _VehicleSpec(path: roadWestDukhan, speed: 1.0, phase: 0.85, role: _MapVehicleRole.courier, reverse: true),
       _VehicleSpec(path: roadSalwaInd, speed: 1.0, phase: 0.18, role: _MapVehicleRole.siteSupply),
     ];
 
@@ -616,13 +679,19 @@ class _QatarLiveMapPainter extends CustomPainter {
     );
 
     // Ground drop shadow
+    final isPickup = role == _MapVehicleRole.siteSupply;
+    final bodyRect = isPickup
+        ? const Rect.fromLTWH(-10, -5.6, 20, 11.2)
+        : const Rect.fromLTWH(-9, -5.2, 18, 10.4);
     canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-9, -4.5, 19, 10.5), const Radius.circular(4)),
-      Paint()..color = Colors.black.withValues(alpha: isDark ? 0.48 : 0.20),
+      RRect.fromRectAndRadius(
+        bodyRect.translate(0.5, 0.8),
+        const Radius.circular(4),
+      ),
+      Paint()..color = Colors.black.withValues(alpha: isDark ? 0.48 : 0.22),
     );
 
-    // Car body shell (Teal for Couriers, Qatari Maroon for Site Supply/Errands, Navy/White for Rides)
-    final bodyRect = const Rect.fromLTWH(-9, -5.2, 18, 10.4);
+    // Car body shell (Teal Courier w/ Parcel Pod, Maroon Site Pickup w/ Cargo Bed, Navy/White Executive Ride)
     final bodyColor = switch (role) {
       _MapVehicleRole.courier => AppColors.teal,
       _MapVehicleRole.siteSupply => AppColors.qatarMaroon,
@@ -644,25 +713,48 @@ class _QatarLiveMapPainter extends CustomPainter {
         ..strokeWidth = 1.0,
     );
 
-    // Panoramic windshield & roof cabin
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-4.5, -3.5, 9.5, 7.0), const Radius.circular(2.4)),
-      Paint()
-        ..color = switch (role) {
-          _MapVehicleRole.courier => const Color(0xFF0E4D49),
-          _MapVehicleRole.siteSupply => AppColors.qatarMaroonDark,
-          _MapVehicleRole.ride => isDark ? const Color(0xFF0F2A43) : const Color(0xFF284D70),
-        },
-    );
-
-    // Signature MASHWAR roof accent indicator
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(const Rect.fromLTWH(-1.5, -2.0, 3.8, 4.0), const Radius.circular(1.2)),
-      Paint()
-        ..color = role == _MapVehicleRole.ride
-            ? (isDark ? AppColors.teal : AppColors.gold)
-            : AppColors.gold,
-    );
+    if (isPickup) {
+      // Utility pickup cab + sunlit cargo bed at rear (-X)
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(-1.0, -3.7, 8.2, 7.4), const Radius.circular(2.2)),
+        Paint()..color = AppColors.qatarMaroonDark,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(-8.6, -3.8, 6.4, 7.6), const Radius.circular(1.8)),
+        Paint()..color = AppColors.sand,
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(-7.4, -2.5, 4.0, 5.0), const Radius.circular(1.2)),
+        Paint()..color = AppColors.gold,
+      );
+    } else if (role == _MapVehicleRole.courier) {
+      // Courier windshield + roof parcel box with golden strap
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(-4.5, -3.5, 9.5, 7.0), const Radius.circular(2.4)),
+        Paint()..color = const Color(0xFF0E4D49),
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(-3.5, -2.6, 5.2, 5.2), const Radius.circular(1.4)),
+        Paint()..color = Colors.white,
+      );
+      canvas.drawLine(
+        const Offset(-0.9, -2.6),
+        const Offset(-0.9, 2.6),
+        Paint()
+          ..color = AppColors.gold
+          ..strokeWidth = 1.2,
+      );
+    } else {
+      // Executive ride panoramic windshield & roof cabin
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(-4.5, -3.5, 9.5, 7.0), const Radius.circular(2.4)),
+        Paint()..color = isDark ? const Color(0xFF0F2A43) : const Color(0xFF284D70),
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(const Rect.fromLTWH(-1.5, -2.0, 3.8, 4.0), const Radius.circular(1.2)),
+        Paint()..color = isDark ? AppColors.teal : AppColors.gold,
+      );
+    }
 
     canvas.restore();
   }

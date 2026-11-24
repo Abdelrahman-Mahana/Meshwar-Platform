@@ -1,11 +1,11 @@
-import 'dart:math' as math;
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimens.dart';
-import '../../core/constants/app_typography.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
+import 'widgets/admin_ui_kit.dart';
 
 class AdminAuditLogScreen extends StatefulWidget {
   const AdminAuditLogScreen({super.key});
@@ -15,82 +15,47 @@ class AdminAuditLogScreen extends StatefulWidget {
 }
 
 class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
-  String _selectedActor = 'الكل';
-  String _selectedAction = 'الكل';
+  String _searchText = '';
   String _selectedTarget = 'الكل';
-  String _selectedDate = 'الكل';
 
   void _resetFilters() {
     setState(() {
-      _selectedActor = 'الكل';
-      _selectedAction = 'الكل';
+      _searchText = '';
       _selectedTarget = 'الكل';
-      _selectedDate = 'الكل';
     });
+  }
+
+  void _copyAuditJson(BuildContext context, List<AdminAuditLogEntry> logs, bool isAr) {
+    final jsonStr = const JsonEncoder.withIndent('  ').convert(logs.map((l) => l.toJson()).toList());
+    Clipboard.setData(ClipboardData(text: jsonStr));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isAr ? 'تم نسخ ${logs.length} سجل تدقيق بصيغة JSON' : 'Copied ${logs.length} audit records as JSON'),
+        backgroundColor: AppColors.teal,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final admin = context.watch<AdminProvider>();
+    final t = AdminThemeTokens.of(context);
 
-    // Actor options
-    final actorOptions = isAr
-        ? ['الكل', 'مدير النظام', 'أحمد', 'منى']
-        : ['All', 'System Admin', 'Ahmed', 'Mona'];
-
-    // Action options
-    final actionOptions = isAr
-        ? [
-            'الكل',
-            'قبول سائق',
-            'رفض توثيق سائق',
-            'حظر مستخدم',
-            'رفع الإيقاف',
-            'تعديل إعداد',
-            'حل نزاع وبلاغ',
-            'إسناد بلاغ لموظف',
-            'تعديل حالة رحلة يدوياً',
-            'إضافة موظف جديد',
-            'تعديل صلاحيات موظف',
-          ]
-        : [
-            'All',
-            'Approve Driver',
-            'Reject Driver',
-            'Ban User',
-            'Lift Ban',
-            'Edit Setting',
-            'Resolve Dispute',
-            'Assign Dispute',
-            'Ride Status Override',
-            'Add Staff',
-            'Edit Staff Role',
-          ];
-
-    // Target options
     final targetOptions = isAr
-        ? ['الكل', 'سائق', 'مستخدم', 'رحلة', 'بلاغ', 'إعداد']
-        : ['All', 'Driver', 'User', 'Ride', 'Dispute', 'Setting'];
+        ? ['الكل', 'سائق', 'مستخدم', 'رحلة', 'بلاغ', 'إعداد', 'Escrow', 'Flag']
+        : ['All', 'Driver', 'User', 'Ride', 'Dispute', 'Setting', 'Escrow', 'Flag'];
 
-    // Date options
-    final dateOptions = isAr
-        ? ['الكل', 'اليوم', 'الأمس', 'آخر 7 أيام']
-        : ['All', 'Today', 'Yesterday', 'Last 7 Days'];
-
-    // Filtering logic
     final filteredLogs = admin.auditLogs.where((log) {
-      if (_selectedActor != 'الكل' && _selectedActor != 'All') {
-        final query = _selectedActor == 'مدير النظام' || _selectedActor == 'System Admin'
-            ? 'مدير النظام'
-            : _selectedActor;
-        if (!log.actor.contains(query)) return false;
+      if (_searchText.isNotEmpty) {
+        final q = _searchText.toLowerCase();
+        if (!log.actor.toLowerCase().contains(q) &&
+            !log.action.toLowerCase().contains(q) &&
+            !log.target.toLowerCase().contains(q) &&
+            !log.beforeAfter.toLowerCase().contains(q)) {
+          return false;
+        }
       }
-
-      if (_selectedAction != 'الكل' && _selectedAction != 'All') {
-        if (!log.action.contains(_selectedAction)) return false;
-      }
-
       if (_selectedTarget != 'الكل' && _selectedTarget != 'All') {
         final matchTerm = isAr
             ? _selectedTarget
@@ -102,172 +67,144 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                         ? 'رحلة'
                         : _selectedTarget == 'Dispute'
                             ? 'بلاغ'
-                            : 'إعداد');
-        if (!log.target.contains(matchTerm)) return false;
+                            : _selectedTarget);
+        if (!log.target.toLowerCase().contains(matchTerm.toLowerCase()) &&
+            !log.action.toLowerCase().contains(matchTerm.toLowerCase())) {
+          return false;
+        }
       }
-
       return true;
     }).toList();
 
-    final isFiltered = _selectedActor != 'الكل' ||
-        _selectedAction != 'الكل' ||
-        _selectedTarget != 'الكل' ||
-        _selectedDate != 'الكل';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimens.space24),
+    return AdminPageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Filter Badges Row (Page 76)
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _buildFilterDropdown(
-                label: isAr ? 'الفاعل' : 'Actor',
-                selectedValue: _selectedActor,
-                options: actorOptions,
-                onChanged: (val) => setState(() => _selectedActor = val),
-              ),
-              _buildFilterDropdown(
-                label: isAr ? 'الإجراء' : 'Action',
-                selectedValue: _selectedAction,
-                options: actionOptions,
-                onChanged: (val) => setState(() => _selectedAction = val),
-              ),
-              _buildFilterDropdown(
-                label: isAr ? 'الكائن' : 'Target',
-                selectedValue: _selectedTarget,
-                options: targetOptions,
-                onChanged: (val) => setState(() => _selectedTarget = val),
-              ),
-              _buildFilterDropdown(
-                label: isAr ? 'التاريخ' : 'Date',
-                selectedValue: _selectedDate,
-                options: dateOptions,
-                onChanged: (val) => setState(() => _selectedDate = val),
-              ),
-              if (isFiltered)
-                TextButton.icon(
-                  onPressed: _resetFilters,
-                  icon: const Icon(Icons.refresh_rounded, size: 16, color: AppColors.coral),
-                  label: Text(
-                    isAr ? 'إعادة ضبط الفلاتر' : 'Reset Filters',
-                    style: const TextStyle(color: AppColors.coral, fontSize: 12, fontWeight: FontWeight.bold),
+          AdminSectionCard(
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                SizedBox(
+                  width: 300,
+                  child: TextField(
+                    style: TextStyle(color: t.textPrimary, fontSize: 13),
+                    onChanged: (v) => setState(() => _searchText = v.trim()),
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: isAr ? 'بحث في الأحداث، الفاعل، أو القيمة...' : 'Search audit events, actor, or diff...',
+                      hintStyle: TextStyle(color: t.textSecondary, fontSize: 12),
+                      prefixIcon: Icon(Icons.search_rounded, size: 18, color: t.accentPrimary),
+                      filled: true,
+                      fillColor: t.surfaceAlt,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: t.border)),
+                    ),
                   ),
                 ),
-            ],
-          ),
-
-          const SizedBox(height: AppDimens.space16),
-
-          // Audit Table Container (Page 76)
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    for (final opt in targetOptions)
+                      ChoiceChip(
+                        label: Text(opt),
+                        selected: _selectedTarget == opt,
+                        onSelected: (_) => setState(() => _selectedTarget = opt),
+                      ),
+                    if (_searchText.isNotEmpty || _selectedTarget != 'الكل')
+                      TextButton(onPressed: _resetFilters, child: Text(isAr ? 'إعادة ضبط' : 'Reset')),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.copy_all_rounded, size: 16),
+                      label: Text(isAr ? 'نسخ JSON' : 'Export JSON', style: const TextStyle(fontSize: 12)),
+                      onPressed: () => _copyAuditJson(context, filteredLogs, isAr),
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+          AdminSectionCard(
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (filteredLogs.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(36.0),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.search_off_rounded, size: 48, color: AppColors.textSecondary),
-                          const SizedBox(height: 12),
-                          Text(
-                            isAr ? 'لا توجد سجلات تدقيق مطابقة للفلاتر المحددة' : 'No audit records match the selected filters',
-                            style: AppTypography.body(color: AppColors.textSecondary),
+                AdminAdaptiveDataView<AdminAuditLogEntry>(
+                  items: filteredLogs,
+                  minTableWidth: 860,
+                  columns: [
+                    DataColumn(label: Text(isAr ? 'الوقت' : 'Time')),
+                    DataColumn(label: Text(isAr ? 'الفاعل' : 'Actor')),
+                    DataColumn(label: Text(isAr ? 'الإجراء' : 'Action')),
+                    DataColumn(label: Text(isAr ? 'الكائن' : 'Target')),
+                    DataColumn(label: Text(isAr ? 'قبل ← بعد' : 'Before -> After')),
+                  ],
+                  buildRow: (log) => DataRow(
+                    cells: [
+                      DataCell(Text(log.time, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+                      DataCell(Text(log.actor, style: TextStyle(fontWeight: FontWeight.w600, color: t.textPrimary))),
+                      DataCell(
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: t.surfaceMuted,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: t.border),
                           ),
-                          const SizedBox(height: 8),
-                          OutlinedButton(
-                            onPressed: _resetFilters,
-                            child: Text(isAr ? 'عرض كل السجلات' : 'View All Logs'),
-                          ),
-                        ],
+                          child: Text(log.action, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: t.textPrimary)),
+                        ),
                       ),
+                      DataCell(Text(log.target, style: const TextStyle(fontFamily: 'monospace', fontSize: 12))),
+                      DataCell(Text(log.beforeAfter, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
+                    ],
+                  ),
+                  buildMobileCard: (ctx, log) => Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: t.surfaceAlt,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: t.border),
                     ),
-                  )
-                else
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final double minW = math.max(constraints.maxWidth, 850.0);
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(minWidth: minW),
-                          child: DataTable(
-                        headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-                        dataRowMinHeight: 60,
-                        dataRowMaxHeight: 60,
-                        columns: [
-                          DataColumn(label: Text(isAr ? 'الوقت' : 'Timestamp', style: const TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text(isAr ? 'الفاعل' : 'Actor', style: const TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text(isAr ? 'الإجراء' : 'Action', style: const TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text(isAr ? 'الكائن' : 'Target Object', style: const TextStyle(fontWeight: FontWeight.bold))),
-                          DataColumn(label: Text(isAr ? 'قبل ← بعد' : 'Before → After', style: const TextStyle(fontWeight: FontWeight.bold))),
-                        ],
-                        rows: filteredLogs.map((log) {
-                          return DataRow(
-                            cells: [
-                              DataCell(Text(log.time, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
-                              DataCell(Text(log.actor, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.navy))),
-                              DataCell(
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                                  ),
-                                  child: Text(log.action, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.navy)),
-                                ),
-                              ),
-                              DataCell(Text(log.target, style: const TextStyle(fontFamily: 'monospace', fontSize: 12))),
-                              DataCell(Text(log.beforeAfter, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
-                            ],
-                          );
-                        }).toList(),
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: Text(log.action, style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 13))),
+                            Text(log.time, style: TextStyle(color: t.textSecondary, fontSize: 11)),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text('${log.actor} · ${log.target}', style: TextStyle(color: t.textSecondary, fontSize: 11)),
+                        const SizedBox(height: 4),
+                        Text(log.beforeAfter, style: TextStyle(color: t.accentTeal, fontWeight: FontWeight.w700, fontSize: 12)),
+                      ],
                     ),
-                  );
-                },
-              ),
-
-                // Footer Immutable Warning (Page 76)
+                  ),
+                ),
+                const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8FAFC),
-                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(AppDimens.radiusCard)),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: t.surfaceAlt,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: t.border),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.lock_rounded, size: 16, color: AppColors.textSecondary),
+                      Icon(Icons.lock_rounded, size: 16, color: t.textSecondary),
                       const SizedBox(width: 6),
                       Flexible(
                         child: Text(
                           isAr
-                              ? 'السجل للقراءة فقط ومحمي بالتشفير وغير قابل للتعديل أو الحذف.'
+                              ? 'السجل للقراءة فقط ومحمي بالتشفير وغير قابل للتعديل أو الحذف (Append-Only).'
                               : 'Audit trail is append-only, tamper-proof and immutable by regulation.',
                           textAlign: TextAlign.center,
-                          style: AppTypography.label(color: AppColors.textSecondary),
+                          style: TextStyle(color: t.textSecondary, fontSize: 11),
                         ),
                       ),
                     ],
@@ -277,78 +214,6 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFilterDropdown({
-    required String label,
-    required String selectedValue,
-    required List<String> options,
-    required ValueChanged<String> onChanged,
-  }) {
-    final isSelected = selectedValue != 'الكل' && selectedValue != 'All';
-
-    return PopupMenuButton<String>(
-      tooltip: label,
-      onSelected: onChanged,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      itemBuilder: (ctx) => options.map((opt) {
-        final isItemSel = opt == selectedValue;
-        return PopupMenuItem<String>(
-          value: opt,
-          child: Row(
-            children: [
-              if (isItemSel)
-                const Icon(Icons.check_rounded, size: 16, color: AppColors.teal)
-              else
-                const SizedBox(width: 16),
-              const SizedBox(width: 8),
-              Text(
-                opt,
-                style: TextStyle(
-                  fontWeight: isItemSel ? FontWeight.bold : FontWeight.normal,
-                  color: isItemSel ? AppColors.navy : Colors.black87,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.navy : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: isSelected ? AppColors.navy : const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '$label: $selectedValue',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.navy,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.arrow_drop_down_rounded,
-              size: 18,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
-            ),
-          ],
-        ),
       ),
     );
   }

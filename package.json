@@ -1,12 +1,15 @@
 {
   "name": "mashwar-app",
-  "version": "1.0.0",
+  "version": "2.4.0",
   "private": true,
-  "description": "MASHWAR - Egyptian Carpooling & Parcel Crowd-Shipping Platform",
+  "description": "MASHWAR - Qatar Community Services, On-the-Way Fulfillment, Bilateral Escrow & DevOps Command Platform",
   "scripts": {
     "dev": "serve build/web -l 3000",
     "start": "serve build/web -l 3000",
-    "build": "flutter build web --release && rm -f pubspec.lock",
+    "build": "flutter build web --release --base-href / && rm -f pubspec.lock",
+    "build:admin": "flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin",
+    "build:all": "powershell -ExecutionPolicy Bypass -File scripts/build_platform.ps1 -SkipAnalyze -SkipTests",
+    "verify": "flutter analyze && flutter test",
     "lint": "flutter analyze --no-fatal-infos --no-fatal-warnings && rm -f pubspec.lock"
   },
   "dependencies": {

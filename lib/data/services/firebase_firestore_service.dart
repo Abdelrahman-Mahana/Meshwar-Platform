@@ -13,6 +13,13 @@ class FirestoreCollections {
   static const String walletTransactions = 'wallet_transactions';
   static const String driverVerifications = 'driver_verifications';
   static const String adminAuditLogs = 'admin_audit_logs';
+  static const String platformConfig = 'platform_config';
+  static const String serviceCatalog = 'service_catalog';
+  static const String corridors = 'corridors';
+  static const String escrowHolds = 'escrow_holds';
+  static const String disputes = 'disputes';
+  static const String featureFlags = 'feature_flags';
+  static const String adminStaff = 'admin_staff';
 
   /// Path to a specific user's document
   static String userDoc(String userId) => '$users/$userId';

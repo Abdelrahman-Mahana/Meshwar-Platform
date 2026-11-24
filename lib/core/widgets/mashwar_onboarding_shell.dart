@@ -168,6 +168,25 @@ class MashwarOnboardingShell extends StatelessWidget {
                                         color: Colors.white.withValues(alpha: 0.8),
                                       ).copyWith(fontSize: 13),
                                     ),
+                                    const SizedBox(height: 12),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 6,
+                                      children: [
+                                        _buildTrustPill(
+                                          Icons.verified_user_rounded,
+                                          isAr ? 'ضمان Escrow 100%' : 'Escrow 100% Safe',
+                                        ),
+                                        _buildTrustPill(
+                                          Icons.flash_on_rounded,
+                                          isAr ? 'فوراً Fawran & QPay' : 'Fawran & QPay',
+                                        ),
+                                        _buildTrustPill(
+                                          Icons.location_city_rounded,
+                                          isAr ? 'كل بلديات قطر' : 'All Qatar Hubs',
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -202,6 +221,33 @@ class MashwarOnboardingShell extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTrustPill(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: AppColors.gold),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Cairo',
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

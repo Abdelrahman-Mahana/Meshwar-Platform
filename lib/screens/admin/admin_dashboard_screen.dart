@@ -1,592 +1,450 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_dimens.dart';
-import '../../core/constants/app_typography.dart';
-import '../../state/settings_provider.dart';
+import '../../core/widgets/mashwar_animations.dart';
+import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../state/admin_provider.dart';
+import '../../state/settings_provider.dart';
+import 'widgets/admin_ui_kit.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
-  const AdminDashboardScreen({super.key});
+  final ValueChanged<int>? onJumpToModule;
+
+  const AdminDashboardScreen({super.key, this.onJumpToModule});
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final admin = context.watch<AdminProvider>();
+    final t = AdminThemeTokens.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimens.space24),
+    final openDisputesCount = admin.disputes.where((d) => d.status == 'مفتوح').length;
+    final pendingDriversCount = admin.driverRequests.where((r) => r.status == 'قيد المراجعة').length;
+    final enabledFlags = admin.featureFlags.where((f) => f.isEnabled && !f.isKillSwitch).length;
+
+    return AdminPageBody(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Operational Banner / Ticker
+          // Executive Live Banner
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0F2942), Color(0xFF1E3A58)],
-                begin: Alignment.centerRight,
-                end: Alignment.centerLeft,
+                colors: [Color(0xFF0F2A43), Color(0xFF8A1538)],
+                begin: AlignmentDirectional.centerStart,
+                end: AlignmentDirectional.centerEnd,
               ),
               borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.navy.withValues(alpha: 0.15),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
             ),
             child: Wrap(
               alignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 12,
-              runSpacing: 8,
+              runSpacing: 10,
               children: [
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: (MediaQuery.of(context).size.width - 64).clamp(180.0, 700.0),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF10B981),
-                          shape: BoxShape.circle,
-                        ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const MashwarLivePulseDot(color: Color(0xFF10B981), size: 9),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        isAr
+                            ? 'مركز عمليات مشوار قطر · ${admin.servicesCatalog.where((s) => s.isEnabled).length} خدمات · ${admin.corridors.length} محور حي · $enabledFlags Feature Flags'
+                            : 'MASHWAR Qatar Command · ${admin.servicesCatalog.where((s) => s.isEnabled).length} Services · ${admin.corridors.length} Corridors · $enabledFlags Flags',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5),
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          isAr
-                              ? 'شبكة التنقل التشاركي تعمل بكامل كفاءتها عبر 8 بلديات في قطر'
-                              : 'Shared mobility network fully operational across 8 municipalities in Qatar',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                  ),
-                  child: Text(
-                    isAr ? 'الفترة المحددة: ${admin.currentPeriod}' : 'Active Scope: ${admin.currentPeriod}',
-                    style: const TextStyle(
-                      color: AppColors.gold,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 11,
                     ),
-                  ),
+                  ],
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _bannerTag(
+                      isAr ? 'النطاق: ${admin.currentPeriod}' : 'Scope: ${admin.currentPeriod}',
+                      AppColors.gold,
+                    ),
+                    _bannerTag(
+                      'ENV: ${admin.activeEnvironment.toUpperCase()}',
+                      const Color(0xFF2DD4BF),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 16),
 
-          const SizedBox(height: 18),
-
-          // 5 Metric KPI Cards (Page 69 - Fully Responsive Breakpoints)
+          // Primary 5 Operational KPI Cards
           LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;
-              double cardWidth;
-              if (w >= 1180) {
-                cardWidth = (w - (16 * 4)) / 5;
-              } else if (w >= 720) {
-                cardWidth = (w - (16 * 2)) / 3;
-              } else if (w >= 480) {
-                cardWidth = (w - 16) / 2;
-              } else {
-                cardWidth = w;
-              }
-
-              final openDisputesCount = admin.disputes.where((d) => d.status == 'مفتوح').length;
+              final cols = w >= 1220 ? 5 : (w >= 760 ? 3 : (w >= 480 ? 2 : 1));
+              final cardWidth = (w - (14 * (cols - 1))) / cols;
 
               return Wrap(
-                spacing: 16,
-                runSpacing: 16,
+                spacing: 14,
+                runSpacing: 14,
                 children: [
-                  _buildMetricCard(
-                    title: isAr ? 'مستخدمون جدد' : 'New Users',
-                    value: '${admin.kpiNewUsers}',
-                    subtext: admin.kpiNewUsersSubtext,
-                    subtextColor: AppColors.teal,
-                    icon: Icons.group_add_rounded,
-                    iconBg: const Color(0xFFE6F7F0),
-                    iconColor: AppColors.teal,
+                  SizedBox(
                     width: cardWidth,
+                    child: AdminKpiCard(
+                      title: isAr ? 'مستخدمون جدد' : 'New Users',
+                      value: '${admin.kpiNewUsers}',
+                      deltaText: admin.kpiNewUsersSubtext,
+                      accentColor: t.accentTeal,
+                      icon: Icons.group_add_rounded,
+                      onTap: () => onJumpToModule?.call(2),
+                    ),
                   ),
-                  _buildMetricCard(
-                    title: isAr ? 'رحلات منشورة' : 'Published Rides',
-                    value: '${admin.kpiPublishedRides}',
-                    subtext: admin.kpiPublishedRidesSubtext,
-                    subtextColor: AppColors.teal,
-                    icon: Icons.directions_car_filled_rounded,
-                    iconBg: const Color(0xFFE8F1FA),
-                    iconColor: AppColors.navy,
+                  SizedBox(
                     width: cardWidth,
+                    child: AdminKpiCard(
+                      title: isAr ? 'رحلات منشورة' : 'Published Rides',
+                      value: '${admin.kpiPublishedRides}',
+                      deltaText: admin.kpiPublishedRidesSubtext,
+                      accentColor: t.accentPrimary,
+                      icon: Icons.directions_car_filled_rounded,
+                      onTap: () => onJumpToModule?.call(3),
+                    ),
                   ),
-                  _buildMetricCard(
-                    title: isAr ? 'حجوزات مؤكدة' : 'Confirmed Bookings',
-                    value: '${admin.kpiConfirmedBookings}',
-                    subtext: admin.kpiConversionRate,
-                    subtextColor: AppColors.navy,
-                    icon: Icons.confirmation_number_rounded,
-                    iconBg: const Color(0xFFFFF8E1),
-                    iconColor: const Color(0xFFD97706),
+                  SizedBox(
                     width: cardWidth,
+                    child: AdminKpiCard(
+                      title: isAr ? 'حجوزات مؤكدة' : 'Confirmed Bookings',
+                      value: '${admin.kpiConfirmedBookings}',
+                      deltaText: admin.kpiConversionRate,
+                      accentColor: AppColors.gold,
+                      icon: Icons.confirmation_number_rounded,
+                      onTap: () => onJumpToModule?.call(3),
+                    ),
                   ),
-                  _buildMetricCard(
-                    title: isAr ? 'طرود مسلّمة' : 'Delivered Parcels',
-                    value: '${admin.kpiDeliveredParcels}',
-                    subtext: admin.kpiParcelSuccessRate,
-                    subtextColor: AppColors.teal,
-                    icon: Icons.inventory_2_rounded,
-                    iconBg: const Color(0xFFE6F7F0),
-                    iconColor: AppColors.teal,
+                  SizedBox(
                     width: cardWidth,
+                    child: AdminKpiCard(
+                      title: isAr ? 'طرود مسلّمة' : 'Delivered Parcels',
+                      value: '${admin.kpiDeliveredParcels}',
+                      deltaText: admin.kpiParcelSuccessRate,
+                      accentColor: t.accentTeal,
+                      icon: Icons.inventory_2_rounded,
+                      onTap: () => onJumpToModule?.call(3),
+                    ),
                   ),
-                  _buildMetricCard(
-                    title: isAr ? 'بلاغات مفتوحة' : 'Open Disputes',
-                    value: '$openDisputesCount',
-                    subtext: isAr ? 'تحتاج مراجعة' : 'Requires action',
-                    subtextColor: AppColors.coral,
-                    valueColor: AppColors.coral,
-                    icon: Icons.warning_amber_rounded,
-                    iconBg: const Color(0xFFFEE2E2),
-                    iconColor: AppColors.coral,
+                  SizedBox(
                     width: cardWidth,
+                    child: AdminKpiCard(
+                      title: isAr ? 'بلاغات مفتوحة' : 'Open Disputes',
+                      value: '$openDisputesCount',
+                      deltaText: isAr ? 'تحتاج مراجعة فورية' : 'Requires action',
+                      accentColor: AppColors.coral,
+                      icon: Icons.warning_amber_rounded,
+                      onTap: () => onJumpToModule?.call(4),
+                    ),
                   ),
                 ],
               );
             },
           ),
+          const SizedBox(height: 16),
 
-          const SizedBox(height: AppDimens.space24),
+          // Quick-Action Command Strip (1-Click Jump to Urgent Ops)
+          AdminSectionCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  isAr ? 'وصول تنفيذي سريع:' : 'Quick Operational Actions:',
+                  style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 13),
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _quickActionBtn(
+                      icon: Icons.verified_user_rounded,
+                      label: isAr ? 'مراجعة السائقين ($pendingDriversCount)' : 'Verify Drivers ($pendingDriversCount)',
+                      color: AppColors.gold,
+                      onTap: () => onJumpToModule?.call(1),
+                    ),
+                    _quickActionBtn(
+                      icon: Icons.account_balance_wallet_rounded,
+                      label: isAr
+                          ? 'الضمان المالي (${admin.kpiActiveEscrowHoldQar.toStringAsFixed(0)} ر.ق)'
+                          : 'Escrow Holds (${admin.kpiActiveEscrowHoldQar.toStringAsFixed(0)} QAR)',
+                      color: AppColors.qatarMaroon,
+                      onTap: () => onJumpToModule?.call(10),
+                    ),
+                    _quickActionBtn(
+                      icon: Icons.grid_view_rounded,
+                      label: isAr ? 'إدارة الخدمات (${admin.servicesCatalog.length})' : 'Services (${admin.servicesCatalog.length})',
+                      color: AppColors.teal,
+                      onTap: () => onJumpToModule?.call(8),
+                    ),
+                    _quickActionBtn(
+                      icon: Icons.terminal_rounded,
+                      label: isAr ? 'غرفة DevOps والـ Flags' : 'DevOps & SRE',
+                      color: const Color(0xFF4338CA),
+                      onTap: () => onJumpToModule?.call(11),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
-          // Charts & Corridors Row (Page 69)
+          // GMV Telemetry Chart + Live Qatar Corridor Map
           LayoutBuilder(
             builder: (context, constraints) {
-              final isStacked = constraints.maxWidth < 920;
+              final isStacked = constraints.maxWidth < 960;
+              final telemetryCard = AdminSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            isAr ? 'مؤشر حجم المعاملات والضمان المالي (ر.ق)' : 'GMV & Bilateral Escrow Flow (QAR)',
+                            style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
+                          ),
+                        ),
+                        Text(
+                          '${admin.kpiNetPlatformCommissionQar.toStringAsFixed(1)} ${isAr ? "ر.ق عمولة" : "QAR Take"}',
+                          style: TextStyle(color: t.accentTeal, fontWeight: FontWeight.w800, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    const AdminTelemetryLineChart(
+                      primarySeries: [1850, 2240, 2680, 2510, 3190, 3840, 4420],
+                      secondarySeries: [1200, 1480, 1790, 1720, 2140, 2610, 3050],
+                      labels: ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Today'],
+                      primaryColor: AppColors.qatarMaroon,
+                      secondaryColor: AppColors.teal,
+                    ),
+                  ],
+                ),
+              );
+
+              final mapCard = AdminSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            isAr ? 'شبكة المحاور والبلديات القطرية الحية' : 'Live Qatar Corridor Network',
+                            style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => onJumpToModule?.call(9),
+                          child: Text(isAr ? 'إدارة المحاور' : 'Manage'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 196,
+                      width: double.infinity,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: QatarLiveMapCanvas(
+                          style: t.isDark ? QatarMapStyle.darkExecutive : QatarMapStyle.light,
+                          activeFromCity: 'المنطقة الصناعية',
+                          activeToCity: 'لوسيل',
+                          showHubLabels: true,
+                          showCarTrails: true,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+
               if (isStacked) {
                 return Column(
                   children: [
-                    _buildGovernorateChart(context, isAr),
-                    const SizedBox(height: 18),
-                    _buildCorridorsTable(context, isAr),
+                    telemetryCard,
+                    const SizedBox(height: 16),
+                    mapCard,
                   ],
                 );
               }
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    flex: 5,
-                    child: _buildGovernorateChart(context, isAr),
-                  ),
-                  const SizedBox(width: 18),
-                  Expanded(
-                    flex: 6,
-                    child: _buildCorridorsTable(context, isAr),
-                  ),
+                  Expanded(flex: 6, child: telemetryCard),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 5, child: mapCard),
                 ],
               );
             },
           ),
+          const SizedBox(height: 16),
 
-          const SizedBox(height: AppDimens.space20),
-
-          // Platform Health & Ops Indicator Footer
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.shield_outlined, color: AppColors.teal, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    isAr
-                        ? 'الأرقام تجريبية لتوضيح الشكل ومحاكاة عمليات التشغيل · نظام أمان وتشفير البيانات فعال'
-                        : 'Sample metric numbers illustrating live operations · Real-time data encryption active',
-                    style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontSize: 11),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricCard({
-    required String title,
-    required String value,
-    required String subtext,
-    required Color subtextColor,
-    Color? valueColor,
-    required IconData icon,
-    required Color iconBg,
-    required Color iconColor,
-    required double width,
-  }) {
-    return Container(
-      width: width,
-      padding: const EdgeInsets.all(AppDimens.space16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: AppTypography.label(color: AppColors.textSecondary).copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 18, color: iconColor),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: AppTypography.largeTitle().copyWith(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: valueColor ?? AppColors.navy,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: subtextColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              subtext,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: subtextColor,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGovernorateChart(BuildContext context, bool isAr) {
-    final data = [
-      {'name': isAr ? 'الدوحة' : 'Doha', 'val': 140, 'pct': '36%'},
-      {'name': isAr ? 'الريان' : 'Al Rayyan', 'val': 90, 'pct': '23%'},
-      {'name': isAr ? 'الوكرة' : 'Al Wakrah', 'val': 65, 'pct': '17%'},
-      {'name': isAr ? 'الخور' : 'Al Khor', 'val': 50, 'pct': '13%'},
-      {'name': isAr ? 'لوسيل' : 'Lusail', 'val': 42, 'pct': '11%'},
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.space20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  isAr ? 'رحلات حسب البلدية / المنطقة' : 'Rides by Municipality',
-                  style: AppTypography.title().copyWith(fontSize: 16, fontWeight: FontWeight.w800),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  isAr ? 'أعلى 5 مناطق' : 'Top 5 Areas',
-                  style: const TextStyle(fontSize: 11, color: AppColors.navy, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimens.space24),
-          SizedBox(
-            height: 190,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 320),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: data.map((item) {
-                    final heightPct = (item['val'] as int) / 120.0;
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            '${item['val']}',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.navy),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item['pct'] as String,
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.teal),
-                          ),
-                          const SizedBox(height: 6),
-                          Container(
-                            width: 36,
-                            height: 110 * heightPct,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [AppColors.navy, Color(0xFF1E3A58)],
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                              ),
+          // Service Mix Breakdown + Live Corridor Performance Table
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isStacked = constraints.maxWidth < 960;
+              final serviceMixCard = AdminSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAr ? 'توزيع الطلبات حسب خطوط الخدمة' : 'Order Volume Across Service Lines',
+                      style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
+                    ),
+                    const SizedBox(height: 14),
+                    for (final svc in admin.servicesCatalog) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    isAr ? svc.nameAr : svc.nameEn,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(color: t.textPrimary, fontSize: 12, fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                                Text(
+                                  '${svc.activeOrdersCount} (${svc.commissionPct.toStringAsFixed(0)}%)',
+                                  style: TextStyle(color: t.textSecondary, fontSize: 11, fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            ClipRRect(
                               borderRadius: BorderRadius.circular(6),
+                              child: LinearProgressIndicator(
+                                value: (svc.activeOrdersCount / 100.0).clamp(0.08, 1.0),
+                                minHeight: 7,
+                                backgroundColor: t.surfaceMuted,
+                                valueColor: AlwaysStoppedAnimation(Color(svc.accentHex)),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${item['name']}',
-                            style: AppTypography.label(color: AppColors.textSecondary).copyWith(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCorridorsTable(BuildContext context, bool isAr) {
-    final rows = [
-      {
-        'corridor': isAr ? 'الدوحة ↔ الخور' : 'Doha ↔ Al Khor',
-        'rides': 94,
-        'bookings': 71,
-        'rate': '48%',
-        'status': isAr ? 'ذروة' : 'Peak',
-      },
-      {
-        'corridor': isAr ? 'الدوحة ↔ الوكرة' : 'Doha ↔ Al Wakrah',
-        'rides': 61,
-        'bookings': 40,
-        'rate': '39%',
-        'status': isAr ? 'مستقر' : 'Stable',
-      },
-      {
-        'corridor': isAr ? 'الدوحة ↔ دخان' : 'Doha ↔ Dukhan',
-        'rides': 38,
-        'bookings': 22,
-        'rate': '36%',
-        'status': isAr ? 'نشط' : 'Active',
-      },
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(AppDimens.space20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  isAr ? 'أداء محاور السفر الرئيسية' : 'Key Corridor Performance',
-                  style: AppTypography.title().copyWith(fontSize: 16, fontWeight: FontWeight.w800),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.tealSurface,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  isAr ? 'طرق حية' : 'Live Routes',
-                  style: const TextStyle(fontSize: 11, color: AppColors.teal, fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppDimens.space16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 420),
-              child: Table(
-                columnWidths: const {
-                  0: FlexColumnWidth(2.6),
-                  1: FlexColumnWidth(1.0),
-                  2: FlexColumnWidth(1.0),
-                  3: FlexColumnWidth(1.2),
-                },
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                border: const TableBorder(horizontalInside: BorderSide(color: Color(0xFFF1F5F9), width: 1.0)),
-                children: [
-                  TableRow(
-                    decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          isAr ? 'المحور' : 'Corridor',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.navy),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          isAr ? 'رحلات' : 'Rides',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.navy),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          isAr ? 'حجوزات' : 'Bookings',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.navy),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          isAr ? 'تحويل' : 'Conversion',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.navy),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                  for (final r in rows) ...[
-                    TableRow(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                          child: Text(
-                            r['corridor'] as String,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.navy),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text('${r['rides']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text('${r['bookings']}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.tealSurface,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              r['rate'] as String,
-                              style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w800, fontSize: 11),
-                            ),
-                          ),
-                        ),
+                  ],
+                ),
+              );
+
+              final corridorsCard = AdminSectionCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAr ? 'أداء محاور السفر والإمداد الرئيسية' : 'Key Corridor Performance',
+                      style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
+                    ),
+                    const SizedBox(height: 12),
+                    AdminAdaptiveDataView(
+                      items: admin.corridors.take(4).toList(),
+                      minTableWidth: 460,
+                      columns: [
+                        DataColumn(label: Text(isAr ? 'المحور' : 'Corridor')),
+                        DataColumn(label: Text(isAr ? 'الطلبات' : 'Requests')),
+                        DataColumn(label: Text(isAr ? 'التحويل' : 'Conv.')),
+                        DataColumn(label: Text(isAr ? 'التحفيز' : 'Boost')),
                       ],
+                      buildRow: (c) => DataRow(
+                        cells: [
+                          DataCell(Text(c.routeLabel(isAr), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
+                          DataCell(Text('${c.openRequests}')),
+                          DataCell(Text('${c.conversionPct.toStringAsFixed(0)}%', style: TextStyle(color: t.accentTeal, fontWeight: FontWeight.bold))),
+                          DataCell(Text('${c.incentiveMultiplier.toStringAsFixed(2)}x', style: const TextStyle(fontWeight: FontWeight.bold))),
+                        ],
+                      ),
+                      buildMobileCard: (ctx, c) => Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: t.surfaceAlt,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: t.border),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(c.routeLabel(isAr), style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w700, fontSize: 12)),
+                            ),
+                            Text('${c.conversionPct.toStringAsFixed(0)}% · ${c.incentiveMultiplier.toStringAsFixed(2)}x', style: TextStyle(color: t.accentTeal, fontSize: 11, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
+                ),
+              );
+
+              if (isStacked) {
+                return Column(
+                  children: [
+                    serviceMixCard,
+                    const SizedBox(height: 16),
+                    corridorsCard,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 5, child: serviceMixCard),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 6, child: corridorsCard),
                 ],
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
+    );
+  }
+
+  Widget _bannerTag(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 11),
+      ),
+    );
+  }
+
+  Widget _quickActionBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return ActionChip(
+      avatar: Icon(icon, size: 15, color: color),
+      label: Text(label, style: TextStyle(color: color, fontSize: 11.5, fontWeight: FontWeight.w700)),
+      backgroundColor: color.withValues(alpha: 0.10),
+      side: BorderSide(color: color.withValues(alpha: 0.25)),
+      onPressed: onTap,
     );
   }
 }
