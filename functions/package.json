@@ -11,6 +11,7 @@
     "build:watch": "tsc --watch",
     "pretest": "npm run build",
     "test": "node --test test/backend_security.test.mjs",
+    "test:rules": "node --test test/emulator_rules.test.mjs",
     "serve": "npm run build && firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions"
   },
@@ -19,6 +20,7 @@
     "firebase-functions": "^6.1.1"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.2"
   },
