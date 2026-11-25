@@ -793,6 +793,100 @@ class WorksiteRepositoryImpl implements IWorksiteRepository {
   }
 
   @override
+  Future<void> withdrawOffer({
+    required String requestId,
+    required String offerId,
+    required String providerId,
+  }) async {
+    _requireDevMockMode();
+    final uid = providerId.trim();
+    if (uid.isEmpty) {
+      throw WorksiteRepositoryException.unauthenticated();
+    }
+    final reqId = requestId.trim();
+    final request = _requests[reqId];
+    if (request == null) {
+      throw const WorksiteRepositoryException(
+        code: 'not-found',
+        messageAr: 'طلب التوريد غير موجود.',
+        messageEn: 'Work request not found.',
+      );
+    }
+
+    final offers = _offersByRequest[reqId] ?? [];
+    final idx = offers.indexWhere((o) => o.id == offerId.trim());
+    if (idx < 0) {
+      throw const WorksiteRepositoryException(
+        code: 'not-found',
+        messageAr: 'العرض المطلوب غير موجود.',
+        messageEn: 'Offer not found.',
+      );
+    }
+    final existing = offers[idx];
+    if (existing.providerId != uid) {
+      throw const WorksiteRepositoryException(
+        code: 'permission-denied',
+        messageAr: 'صاحب العرض فقط يمكنه سحب عرضه.',
+        messageEn: 'Only the offer owner may withdraw it.',
+      );
+    }
+    if (existing.status != 'pending') {
+      throw const WorksiteRepositoryException(
+        code: 'failed-precondition',
+        messageAr: 'يمكن سحب العروض المعلقة فقط.',
+        messageEn: 'Only pending offers can be withdrawn.',
+      );
+    }
+
+    final now = _now();
+    offers[idx] = existing.copyWith(
+      status: 'withdrawn',
+      isSelected: false,
+      updatedAt: now,
+    );
+
+    final pendingCount = offers.where((o) => o.status == 'pending').length;
+    final nextStatus = (request.status == WorkRequestStatus.offerReceived &&
+            pendingCount == 0)
+        ? WorkRequestStatus.open
+        : request.status;
+    _requests[reqId] = request.copyWith(
+      status: nextStatus,
+      offerCount: pendingCount,
+      updatedAt: now,
+    );
+
+    _appendEvent(
+      reqId,
+      actorId: uid,
+      actorRole: 'provider',
+      eventType: 'offer_withdrawn',
+      fromStatus: request.status,
+      toStatus: nextStatus,
+      note: 'Offer ${existing.id} withdrawn by provider.',
+      metadata: {'offerId': existing.id, 'providerId': uid},
+      createdAt: now,
+    );
+  }
+
+  @override
+  Future<WorkRequest> cancelRequest({
+    required String requestId,
+    required String requesterId,
+    String? reason,
+  }) {
+    final cleanReason = reason?.trim();
+    return updateFulfillmentStatus(
+      requestId: requestId,
+      nextStatus: WorkRequestStatus.cancelled,
+      actorId: requesterId,
+      actorRole: 'requester',
+      note:
+          (cleanReason != null && cleanReason.isNotEmpty) ? cleanReason : null,
+    );
+  }
+
+  @override
   Future<WorkRequest> acceptOffer({
     required String requestId,
     required String offerId,

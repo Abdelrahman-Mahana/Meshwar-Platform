@@ -20,10 +20,22 @@ abstract class IWorksiteRepository {
 
   Future<WorkOffer> submitOffer(WorkOffer offer);
 
+  Future<void> withdrawOffer({
+    required String requestId,
+    required String offerId,
+    required String providerId,
+  });
+
   Future<WorkRequest> acceptOffer({
     required String requestId,
     required String offerId,
     required String requesterId,
+  });
+
+  Future<WorkRequest> cancelRequest({
+    required String requestId,
+    required String requesterId,
+    String? reason,
   });
 
   Future<WorkRequest> updateFulfillmentStatus({

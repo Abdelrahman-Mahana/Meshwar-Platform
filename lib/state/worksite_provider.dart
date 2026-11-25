@@ -5,10 +5,169 @@ import '../data/models/worksite_models.dart';
 import '../data/repositories/app_repositories.dart';
 import '../data/repositories/contracts/i_provider_repository.dart';
 import '../data/repositories/contracts/i_worksite_repository.dart';
+import '../data/repositories/implementations/firebase/firebase_worksite_repository.dart';
 import '../data/services/firebase_firestore_service.dart';
 
 export '../data/services/firebase_firestore_service.dart'
     show WorksiteRepositoryException;
+
+/// Sort modes for the Worksite Supply marketplace & requests list.
+enum WorksiteSortOption {
+  newest,
+  highestBudget,
+  soonestDeadline,
+  fewestOffers,
+}
+
+/// Owner-scoped notification item hydrated from Firestore `notifications`,
+/// [MashwarDemoCasesCatalog], or live request/offer state fallback.
+@immutable
+class WorksiteNotificationItem {
+  final String id;
+  final String userId;
+  final String title;
+  final String titleAr;
+  final String titleEn;
+  final String body;
+  final String bodyAr;
+  final String bodyEn;
+  final String type;
+  final String category;
+  final String? requestId;
+  final String? offerId;
+  final String? targetRoute;
+  final bool isRead;
+  final bool isDerived;
+  final DateTime createdAt;
+
+  const WorksiteNotificationItem({
+    required this.id,
+    required this.userId,
+    required this.title,
+    required this.titleAr,
+    required this.titleEn,
+    required this.body,
+    required this.bodyAr,
+    required this.bodyEn,
+    required this.type,
+    required this.category,
+    this.requestId,
+    this.offerId,
+    this.targetRoute,
+    this.isRead = false,
+    this.isDerived = false,
+    required this.createdAt,
+  });
+
+  String localizedTitle({required bool isArabic}) {
+    final preferred = isArabic ? titleAr : titleEn;
+    return preferred.trim().isNotEmpty ? preferred : title;
+  }
+
+  String localizedBody({required bool isArabic}) {
+    final preferred = isArabic ? bodyAr : bodyEn;
+    return preferred.trim().isNotEmpty ? preferred : body;
+  }
+
+  WorksiteNotificationItem copyWith({
+    String? id,
+    String? userId,
+    String? title,
+    String? titleAr,
+    String? titleEn,
+    String? body,
+    String? bodyAr,
+    String? bodyEn,
+    String? type,
+    String? category,
+    String? requestId,
+    String? offerId,
+    String? targetRoute,
+    bool? isRead,
+    bool? isDerived,
+    DateTime? createdAt,
+  }) {
+    return WorksiteNotificationItem(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      titleAr: titleAr ?? this.titleAr,
+      titleEn: titleEn ?? this.titleEn,
+      body: body ?? this.body,
+      bodyAr: bodyAr ?? this.bodyAr,
+      bodyEn: bodyEn ?? this.bodyEn,
+      type: type ?? this.type,
+      category: category ?? this.category,
+      requestId: requestId ?? this.requestId,
+      offerId: offerId ?? this.offerId,
+      targetRoute: targetRoute ?? this.targetRoute,
+      isRead: isRead ?? this.isRead,
+      isDerived: isDerived ?? this.isDerived,
+      createdAt: (createdAt ?? this.createdAt).toUtc(),
+    );
+  }
+
+  factory WorksiteNotificationItem.fromDemoEntry(DemoNotificationEntry entry) {
+    return WorksiteNotificationItem(
+      id: entry.id,
+      userId: entry.userId,
+      title: entry.title,
+      titleAr: entry.titleAr,
+      titleEn: entry.titleEn,
+      body: entry.body,
+      bodyAr: entry.bodyAr,
+      bodyEn: entry.bodyEn,
+      type: entry.type,
+      category: entry.category,
+      requestId: entry.requestId,
+      offerId: entry.offerId,
+      targetRoute: entry.targetRoute,
+      isRead: entry.isRead,
+      isDerived: false,
+      createdAt: entry.createdAt.toUtc(),
+    );
+  }
+
+  factory WorksiteNotificationItem.fromJson(Map<String, dynamic> json) {
+    final rawTitle = (json['title'] ?? '').toString();
+    final rawTitleAr = (json['titleAr'] ?? rawTitle).toString();
+    final rawTitleEn = (json['titleEn'] ?? rawTitle).toString();
+    final rawBody = (json['body'] ?? '').toString();
+    final rawBodyAr = (json['bodyAr'] ?? rawBody).toString();
+    final rawBodyEn = (json['bodyEn'] ?? rawBody).toString();
+    final rawCreated = json['createdAt'];
+    DateTime createdAt;
+    if (rawCreated is DateTime) {
+      createdAt = rawCreated.toUtc();
+    } else if (rawCreated is String && rawCreated.trim().isNotEmpty) {
+      createdAt = DateTime.tryParse(rawCreated.trim())?.toUtc() ??
+          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+    } else if (rawCreated is int) {
+      createdAt = DateTime.fromMillisecondsSinceEpoch(rawCreated, isUtc: true);
+    } else {
+      createdAt = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+    }
+
+    return WorksiteNotificationItem(
+      id: (json['id'] ?? '').toString(),
+      userId: (json['userId'] ?? '').toString(),
+      title: rawTitle.isNotEmpty ? rawTitle : rawTitleAr,
+      titleAr: rawTitleAr,
+      titleEn: rawTitleEn,
+      body: rawBody.isNotEmpty ? rawBody : rawBodyAr,
+      bodyAr: rawBodyAr,
+      bodyEn: rawBodyEn,
+      type: (json['type'] ?? 'status_update').toString(),
+      category: (json['category'] ?? 'worksite_supply').toString(),
+      requestId: json['requestId']?.toString(),
+      offerId: json['offerId']?.toString(),
+      targetRoute: json['targetRoute']?.toString(),
+      isRead: json['isRead'] as bool? ?? false,
+      isDerived: false,
+      createdAt: createdAt,
+    );
+  }
+}
 
 /// Clean draft payload generated by [WorksiteProvider.buildReorderDraft] for Quick Reorder.
 /// Carries over items, route, site contact, and QAR minor-unit budgets without leaking
@@ -119,6 +278,9 @@ class WorksiteProvider extends ChangeNotifier {
   WorkRequestStatus? _filterStatus;
   bool _filterOnlyMine = false;
   bool _filterAssignedToMe = false;
+  String _searchQuery = '';
+  String? _filterCategory;
+  WorksiteSortOption _sortBy = WorksiteSortOption.newest;
   int _lastLimit = 50;
   String? _lastSelectedRequestId;
   bool _lastOperationWasSelect = false;
@@ -130,9 +292,13 @@ class WorksiteProvider extends ChangeNotifier {
 
   ProviderProfile? _providerProfile;
   List<SavedWorksite> _savedWorksites = const [];
+  List<WorksiteNotificationItem> _notifications = const [];
+  final Set<String> _locallyReadNotificationIds = <String>{};
   final Map<String, String> _reorderedFromMap = {};
   bool _isDemoShowcaseMode = false;
   MashwarDemoCasesBundle? _showcaseBundle;
+  Map<String, List<WorkOffer>> _demoOffersByRequest = {};
+  Map<String, List<RequestEvent>> _demoEventsByRequest = {};
 
   WorksiteProvider({
     IWorksiteRepository? worksiteRepository,
@@ -185,13 +351,24 @@ class WorksiteProvider extends ChangeNotifier {
       _filterMaxBudgetMinor != null ||
       _filterStatus != null ||
       _filterOnlyMine ||
-      _filterAssignedToMe;
+      _filterAssignedToMe ||
+      _searchQuery.isNotEmpty ||
+      (_filterCategory != null && _filterCategory!.isNotEmpty) ||
+      _sortBy != WorksiteSortOption.newest;
 
   String? get filterArea => _filterArea;
   int? get filterMaxBudgetMinor => _filterMaxBudgetMinor;
   WorkRequestStatus? get filterStatus => _filterStatus;
   bool get filterOnlyMine => _filterOnlyMine;
   bool get filterAssignedToMe => _filterAssignedToMe;
+  String get searchQuery => _searchQuery;
+  String? get filterCategory => _filterCategory;
+  WorksiteSortOption get sortBy => _sortBy;
+
+  List<WorksiteNotificationItem> get notifications =>
+      List.unmodifiable(_notifications);
+  int get unreadNotificationsCount =>
+      _notifications.where((item) => !item.isRead).length;
 
   WorkRequest? get selectedRequest => _selectedRequest;
   List<WorkOffer> get selectedOffers => List.unmodifiable(_selectedOffers);
@@ -223,19 +400,30 @@ class WorksiteProvider extends ChangeNotifier {
     _clearErrorSilently();
     _allLoadedRequests = List<WorkRequest>.from(bundle.requests)
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _demoOffersByRequest = {
+      for (final entry in bundle.offersByRequest.entries)
+        entry.key: List<WorkOffer>.from(entry.value),
+    };
+    _demoEventsByRequest = {
+      for (final entry in bundle.eventsByRequest.entries)
+        entry.key: List<RequestEvent>.from(entry.value),
+    };
     _savedWorksites = bundle.savedWorksites;
     _providerProfile = bundle.providerProfileFor(uid) ?? _providerProfile;
+    _notifications = _buildShowcaseNotifications(bundle);
     _recomputeFilteredRequests();
 
     final selectedId = _selectedRequest?.id;
     if (selectedId != null) {
-      final demoSelected = bundle.requestById(selectedId);
+      final demoSelected = _findShowcaseRequest(selectedId);
       if (demoSelected != null) {
         _selectedRequest = demoSelected;
-        _selectedOffers =
-            List.unmodifiable(bundle.offersByRequest[selectedId] ?? const []);
-        _selectedEvents =
-            List.unmodifiable(bundle.eventsByRequest[selectedId] ?? const []);
+        _selectedOffers = List.unmodifiable(
+          _demoOffersByRequest[selectedId] ?? const [],
+        );
+        _selectedEvents = List.unmodifiable(
+          _demoEventsByRequest[selectedId] ?? const [],
+        );
         _activeHandoverCode = (uid == demoSelected.requesterId &&
                 _handoverVisibleStatuses.contains(demoSelected.status))
             ? bundle.handoverCodesByRequest[selectedId]
@@ -254,6 +442,8 @@ class WorksiteProvider extends ChangeNotifier {
   Future<void> exitDemoShowcase() async {
     _isDemoShowcaseMode = false;
     _showcaseBundle = null;
+    _demoOffersByRequest = {};
+    _demoEventsByRequest = {};
     _selectedRequest = null;
     _selectedOffers = const [];
     _selectedEvents = const [];
@@ -275,6 +465,7 @@ class WorksiteProvider extends ChangeNotifier {
     } else {
       _savedWorksites = const [];
       _providerProfile = null;
+      _notifications = const [];
       notifyListeners();
     }
   }
@@ -296,9 +487,15 @@ class WorksiteProvider extends ChangeNotifier {
       _activeHandoverCode = null;
       _isDemoShowcaseMode = false;
       _showcaseBundle = null;
+      _demoOffersByRequest = {};
+      _demoEventsByRequest = {};
+      _locallyReadNotificationIds.clear();
       if (normalizedNext == null) {
         _providerProfile = null;
         _savedWorksites = const [];
+        _notifications = const [];
+      } else {
+        _notifications = _deriveLiveNotifications(normalizedNext);
       }
       _recomputeFilteredRequests();
       notifyListeners();
@@ -371,9 +568,12 @@ class WorksiteProvider extends ChangeNotifier {
 
     try {
       if (_isDemoShowcaseMode && _showcaseBundle != null) {
-        _allLoadedRequests = List<WorkRequest>.from(_showcaseBundle!.requests)
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        if (_allLoadedRequests.isEmpty) {
+          _allLoadedRequests = List<WorkRequest>.from(_showcaseBundle!.requests)
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        }
         _recomputeFilteredRequests();
+        await _refreshNotifications(notify: false);
         return;
       }
       final uid = currentUserId;
@@ -386,6 +586,7 @@ class WorksiteProvider extends ChangeNotifier {
       );
       _allLoadedRequests = fetched;
       _recomputeFilteredRequests();
+      await _refreshNotifications(notify: false);
     } catch (e) {
       _recordError(e);
     } finally {
@@ -403,16 +604,21 @@ class WorksiteProvider extends ChangeNotifier {
     await loadRequests(limit: _lastLimit);
   }
 
-  /// Applies local filters over loaded requests and refreshes the filtered list.
+  /// Applies local filters & sorting over loaded requests and refreshes the filtered list.
   void applyFilters({
     String? area,
     int? maxBudgetMinor,
     WorkRequestStatus? status,
     bool? onlyMine,
     bool? assignedToMe,
+    String? searchQuery,
+    String? category,
+    WorksiteSortOption? sortBy,
     bool clearArea = false,
     bool clearMaxBudget = false,
     bool clearStatus = false,
+    bool clearSearchQuery = false,
+    bool clearCategory = false,
   }) {
     if (clearArea) {
       _filterArea = null;
@@ -432,6 +638,21 @@ class WorksiteProvider extends ChangeNotifier {
       _filterStatus = status;
     }
 
+    if (clearSearchQuery) {
+      _searchQuery = '';
+    } else if (searchQuery != null) {
+      _searchQuery = searchQuery.trim();
+    }
+
+    if (clearCategory) {
+      _filterCategory = null;
+    } else if (category != null) {
+      final cleanCat = category.trim();
+      _filterCategory =
+          (cleanCat.isEmpty || cleanCat.toLowerCase() == 'all') ? null : cleanCat;
+    }
+
+    if (sortBy != null) _sortBy = sortBy;
     if (onlyMine != null) _filterOnlyMine = onlyMine;
     if (assignedToMe != null) _filterAssignedToMe = assignedToMe;
 
@@ -445,6 +666,9 @@ class WorksiteProvider extends ChangeNotifier {
     _filterStatus = null;
     _filterOnlyMine = false;
     _filterAssignedToMe = false;
+    _searchQuery = '';
+    _filterCategory = null;
+    _sortBy = WorksiteSortOption.newest;
     _recomputeFilteredRequests();
     notifyListeners();
   }
@@ -452,8 +676,10 @@ class WorksiteProvider extends ChangeNotifier {
   void _recomputeFilteredRequests() {
     final uid = currentUserId;
     final cleanArea = _filterArea?.trim().toLowerCase();
+    final cleanCat = _filterCategory?.trim().toLowerCase();
+    final cleanQuery = _searchQuery.trim().toLowerCase();
 
-    _filteredRequests = _allLoadedRequests.where((req) {
+    final list = _allLoadedRequests.where((req) {
       if (_filterStatus != null && req.status != _filterStatus) {
         return false;
       }
@@ -461,6 +687,11 @@ class WorksiteProvider extends ChangeNotifier {
           cleanArea.isNotEmpty &&
           req.municipality.trim().toLowerCase() != cleanArea &&
           !req.municipality.toLowerCase().contains(cleanArea)) {
+        return false;
+      }
+      if (cleanCat != null &&
+          cleanCat.isNotEmpty &&
+          req.supplyCategory.trim().toLowerCase() != cleanCat) {
         return false;
       }
       if (_filterMaxBudgetMinor != null &&
@@ -473,8 +704,57 @@ class WorksiteProvider extends ChangeNotifier {
       if (_filterAssignedToMe) {
         if (uid == null || req.assignedProviderId != uid) return false;
       }
+      if (cleanQuery.isNotEmpty) {
+        final haystack = <String>[
+          req.title,
+          req.description,
+          req.pickupLocation,
+          req.dropoffWorksite,
+          req.municipality,
+          req.requesterName,
+          req.supplyCategory,
+          req.itemNotes ?? '',
+        ].join(' ').toLowerCase();
+        if (!haystack.contains(cleanQuery)) {
+          return false;
+        }
+      }
       return true;
     }).toList();
+
+    switch (_sortBy) {
+      case WorksiteSortOption.newest:
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case WorksiteSortOption.highestBudget:
+        list.sort((a, b) {
+          final cmp = b.effectiveTotalMinor.minorUnits
+              .compareTo(a.effectiveTotalMinor.minorUnits);
+          return cmp != 0 ? cmp : b.createdAt.compareTo(a.createdAt);
+        });
+        break;
+      case WorksiteSortOption.soonestDeadline:
+        list.sort((a, b) {
+          final da = a.scheduledBy;
+          final db = b.scheduledBy;
+          if (da == null && db == null) {
+            return b.createdAt.compareTo(a.createdAt);
+          }
+          if (da == null) return 1;
+          if (db == null) return -1;
+          final cmp = da.compareTo(db);
+          return cmp != 0 ? cmp : b.createdAt.compareTo(a.createdAt);
+        });
+        break;
+      case WorksiteSortOption.fewestOffers:
+        list.sort((a, b) {
+          final cmp = a.offerCount.compareTo(b.offerCount);
+          return cmp != 0 ? cmp : b.createdAt.compareTo(a.createdAt);
+        });
+        break;
+    }
+
+    _filteredRequests = list;
   }
 
   /// Loads request details, offers, audit events, and requester-only handover code (when owner).
@@ -495,15 +775,19 @@ class WorksiteProvider extends ChangeNotifier {
 
     try {
       if (_isDemoShowcaseMode && _showcaseBundle != null) {
-        final demoReq = _showcaseBundle!.requestById(requestId);
+        final demoReq = _findShowcaseRequest(requestId);
         if (demoReq != null) {
           final uid = currentUserId;
           _selectedRequest = demoReq;
           _selectedOffers = List.unmodifiable(
-            _showcaseBundle!.offersByRequest[requestId] ?? const [],
+            _demoOffersByRequest[requestId] ??
+                _showcaseBundle!.offersByRequest[requestId] ??
+                const [],
           );
           _selectedEvents = List.unmodifiable(
-            _showcaseBundle!.eventsByRequest[requestId] ?? const [],
+            _demoEventsByRequest[requestId] ??
+                _showcaseBundle!.eventsByRequest[requestId] ??
+                const [],
           );
           _activeHandoverCode = (uid != null &&
                   uid == demoReq.requesterId &&
@@ -716,6 +1000,226 @@ class WorksiteProvider extends ChangeNotifier {
         _selectedEvents = await _worksiteRepo.listRequestEvents(requestId);
       }
       return created;
+    } catch (e) {
+      _recordError(e);
+      return null;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  /// Withdraws a pending offer submitted by the signed-in provider.
+  Future<bool> withdrawOffer({
+    required String requestId,
+    required String offerId,
+    String? providerId,
+  }) async {
+    _isSubmitting = true;
+    _clearErrorSilently();
+    notifyListeners();
+
+    try {
+      final uid = _resolveRequiredUid(providerId);
+      final cleanReqId = requestId.trim();
+      final cleanOfferId = offerId.trim();
+
+      if (_isDemoShowcaseMode && _showcaseBundle != null) {
+        final offers = _demoOffersByRequest[cleanReqId];
+        if (offers == null) {
+          throw const WorksiteRepositoryException(
+            code: 'not-found',
+            messageAr: 'العرض المطلوب غير موجود.',
+            messageEn: 'Offer not found.',
+          );
+        }
+        final idx = offers.indexWhere((o) => o.id == cleanOfferId);
+        if (idx < 0) {
+          throw const WorksiteRepositoryException(
+            code: 'not-found',
+            messageAr: 'العرض المطلوب غير موجود.',
+            messageEn: 'Offer not found.',
+          );
+        }
+        final existing = offers[idx];
+        if (existing.providerId != uid) {
+          throw const WorksiteRepositoryException(
+            code: 'permission-denied',
+            messageAr: 'صاحب العرض فقط يمكنه سحب عرضه.',
+            messageEn: 'Only the offer owner may withdraw it.',
+          );
+        }
+        if (existing.status != 'pending') {
+          throw const WorksiteRepositoryException(
+            code: 'failed-precondition',
+            messageAr: 'يمكن سحب العروض المعلقة فقط.',
+            messageEn: 'Only pending offers can be withdrawn.',
+          );
+        }
+        final now = DateTime.now().toUtc();
+        offers[idx] = existing.copyWith(
+          status: 'withdrawn',
+          isSelected: false,
+          updatedAt: now,
+        );
+
+        final req = _findShowcaseRequest(cleanReqId);
+        if (req != null) {
+          final pendingCount = offers.where((o) => o.status == 'pending').length;
+          final nextStatus = (req.status == WorkRequestStatus.offerReceived &&
+                  pendingCount == 0)
+              ? WorkRequestStatus.open
+              : req.status;
+          final updatedReq = req.copyWith(
+            status: nextStatus,
+            offerCount: pendingCount,
+            updatedAt: now,
+          );
+          _upsertRequestInCache(updatedReq);
+          final events = _demoEventsByRequest.putIfAbsent(cleanReqId, () => []);
+          events.add(
+            RequestEvent(
+              id: 'demo_evt_withdraw_${now.microsecondsSinceEpoch}',
+              requestId: cleanReqId,
+              actorId: uid,
+              actorRole: 'provider',
+              eventType: 'offer_withdrawn',
+              fromStatus: req.status,
+              toStatus: nextStatus,
+              note: 'تم سحب العرض من قبل المزود.',
+              metadata: {'offerId': cleanOfferId, 'providerId': uid},
+              createdAt: now,
+            ),
+          );
+          if (_selectedRequest?.id == cleanReqId) {
+            _selectedRequest = updatedReq;
+            _selectedOffers = List.unmodifiable(offers);
+            _selectedEvents = List.unmodifiable(events);
+          }
+        }
+        await _refreshNotifications(notify: false);
+        return true;
+      }
+
+      await _worksiteRepo.withdrawOffer(
+        requestId: cleanReqId,
+        offerId: cleanOfferId,
+        providerId: uid,
+      );
+      final refreshedRequest = await _worksiteRepo.getRequestById(cleanReqId);
+      if (refreshedRequest != null) {
+        _upsertRequestInCache(refreshedRequest);
+      }
+      if (_selectedRequest?.id == cleanReqId) {
+        _selectedOffers = await _worksiteRepo.listOffersForRequest(cleanReqId);
+        _selectedEvents = await _worksiteRepo.listRequestEvents(cleanReqId);
+      }
+      await _refreshNotifications(notify: false);
+      return true;
+    } catch (e) {
+      _recordError(e);
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  /// Cancels an active requester-owned work request before store pickup.
+  Future<WorkRequest?> cancelRequest({
+    required String requestId,
+    String? requesterId,
+    String? reason,
+  }) async {
+    _isSubmitting = true;
+    _clearErrorSilently();
+    notifyListeners();
+
+    try {
+      final uid = _resolveRequiredUid(requesterId);
+      final cleanReqId = requestId.trim();
+      final cleanReason = reason?.trim();
+
+      if (_isDemoShowcaseMode && _showcaseBundle != null) {
+        final req = _findShowcaseRequest(cleanReqId);
+        if (req == null) {
+          throw const WorksiteRepositoryException(
+            code: 'not-found',
+            messageAr: 'طلب التوريد غير موجود.',
+            messageEn: 'Work request not found.',
+          );
+        }
+        if (req.requesterId != uid) {
+          throw const WorksiteRepositoryException(
+            code: 'permission-denied',
+            messageAr: 'صاحب الطلب فقط يمكنه إلغاء هذا الطلب.',
+            messageEn: 'Only the request owner may cancel this request.',
+          );
+        }
+        const cancellableStatuses = {
+          WorkRequestStatus.open,
+          WorkRequestStatus.offerReceived,
+          WorkRequestStatus.offerSelected,
+          WorkRequestStatus.accepted,
+          WorkRequestStatus.inProgress,
+        };
+        if (!cancellableStatuses.contains(req.status)) {
+          throw WorksiteRepositoryException(
+            code: 'failed-precondition',
+            messageAr: 'لا يمكن إلغاء الطلب في مرحلته الحالية.',
+            messageEn:
+                "Cannot cancel request when status is '${req.status.value}'.",
+          );
+        }
+
+        final now = DateTime.now().toUtc();
+        final updated = req.copyWith(
+          status: WorkRequestStatus.cancelled,
+          cancellationReason:
+              (cleanReason != null && cleanReason.isNotEmpty)
+                  ? cleanReason
+                  : req.cancellationReason,
+          updatedAt: now,
+        );
+        _upsertRequestInCache(updated);
+        final events = _demoEventsByRequest.putIfAbsent(cleanReqId, () => []);
+        events.add(
+          RequestEvent(
+            id: 'demo_evt_cancel_${now.microsecondsSinceEpoch}',
+            requestId: cleanReqId,
+            actorId: uid,
+            actorRole: 'requester',
+            eventType: 'status_changed',
+            fromStatus: req.status,
+            toStatus: WorkRequestStatus.cancelled,
+            note: (cleanReason != null && cleanReason.isNotEmpty)
+                ? cleanReason
+                : 'تم إلغاء الطلب من قبل صاحب الطلب.',
+            createdAt: now,
+          ),
+        );
+        if (_selectedRequest?.id == cleanReqId) {
+          _selectedRequest = updated;
+          _selectedEvents = List.unmodifiable(events);
+          _activeHandoverCode = null;
+        }
+        await _refreshNotifications(notify: false);
+        return updated;
+      }
+
+      final updated = await _worksiteRepo.cancelRequest(
+        requestId: cleanReqId,
+        requesterId: uid,
+        reason: cleanReason,
+      );
+      _upsertRequestInCache(updated);
+      if (_selectedRequest?.id == cleanReqId) {
+        _selectedRequest = updated;
+        _selectedEvents = await _worksiteRepo.listRequestEvents(cleanReqId);
+        _activeHandoverCode = null;
+      }
+      await _refreshNotifications(notify: false);
+      return updated;
     } catch (e) {
       _recordError(e);
       return null;
@@ -1079,5 +1583,274 @@ class WorksiteProvider extends ChangeNotifier {
       _isSubmitting = false;
       notifyListeners();
     }
+  }
+
+  /// Loads notifications for the active user from Firestore (Firebase mode),
+  /// [MashwarDemoCasesCatalog] (showcase/demo mode), or live request/offer alerts.
+  Future<void> loadNotifications({String? currentUserIdOverride}) async {
+    if (currentUserIdOverride != null &&
+        currentUserIdOverride.trim().isNotEmpty) {
+      _boundUserId = currentUserIdOverride.trim();
+    }
+    await _refreshNotifications(notify: true);
+  }
+
+  /// Marks a single notification as read locally and in Firestore when applicable.
+  Future<void> markNotificationRead(String id) async {
+    final cleanId = id.trim();
+    if (cleanId.isEmpty) return;
+    _locallyReadNotificationIds.add(cleanId);
+
+    WorksiteNotificationItem? target;
+    final next = _notifications.map((item) {
+      if (item.id == cleanId) {
+        target = item;
+        return item.copyWith(isRead: true);
+      }
+      return item;
+    }).toList();
+    _notifications = next;
+    notifyListeners();
+
+    final item = target;
+    final repo = _worksiteRepo;
+    final uid = currentUserId;
+    if (item != null &&
+        !item.isDerived &&
+        !_isDemoShowcaseMode &&
+        repo is FirebaseWorksiteRepository &&
+        uid != null &&
+        uid.isNotEmpty) {
+      try {
+        await repo.markNotificationRead(cleanId, userId: uid);
+      } catch (_) {}
+    }
+  }
+
+  /// Marks every loaded notification as read locally and persists to Firestore when applicable.
+  Future<void> markAllNotificationsRead() async {
+    if (_notifications.isEmpty) return;
+
+    final pendingRemoteIds = <String>[];
+    final next = _notifications.map((item) {
+      _locallyReadNotificationIds.add(item.id);
+      if (!item.isRead && !item.isDerived) {
+        pendingRemoteIds.add(item.id);
+      }
+      return item.copyWith(isRead: true);
+    }).toList();
+    _notifications = next;
+    notifyListeners();
+
+    final repo = _worksiteRepo;
+    final uid = currentUserId;
+    if (!_isDemoShowcaseMode &&
+        repo is FirebaseWorksiteRepository &&
+        uid != null &&
+        uid.isNotEmpty &&
+        pendingRemoteIds.isNotEmpty) {
+      for (final notifId in pendingRemoteIds) {
+        try {
+          await repo.markNotificationRead(notifId, userId: uid);
+        } catch (_) {}
+      }
+    }
+  }
+
+  WorkRequest? _findShowcaseRequest(String requestId) {
+    final clean = requestId.trim();
+    for (final req in _allLoadedRequests) {
+      if (req.id == clean) return req;
+    }
+    return _showcaseBundle?.requestById(clean);
+  }
+
+  List<WorksiteNotificationItem> _buildShowcaseNotifications(
+    MashwarDemoCasesBundle bundle,
+  ) {
+    final list = bundle.notifications.map((entry) {
+      final item = WorksiteNotificationItem.fromDemoEntry(entry);
+      return _locallyReadNotificationIds.contains(item.id)
+          ? item.copyWith(isRead: true)
+          : item;
+    }).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return list;
+  }
+
+  Future<void> _refreshNotifications({required bool notify}) async {
+    final uid = currentUserId;
+    if (uid == null || uid.isEmpty) {
+      _notifications = const [];
+      if (notify) notifyListeners();
+      return;
+    }
+
+    if (_isDemoShowcaseMode && _showcaseBundle != null) {
+      _notifications = _buildShowcaseNotifications(_showcaseBundle!);
+      if (notify) notifyListeners();
+      return;
+    }
+
+    final repo = _worksiteRepo;
+    if (repo is FirebaseWorksiteRepository) {
+      try {
+        final rawDocs = await repo.listNotifications(userId: uid);
+        if (rawDocs.isNotEmpty) {
+          final parsed = rawDocs.map((doc) {
+            final item = WorksiteNotificationItem.fromJson(doc);
+            return _locallyReadNotificationIds.contains(item.id)
+                ? item.copyWith(isRead: true)
+                : item;
+          }).toList()
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _notifications = parsed;
+          if (notify) notifyListeners();
+          return;
+        }
+      } catch (_) {}
+      _notifications = _deriveLiveNotifications(uid);
+      if (notify) notifyListeners();
+      return;
+    }
+
+    // Dev/local mode: hydrate catalog notifications when seeded with demo_wr_* cases,
+    // or derive live alerts from loaded requests/offers/events.
+    final hasCatalogRequests =
+        _allLoadedRequests.any((r) => r.id.startsWith('demo_wr_'));
+    if (hasCatalogRequests) {
+      final demoBundle = MashwarDemoCasesCatalog.build(
+        currentUserId: uid,
+        currentUserName:
+            currentUserName.isNotEmpty ? currentUserName : null,
+      );
+      _notifications = _buildShowcaseNotifications(demoBundle);
+      if (notify) notifyListeners();
+      return;
+    }
+
+    _notifications = _deriveLiveNotifications(uid);
+    if (notify) notifyListeners();
+  }
+
+  List<WorksiteNotificationItem> _deriveLiveNotifications(String uid) {
+    final items = <WorksiteNotificationItem>[];
+    for (final req in _allLoadedRequests) {
+      final isRequester = req.requesterId == uid;
+      final isAssignedProvider = req.assignedProviderId == uid;
+      if (!isRequester && !isAssignedProvider) continue;
+
+      final derivedId =
+          'derived_${req.id}_${req.status.value}_${req.offerCount}';
+      final isRead = _locallyReadNotificationIds.contains(derivedId);
+
+      if (isRequester &&
+          req.status == WorkRequestStatus.offerReceived &&
+          req.offerCount > 0) {
+        items.add(
+          WorksiteNotificationItem(
+            id: derivedId,
+            userId: uid,
+            title: '${req.offerCount} عروض جديدة على ${req.title}',
+            titleAr: '${req.offerCount} عروض جديدة على ${req.title}',
+            titleEn: '${req.offerCount} new offer(s) on ${req.title}',
+            body:
+                'تلقيت ${req.offerCount} عرضاً لموقع ${req.dropoffWorksite} في ${req.municipality}.',
+            bodyAr:
+                'تلقيت ${req.offerCount} عرضاً لموقع ${req.dropoffWorksite} في ${req.municipality}.',
+            bodyEn:
+                'You received ${req.offerCount} offer(s) for ${req.dropoffWorksite} (${req.municipality}).',
+            type: 'new_offer',
+            category: 'worksite_supply',
+            requestId: req.id,
+            targetRoute: '/work-requests/${req.id}',
+            isRead: isRead,
+            isDerived: true,
+            createdAt: req.updatedAt,
+          ),
+        );
+      } else if (req.status == WorkRequestStatus.deliveredPendingConfirmation) {
+        items.add(
+          WorksiteNotificationItem(
+            id: derivedId,
+            userId: uid,
+            title: isAssignedProvider
+                ? 'بانتظار إدخال رمز التسليم: ${req.title}'
+                : 'بانتظار تأكيد استلامك: ${req.title}',
+            titleAr: isAssignedProvider
+                ? 'بانتظار إدخال رمز التسليم: ${req.title}'
+                : 'بانتظار تأكيد استلامك: ${req.title}',
+            titleEn: isAssignedProvider
+                ? 'Enter handover code to close: ${req.title}'
+                : 'Delivery awaiting confirmation: ${req.title}',
+            body: isAssignedProvider
+                ? 'اطلب رمز التسليم المكون من 6 خانات عند بوابة ${req.dropoffWorksite}.'
+                : 'وصل المزود إلى ${req.dropoffWorksite}. شارك رمز التسليم عند مطابقة المواد والفاتورة.',
+            bodyAr: isAssignedProvider
+                ? 'اطلب رمز التسليم المكون من 6 خانات عند بوابة ${req.dropoffWorksite}.'
+                : 'وصل المزود إلى ${req.dropoffWorksite}. شارك رمز التسليم عند مطابقة المواد والفاتورة.',
+            bodyEn: isAssignedProvider
+                ? 'Request the 6-char handover code at ${req.dropoffWorksite}.'
+                : 'Provider arrived at ${req.dropoffWorksite}. Share handover code after verifying items.',
+            type: 'handover_pending',
+            category: 'worksite_supply',
+            requestId: req.id,
+            targetRoute: '/work-requests/${req.id}',
+            isRead: isRead,
+            isDerived: true,
+            createdAt: req.updatedAt,
+          ),
+        );
+      } else if (req.status == WorkRequestStatus.disputed) {
+        items.add(
+          WorksiteNotificationItem(
+            id: derivedId,
+            userId: uid,
+            title: 'تنبيه نزاع: ${req.title}',
+            titleAr: 'تنبيه نزاع: ${req.title}',
+            titleEn: 'Dispute alert: ${req.title}',
+            body: req.disputeReason ?? 'الطلب قيد مراجعة فريق الدعم.',
+            bodyAr: req.disputeReason ?? 'الطلب قيد مراجعة فريق الدعم.',
+            bodyEn: req.disputeReason ?? 'Request is under Trust & Safety review.',
+            type: 'dispute_alert',
+            category: 'worksite_supply',
+            requestId: req.id,
+            targetRoute: '/work-requests/${req.id}',
+            isRead: isRead,
+            isDerived: true,
+            createdAt: req.updatedAt,
+          ),
+        );
+      } else if (req.status == WorkRequestStatus.accepted ||
+          req.status == WorkRequestStatus.inProgress ||
+          req.status == WorkRequestStatus.pickedUp ||
+          req.status == WorkRequestStatus.inTransit) {
+        items.add(
+          WorksiteNotificationItem(
+            id: derivedId,
+            userId: uid,
+            title: 'تحديث التوريد: ${req.title}',
+            titleAr: 'تحديث التوريد: ${req.title}',
+            titleEn: 'Supply update: ${req.title}',
+            body:
+                'الحالة الحالية: ${req.status.label(isArabic: true)} — ${req.dropoffWorksite}',
+            bodyAr:
+                'الحالة الحالية: ${req.status.label(isArabic: true)} — ${req.dropoffWorksite}',
+            bodyEn:
+                'Current status: ${req.status.label(isArabic: false)} — ${req.dropoffWorksite}',
+            type: 'status_update',
+            category: 'worksite_supply',
+            requestId: req.id,
+            targetRoute: '/work-requests/${req.id}',
+            isRead: isRead,
+            isDerived: true,
+            createdAt: req.updatedAt,
+          ),
+        );
+      }
+    }
+
+    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return items;
   }
 }

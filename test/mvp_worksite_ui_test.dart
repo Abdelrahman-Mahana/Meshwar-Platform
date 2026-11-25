@@ -141,6 +141,30 @@ class _ControllableFeedRepo implements IWorksiteRepository {
   Future<WorkOffer> submitOffer(WorkOffer offer) => delegate.submitOffer(offer);
 
   @override
+  Future<void> withdrawOffer({
+    required String requestId,
+    required String offerId,
+    required String providerId,
+  }) =>
+      delegate.withdrawOffer(
+        requestId: requestId,
+        offerId: offerId,
+        providerId: providerId,
+      );
+
+  @override
+  Future<WorkRequest> cancelRequest({
+    required String requestId,
+    required String requesterId,
+    String? reason,
+  }) =>
+      delegate.cancelRequest(
+        requestId: requestId,
+        requesterId: requesterId,
+        reason: reason,
+      );
+
+  @override
   Future<RequestRating> submitRating(RequestRating rating) =>
       delegate.submitRating(rating);
 

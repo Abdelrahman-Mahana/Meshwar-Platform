@@ -93,6 +93,7 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 │       └── emulator_rules.test.mjs    # Live Firestore & Storage Emulator rules suite (10/10 passing)
 ├── lib/
 │   ├── core/config/             # AppEnvironment, AppFlavor, feature flags & legal disclaimers
+│   ├── core/widgets/            # mashwar_worksite_icons.dart, mashwar_animations.dart, qatar_live_map_canvas.dart
 │   ├── data/
 │   │   ├── demo/                # MashwarDemoCasesCatalog (14 Qatar worksite cases, 11 statuses, 8 providers, 5 handover codes)
 │   │   ├── models/              # worksite_models.dart (MoneyMinor, WorkRequest, WorkOffer, etc.), user_model.dart
@@ -169,12 +170,17 @@ flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=development -
 ### 4. Run Static Analysis, Unit/Widget Suites & Live Emulator Security Tests
 ```powershell
 flutter analyze --no-pub
-flutter test --no-pub                                           # 141/141 passing (incl. Auth error mapping & cross-screen clearing)
+flutter test --no-pub                                           # 155/155 passing (incl. Wave 8 UI/UX & feature suite)
 Push-Location functions; npm run build; npm test; Pop-Location  # 11/11 passing
 powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1  # 10/10 live Firestore + Storage suites passing
-flutter build web --release                                     # Production consumer web bundle
-flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin  # Admin web bundle
+flutter build web --release --base-href / --dart-define=USE_FIREBASE=true                                # Production consumer web bundle
+flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin --dart-define=USE_FIREBASE=true  # Admin web bundle
 ```
+
+### Wave 8 UI/UX & Marketplace Polish Summary
+- **Photography & Custom Vector System:** Added `assets/images/mvp_hero_lusail_supply.jpg` and `assets/images/cat_tools_ppe.jpg`, plus `lib/core/widgets/mashwar_worksite_icons.dart` (`MashwarCategoryIcon`, `MashwarCategoryVisualBanner` with photography + `electrical`/`plumbing` `CustomPainter` dioramas, and `MashwarTrustEmblem`) and `lib/core/widgets/mashwar_animations.dart` (`MashwarShimmerBox`, `MashwarHoverCard`, `MashwarWorksiteStatusStepper`, `MashwarAttachmentThumbnail`, `MashwarImagePreviewDialog`).
+- **Feed, Create & Details Upgrades:** Added search/category/perspective filters & `WorksiteSortOption` sorting on `WorkRequestsFeedScreen`; 4 1-tap Qatar templates, custom deadline picker, and live QAR cost calculator (`create_live_cost_summary`) on `CreateWorkRequestScreen`; and status stepper, smart offer comparison badges (`Lowest Price`, `Fastest ETA`, `Top Rated`), requester `cancelRequest`, and provider `withdrawOffer` on `WorkRequestDetailsScreen`.
+- **Home, Shell & Account Compliance:** Upgraded `HomeScreen` (Lusail hero, category grid, live `QatarLiveMapCanvas` corridor map, trust pillars, clickable notifications strip), `MainNavShell` (unread badges & activity role filters/steppers), real `NotificationsCenterScreen` (`WorksiteNotificationItem`, unread filter, mark-read/mark-all-read, navigation to `WorkRequestDetailsScreen`), `WelcomeScreen`, and Qatar MVP `UserProfileScreen` / `HelpSupportScreen` (`+974 4400 9999`, `ops@mashwar.qa`).
 
 ---
 

@@ -8,7 +8,9 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/worksite_models.dart';
 import '../../data/services/media_upload_service.dart';
 import '../../state/auth_provider.dart';
@@ -39,6 +41,42 @@ class CreateWorkRequestScreen extends StatefulWidget {
       _CreateWorkRequestScreenState();
 }
 
+class _WorksiteQuickTemplate {
+  final String id;
+  final String category;
+  final String shortLabelAr;
+  final String shortLabelEn;
+  final String titleAr;
+  final String titleEn;
+  final String descAr;
+  final String descEn;
+  final String unit;
+  final String qty;
+  final String pickupAr;
+  final String pickupEn;
+  final String estimatedItemsQar;
+  final String maxCapQar;
+  final String deliveryFeeQar;
+
+  const _WorksiteQuickTemplate({
+    required this.id,
+    required this.category,
+    required this.shortLabelAr,
+    required this.shortLabelEn,
+    required this.titleAr,
+    required this.titleEn,
+    required this.descAr,
+    required this.descEn,
+    required this.unit,
+    required this.qty,
+    required this.pickupAr,
+    required this.pickupEn,
+    required this.estimatedItemsQar,
+    required this.maxCapQar,
+    required this.deliveryFeeQar,
+  });
+}
+
 class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
   static const List<String> _qatarAreasAr = [
     'الدوحة',
@@ -54,14 +92,83 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     'رأس لفان',
   ];
 
-  static const List<(String, String, String, IconData)> _supplyCategories = [
-    ('general_site_supply', 'توريد موقع عام', 'General Site Supply', Icons.inventory_2_outlined),
-    ('electrical', 'كهرباء وكابلات', 'Electrical & Cables', Icons.electrical_services_rounded),
-    ('plumbing', 'سباكة ومواسير', 'Plumbing & Pipes', Icons.plumbing_rounded),
-    ('hardware', 'عدد ومسامير', 'Hardware & Fasteners', Icons.handyman_outlined),
-    ('safety_ppe', 'سلامة مهنية PPE', 'Safety & PPE', Icons.health_and_safety_outlined),
-    ('tools', 'معدات وأدوات', 'Power & Hand Tools', Icons.build_circle_outlined),
-    ('civil_materials', 'مواد بناء وتشطيب', 'Civil & Finishing', Icons.foundation_rounded),
+  static const List<_WorksiteQuickTemplate> _quickTemplates = [
+    _WorksiteQuickTemplate(
+      id: 'electrical_breakers',
+      category: 'electrical',
+      shortLabelAr: 'قواطع وكابلات 32A',
+      shortLabelEn: '32A Breakers & Cable',
+      titleAr: 'قواطع كهربائية 32A وكابلات نحاس 4مم',
+      titleEn: '12x 32A Circuit Breakers & 4mm Copper Cable',
+      descAr:
+          '12 قاطع كهربائي 32A معتمد (كهرماء) + لفة كابل نحاس 4مم مقاوم للحرارة للموقع.',
+      descEn:
+          '12x Kahramaa-approved 32A MCB breakers + 1x 4mm heat-resistant copper cable coil.',
+      unit: 'set',
+      qty: '12',
+      pickupAr: 'المنطقة الصناعية - شارع 10، مستودع مستلزمات الكهرباء',
+      pickupEn: 'Industrial Area - St 10 Electrical Supply Depot',
+      estimatedItemsQar: '420',
+      maxCapQar: '480',
+      deliveryFeeQar: '55',
+    ),
+    _WorksiteQuickTemplate(
+      id: 'plumbing_ppr',
+      category: 'plumbing',
+      shortLabelAr: 'محابس نحاس وPPR',
+      shortLabelEn: 'Brass Valves & PPR',
+      titleAr: 'محابس نحاس 32مم ومواسير PPR PN20',
+      titleEn: 'Brass Ball Valves 32mm & PPR PN20 Pipes',
+      descAr:
+          '8 محابس نحاس أصلية مقاس 32مم + 10 مواسير PPR PN20 مع وصلات لحام ومادة غراء.',
+      descEn:
+          '8x heavy-duty 32mm brass shutoff valves + 10x PPR PN20 pipes with elbow fittings.',
+      unit: 'pcs',
+      qty: '18',
+      pickupAr: 'طريق سلوى - مجمع مواد السباكة والصحية',
+      pickupEn: 'Salwa Road - Plumbing & Sanitary Materials Hub',
+      estimatedItemsQar: '340',
+      maxCapQar: '400',
+      deliveryFeeQar: '50',
+    ),
+    _WorksiteQuickTemplate(
+      id: 'hilti_anchors',
+      category: 'tools',
+      shortLabelAr: 'مثبتات هيلتي وريش',
+      shortLabelEn: 'Hilti Anchors & Bits',
+      titleAr: 'مثبتات هيلتي M12 وريش تخريم SDS-Plus',
+      titleEn: 'Hilti M12 Concrete Anchors & SDS-Plus Bits',
+      descAr:
+          'علبتان مسامير تثبيت خرسانية Hilti M12 + طقم ريش تخريم SDS-Plus مقاسات 10-16مم.',
+      descEn:
+          '2 boxes Hilti M12 heavy-duty wedge anchors + SDS-Plus masonry drill bit set (10-16mm).',
+      unit: 'carton',
+      qty: '2',
+      pickupAr: 'المنطقة الصناعية - شارع 18، مركز المعدات والعدد',
+      pickupEn: 'Industrial Area - St 18 Hilti & Tools Center',
+      estimatedItemsQar: '290',
+      maxCapQar: '330',
+      deliveryFeeQar: '45',
+    ),
+    _WorksiteQuickTemplate(
+      id: 'safety_ppe',
+      category: 'safety_ppe',
+      shortLabelAr: 'طقم سلامة PPE',
+      shortLabelEn: 'Safety PPE Kit',
+      titleAr: 'طقم سلامة مهنية PPE (خوذات وسترات وأحذية)',
+      titleEn: 'Worksite Safety PPE Kit (Helmets, Vests & Gloves)',
+      descAr:
+          '10 خوذات سلامة معيار EN397 + 10 سترات عاكسة عالية الوضوح + قفازات ونظارات حماية.',
+      descEn:
+          '10x EN397 safety helmets + 10x hi-vis reflective vests + protective gloves & goggles.',
+      unit: 'set',
+      qty: '10',
+      pickupAr: 'طريق سلوى - معرض تجهيزات السلامة المهنية',
+      pickupEn: 'Salwa Road - Industrial Safety & PPE Warehouse',
+      estimatedItemsQar: '520',
+      maxCapQar: '580',
+      deliveryFeeQar: '60',
+    ),
   ];
 
   static const List<(String, String, String)> _units = [
@@ -74,6 +181,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
   ];
 
   int _currentStep = 0; // 0, 1, 2
+  String? _selectedTemplateId;
 
   // Step 1 controllers & state
   late final TextEditingController _titleController;
@@ -96,7 +204,8 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
   late final TextEditingController _maxCapQarController;
   late final TextEditingController _deliveryFeeQarController;
   late final TextEditingController _instructionsController;
-  int _deadlinePresetIndex = 0; // 0: +2h, 1: +4h, 2: tomorrow 8am, 3: +24h
+  int _deadlinePresetIndex = 0; // 0: +2h, 1: +4h, 2: tomorrow 8am, 3: +24h, 4: custom
+  DateTime? _customDeadlineLocal;
   PaymentMethod _paymentMethod = PaymentMethod.cashOnDelivery;
   bool _requiresPurchaseReceipt = true;
 
@@ -215,6 +324,9 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
   }
 
   DateTime _computeDeadlineUtc() {
+    if (_deadlinePresetIndex == 4 && _customDeadlineLocal != null) {
+      return _customDeadlineLocal!.toUtc();
+    }
     final now = DateTime.now().toUtc();
     switch (_deadlinePresetIndex) {
       case 0:
@@ -230,6 +342,14 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     }
   }
 
+  String _formatCustomDeadline(DateTime dt, bool isAr) {
+    final hh = dt.hour.toString().padLeft(2, '0');
+    final mm = dt.minute.toString().padLeft(2, '0');
+    return isAr
+        ? '${dt.day}/${dt.month} · $hh:$mm'
+        : '${dt.month}/${dt.day} · $hh:$mm';
+  }
+
   String _deadlineLabel(bool isAr, int index) {
     switch (index) {
       case 0:
@@ -238,9 +358,73 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
         return isAr ? 'اليوم (خلال 4 ساعات)' : 'Today (Within 4 hrs)';
       case 2:
         return isAr ? 'غداً 8:00 صباحاً' : 'Tomorrow 8:00 AM';
+      case 4:
+        if (_customDeadlineLocal != null) {
+          return _formatCustomDeadline(_customDeadlineLocal!, isAr);
+        }
+        return isAr ? 'موعد مخصص' : 'Custom Date & Time';
       case 3:
       default:
         return isAr ? 'خلال 24 ساعة' : 'Within 24 hours';
+    }
+  }
+
+  Future<void> _pickCustomDeadline(BuildContext context, bool isAr) async {
+    final nowLocal = DateTime.now();
+    final initial = _customDeadlineLocal ?? nowLocal.add(const Duration(hours: 6));
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: initial.isBefore(nowLocal) ? nowLocal : initial,
+      firstDate: DateTime(nowLocal.year, nowLocal.month, nowLocal.day),
+      lastDate: nowLocal.add(const Duration(days: 60)),
+      helpText: isAr ? 'اختر يوم التسليم المطلوب' : 'Select Delivery Date',
+    );
+    if (pickedDate == null || !context.mounted) return;
+
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+      helpText: isAr ? 'اختر وقت التسليم' : 'Select Delivery Time',
+    );
+    if (pickedTime == null || !mounted) return;
+
+    final combined = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+    setState(() {
+      _customDeadlineLocal = combined;
+      _deadlinePresetIndex = 4;
+      _stepValidationError = null;
+    });
+  }
+
+  void _applyQuickTemplate(_WorksiteQuickTemplate tpl, bool isAr) {
+    setState(() {
+      _selectedTemplateId = tpl.id;
+      _selectedCategory = tpl.category;
+      _titleController.text = isAr ? tpl.titleAr : tpl.titleEn;
+      _descriptionController.text = isAr ? tpl.descAr : tpl.descEn;
+      _selectedUnit = tpl.unit;
+      _quantityController.text = tpl.qty;
+      _pickupController.text = isAr ? tpl.pickupAr : tpl.pickupEn;
+      _estimatedItemsQarController.text = tpl.estimatedItemsQar;
+      _maxCapQarController.text = tpl.maxCapQar;
+      _deliveryFeeQarController.text = tpl.deliveryFeeQar;
+      _stepValidationError = null;
+    });
+  }
+
+  MoneyMinor? _tryParseQar(String raw) {
+    final clean = raw.trim();
+    if (clean.isEmpty) return null;
+    try {
+      return MoneyMinor.fromDecimalString(clean);
+    } catch (_) {
+      return null;
     }
   }
 
@@ -514,7 +698,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
           },
         ),
         title: Text(
-          isAr ? 'إنشاء طلب توريد موقع' : 'Create Worksite Request',
+          isAr ? 'إنشاء طلب توريد موقع' : 'Create Supply Request',
           style: AppTypography.title().copyWith(fontSize: 18),
         ),
       ),
@@ -537,7 +721,8 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                           final active = idx <= _currentStep;
                           final current = idx == _currentStep;
                           return Expanded(
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
                               height: 5,
                               margin: EdgeInsetsDirectional.only(
                                   end: idx < 2 ? 6 : 0),
@@ -635,9 +820,29 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                           _buildErrorBanner(providerErr),
                           const SizedBox(height: 14),
                         ],
-                        if (_currentStep == 0) _buildStep1(isAr),
-                        if (_currentStep == 1) _buildStep2(context, provider, isAr),
-                        if (_currentStep == 2) _buildStep3(isAr),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 240),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, anim) => FadeTransition(
+                            opacity: anim,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.03, 0),
+                                end: Offset.zero,
+                              ).animate(anim),
+                              child: child,
+                            ),
+                          ),
+                          child: KeyedSubtree(
+                            key: ValueKey<int>(_currentStep),
+                            child: _currentStep == 0
+                                ? _buildStep1(isAr)
+                                : (_currentStep == 1
+                                    ? _buildStep2(context, provider, isAr)
+                                    : _buildStep3(isAr)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -733,33 +938,165 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildFieldLabel(
-            isAr ? 'فئة التوريد' : 'Supply Category'),
+        // 1-Tap Quick Templates Strip
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.sand,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.flash_on_rounded,
+                      size: 17, color: AppColors.qatarMaroon),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isAr
+                          ? 'قوالب تعبئة فورية لمواقع قطر (ضغطة واحدة)'
+                          : '1-Tap Qatar Construction Templates',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w800, fontSize: 12.5),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _quickTemplates.map((tpl) {
+                    final selected = _selectedTemplateId == tpl.id;
+                    final meta = mashwarCategoryMetaFor(tpl.category);
+                    return Padding(
+                      padding: const EdgeInsetsDirectional.only(end: 8),
+                      child: MashwarHoverCard(
+                        key: ValueKey('create_quick_template_${tpl.id}'),
+                        borderRadius: BorderRadius.circular(12),
+                        backgroundColor:
+                            selected ? meta.surfaceColor : Colors.white,
+                        borderColor: selected
+                            ? meta.accentColor
+                            : AppColors.borderDisabled,
+                        hoverBorderColor: meta.accentColor,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 8),
+                        onTap: () => _applyQuickTemplate(tpl, isAr),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            MashwarCategoryIcon(
+                              category: tpl.category,
+                              size: 28,
+                              showSurface: true,
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  isAr ? tpl.shortLabelAr : tpl.shortLabelEn,
+                                  style: AppTypography.label(
+                                          color: AppColors.navy)
+                                      .copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                                Text(
+                                  isAr
+                                      ? '${tpl.estimatedItemsQar}+${tpl.deliveryFeeQar} ر.ق'
+                                      : '${tpl.estimatedItemsQar}+${tpl.deliveryFeeQar} QAR',
+                                  style: AppTypography.label(
+                                          color: AppColors.teal)
+                                      .copyWith(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        _buildFieldLabel(isAr ? 'فئة التوريد' : 'Supply Category'),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _supplyCategories.map((cat) {
-            final selected = _selectedCategory == cat.$1;
-            return ChoiceChip(
-              label: Text(isAr ? cat.$2 : cat.$3),
-              avatar: Icon(
-                cat.$4,
-                size: 16,
-                color: selected ? Colors.white : AppColors.navy,
-              ),
-              selected: selected,
-              selectedColor: AppColors.navy,
-              backgroundColor: Colors.white,
-              labelStyle: TextStyle(
-                color: selected ? Colors.white : AppColors.navy,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-                fontFamily: 'Cairo',
-              ),
-              onSelected: (_) => setState(() => _selectedCategory = cat.$1),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final colCount = constraints.maxWidth >= 560 ? 3 : 2;
+            const spacing = 8.0;
+            final cardWidth =
+                (constraints.maxWidth - (spacing * (colCount - 1))) / colCount;
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: mashwarWorksiteCategories.map((meta) {
+                final selected = _selectedCategory == meta.id;
+                return SizedBox(
+                  width: cardWidth,
+                  child: MashwarHoverCard(
+                    key: ValueKey('create_category_${meta.id}'),
+                    borderRadius: BorderRadius.circular(14),
+                    backgroundColor:
+                        selected ? meta.surfaceColor : Colors.white,
+                    borderColor: selected
+                        ? meta.accentColor
+                        : AppColors.borderDisabled,
+                    hoverBorderColor: meta.accentColor,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 9),
+                    onTap: () => setState(() => _selectedCategory = meta.id),
+                    child: Row(
+                      children: [
+                        MashwarCategoryIcon(
+                          category: meta.id,
+                          size: 32,
+                          showSurface: true,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            meta.title(isArabic: isAr),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(
+                              fontWeight:
+                                  selected ? FontWeight.w800 : FontWeight.w700,
+                              fontSize: 11.5,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                        if (selected) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 16,
+                            color: meta.accentColor,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         ),
         const SizedBox(height: 18),
 
@@ -820,6 +1157,11 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: const InputDecoration(hintText: '1'),
+                    onChanged: (_) {
+                      if (_stepValidationError != null) {
+                        setState(() => _stepValidationError = null);
+                      }
+                    },
                   ),
                 ],
               ),
@@ -1296,19 +1638,16 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
   }
 
   Widget _buildStep3(bool isAr) {
-    MoneyMinor? previewItems;
-    MoneyMinor? previewFee;
-    try {
-      previewItems = MoneyMinor.fromDecimalString(
-          _estimatedItemsQarController.text.trim());
-    } catch (_) {}
-    try {
-      previewFee =
-          MoneyMinor.fromDecimalString(_deliveryFeeQarController.text.trim());
-    } catch (_) {}
-    final totalPreview =
-        (previewItems ?? const MoneyMinor.zero()) +
-            (previewFee ?? const MoneyMinor.zero());
+    final previewItems = _tryParseQar(_estimatedItemsQarController.text);
+    final previewCap = _tryParseQar(_maxCapQarController.text);
+    final previewFee = _tryParseQar(_deliveryFeeQarController.text);
+    final effectiveItems = previewItems ?? const MoneyMinor.zero();
+    final effectiveCap = previewCap ?? effectiveItems;
+    final effectiveFee = previewFee ?? const MoneyMinor.zero();
+    final totalPreview = effectiveItems + effectiveFee;
+    final maxTotalWithCap = effectiveCap + effectiveFee;
+    final capBufferMinor = effectiveCap.minorUnits - effectiveItems.minorUnits;
+    final hasValidCap = capBufferMinor >= 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1320,23 +1659,51 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: List.generate(4, (idx) {
-            final selected = _deadlinePresetIndex == idx;
-            return ChoiceChip(
-              key: ValueKey('deadline_chip_$idx'),
-              label: Text(_deadlineLabel(isAr, idx)),
-              selected: selected,
-              selectedColor: AppColors.navy,
-              backgroundColor: Colors.white,
+          children: [
+            ...List.generate(4, (idx) {
+              final selected = _deadlinePresetIndex == idx;
+              return ChoiceChip(
+                key: ValueKey('deadline_chip_$idx'),
+                label: Text(_deadlineLabel(isAr, idx)),
+                selected: selected,
+                selectedColor: AppColors.navy,
+                backgroundColor: Colors.white,
+                labelStyle: TextStyle(
+                  color: selected ? Colors.white : AppColors.navy,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  fontFamily: 'Cairo',
+                ),
+                onSelected: (_) => setState(() => _deadlinePresetIndex = idx),
+              );
+            }),
+            ChoiceChip(
+              key: const ValueKey('deadline_chip_custom'),
+              avatar: Icon(
+                Icons.event_available_rounded,
+                size: 16,
+                color: _deadlinePresetIndex == 4
+                    ? Colors.white
+                    : AppColors.teal,
+              ),
+              label: Text(
+                _deadlinePresetIndex == 4 && _customDeadlineLocal != null
+                    ? _formatCustomDeadline(_customDeadlineLocal!, isAr)
+                    : (isAr ? 'تحديد تاريخ ووقت' : 'Custom Date & Time'),
+              ),
+              selected: _deadlinePresetIndex == 4,
+              selectedColor: AppColors.teal,
+              backgroundColor: AppColors.tealSurface,
               labelStyle: TextStyle(
-                color: selected ? Colors.white : AppColors.navy,
+                color:
+                    _deadlinePresetIndex == 4 ? Colors.white : AppColors.navy,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
                 fontFamily: 'Cairo',
               ),
-              onSelected: (_) => setState(() => _deadlinePresetIndex = idx),
-            );
-          }),
+              onSelected: (_) => _pickCustomDeadline(context, isAr),
+            ),
+          ],
         ),
         const SizedBox(height: 18),
 
@@ -1376,6 +1743,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                       hintText: '220',
                       suffixText: isAr ? 'ر.ق' : 'QAR',
                     ),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ],
               ),
@@ -1404,6 +1772,85 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 14),
+
+        // Live QAR Cost Breakdown & Receipt Cap Summary Card
+        Container(
+          key: const ValueKey('create_live_cost_summary'),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.sand,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: hasValidCap
+                  ? AppColors.gold.withValues(alpha: 0.45)
+                  : AppColors.danger.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.calculate_outlined,
+                    size: 18,
+                    color: hasValidCap ? AppColors.navy : AppColors.danger,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      isAr
+                          ? 'ملخص التكلفة وسقف الفاتورة المباشر'
+                          : 'Live QAR Cost & Receipt Cap Breakdown',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w800, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              _buildCostLine(
+                isAr ? 'تقدير المشتريات' : 'Estimated Items',
+                effectiveItems.format(isArabic: isAr),
+              ),
+              const SizedBox(height: 4),
+              _buildCostLine(
+                isAr ? 'هامش سقف الفاتورة' : 'Receipt Cap Buffer',
+                hasValidCap
+                    ? '+${MoneyMinor(capBufferMinor).format(isArabic: isAr)}'
+                    : (isAr
+                        ? 'أقل من التكلفة التقديرية'
+                        : 'Below estimated cost'),
+                valueColor: hasValidCap ? AppColors.teal : AppColors.danger,
+              ),
+              const SizedBox(height: 4),
+              _buildCostLine(
+                isAr ? 'سقف الفاتورة المعتمد' : 'Max Receipt Cap',
+                effectiveCap.format(isArabic: isAr),
+              ),
+              const SizedBox(height: 4),
+              _buildCostLine(
+                isAr ? 'رسوم التوصيل والتوريد' : 'Delivery Fee Budget',
+                effectiveFee.format(isArabic: isAr),
+              ),
+              const Divider(height: 14, color: AppColors.borderDisabled),
+              _buildCostLine(
+                isAr ? 'الإجمالي التقديري' : 'Est. Total Outlay',
+                totalPreview.format(isArabic: isAr),
+                valueColor: AppColors.teal,
+                bold: true,
+              ),
+              const SizedBox(height: 3),
+              _buildCostLine(
+                isAr ? 'الحد الأقصى مع السقف' : 'Worst-Case Total (w/ Cap)',
+                maxTotalWithCap.format(isArabic: isAr),
+                valueColor: AppColors.navy,
+                bold: true,
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 10),
 
@@ -1599,6 +2046,36 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCostLine(
+    String label,
+    String value, {
+    Color valueColor = AppColors.navy,
+    bool bold = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            style: AppTypography.label(color: AppColors.textSecondary).copyWith(
+              fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
+              fontSize: bold ? 12.5 : 11.5,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          value,
+          style: AppTypography.label(color: valueColor).copyWith(
+            fontWeight: FontWeight.w800,
+            fontSize: bold ? 13 : 12,
+          ),
+        ),
+      ],
     );
   }
 

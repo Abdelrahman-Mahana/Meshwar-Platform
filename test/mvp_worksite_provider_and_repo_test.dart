@@ -173,6 +173,34 @@ class _FailingWorksiteRepository implements IWorksiteRepository {
   }
 
   @override
+  Future<void> withdrawOffer({
+    required String requestId,
+    required String offerId,
+    required String providerId,
+  }) async {
+    _maybeThrow();
+    return delegate.withdrawOffer(
+      requestId: requestId,
+      offerId: offerId,
+      providerId: providerId,
+    );
+  }
+
+  @override
+  Future<WorkRequest> cancelRequest({
+    required String requestId,
+    required String requesterId,
+    String? reason,
+  }) async {
+    _maybeThrow();
+    return delegate.cancelRequest(
+      requestId: requestId,
+      requesterId: requesterId,
+      reason: reason,
+    );
+  }
+
+  @override
   Future<RequestRating> submitRating(RequestRating rating) async {
     _maybeThrow();
     return delegate.submitRating(rating);

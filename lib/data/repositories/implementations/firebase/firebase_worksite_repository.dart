@@ -70,8 +70,21 @@ abstract interface class SparkWorksiteWriteGateway {
   });
 }
 
+/// Optional notification read gateway implemented by live [_FirestoreWorksiteStore]
+/// and injectable in tests without modifying existing [FirebaseWorksiteStore] mocks.
+@visibleForTesting
+abstract interface class FirebaseNotificationStore {
+  Future<List<Map<String, dynamic>>> queryUserNotifications(
+    String userId, {
+    int limit = 30,
+  });
+}
+
 class _FirestoreWorksiteStore
-    implements FirebaseWorksiteStore, SparkWorksiteWriteGateway {
+    implements
+        FirebaseWorksiteStore,
+        SparkWorksiteWriteGateway,
+        FirebaseNotificationStore {
   final FirebaseFirestore? _injectedFirestore;
 
   _FirestoreWorksiteStore([this._injectedFirestore]);
@@ -265,6 +278,26 @@ class _FirestoreWorksiteStore
         .doc(notificationId)
         .update(patch);
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> queryUserNotifications(
+    String userId, {
+    int limit = 30,
+  }) async {
+    final snap = await _firestore
+        .collection(FirestoreCollections.notifications)
+        .where('userId', isEqualTo: userId)
+        .limit(limit)
+        .get();
+    final docs = snap.docs
+        .map((doc) => normalizeFirestoreDocument(doc.data(), fallbackId: doc.id))
+        .toList();
+    docs.sort(
+      (a, b) => (b['createdAt']?.toString() ?? '')
+          .compareTo(a['createdAt']?.toString() ?? ''),
+    );
+    return docs;
+  }
 }
 
 /// Production Cloud Firestore + Cloud Functions v2 implementation of [IWorksiteRepository].
@@ -302,6 +335,7 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
   final FirebaseFunctionsCallableClient _functionsClient;
   final FirebaseWorksiteStore _store;
   final SparkWorksiteWriteGateway? _sparkGatewayOverride;
+  final FirebaseNotificationStore? _notificationStoreOverride;
 
   FirebaseWorksiteRepository({
     fb_auth.FirebaseAuth? firebaseAuth,
@@ -317,7 +351,8 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
                       ?.getIdToken(),
             ),
         _store = _FirestoreWorksiteStore(firestore),
-        _sparkGatewayOverride = null;
+        _sparkGatewayOverride = null,
+        _notificationStoreOverride = null;
 
   @visibleForTesting
   FirebaseWorksiteRepository.withDeps({
@@ -325,15 +360,30 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
     required FirebaseFunctionsCallableClient functionsClient,
     required FirebaseWorksiteStore store,
     SparkWorksiteWriteGateway? sparkFallbackGateway,
+    FirebaseNotificationStore? notificationStore,
   })  : _currentUidProvider = currentUidProvider,
         _functionsClient = functionsClient,
         _store = store,
-        _sparkGatewayOverride = sparkFallbackGateway;
+        _sparkGatewayOverride = sparkFallbackGateway,
+        _notificationStoreOverride = notificationStore;
 
   SparkWorksiteWriteGateway? get _sparkGateway {
     if (_sparkGatewayOverride != null) return _sparkGatewayOverride;
     final store = _store;
     if (store is _FirestoreWorksiteStore) return store;
+    return null;
+  }
+
+  FirebaseNotificationStore? get _notificationStore {
+    if (_notificationStoreOverride != null) return _notificationStoreOverride;
+    final store = _store;
+    if (store is FirebaseNotificationStore) {
+      return store as FirebaseNotificationStore;
+    }
+    final gateway = _sparkGatewayOverride;
+    if (gateway is FirebaseNotificationStore) {
+      return gateway as FirebaseNotificationStore;
+    }
     return null;
   }
 
@@ -805,6 +855,7 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
   }
 
   /// Withdraws a pending offer owned by [providerId].
+  @override
   Future<void> withdrawOffer({
     required String requestId,
     required String offerId,
@@ -856,6 +907,25 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
         permissionDeniedEn: 'Cannot withdraw offer in its current state.',
       );
     }
+  }
+
+  /// Cancels an open/offer-received request owned by [requesterId], appending
+  /// an audit event and conforming to `work_requests` Spark security rules.
+  @override
+  Future<WorkRequest> cancelRequest({
+    required String requestId,
+    required String requesterId,
+    String? reason,
+  }) {
+    final cleanReason = reason?.trim();
+    return updateFulfillmentStatus(
+      requestId: requestId,
+      nextStatus: WorkRequestStatus.cancelled,
+      actorId: requesterId,
+      actorRole: 'requester',
+      note:
+          (cleanReason != null && cleanReason.isNotEmpty) ? cleanReason : null,
+    );
   }
 
   @override
@@ -1438,6 +1508,21 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
         );
       }
       return refreshed;
+    }
+  }
+
+  /// Lists notifications owned by the signed-in user from `notifications`.
+  Future<List<Map<String, dynamic>>> listNotifications({
+    String? userId,
+    int limit = 30,
+  }) async {
+    final uid = await _requireSignedInUid(expectedUid: userId);
+    final store = _notificationStore;
+    if (store == null) return const [];
+    try {
+      return await store.queryUserNotifications(uid, limit: limit);
+    } catch (e) {
+      throw WorksiteRepositoryException.fromFirebase(e);
     }
   }
 

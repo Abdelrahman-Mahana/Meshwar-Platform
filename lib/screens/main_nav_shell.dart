@@ -10,6 +10,7 @@ import '../core/widgets/brand_logo.dart';
 import '../core/widgets/mashwar_animations.dart';
 import '../core/widgets/mashwar_badge.dart';
 import '../core/widgets/mashwar_button.dart';
+import '../core/widgets/mashwar_worksite_icons.dart';
 import '../data/mock_data.dart';
 import '../data/models/user_model.dart';
 import '../data/models/worksite_models.dart';
@@ -65,6 +66,7 @@ class _MainNavShellState extends State<MainNavShell> {
 
   // Segment state for Orders / Activity Tab
   bool _isActiveOrders = true;
+  int _mvpRoleFilter = 0; // 0: All, 1: My Requests, 2: Provider Jobs
   int _ordersFilterIndex = 0; // 0: All, 1: Mobility/Travel, 2: Errands, 3: Logistics/Cargo
   bool _messagesUnreadOnly = false;
   final TextEditingController _messagesSearchController = TextEditingController();
@@ -98,6 +100,9 @@ class _MainNavShellState extends State<MainNavShell> {
         if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
           ws.loadRequests();
         }
+        if (ws.notifications.isEmpty) {
+          ws.loadNotifications();
+        }
         if (uid.isNotEmpty && ws.providerProfile == null) {
           ws.loadProviderProfile(uid);
           ws.loadSavedWorksites(uid);
@@ -106,15 +111,67 @@ class _MainNavShellState extends State<MainNavShell> {
     });
   }
 
-  Widget _buildNavIconPill(IconData icon, {bool active = false}) {
-    if (!active) return Icon(icon, size: 22);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+  Widget _buildIconWithBadge(
+    IconData icon, {
+    required Color color,
+    int badgeCount = 0,
+  }) {
+    final iconWidget = Icon(icon, size: 22, color: color);
+    if (badgeCount <= 0) return iconWidget;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        iconWidget,
+        PositionedDirectional(
+          top: -5,
+          end: -7,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: AppColors.qatarMaroon,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white, width: 1.2),
+            ),
+            constraints: const BoxConstraints(minWidth: 15),
+            child: Text(
+              badgeCount > 9 ? '9+' : '$badgeCount',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavIconPill(
+    IconData icon, {
+    bool active = false,
+    int badgeCount = 0,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.symmetric(
+        horizontal: active ? 14 : 8,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.navy.withValues(alpha: 0.1),
+        color: active
+            ? AppColors.navy.withValues(alpha: 0.11)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: Icon(icon, size: 22, color: AppColors.navy),
+      child: _buildIconWithBadge(
+        icon,
+        color: active ? AppColors.navy : const Color(0xFF8E8E93),
+        badgeCount: badgeCount,
+      ),
     );
   }
 
@@ -133,6 +190,21 @@ class _MainNavShellState extends State<MainNavShell> {
     final settings = context.watch<SettingsProvider>();
     final worksite = _resolveWorksite(context, auth);
     final isAr = settings.isArabic;
+    final currentUid = worksite.currentUserId ??
+        (auth.user.id.isNotEmpty ? auth.user.id : null);
+    final unreadNotificationsCount = worksite.unreadNotificationsCount;
+    final activityAttentionCount = currentUid == null
+        ? 0
+        : worksite.allLoadedRequests.where((r) {
+            if (r.requesterId == currentUid) {
+              return r.status == WorkRequestStatus.offerReceived ||
+                  r.status == WorkRequestStatus.deliveredPendingConfirmation;
+            }
+            if (r.assignedProviderId == currentUid) {
+              return r.status == WorkRequestStatus.deliveredPendingConfirmation;
+            }
+            return false;
+          }).length;
 
     final List<Widget> pages = _isMvpWorksiteOnly
         ? [
@@ -164,13 +236,29 @@ class _MainNavShellState extends State<MainNavShell> {
               label: Text(isAr ? 'الطلبات' : 'Requests'),
             ),
             NavigationRailDestination(
-              icon: const Icon(Icons.assignment_outlined),
-              selectedIcon: const Icon(Icons.assignment_rounded),
+              icon: _buildIconWithBadge(
+                Icons.assignment_outlined,
+                color: AppColors.textSecondary,
+                badgeCount: activityAttentionCount,
+              ),
+              selectedIcon: _buildIconWithBadge(
+                Icons.assignment_rounded,
+                color: AppColors.navy,
+                badgeCount: activityAttentionCount,
+              ),
               label: Text(isAr ? 'نشاطي' : 'My Activity'),
             ),
             NavigationRailDestination(
-              icon: const Icon(Icons.person_outline_rounded),
-              selectedIcon: const Icon(Icons.person_rounded),
+              icon: _buildIconWithBadge(
+                Icons.person_outline_rounded,
+                color: AppColors.textSecondary,
+                badgeCount: unreadNotificationsCount,
+              ),
+              selectedIcon: _buildIconWithBadge(
+                Icons.person_rounded,
+                color: AppColors.navy,
+                badgeCount: unreadNotificationsCount,
+              ),
               label: Text(isAr ? 'حسابي' : 'Account'),
             ),
           ]
@@ -216,14 +304,27 @@ class _MainNavShellState extends State<MainNavShell> {
               label: isAr ? 'الطلبات' : 'Requests',
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIconPill(Icons.assignment_outlined),
-              activeIcon:
-                  _buildNavIconPill(Icons.assignment_rounded, active: true),
+              icon: _buildNavIconPill(
+                Icons.assignment_outlined,
+                badgeCount: activityAttentionCount,
+              ),
+              activeIcon: _buildNavIconPill(
+                Icons.assignment_rounded,
+                active: true,
+                badgeCount: activityAttentionCount,
+              ),
               label: isAr ? 'نشاطي' : 'My Activity',
             ),
             BottomNavigationBarItem(
-              icon: _buildNavIconPill(Icons.person_outline_rounded),
-              activeIcon: _buildNavIconPill(Icons.person_rounded, active: true),
+              icon: _buildNavIconPill(
+                Icons.person_outline_rounded,
+                badgeCount: unreadNotificationsCount,
+              ),
+              activeIcon: _buildNavIconPill(
+                Icons.person_rounded,
+                active: true,
+                badgeCount: unreadNotificationsCount,
+              ),
               label: isAr ? 'حسابي' : 'Account',
             ),
           ]
@@ -404,13 +505,20 @@ class _MainNavShellState extends State<MainNavShell> {
             .where((r) => r.requesterId == uid || r.assignedProviderId == uid)
             .toList();
 
-    final activeList = myRequests
+    final roleFiltered = myRequests.where((r) {
+      if (_mvpRoleFilter == 1) return r.requesterId == uid;
+      if (_mvpRoleFilter == 2) return r.assignedProviderId == uid;
+      return true;
+    }).toList();
+
+    final activeList = roleFiltered
         .where((r) => !WorkRequestStatusMachine.isTerminal(r.status))
         .toList();
-    final completedList = myRequests
+    final completedList = roleFiltered
         .where((r) => WorkRequestStatusMachine.isTerminal(r.status))
         .toList();
     final shownList = _isActiveOrders ? activeList : completedList;
+    final unreadCount = worksite.unreadNotificationsCount;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCFCFD),
@@ -423,17 +531,43 @@ class _MainNavShellState extends State<MainNavShell> {
           children: [
             const MashwarPinIcon(size: 18),
             const SizedBox(width: 6),
-            Text(
-              isAr ? 'نشاطي' : 'My Activity',
-              style: AppTypography.title(),
+            Flexible(
+              child: Text(
+                isAr ? 'نشاطي' : 'My Activity',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.title(),
+              ),
             ),
           ],
         ),
         actions: [
           IconButton(
+            tooltip: isAr ? 'الإشعارات' : 'Notifications',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const NotificationsCenterScreen(),
+                ),
+              );
+            },
+            icon: _buildIconWithBadge(
+              unreadCount > 0
+                  ? Icons.notifications_active_rounded
+                  : Icons.notifications_none_rounded,
+              color: AppColors.navy,
+              badgeCount: unreadCount,
+            ),
+          ),
+          IconButton(
             tooltip: isAr ? 'تحديث' : 'Refresh',
             icon: const Icon(Icons.refresh_rounded, color: AppColors.navy),
-            onPressed: worksite.isLoading ? null : () => worksite.loadRequests(),
+            onPressed: worksite.isLoading
+                ? null
+                : () async {
+                    await worksite.loadRequests();
+                    await worksite.loadNotifications();
+                  },
           ),
         ],
       ),
@@ -444,298 +578,572 @@ class _MainNavShellState extends State<MainNavShell> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppDimens.space16, 12, AppDimens.space16, 8),
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: GestureDetector(
-                            key: const ValueKey('activity_segment_active'),
-                            onTap: () => setState(() => _isActiveOrders = true),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: _isActiveOrders
-                                    ? Colors.white
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  isAr
-                                      ? 'الطلبات النشطة (${activeList.length})'
-                                      : 'Active (${activeList.length})',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.bodySecondary(
-                                    color: _isActiveOrders
-                                        ? AppColors.navy
-                                        : AppColors.textSecondary,
-                                  ).copyWith(
-                                    fontWeight: _isActiveOrders
-                                        ? FontWeight.w800
-                                        : FontWeight.w600,
-                                    fontSize: 12.5,
+                MashwarFadeSlideIn(
+                  duration: const Duration(milliseconds: 260),
+                  offsetY: 8,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            AppDimens.space16, 12, AppDimens.space16, 8),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  key: const ValueKey('activity_segment_active'),
+                                  onTap: () =>
+                                      setState(() => _isActiveOrders = true),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    curve: Curves.easeOutCubic,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: _isActiveOrders
+                                          ? Colors.white
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: _isActiveOrders
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withValues(alpha: 0.05),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 1),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        isAr
+                                            ? 'الطلبات النشطة (${activeList.length})'
+                                            : 'Active (${activeList.length})',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.bodySecondary(
+                                          color: _isActiveOrders
+                                              ? AppColors.navy
+                                              : AppColors.textSecondary,
+                                        ).copyWith(
+                                          fontWeight: _isActiveOrders
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          fontSize: 12.5,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: GestureDetector(
-                            key: const ValueKey('activity_segment_completed'),
-                            onTap: () =>
-                                setState(() => _isActiveOrders = false),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: !_isActiveOrders
-                                    ? Colors.white
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  isAr
-                                      ? 'المكتملة والسابقة (${completedList.length})'
-                                      : 'Completed (${completedList.length})',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.bodySecondary(
-                                    color: !_isActiveOrders
-                                        ? AppColors.navy
-                                        : AppColors.textSecondary,
-                                  ).copyWith(
-                                    fontWeight: !_isActiveOrders
-                                        ? FontWeight.w800
-                                        : FontWeight.w600,
-                                    fontSize: 12.5,
+                              Expanded(
+                                child: GestureDetector(
+                                  key: const ValueKey(
+                                      'activity_segment_completed'),
+                                  onTap: () =>
+                                      setState(() => _isActiveOrders = false),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    curve: Curves.easeOutCubic,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: !_isActiveOrders
+                                          ? Colors.white
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: !_isActiveOrders
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black
+                                                    .withValues(alpha: 0.05),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 1),
+                                              ),
+                                            ]
+                                          : null,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        isAr
+                                            ? 'المكتملة والسابقة (${completedList.length})'
+                                            : 'Completed (${completedList.length})',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.bodySecondary(
+                                          color: !_isActiveOrders
+                                              ? AppColors.navy
+                                              : AppColors.textSecondary,
+                                        ).copyWith(
+                                          fontWeight: !_isActiveOrders
+                                              ? FontWeight.w800
+                                              : FontWeight.w600,
+                                          fontSize: 12.5,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimens.space16, vertical: 4),
+                        child: Row(
+                          children: [
+                            _buildMvpRoleFilterChip(
+                              0,
+                              isAr ? 'الكل' : 'All',
+                              Icons.apps_rounded,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildMvpRoleFilterChip(
+                              1,
+                              isAr ? 'طلباتي' : 'My Requests',
+                              Icons.assignment_ind_outlined,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildMvpRoleFilterChip(
+                              2,
+                              isAr ? 'مهامي كمزود' : 'Provider Jobs',
+                              Icons.local_shipping_outlined,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const SizedBox(height: 4),
                 Expanded(
-                  child: shownList.isEmpty
-                      ? Center(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(AppDimens.space24),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 400),
-                              child: Container(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    switchInCurve: Curves.easeOutCubic,
+                    child: KeyedSubtree(
+                      key: ValueKey('${_isActiveOrders}_$_mvpRoleFilter'),
+                      child: RefreshIndicator(
+                        color: AppColors.navy,
+                        onRefresh: () async {
+                          await worksite.loadRequests();
+                          await worksite.loadNotifications();
+                        },
+                        child: shownList.isEmpty
+                            ? LayoutBuilder(
+                                builder: (context, emptyConstraints) {
+                                  return SingleChildScrollView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    padding:
+                                        const EdgeInsets.all(AppDimens.space24),
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        minHeight:
+                                            (emptyConstraints.maxHeight - 48)
+                                                .clamp(0.0, double.infinity),
+                                      ),
+                                      child: Center(
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                              maxWidth: 400),
+                                          child: MashwarSectionCard(
+                                            padding: const EdgeInsets.all(
+                                                AppDimens.space24),
+                                            borderRadius: 18,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const MashwarTrustEmblem(
+                                                  type: MashwarTrustType
+                                                      .liveCorridor,
+                                                  size: 46,
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Text(
+                                                  _isActiveOrders
+                                                      ? (isAr
+                                                          ? 'لا توجد طلبات توريد نشطة حالياً'
+                                                          : 'No Active Supply Requests')
+                                                      : (isAr
+                                                          ? 'لا توجد طلبات مكتملة سابقة'
+                                                          : 'No Completed Requests Yet'),
+                                                  textAlign: TextAlign.center,
+                                                  style: AppTypography.title()
+                                                      .copyWith(fontSize: 16),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  isAr
+                                                      ? 'أنشئ طلب توريد جديد لموقع عملك أو تصفح الطلبات المتاحة في قطر.'
+                                                      : 'Create a new worksite supply request or browse open requests in Qatar.',
+                                                  textAlign: TextAlign.center,
+                                                  style: AppTypography
+                                                      .bodySecondary(),
+                                                ),
+                                                const SizedBox(height: 16),
+                                                MashwarButton(
+                                                  text: isAr
+                                                      ? 'إنشاء طلب توريد'
+                                                      : 'Create a Request',
+                                                  onPressed: () {
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            const CreateWorkRequestScreen(),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : ListView.separated(
+                                physics: const AlwaysScrollableScrollPhysics(),
                                 padding:
-                                    const EdgeInsets.all(AppDimens.space24),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(18),
-                                  border: Border.all(
-                                      color: AppColors.borderDisabled),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.assignment_outlined,
-                                        size: 40, color: AppColors.navy),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      _isActiveOrders
-                                          ? (isAr
-                                              ? 'لا توجد طلبات توريد نشطة حالياً'
-                                              : 'No Active Supply Requests')
-                                          : (isAr
-                                              ? 'لا توجد طلبات مكتملة سابقة'
-                                              : 'No Completed Requests Yet'),
-                                      textAlign: TextAlign.center,
-                                      style: AppTypography.title()
-                                          .copyWith(fontSize: 16),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      isAr
-                                          ? 'أنشئ طلب توريد جديد لموقع عملك أو تصفح الطلبات المتاحة في قطر.'
-                                          : 'Create a new worksite supply request or browse open requests in Qatar.',
-                                      textAlign: TextAlign.center,
-                                      style: AppTypography.bodySecondary(),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    MashwarButton(
-                                      text: isAr
-                                          ? 'إنشاء طلب توريد'
-                                          : 'Create a Request',
-                                      onPressed: () {
+                                    const EdgeInsets.all(AppDimens.space16),
+                                itemCount: shownList.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final req = shownList[index];
+                                  final isMyReq = req.requesterId == uid;
+                                  final isTerminal =
+                                      WorkRequestStatusMachine.isTerminal(
+                                          req.status);
+                                  final areaLabel = AppStrings.translateCity(
+                                      req.municipality,
+                                      isArabic: isAr);
+                                  final showHandoverReady = req.status ==
+                                          WorkRequestStatus
+                                              .deliveredPendingConfirmation ||
+                                      (isMyReq &&
+                                          (req.status ==
+                                                  WorkRequestStatus.accepted ||
+                                              req.status ==
+                                                  WorkRequestStatus
+                                                      .inProgress ||
+                                              req.status ==
+                                                  WorkRequestStatus.pickedUp ||
+                                              req.status ==
+                                                  WorkRequestStatus.inTransit));
+
+                                  return MashwarFadeSlideIn(
+                                    duration: const Duration(milliseconds: 250),
+                                    offsetY: 8,
+                                    child: MashwarHoverCard(
+                                      key: ValueKey('activity_card_${req.id}'),
+                                      borderRadius: BorderRadius.circular(16),
+                                      padding: const EdgeInsets.all(16),
+                                      onTap: () {
                                         Navigator.of(context).push(
                                           MaterialPageRoute(
                                             builder: (_) =>
-                                                const CreateWorkRequestScreen(),
+                                                WorkRequestDetailsScreen(
+                                              requestId: req.id,
+                                            ),
                                           ),
                                         );
                                       },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.all(AppDimens.space16),
-                          itemCount: shownList.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final req = shownList[index];
-                            final isMyReq = req.requesterId == uid;
-                            final areaLabel = AppStrings.translateCity(
-                                req.municipality,
-                                isArabic: isAr);
-
-                            return Container(
-                              key: ValueKey('activity_card_${req.id}'),
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border:
-                                    Border.all(color: AppColors.borderDisabled),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Wrap(
-                                    alignment: WrapAlignment.spaceBetween,
-                                    spacing: 8,
-                                    runSpacing: 6,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 3),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.sand,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          isMyReq
-                                              ? (isAr
-                                                  ? 'طلبي'
-                                                  : 'My Request')
-                                              : (isAr
-                                                  ? 'مهمة مسندة لي'
-                                                  : 'Assigned Job'),
-                                          style: AppTypography.label(
-                                                  color: AppColors.navy)
-                                              .copyWith(
-                                                  fontWeight: FontWeight.w800),
-                                        ),
-                                      ),
-                                      MashwarBadge(
-                                        type: req.status ==
-                                                WorkRequestStatus.completed
-                                            ? BadgeType.verified
-                                            : BadgeType.confirmed,
-                                        customLabel:
-                                            req.status.label(isArabic: isAr),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    req.title,
-                                    style: AppTypography.title()
-                                        .copyWith(fontSize: 16),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  MashwarRouteTimeline(
-                                    from: req.pickupLocation,
-                                    to: '${req.dropoffWorksite} · $areaLabel',
-                                    compact: true,
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Wrap(
-                                    alignment: WrapAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        WrapCrossAlignment.center,
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      Text(
-                                        req.effectiveTotalMinor
-                                            .format(isArabic: isAr),
-                                        style: AppTypography.body(
-                                                color: AppColors.teal)
-                                            .copyWith(
-                                                fontWeight: FontWeight.w800),
-                                      ),
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 6,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          if (isMyReq)
-                                            OutlinedButton.icon(
-                                              key: ValueKey(
-                                                  'activity_reorder_${req.id}'),
-                                              onPressed: () {
-                                                final draft = worksite
-                                                    .buildReorderDraft(req);
-                                                Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                    builder: (_) =>
-                                                        CreateWorkRequestScreen(
-                                                      initialDraft: draft,
+                                          Row(
+                                            children: [
+                                              MashwarCategoryIcon(
+                                                category: req.supplyCategory,
+                                                size: 34,
+                                              ),
+                                              const SizedBox(width: 10),
+                                              Expanded(
+                                                child: Wrap(
+                                                  alignment:
+                                                      WrapAlignment.spaceBetween,
+                                                  crossAxisAlignment:
+                                                      WrapCrossAlignment.center,
+                                                  spacing: 8,
+                                                  runSpacing: 6,
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 3),
+                                                      decoration: BoxDecoration(
+                                                        color: isMyReq
+                                                            ? AppColors.sand
+                                                            : AppColors
+                                                                .tealSurface,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                      ),
+                                                      child: Text(
+                                                        isMyReq
+                                                            ? (isAr
+                                                                ? 'طلبي'
+                                                                : 'My Request')
+                                                            : (isAr
+                                                                ? 'مهمة مسندة لي'
+                                                                : 'Assigned Job'),
+                                                        style: AppTypography
+                                                                .label(
+                                                          color: isMyReq
+                                                              ? AppColors.navy
+                                                              : AppColors.teal,
+                                                        ).copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    MashwarBadge(
+                                                      type: req.status ==
+                                                              WorkRequestStatus
+                                                                  .completed
+                                                          ? BadgeType.verified
+                                                          : (req.status ==
+                                                                  WorkRequestStatus
+                                                                      .disputed
+                                                              ? BadgeType
+                                                                  .rejected
+                                                              : BadgeType
+                                                                  .confirmed),
+                                                      customLabel: req.status
+                                                          .label(
+                                                              isArabic: isAr),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            req.title,
+                                            style: AppTypography.title()
+                                                .copyWith(fontSize: 16),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          MashwarRouteTimeline(
+                                            from: req.pickupLocation,
+                                            to: '${req.dropoffWorksite} · $areaLabel',
+                                            compact: true,
+                                          ),
+                                          if (!isTerminal) ...[
+                                            const SizedBox(height: 10),
+                                            MashwarWorksiteStatusStepper(
+                                              status: req.status,
+                                              isAr: isAr,
+                                              compact: true,
+                                            ),
+                                          ],
+                                          if (showHandoverReady) ...[
+                                            const SizedBox(height: 10),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 8,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: req.status ==
+                                                        WorkRequestStatus
+                                                            .deliveredPendingConfirmation
+                                                    ? AppColors.goldSurface
+                                                    : AppColors.escrowSurface,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: req.status ==
+                                                          WorkRequestStatus
+                                                              .deliveredPendingConfirmation
+                                                      ? AppColors.gold
+                                                          .withValues(
+                                                              alpha: 0.5)
+                                                      : AppColors.escrowGreen
+                                                          .withValues(
+                                                              alpha: 0.35),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.key_rounded,
+                                                    size: 16,
+                                                    color: req.status ==
+                                                            WorkRequestStatus
+                                                                .deliveredPendingConfirmation
+                                                        ? AppColors.warning
+                                                        : AppColors.escrowGreen,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      req.status ==
+                                                              WorkRequestStatus
+                                                                  .deliveredPendingConfirmation
+                                                          ? (isAr
+                                                              ? (isMyReq
+                                                                  ? 'وصل المزود — افتح التفاصيل لمشاركة رمز التسليم (6 خانات)'
+                                                                  : 'جاهز للإغلاق — أدخل رمز التسليم المكون من 6 خانات')
+                                                              : (isMyReq
+                                                                  ? 'Handover ready — open details to share 6-char code'
+                                                                  : 'Handover ready — enter 6-char code to complete'))
+                                                          : (isAr
+                                                              ? 'رمز التسليم السري نشط في تفاصيل الطلب'
+                                                              : '6-char handover code active in request details'),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style:
+                                                          AppTypography.label(
+                                                        color: AppColors.navy,
+                                                      ).copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
                                                     ),
                                                   ),
-                                                );
-                                              },
-                                              icon: const Icon(
-                                                  Icons.replay_rounded,
-                                                  size: 16),
-                                              label: Text(isAr
-                                                  ? 'إعادة طلب'
-                                                  : 'Quick Reorder'),
+                                                ],
+                                              ),
                                             ),
-                                          ElevatedButton(
-                                            key: ValueKey(
-                                                'activity_details_${req.id}'),
-                                            onPressed: () {
-                                              Navigator.of(context).push(
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      WorkRequestDetailsScreen(
-                                                    requestId: req.id,
+                                          ],
+                                          const SizedBox(height: 10),
+                                          Wrap(
+                                            alignment:
+                                                WrapAlignment.spaceBetween,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            spacing: 8,
+                                            runSpacing: 8,
+                                            children: [
+                                              Text(
+                                                req.effectiveTotalMinor
+                                                    .format(isArabic: isAr),
+                                                style: AppTypography.body(
+                                                        color: AppColors.teal)
+                                                    .copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w800),
+                                              ),
+                                              Wrap(
+                                                spacing: 8,
+                                                runSpacing: 6,
+                                                children: [
+                                                  if (isMyReq)
+                                                    OutlinedButton.icon(
+                                                      key: ValueKey(
+                                                          'activity_reorder_${req.id}'),
+                                                      onPressed: () {
+                                                        final draft = worksite
+                                                            .buildReorderDraft(
+                                                                req);
+                                                        Navigator.of(context)
+                                                            .push(
+                                                          MaterialPageRoute(
+                                                            builder: (_) =>
+                                                                CreateWorkRequestScreen(
+                                                              initialDraft:
+                                                                  draft,
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                      icon: const Icon(
+                                                          Icons.replay_rounded,
+                                                          size: 16),
+                                                      label: Text(isAr
+                                                          ? 'إعادة طلب'
+                                                          : 'Quick Reorder'),
+                                                    ),
+                                                  ElevatedButton(
+                                                    key: ValueKey(
+                                                        'activity_details_${req.id}'),
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .push(
+                                                        MaterialPageRoute(
+                                                          builder: (_) =>
+                                                              WorkRequestDetailsScreen(
+                                                            requestId: req.id,
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
+                                                    child: Text(isAr
+                                                        ? 'التفاصيل'
+                                                        : 'Details'),
                                                   ),
-                                                ),
-                                              );
-                                            },
-                                            child: Text(isAr
-                                                ? 'التفاصيل'
-                                                : 'Details'),
+                                                ],
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
-                                ],
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMvpRoleFilterChip(int index, String label, IconData icon) {
+    final selected = _mvpRoleFilter == index;
+    return MashwarPressable(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () => setState(() => _mvpRoleFilter = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.navy : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? AppColors.navy : AppColors.borderDisabled,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: selected ? AppColors.gold : AppColors.navy,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTypography.label(
+                color: selected ? Colors.white : AppColors.navy,
+              ).copyWith(fontWeight: FontWeight.w800),
+            ),
+          ],
         ),
       ),
     );
@@ -754,6 +1162,7 @@ class _MainNavShellState extends State<MainNavShell> {
     final user = auth.user;
     final prov = worksite.providerProfile;
     final uid = worksite.currentUserId ?? user.id;
+    final unreadCount = worksite.unreadNotificationsCount;
 
     final displayName = user.fullName.trim().isNotEmpty
         ? user.fullName.trim()
@@ -779,6 +1188,23 @@ class _MainNavShellState extends State<MainNavShell> {
         title: Text(isAr ? 'حسابي' : 'Account', style: AppTypography.title()),
         actions: [
           IconButton(
+            tooltip: isAr ? 'الإشعارات' : 'Notifications',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const NotificationsCenterScreen(),
+                ),
+              );
+            },
+            icon: _buildIconWithBadge(
+              unreadCount > 0
+                  ? Icons.notifications_active_rounded
+                  : Icons.notifications_none_rounded,
+              color: AppColors.navy,
+              badgeCount: unreadCount,
+            ),
+          ),
+          IconButton(
             icon: const Icon(Icons.settings_outlined, color: AppColors.navy),
             tooltip: isAr ? 'الإعدادات' : 'Settings',
             onPressed: () {
@@ -795,253 +1221,365 @@ class _MainNavShellState extends State<MainNavShell> {
             constraints: const BoxConstraints(maxWidth: 820),
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppDimens.space20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Honest Identity Summary (Zero fake balances or unverified badges)
-                  Container(
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppColors.borderDisabled),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: const BoxDecoration(
-                                color: AppColors.gold,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  displayName[0].toUpperCase(),
-                                  style:
-                                      AppTypography.title(color: AppColors.navy)
-                                          .copyWith(fontSize: 22),
+              child: MashwarFadeSlideIn(
+                duration: const Duration(milliseconds: 280),
+                offsetY: 10,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Refined QID / Provider Identity Summary
+                    MashwarSectionCard(
+                      padding: const EdgeInsets.all(18),
+                      borderRadius: 18,
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.gold,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    displayName[0].toUpperCase(),
+                                    style: AppTypography.title(
+                                            color: AppColors.navy)
+                                        .copyWith(fontSize: 22),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          displayName,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            displayName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: AppTypography.title()
+                                                .copyWith(fontSize: 18),
+                                          ),
+                                        ),
+                                        if (worksite.isApprovedProvider ||
+                                            user.isVerified) ...[
+                                          const SizedBox(width: 6),
+                                          const Icon(Icons.verified_rounded,
+                                              color: AppColors.teal, size: 18),
+                                        ],
+                                      ],
+                                    ),
+                                    if (user.email != null &&
+                                        user.email!.isNotEmpty)
+                                      Text(user.email!,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: AppTypography.title()
-                                              .copyWith(fontSize: 18),
-                                        ),
-                                      ),
-                                      if (worksite.isApprovedProvider ||
-                                          user.isVerified) ...[
-                                        const SizedBox(width: 6),
-                                        const Icon(Icons.verified_rounded,
-                                            color: AppColors.teal, size: 18),
-                                      ],
-                                    ],
-                                  ),
-                                  if (user.email != null &&
-                                      user.email!.isNotEmpty)
-                                    Text(user.email!,
-                                        style: AppTypography.bodySecondary()),
-                                  if (user.phone.isNotEmpty)
-                                    Text(user.phone,
-                                        style: AppTypography.label()),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        const Divider(
-                            height: 1, color: AppColors.borderDisabled),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildStatColumn(
-                                '$myReqCount',
-                                isAr ? 'طلباتي' : 'My Requests',
-                              ),
-                            ),
-                            _buildStatDivider(),
-                            Expanded(
-                              child: _buildStatColumn(
-                                '$completedJobsCount',
-                                isAr ? 'توريدات مكتملة' : 'Completed Jobs',
-                              ),
-                            ),
-                            _buildStatDivider(),
-                            Expanded(
-                              child: _buildStatColumn(
-                                realRating > 0
-                                    ? '${realRating.toStringAsFixed(1)} ★'
-                                    : '—',
-                                isAr ? 'التقييم' : 'Rating',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Worksite Supply & Provider Verification Group
-                  Material(
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                      side: const BorderSide(color: AppColors.borderDisabled),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      children: [
-                        _buildMenuItem(
-                          icon: Icons.verified_user_outlined,
-                          iconBg: AppColors.tealSurface,
-                          iconColor: AppColors.teal,
-                          title: isAr
-                              ? 'ملف المزود وتوثيق البطاقة القطرية (QID)'
-                              : 'Provider Profile & QID Verification',
-                          badge: prov != null
-                              ? MashwarBadge(
-                                  type: prov.approvalStatus ==
-                                          ProviderApprovalStatus.approved
-                                      ? BadgeType.verified
-                                      : (prov.approvalStatus ==
-                                              ProviderApprovalStatus.rejected
-                                          ? BadgeType.rejected
-                                          : BadgeType.pending),
-                                  customLabel: prov.approvalStatus
-                                      .label(isArabic: isAr),
-                                )
-                              : null,
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const ProviderProfileScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: AppColors.borderDisabled),
-                        _buildMenuItem(
-                          icon: Icons.factory_outlined,
-                          iconBg: AppColors.sand,
-                          iconColor: AppColors.qatarMaroon,
-                          title: isAr
-                              ? 'مواقع العمل المحفوظة'
-                              : 'Saved Worksites',
-                          trailingText: '${worksite.savedWorksites.length}',
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const ProviderProfileScreen(
-                                  focusSavedWorksites: true,
+                                          style: AppTypography.bodySecondary()),
+                                    if (user.phone.isNotEmpty)
+                                      Text(user.phone,
+                                          style: AppTypography.label()),
+                                  ],
                                 ),
                               ),
-                            );
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: AppColors.borderDisabled),
-                        _buildMenuItem(
-                          icon: Icons.person_outline_rounded,
-                          iconBg: AppColors.infoBg,
-                          iconColor: AppColors.info,
-                          title: isAr
-                              ? 'الملف الشخصي وتعديل البيانات'
-                              : 'Personal Profile',
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) => const UserProfileScreen()),
-                            );
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: AppColors.borderDisabled),
-                        _buildMenuItem(
-                          icon: Icons.settings_outlined,
-                          iconBg: AppColors.chipInactiveBg,
-                          iconColor: AppColors.navy,
-                          title: isAr
-                              ? 'إعدادات التطبيق واللغة'
-                              : 'App Settings & Language',
-                          trailingText: isAr ? 'العربية' : 'English',
-                          onTap: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) => const SettingsScreen()),
-                            );
-                          },
-                        ),
-                        const Divider(
-                            height: 1, color: AppColors.borderDisabled),
-                        _buildMenuItem(
-                          icon: Icons.gavel_outlined,
-                          iconBg: AppColors.chipInactiveBg,
-                          iconColor: AppColors.navy,
-                          title: isAr
-                              ? 'الشروط القانونية والإفصاحات التنظيمية'
-                              : 'Legal Terms & Regulatory Scope',
-                          onTap: () =>
-                              _showPilotLegalDisclaimersSheet(context, isAr),
-                        ),
-                      ],
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.start,
+                            children: [
+                              _buildAccountTrustChip(
+                                MashwarTrustType.qatarIdCrest,
+                                prov != null
+                                    ? prov.approvalStatus.label(isArabic: isAr)
+                                    : (user.idVerificationStatus ==
+                                            IdVerificationStatus.verified
+                                        ? (isAr ? 'QID موثّق' : 'QID Verified')
+                                        : (isAr
+                                            ? 'حساب طلبات نشط'
+                                            : 'Requester Account')),
+                              ),
+                              _buildAccountTrustChip(
+                                MashwarTrustType.verifiedReceipt,
+                                isAr ? 'فواتير QAR موثّقة' : 'Verified QAR Invoices',
+                              ),
+                              _buildAccountTrustChip(
+                                MashwarTrustType.handoverShield,
+                                isAr ? 'تسليم برمز 6 خانات' : '6-Char Handover',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          const Divider(
+                              height: 1, color: AppColors.borderDisabled),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatColumn(
+                                  '$myReqCount',
+                                  isAr ? 'طلباتي' : 'My Requests',
+                                ),
+                              ),
+                              _buildStatDivider(),
+                              Expanded(
+                                child: _buildStatColumn(
+                                  '$completedJobsCount',
+                                  isAr ? 'توريدات مكتملة' : 'Completed Jobs',
+                                ),
+                              ),
+                              _buildStatDivider(),
+                              Expanded(
+                                child: _buildStatColumn(
+                                  realRating > 0
+                                      ? '${realRating.toStringAsFixed(1)} ★'
+                                      : '—',
+                                  isAr ? 'التقييم' : 'Rating',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
-                  // Honest Pilot Scope Card
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.sand,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.35)),
+                    // Worksite Supply, Notifications, Support & Provider Verification Group
+                    Material(
+                      color: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppDimens.radiusCard),
+                        side: const BorderSide(color: AppColors.borderDisabled),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Column(
+                        children: [
+                          _buildMenuItem(
+                            icon: Icons.verified_user_outlined,
+                            iconBg: AppColors.tealSurface,
+                            iconColor: AppColors.teal,
+                            title: isAr
+                                ? 'ملف المزود وتوثيق البطاقة القطرية (QID)'
+                                : 'Provider Profile & QID Verification',
+                            badge: prov != null
+                                ? MashwarBadge(
+                                    type: prov.approvalStatus ==
+                                            ProviderApprovalStatus.approved
+                                        ? BadgeType.verified
+                                        : (prov.approvalStatus ==
+                                                ProviderApprovalStatus.rejected
+                                            ? BadgeType.rejected
+                                            : BadgeType.pending),
+                                    customLabel: prov.approvalStatus
+                                        .label(isArabic: isAr),
+                                  )
+                                : null,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const ProviderProfileScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(
+                              height: 1, color: AppColors.borderDisabled),
+                          _buildMenuItem(
+                            icon: Icons.factory_outlined,
+                            iconBg: AppColors.sand,
+                            iconColor: AppColors.qatarMaroon,
+                            title: isAr
+                                ? 'مواقع العمل المحفوظة'
+                                : 'Saved Worksites',
+                            trailingText: '${worksite.savedWorksites.length}',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ProviderProfileScreen(
+                                    focusSavedWorksites: true,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(
+                              height: 1, color: AppColors.borderDisabled),
+                          _buildMenuItem(
+                            icon: Icons.notifications_active_outlined,
+                            iconBg: AppColors.goldSurface,
+                            iconColor: AppColors.warning,
+                            title: isAr
+                                ? 'مركز الإشعارات والتنبيهات'
+                                : 'Notifications Center',
+                            badge: unreadCount > 0
+                                ? Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.qatarMaroon,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '$unreadCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  )
+                                : null,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const NotificationsCenterScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(
+                              height: 1, color: AppColors.borderDisabled),
+                          _buildMenuItem(
+                            icon: Icons.person_outline_rounded,
+                            iconBg: AppColors.infoBg,
+                            iconColor: AppColors.info,
+                            title: isAr
+                                ? 'الملف الشخصي وتعديل البيانات'
+                                : 'Personal Profile',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => const UserProfileScreen()),
+                              );
+                            },
+                          ),
+                          const Divider(
+                              height: 1, color: AppColors.borderDisabled),
+                          _buildMenuItem(
+                            icon: Icons.support_agent_rounded,
+                            iconBg: AppColors.escrowSurface,
+                            iconColor: AppColors.escrowGreen,
+                            title: isAr
+                                ? 'المساعدة والدعم (قطر)'
+                                : 'Help & Support (Qatar)',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => const HelpSupportScreen()),
+                              );
+                            },
+                          ),
+                          const Divider(
+                              height: 1, color: AppColors.borderDisabled),
+                          _buildMenuItem(
+                            icon: Icons.settings_outlined,
+                            iconBg: AppColors.chipInactiveBg,
+                            iconColor: AppColors.navy,
+                            title: isAr
+                                ? 'إعدادات التطبيق واللغة'
+                                : 'App Settings & Language',
+                            trailingText: isAr ? 'العربية' : 'English',
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => const SettingsScreen()),
+                              );
+                            },
+                          ),
+                          const Divider(
+                              height: 1, color: AppColors.borderDisabled),
+                          _buildMenuItem(
+                            icon: Icons.gavel_outlined,
+                            iconBg: AppColors.chipInactiveBg,
+                            iconColor: AppColors.navy,
+                            title: isAr
+                                ? 'الشروط القانونية والإفصاحات التنظيمية'
+                                : 'Legal Terms & Regulatory Scope',
+                            onTap: () =>
+                                _showPilotLegalDisclaimersSheet(context, isAr),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Text(
-                      AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
-                      style: AppTypography.bodySmall(color: AppColors.navy),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                  MashwarButton(
-                    key: const ValueKey('mvp_logout_btn'),
-                    text: isAr ? 'تسجيل الخروج' : 'Log Out',
-                    variant: MashwarButtonVariant.danger,
-                    isLoading: auth.isLoading,
-                    onPressed: () async {
-                      await auth.logout();
-                      if (!context.mounted) return;
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                            builder: (_) => const WelcomeScreen()),
-                        (route) => false,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                ],
+                    // Honest Pilot Scope Card
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.sand,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: AppColors.gold.withValues(alpha: 0.35)),
+                      ),
+                      child: Text(
+                        AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
+                        style: AppTypography.bodySmall(color: AppColors.navy),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    MashwarButton(
+                      key: const ValueKey('mvp_logout_btn'),
+                      text: isAr ? 'تسجيل الخروج' : 'Log Out',
+                      variant: MashwarButtonVariant.danger,
+                      isLoading: auth.isLoading,
+                      onPressed: () async {
+                        await auth.logout();
+                        if (!context.mounted) return;
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                              builder: (_) => const WelcomeScreen()),
+                          (route) => false,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAccountTrustChip(MashwarTrustType type, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.slateBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.slateBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MashwarTrustEmblem(type: type, size: 22),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.label(color: AppColors.navy).copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

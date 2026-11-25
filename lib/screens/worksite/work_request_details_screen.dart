@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,6 +13,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/worksite_models.dart';
 import '../../data/services/media_upload_service.dart';
 import '../../state/auth_provider.dart';
@@ -79,6 +82,26 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
   void dispose() {
     _fallbackWorksiteProvider?.dispose();
     super.dispose();
+  }
+
+  static final RegExp _refPhotoPattern = RegExp(
+    r'RefPhoto:\s*(\S+)',
+    caseSensitive: false,
+  );
+
+  List<String> _extractReferenceImageUrls(WorkRequest req) {
+    final rawNotes = req.itemNotes;
+    if (rawNotes == null || rawNotes.trim().isEmpty) return const [];
+    final urls = <String>[];
+    for (final match in _refPhotoPattern.allMatches(rawNotes)) {
+      final candidate = match.group(1)?.trim();
+      if (candidate != null &&
+          candidate.isNotEmpty &&
+          !urls.contains(candidate)) {
+        urls.add(candidate);
+      }
+    }
+    return urls;
   }
 
   WorkRequestStatus? _nextProviderStage(WorkRequestStatus current) {
@@ -221,99 +244,111 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
 
     final inlineError = provider.localizedError(isArabic: isAr);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimens.space16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (provider.hasError && inlineError != null) ...[
-            Container(
-              key: const ValueKey('details_error_banner'),
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.dangerBg,
-                borderRadius: BorderRadius.circular(12),
-                border:
-                    Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      color: AppColors.danger, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      inlineError,
-                      style: AppTypography.label(color: AppColors.navy)
-                          .copyWith(fontWeight: FontWeight.w700),
+    return RefreshIndicator(
+      color: AppColors.teal,
+      onRefresh: () => provider.selectAndLoadRequest(widget.requestId),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppDimens.space16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (provider.hasError && inlineError != null) ...[
+              Container(
+                key: const ValueKey('details_error_banner'),
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.dangerBg,
+                  borderRadius: BorderRadius.circular(12),
+                  border:
+                      Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: AppColors.danger, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        inlineError,
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    onPressed: provider.clearError,
-                  ),
-                ],
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      onPressed: provider.clearError,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
 
-          // 1. Summary & Route Card
-          _buildOverviewCard(context, provider, req, isRequester, isAr),
-          const SizedBox(height: 14),
-
-          // 2. Requester Handover Secret Code Card (ONLY visible to owner during active fulfillment)
-          if (isRequester && provider.activeHandoverCode != null) ...[
-            _buildRequesterHandoverCard(
-                context, provider.activeHandoverCode!, isAr),
+            // 1. Summary & Route Card
+            _buildOverviewCard(context, provider, req, isRequester, isAr),
             const SizedBox(height: 14),
-          ],
 
-          // 3. Requester Manual Bank Transfer Proof Upload
-          if (isRequester &&
-              req.paymentMethod == PaymentMethod.bankTransferManual) ...[
-            _buildBankTransferProofCard(context, provider, req, isAr),
-            const SizedBox(height: 14),
-          ],
+            // 2. Requester Handover Secret Code Card (ONLY visible to owner during active fulfillment)
+            if (isRequester && provider.activeHandoverCode != null) ...[
+              _buildRequesterHandoverCard(
+                  context, provider.activeHandoverCode!, isAr),
+              const SizedBox(height: 14),
+            ],
 
-          // 4. Contextual Action Strip (Chat, Quick Reorder, Dispute, Rating)
-          _buildContextualActionsCard(
-            context,
-            provider,
-            req,
-            isRequester: isRequester,
-            isAssignedProvider: isAssignedProvider,
-            disputable: disputable,
-            isAr: isAr,
-          ),
-          const SizedBox(height: 14),
+            // 3. Requester Manual Bank Transfer Proof Upload
+            if (isRequester &&
+                req.paymentMethod == PaymentMethod.bankTransferManual) ...[
+              _buildBankTransferProofCard(context, provider, req, isAr),
+              const SizedBox(height: 14),
+            ],
 
-          // 5. Provider Fulfillment Controls + 6-char Handover Verification Modal Trigger
-          if (isAssignedProvider) ...[
-            _buildAssignedProviderControls(
+            // 4. Contextual Action Strip (Chat, Quick Reorder, Cancel, Dispute, Rating)
+            _buildContextualActionsCard(
               context,
               provider,
               req,
-              nextStage: nextStage,
+              isRequester: isRequester,
+              isAssignedProvider: isAssignedProvider,
+              disputable: disputable,
               isAr: isAr,
             ),
             const SizedBox(height: 14),
-          ],
 
-          // 6. Provider Offer Submission Gate (when viewing an open request not owned by current user)
-          if (!isRequester && !isAssignedProvider && canSubmitOfferStage) ...[
-            _buildProviderOfferGateCard(context, provider, req, isAr),
+            // 5. Provider Fulfillment Controls + 6-char Handover Verification Modal Trigger
+            if (isAssignedProvider) ...[
+              _buildAssignedProviderControls(
+                context,
+                provider,
+                req,
+                nextStage: nextStage,
+                isAr: isAr,
+              ),
+              const SizedBox(height: 14),
+            ],
+
+            // 6. Provider Offer Submission Gate (when viewing an open request not owned by current user)
+            if (!isRequester && !isAssignedProvider && canSubmitOfferStage) ...[
+              _buildProviderOfferGateCard(context, provider, req, isAr),
+              const SizedBox(height: 14),
+            ],
+
+            // 7. Offers Comparison List
+            _buildOffersSection(
+              context,
+              provider,
+              req,
+              isRequester: isRequester,
+              currentUid: currentUid,
+              isAr: isAr,
+            ),
             const SizedBox(height: 14),
+
+            // 8. Request Events Audit Timeline
+            _buildTimelineSection(provider.selectedEvents, isAr),
+            const SizedBox(height: 24),
           ],
-
-          // 7. Offers Comparison List
-          _buildOffersSection(context, provider, req, isRequester, isAr),
-          const SizedBox(height: 14),
-
-          // 8. Request Events Audit Timeline
-          _buildTimelineSection(provider.selectedEvents, isAr),
-          const SizedBox(height: 24),
-        ],
+        ),
       ),
     );
   }
@@ -327,6 +362,13 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
   ) {
     final areaLabel =
         AppStrings.translateCity(req.municipality, isArabic: isAr);
+    final catMeta = mashwarCategoryMetaFor(req.supplyCategory);
+    final referenceImageUrls = _extractReferenceImageUrls(req);
+    final receiptUrl = req.receiptImageUrl?.trim();
+    final paymentProofUrl = req.paymentProofUrl?.trim();
+    final hasAnyAttachment = referenceImageUrls.isNotEmpty ||
+        (receiptUrl != null && receiptUrl.isNotEmpty) ||
+        (paymentProofUrl != null && paymentProofUrl.isNotEmpty);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -338,24 +380,92 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          MashwarWorksiteStatusStepper(status: req.status, isAr: isAr),
+          const SizedBox(height: 12),
           Wrap(
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 8,
             runSpacing: 6,
             children: [
-              MashwarBadge(
-                type: req.status == WorkRequestStatus.completed
-                    ? BadgeType.verified
-                    : (req.status == WorkRequestStatus.cancelled ||
-                            req.status == WorkRequestStatus.disputed
-                        ? BadgeType.rejected
-                        : BadgeType.confirmed),
-                customLabel: req.status.label(isArabic: isAr),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  MashwarBadge(
+                    type: req.status == WorkRequestStatus.completed
+                        ? BadgeType.verified
+                        : (req.status == WorkRequestStatus.cancelled ||
+                                req.status == WorkRequestStatus.disputed
+                            ? BadgeType.rejected
+                            : BadgeType.confirmed),
+                    customLabel: req.status.label(isArabic: isAr),
+                  ),
+                  Container(
+                    padding: const EdgeInsetsDirectional.fromSTEB(4, 3, 9, 3),
+                    decoration: BoxDecoration(
+                      color: catMeta.surfaceColor,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: catMeta.accentColor.withValues(alpha: 0.28),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        MashwarCategoryIcon(
+                          category: req.supplyCategory,
+                          size: 20,
+                          showSurface: true,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          catMeta.title(isArabic: isAr),
+                          style: AppTypography.label(color: catMeta.accentColor)
+                              .copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '#${req.id}',
-                style: AppTypography.label(color: AppColors.textSecondary),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '#${req.id}',
+                    style: AppTypography.label(color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(width: 2),
+                  IconButton(
+                    key: const ValueKey('details_copy_id_btn'),
+                    tooltip: isAr ? 'نسخ رقم الطلب' : 'Copy Request ID',
+                    visualDensity: VisualDensity.compact,
+                    constraints:
+                        const BoxConstraints(minWidth: 30, minHeight: 30),
+                    padding: const EdgeInsets.all(4),
+                    icon: const Icon(
+                      Icons.copy_rounded,
+                      size: 16,
+                      color: AppColors.navy,
+                    ),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: req.id));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isAr ? 'تم نسخ رقم الطلب' : 'Request ID copied',
+                          ),
+                          backgroundColor: AppColors.teal,
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
@@ -383,6 +493,30 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                 style: AppTypography.bodySmall(color: AppColors.navy)
                     .copyWith(fontWeight: FontWeight.w600),
               ),
+            ),
+          ],
+          if (req.status == WorkRequestStatus.cancelled &&
+              req.cancellationReason != null &&
+              req.cancellationReason!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildInfoTag(
+              Icons.cancel_outlined,
+              isAr
+                  ? 'سبب الإلغاء: ${req.cancellationReason}'
+                  : 'Cancellation reason: ${req.cancellationReason}',
+              color: AppColors.danger,
+            ),
+          ],
+          if (req.status == WorkRequestStatus.disputed &&
+              req.disputeReason != null &&
+              req.disputeReason!.trim().isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _buildInfoTag(
+              Icons.report_problem_outlined,
+              isAr
+                  ? 'سبب النزاع: ${req.disputeReason}'
+                  : 'Dispute reason: ${req.disputeReason}',
+              color: AppColors.warning,
             ),
           ],
           const SizedBox(height: 12),
@@ -447,17 +581,73 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                       : 'Provider: ${req.assignedProviderName}',
                   color: AppColors.teal,
                 ),
-              if (req.receiptImageUrl != null &&
-                  req.receiptImageUrl!.isNotEmpty)
+              if (receiptUrl != null && receiptUrl.isNotEmpty)
                 _buildInfoTag(
                   Icons.receipt_long_rounded,
                   isAr
-                      ? 'الفاتورة مرفقة: ${req.receiptImageUrl}'
-                      : 'Invoice attached: ${req.receiptImageUrl}',
+                      ? 'الفاتورة مرفقة: $receiptUrl'
+                      : 'Invoice attached: $receiptUrl',
                   color: AppColors.teal,
                 ),
             ],
           ),
+          if (hasAnyAttachment) ...[
+            const SizedBox(height: 14),
+            Text(
+              isAr
+                  ? 'المرفقات والفواتير وإيصالات التحويل'
+                  : 'Reference Photos, Store Invoices & Transfer Proofs',
+              style: AppTypography.label(color: AppColors.navy)
+                  .copyWith(fontWeight: FontWeight.w800, fontSize: 12.5),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (var i = 0; i < referenceImageUrls.length; i++)
+                  MashwarAttachmentThumbnail(
+                    key: ValueKey('details_ref_photo_thumb_$i'),
+                    url: referenceImageUrls[i],
+                    label: isAr
+                        ? 'صورة مرجعية ${referenceImageUrls.length > 1 ? i + 1 : ""}'
+                            .trim()
+                        : 'Reference ${referenceImageUrls.length > 1 ? i + 1 : ""}'
+                            .trim(),
+                    onTap: () => MashwarImagePreviewDialog.show(
+                      context,
+                      url: referenceImageUrls[i],
+                      title: isAr ? 'صورة مرجعية للمواد' : 'Item Reference Photo',
+                    ),
+                  ),
+                if (receiptUrl != null && receiptUrl.isNotEmpty)
+                  MashwarAttachmentThumbnail(
+                    key: const ValueKey('details_receipt_thumb'),
+                    url: receiptUrl,
+                    label: isAr ? 'فاتورة الشراء' : 'Store Invoice',
+                    isInvoice: true,
+                    onTap: () => MashwarImagePreviewDialog.show(
+                      context,
+                      url: receiptUrl,
+                      title: isAr ? 'فاتورة الشراء الأصلية' : 'Store Invoice',
+                    ),
+                  ),
+                if (paymentProofUrl != null && paymentProofUrl.isNotEmpty)
+                  MashwarAttachmentThumbnail(
+                    key: const ValueKey('details_payment_proof_thumb'),
+                    url: paymentProofUrl,
+                    label: isAr ? 'إيصال التحويل' : 'Transfer Proof',
+                    onTap: () => MashwarImagePreviewDialog.show(
+                      context,
+                      url: paymentProofUrl,
+                      title: isAr
+                          ? 'إيصال التحويل البنكي'
+                          : 'Bank Transfer Proof',
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -800,6 +990,30 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
               ),
             ),
 
+          // Requester Cancel Request (before offer acceptance)
+          if (isRequester &&
+              (req.status == WorkRequestStatus.open ||
+                  req.status == WorkRequestStatus.offerReceived))
+            OutlinedButton.icon(
+              key: const ValueKey('details_cancel_request_btn'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.danger,
+                side: BorderSide(
+                    color: AppColors.danger.withValues(alpha: 0.45)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+              onPressed: provider.isSubmitting
+                  ? null
+                  : () => _showCancelRequestSheet(context, provider, req, isAr),
+              icon: const Icon(Icons.cancel_outlined, size: 17),
+              label: Text(
+                isAr ? 'إلغاء الطلب' : 'Cancel Request',
+                style: AppTypography.label(color: AppColors.danger)
+                    .copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+
           // Post-completion Mutual Rating Modal
           if (req.status == WorkRequestStatus.completed &&
               (isRequester || isAssignedProvider) &&
@@ -1030,14 +1244,44 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
   Widget _buildOffersSection(
     BuildContext context,
     WorksiteProvider provider,
-    WorkRequest req,
-    bool isRequester,
-    bool isAr,
-  ) {
+    WorkRequest req, {
+    required bool isRequester,
+    required String? currentUid,
+    required bool isAr,
+  }) {
     final offers = provider.selectedOffers;
     final canAccept = isRequester &&
         (req.status == WorkRequestStatus.open ||
             req.status == WorkRequestStatus.offerReceived);
+
+    final pendingOffers =
+        offers.where((o) => o.status == 'pending').toList();
+    int? minTotalMinor;
+    bool hasDistinctPrices = false;
+    int? minEtaMinutes;
+    bool hasDistinctEtas = false;
+    double maxRating = 0.0;
+    bool hasTopRatedWinner = false;
+
+    if (pendingOffers.length >= 2) {
+      final totals = pendingOffers
+          .map((o) =>
+              (o.estimatedItemsCostMinor ?? req.estimatedItemsCostMinor)
+                  .minorUnits +
+              o.proposedFeeMinor.minorUnits)
+          .toList();
+      minTotalMinor = totals.reduce(math.min);
+      hasDistinctPrices = totals.toSet().length > 1;
+
+      final etas = pendingOffers.map((o) => o.estimatedEtaMinutes).toList();
+      minEtaMinutes = etas.reduce(math.min);
+      hasDistinctEtas = etas.toSet().length > 1;
+
+      final ratings = pendingOffers.map((o) => o.providerRating).toList();
+      maxRating = ratings.reduce(math.max);
+      hasTopRatedWinner =
+          maxRating > 0 && ratings.any((rating) => rating < maxRating);
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1069,6 +1313,21 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   offer.estimatedItemsCostMinor ?? req.estimatedItemsCostMinor;
               final totalOfferMinor = itemsMinor + offer.proposedFeeMinor;
               final hasRealRating = offer.providerRating > 0;
+              final isPending = offer.status == 'pending';
+              final isOwnerProvider =
+                  currentUid != null && currentUid == offer.providerId;
+
+              final showLowestPrice = isPending &&
+                  hasDistinctPrices &&
+                  minTotalMinor != null &&
+                  totalOfferMinor.minorUnits == minTotalMinor;
+              final showFastestEta = isPending &&
+                  hasDistinctEtas &&
+                  minEtaMinutes != null &&
+                  offer.estimatedEtaMinutes == minEtaMinutes;
+              final showTopRated = isPending &&
+                  hasTopRatedWinner &&
+                  offer.providerRating == maxRating;
 
               return Container(
                 key: ValueKey('offer_card_${offer.id}'),
@@ -1077,7 +1336,9 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                 decoration: BoxDecoration(
                   color: offer.isSelected
                       ? AppColors.tealSurface
-                      : AppColors.slateBg,
+                      : (offer.status == 'withdrawn'
+                          ? AppColors.offlineBg
+                          : AppColors.slateBg),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: offer.isSelected
@@ -1106,8 +1367,15 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                             ),
                             const SizedBox(width: 6),
                             MashwarBadge(
-                              type: BadgeType.verified,
-                              customLabel: isAr ? 'مزود معتمد' : 'Approved',
+                              type: offer.status == 'withdrawn' ||
+                                      offer.status == 'rejected'
+                                  ? BadgeType.suspended
+                                  : BadgeType.verified,
+                              customLabel: offer.status == 'withdrawn'
+                                  ? (isAr ? 'تم السحب' : 'Withdrawn')
+                                  : (offer.status == 'rejected'
+                                      ? (isAr ? 'غير مختار' : 'Declined')
+                                      : (isAr ? 'مزود معتمد' : 'Approved')),
                             ),
                           ],
                         ),
@@ -1122,6 +1390,42 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                         ),
                       ],
                     ),
+                    if (showLowestPrice || showFastestEta || showTopRated) ...[
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          if (showLowestPrice)
+                            _buildOfferComparisonBadge(
+                              key: ValueKey(
+                                  'offer_badge_lowest_price_${offer.id}'),
+                              icon: Icons.savings_outlined,
+                              label: isAr ? 'الأقل سعراً' : 'Lowest Price',
+                              color: AppColors.escrowGreen,
+                              bgColor: AppColors.escrowSurface,
+                            ),
+                          if (showFastestEta)
+                            _buildOfferComparisonBadge(
+                              key: ValueKey(
+                                  'offer_badge_fastest_eta_${offer.id}'),
+                              icon: Icons.bolt_rounded,
+                              label: isAr ? 'الأسرع وصولاً' : 'Fastest ETA',
+                              color: AppColors.info,
+                              bgColor: AppColors.infoBg,
+                            ),
+                          if (showTopRated)
+                            _buildOfferComparisonBadge(
+                              key: ValueKey(
+                                  'offer_badge_top_rated_${offer.id}'),
+                              icon: Icons.star_rounded,
+                              label: isAr ? 'الأعلى تقييماً' : 'Top Rated',
+                              color: AppColors.warning,
+                              bgColor: AppColors.goldSurface,
+                            ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 12,
@@ -1158,7 +1462,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                         style: AppTypography.bodySmall(color: AppColors.navy),
                       ),
                     ],
-                    if (canAccept && offer.status == 'pending') ...[
+                    if (canAccept && isPending) ...[
                       const SizedBox(height: 10),
                       MashwarButton(
                         key: ValueKey('accept_offer_btn_${offer.id}'),
@@ -1173,10 +1477,69 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                         },
                       ),
                     ],
+                    if (isOwnerProvider && isPending) ...[
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        key: ValueKey('withdraw_offer_btn_${offer.id}'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                          side: BorderSide(
+                              color: AppColors.danger.withValues(alpha: 0.45)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                        ),
+                        onPressed: provider.isSubmitting
+                            ? null
+                            : () {
+                                provider.withdrawOffer(
+                                  requestId: req.id,
+                                  offerId: offer.id,
+                                );
+                              },
+                        icon: const Icon(Icons.undo_rounded, size: 16),
+                        label: Text(
+                          isAr ? 'سحب العرض' : 'Withdraw Offer',
+                          style: AppTypography.label(color: AppColors.danger)
+                              .copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               );
             }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOfferComparisonBadge({
+    Key? key,
+    required IconData icon,
+    required String label,
+    required Color color,
+    required Color bgColor,
+  }) {
+    return Container(
+      key: key,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTypography.label(color: color).copyWith(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ],
       ),
     );
@@ -2268,6 +2631,132 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                           requestId: req.id,
                           reporterRole: reporterRole,
                           reason: reasonCtrl.text.trim(),
+                        );
+                        if (!sheetCtx.mounted) return;
+                        if (updated != null) {
+                          Navigator.of(sheetCtx).pop();
+                        } else {
+                          setModalState(() {
+                            modalErr = provider.localizedError(isArabic: isAr);
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showCancelRequestSheet(
+    BuildContext context,
+    WorksiteProvider provider,
+    WorkRequest req,
+    bool isAr,
+  ) {
+    final reasonCtrl = TextEditingController();
+    final quickReasons = isAr
+        ? const [
+            'تم تأمين المواد محلياً من مورد آخر',
+            'تعديل جدول أو مواصفات الموقع',
+            'تغيير الكمية أو الميزانية المطلوبة',
+          ]
+        : const [
+            'Sourced items directly near worksite',
+            'Worksite schedule or specs changed',
+            'Need to adjust quantity or QAR budget',
+          ];
+    String? modalErr;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 16,
+                bottom: MediaQuery.viewInsetsOf(sheetCtx).bottom + 20,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    MashwarSheetHeader(
+                      title: isAr
+                          ? 'تأكيد إلغاء طلب التوريد'
+                          : 'Cancel Supply Request',
+                      subtitle: isAr
+                          ? 'يمكنك إلغاء الطلب مجاناً قبل اختيار العرض وبدء الشراء.'
+                          : 'You can cancel this request before offer acceptance and store pickup.',
+                      leadingIcon: Icons.cancel_outlined,
+                      onClose: () => Navigator.of(sheetCtx).pop(),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: quickReasons.map((preset) {
+                        return ActionChip(
+                          label: Text(
+                            preset,
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(fontSize: 11),
+                          ),
+                          backgroundColor: AppColors.slateBg,
+                          onPressed: () {
+                            setModalState(() {
+                              reasonCtrl.text = preset;
+                              modalErr = null;
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      key: const ValueKey('cancel_reason_input'),
+                      controller: reasonCtrl,
+                      maxLines: 2,
+                      decoration: InputDecoration(
+                        labelText: isAr
+                            ? 'سبب الإلغاء (اختياري)'
+                            : 'Cancellation Reason (Optional)',
+                        hintText: isAr
+                            ? 'أدخل سبب إلغاء الطلب...'
+                            : 'Share why this request is being cancelled...',
+                      ),
+                    ),
+                    if (modalErr != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        modalErr!,
+                        style: AppTypography.label(color: AppColors.danger),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    MashwarButton(
+                      key: const ValueKey('confirm_cancel_request_btn'),
+                      text: isAr
+                          ? 'تأكيد إلغاء الطلب'
+                          : 'Confirm Request Cancellation',
+                      variant: MashwarButtonVariant.danger,
+                      isLoading: provider.isSubmitting,
+                      onPressed: () async {
+                        final updated = await provider.cancelRequest(
+                          requestId: req.id,
+                          reason: reasonCtrl.text.trim().isNotEmpty
+                              ? reasonCtrl.text.trim()
+                              : null,
                         );
                         if (!sheetCtx.mounted) return;
                         if (updated != null) {

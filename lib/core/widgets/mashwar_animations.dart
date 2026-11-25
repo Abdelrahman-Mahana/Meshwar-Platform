@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../data/models/worksite_models.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_typography.dart';
 
@@ -998,4 +999,756 @@ class _FamilyCommutePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _FamilyCommutePainter oldDelegate) => false;
+}
+
+/// Deterministic test-safe shimmer skeleton placeholder.
+///
+/// Sweeps a smooth highlight gradient during live runtime and renders a static
+/// container during widget tests (`mashwarShouldAnimateContinuous() == false`)
+/// or when platform reduced-motion is active so `pumpAndSettle()` never hangs.
+class MashwarShimmerBox extends StatefulWidget {
+  const MashwarShimmerBox({
+    super.key,
+    this.width,
+    required this.height,
+    this.borderRadius = 10,
+    this.baseColor,
+    this.highlightColor,
+  });
+
+  final double? width;
+  final double height;
+  final double borderRadius;
+  final Color? baseColor;
+  final Color? highlightColor;
+
+  @override
+  State<MashwarShimmerBox> createState() => _MashwarShimmerBoxState();
+}
+
+class _MashwarShimmerBoxState extends State<MashwarShimmerBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1300),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+    final shouldRun = mashwarShouldAnimateContinuous() && !disableAnimations;
+    if (shouldRun && !_controller.isAnimating) {
+      _controller.repeat();
+    } else if (!shouldRun && _controller.isAnimating) {
+      _controller.stop();
+      _controller.value = 0.0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final base = widget.baseColor ?? const Color(0xFFECEFF4);
+    final highlight = widget.highlightColor ?? const Color(0xFFF8FAFC);
+    final radius = BorderRadius.circular(widget.borderRadius);
+    final disableAnimations =
+        MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+    if (!mashwarShouldAnimateContinuous() || disableAnimations) {
+      return Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: base,
+          borderRadius: radius,
+        ),
+      );
+    }
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) {
+        final slide = (_controller.value * 3.0) - 1.0;
+        return Container(
+          width: widget.width,
+          height: widget.height,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: LinearGradient(
+              begin: Alignment(slide - 1.0, -0.2),
+              end: Alignment(slide + 1.0, 0.2),
+              colors: [base, highlight, base],
+              stops: const [0.1, 0.5, 0.9],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Interactive hover + pressable card with zero layout shift across mouse/touch.
+class MashwarHoverCard extends StatefulWidget {
+  const MashwarHoverCard({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.borderRadius = const BorderRadius.all(Radius.circular(18)),
+    this.backgroundColor = Colors.white,
+    this.borderColor = AppColors.borderDisabled,
+    this.hoverBorderColor = AppColors.navy,
+    this.padding = EdgeInsets.zero,
+  });
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final BorderRadius borderRadius;
+  final Color backgroundColor;
+  final Color borderColor;
+  final Color hoverBorderColor;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  State<MashwarHoverCard> createState() => _MashwarHoverCardState();
+}
+
+class _MashwarHoverCardState extends State<MashwarHoverCard> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  void _setHovered(bool hovered) {
+    if (_isHovered == hovered || !mounted) return;
+    setState(() => _isHovered = hovered);
+  }
+
+  void _setPressed(bool pressed) {
+    if (_isPressed == pressed || !mounted) return;
+    setState(() => _isPressed = pressed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final activeHover = _isHovered && widget.onTap != null;
+    final resolvedBorder = activeHover
+        ? widget.hoverBorderColor.withValues(alpha: 0.65)
+        : widget.borderColor;
+
+    return MouseRegion(
+      cursor:
+          widget.onTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => _setHovered(true),
+      onExit: (_) => _setHovered(false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.985 : 1.0,
+        duration: const Duration(milliseconds: 110),
+        curve: Curves.easeOut,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          decoration: BoxDecoration(
+            color: widget.backgroundColor,
+            borderRadius: widget.borderRadius,
+            border: Border.all(color: resolvedBorder, width: 1.1),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.navy.withValues(
+                  alpha: activeHover ? 0.08 : 0.035,
+                ),
+                blurRadius: activeHover ? 18 : 10,
+                offset: Offset(0, activeHover ? 6 : 3),
+              ),
+            ],
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            borderRadius: widget.borderRadius,
+            clipBehavior: Clip.antiAlias,
+            child: widget.onTap == null
+                ? Padding(padding: widget.padding, child: widget.child)
+                : InkWell(
+                    borderRadius: widget.borderRadius,
+                    onTap: widget.onTap,
+                    onTapDown: (_) => _setPressed(true),
+                    onTapUp: (_) => _setPressed(false),
+                    onTapCancel: () => _setPressed(false),
+                    child: Padding(
+                      padding: widget.padding,
+                      child: widget.child,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 6-stage worksite supply progress stepper with distinct banners for
+/// `cancelled` and `disputed` states.
+class MashwarWorksiteStatusStepper extends StatelessWidget {
+  const MashwarWorksiteStatusStepper({
+    super.key,
+    required this.status,
+    required this.isAr,
+    this.compact = false,
+  });
+
+  final WorkRequestStatus status;
+  final bool isAr;
+  final bool compact;
+
+  int _stageIndex(WorkRequestStatus value) {
+    switch (value) {
+      case WorkRequestStatus.open:
+        return 0;
+      case WorkRequestStatus.offerReceived:
+      case WorkRequestStatus.offerSelected:
+        return 1;
+      case WorkRequestStatus.accepted:
+      case WorkRequestStatus.inProgress:
+        return 2;
+      case WorkRequestStatus.pickedUp:
+        return 3;
+      case WorkRequestStatus.inTransit:
+        return 4;
+      case WorkRequestStatus.deliveredPendingConfirmation:
+      case WorkRequestStatus.completed:
+        return 5;
+      case WorkRequestStatus.cancelled:
+      case WorkRequestStatus.disputed:
+        return 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == WorkRequestStatus.cancelled ||
+        status == WorkRequestStatus.disputed) {
+      final isCancelled = status == WorkRequestStatus.cancelled;
+      final accent = isCancelled ? AppColors.danger : AppColors.warning;
+      final bg = isCancelled ? AppColors.dangerBg : AppColors.warningBg;
+      final icon = isCancelled
+          ? Icons.cancel_outlined
+          : Icons.report_problem_outlined;
+      final title = isCancelled
+          ? (isAr ? 'تم إلغاء الطلب' : 'Request Cancelled')
+          : (isAr ? 'الطلب قيد مراجعة النزاع' : 'Request Under Dispute');
+      final subtitle = isCancelled
+          ? (isAr
+              ? 'أُغلق الطلب قبل بدء التوصيل.'
+              : 'Supply order stopped before store pickup.')
+          : (isAr
+              ? 'تم تجميد التسليم لحين مراجعة فريق الدعم.'
+              : 'Completion paused pending support arbitration.');
+
+      return Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 10 : 12,
+          vertical: compact ? 8 : 10,
+        ),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: accent.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: accent, size: compact ? 17 : 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.label(color: AppColors.navy).copyWith(
+                      fontSize: compact ? 11.5 : 12.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (!compact) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodySmall(
+                        color: AppColors.textSecondary,
+                      ).copyWith(fontSize: 11),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final stages = <(String ar, String en)>[
+      ('مفتوح', 'Open'),
+      (
+        status == WorkRequestStatus.offerSelected ? 'ترسية' : 'عروض',
+        status == WorkRequestStatus.offerSelected ? 'Selected' : 'Offers',
+      ),
+      (
+        status == WorkRequestStatus.inProgress ? 'تجهيز' : 'مقبول',
+        status == WorkRequestStatus.inProgress ? 'Preparing' : 'Accepted',
+      ),
+      ('استلام', 'Picked Up'),
+      ('بالطريق', 'In Transit'),
+      (
+        status == WorkRequestStatus.completed ? 'مكتمل' : 'بالموقع',
+        status == WorkRequestStatus.completed ? 'Done' : 'At Site',
+      ),
+    ];
+
+    final activeIdx = _stageIndex(status);
+    final isAllDone = status == WorkRequestStatus.completed;
+    final targetProgress = (activeIdx / (stages.length - 1)).clamp(0.0, 1.0);
+    final dotSize = compact ? 16.0 : 20.0;
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 8 : 11,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.slateBg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.slateBorder),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: dotSize + 4,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: Center(
+                    child: Container(
+                      width: double.infinity,
+                      height: 3.5,
+                      margin: EdgeInsets.symmetric(horizontal: dotSize * 0.5),
+                      decoration: BoxDecoration(
+                        color: AppColors.borderDisabled,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return TweenAnimationBuilder<double>(
+                            tween: Tween<double>(
+                              begin: 0.0,
+                              end: targetProgress,
+                            ),
+                            duration: const Duration(milliseconds: 360),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, value, _) {
+                              return Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: Container(
+                                  width: constraints.maxWidth * value,
+                                  height: 3.5,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.teal,
+                                    borderRadius: BorderRadius.circular(3),
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(stages.length, (i) {
+                    final done = isAllDone ? true : i < activeIdx;
+                    final current = !isAllDone && i == activeIdx;
+
+                    if (current) {
+                      return Container(
+                        width: dotSize,
+                        height: dotSize,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.teal, width: 1.5),
+                        ),
+                        child: Center(
+                          child: MashwarLivePulseDot(
+                            color: AppColors.teal,
+                            size: compact ? 6.5 : 8.0,
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Container(
+                      width: dotSize,
+                      height: dotSize,
+                      decoration: BoxDecoration(
+                        color: done ? AppColors.teal : Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: done ? AppColors.teal : AppColors.slateBorder,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: done
+                          ? Icon(
+                              Icons.check_rounded,
+                              size: compact ? 10 : 12,
+                              color: Colors.white,
+                            )
+                          : null,
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: compact ? 4 : 6),
+          Row(
+            children: List.generate(stages.length, (i) {
+              final isCurrent = !isAllDone && i == activeIdx;
+              final isReached = isAllDone || i <= activeIdx;
+              return Expanded(
+                child: Text(
+                  isAr ? stages[i].$1 : stages[i].$2,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(
+                    color: isCurrent
+                        ? AppColors.navy
+                        : (isReached
+                            ? AppColors.teal
+                            : AppColors.textSecondary),
+                  ).copyWith(
+                    fontSize: compact ? 9.0 : 10.0,
+                    fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Thumbnail card for store invoices, transfer proofs, and site reference photos
+/// with graceful vector fallback and tap-to-zoom preview.
+class MashwarAttachmentThumbnail extends StatelessWidget {
+  const MashwarAttachmentThumbnail({
+    super.key,
+    required this.url,
+    required this.label,
+    this.isInvoice = false,
+    this.onTap,
+  });
+
+  final String url;
+  final String label;
+  final bool isInvoice;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanUrl = url.trim();
+    final accent = isInvoice ? AppColors.escrowGreen : AppColors.navy;
+    final surface = isInvoice ? AppColors.escrowSurface : AppColors.slateBg;
+
+    void handleTap() {
+      if (onTap != null) {
+        onTap!();
+      } else {
+        MashwarImagePreviewDialog.show(
+          context,
+          url: cleanUrl,
+          title: label,
+        );
+      }
+    }
+
+    return MashwarPressable(
+      borderRadius: BorderRadius.circular(14),
+      onTap: handleTap,
+      child: Container(
+        width: 124,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: accent.withValues(alpha: 0.25)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: 76,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _MashwarResolvedAttachmentImage(
+                    url: cleanUrl,
+                    fit: BoxFit.cover,
+                    fallbackBg: surface,
+                    fallbackAccent: accent,
+                    isInvoice: isInvoice,
+                  ),
+                  PositionedDirectional(
+                    top: 6,
+                    end: 6,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.navy.withValues(alpha: 0.72),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.zoom_out_map_rounded,
+                        size: 13,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    isInvoice
+                        ? Icons.receipt_long_rounded
+                        : Icons.photo_library_outlined,
+                    size: 13,
+                    color: accent,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(color: AppColors.navy).copyWith(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Full-screen modal image preview with pinch-to-zoom and graceful fallback.
+class MashwarImagePreviewDialog extends StatelessWidget {
+  const MashwarImagePreviewDialog({
+    super.key,
+    required this.url,
+    required this.title,
+  });
+
+  final String url;
+  final String title;
+
+  static Future<void> show(
+    BuildContext context, {
+    required String url,
+    required String title,
+  }) {
+    return showDialog<void>(
+      context: context,
+      builder: (_) => MashwarImagePreviewDialog(url: url, title: title),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cleanUrl = url.trim();
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      backgroundColor: AppColors.navy,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 580),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.image_outlined,
+                    color: AppColors.gold,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.title(color: Colors.white)
+                          .copyWith(fontSize: 15.5),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFF1F3E5E)),
+            Flexible(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+                child: Container(
+                  color: const Color(0xFF0A1B2C),
+                  constraints: const BoxConstraints(minHeight: 240),
+                  child: InteractiveViewer(
+                    minScale: 0.8,
+                    maxScale: 4.0,
+                    child: Center(
+                      child: _MashwarResolvedAttachmentImage(
+                        url: cleanUrl,
+                        fit: BoxFit.contain,
+                        fallbackBg: const Color(0xFF102A43),
+                        fallbackAccent: AppColors.gold,
+                        isInvoice: false,
+                        largeFallback: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MashwarResolvedAttachmentImage extends StatelessWidget {
+  const _MashwarResolvedAttachmentImage({
+    required this.url,
+    required this.fit,
+    required this.fallbackBg,
+    required this.fallbackAccent,
+    required this.isInvoice,
+    this.largeFallback = false,
+  });
+
+  final String url;
+  final BoxFit fit;
+  final Color fallbackBg;
+  final Color fallbackAccent;
+  final bool isInvoice;
+  final bool largeFallback;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget buildFallback() {
+      return Container(
+        color: fallbackBg,
+        padding: EdgeInsets.all(largeFallback ? 24 : 8),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isInvoice
+                    ? Icons.receipt_long_rounded
+                    : Icons.image_search_rounded,
+                size: largeFallback ? 52 : 28,
+                color: fallbackAccent,
+              ),
+              if (largeFallback && url.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  url,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.bodySmall(
+                    color: Colors.white.withValues(alpha: 0.78),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (url.isEmpty) return buildFallback();
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return Image.network(
+        url,
+        fit: fit,
+        errorBuilder: (_, __, ___) => buildFallback(),
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: fallbackBg,
+            child: const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: fit,
+        errorBuilder: (_, __, ___) => buildFallback(),
+      );
+    }
+
+    return buildFallback();
+  }
 }
