@@ -4,23 +4,22 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary Brand Colors (Original MASHWAR Luxury Palette: Navy, Gold, Teal, Warm Sand)
+  // Primary Brand Colors (Keep navy, gold, teal, sand exact hexes for widget tests)
   static const Color navy = Color(0xFF0F2A43); // كحلي ليلي (أساسي)
-  static const Color navySurface = Color(0xFFEDF2F7); // خلفية كحلية ناعمة
   static const Color gold = Color(0xFFF5A524); // ذهبي (تمييز)
-  static const Color goldDeep = Color(0xFFB26A00); // ذهبي داكن لتباين نصوص AA
+  static const Color goldDark = Color(0xFFB26A00); // ذهبي داكن مقروء للنصوص والحدود
   static const Color teal = Color(0xFF1B7F79); // فيروزي (نجاح)
-  static const Color sand = Color(0xFFFAF7F0); // رملي دافئ (براند)
-  static const Color warmBorder = Color(0xFFE7E1D6); // حدود رملية راقية
+  static const Color tealDark = Color(0xFF135E59); // فيروزي داكن
+  static const Color sand = Color(0xFFFAF7F0); // رملي (براند)
   static const Color surfaceLight = Color(0xFFF8F9FA); // سطح محايد ناعم وعصري
 
-  // 3-Service Pillar Tokens mapped to Original MASHWAR Palette (Navy · Warm Gold · Teal)
-  static const Color cobalt = Color(0xFF0F2A43); // Mapped to signature MASHWAR Navy
-  static const Color cobaltSurface = Color(0xFFEDF2F7); // Soft Navy surface
-  static const Color indigo = Color(0xFFB26A00); // Mapped to warm MASHWAR Amber/Gold
-  static const Color indigoSurface = Color(0xFFFCF3E6); // Warm Gold surface
-  static const Color emerald = Color(0xFF1B7F79); // Mapped to signature MASHWAR Teal
-  static const Color emeraldSurface = Color(0xFFE8F5F3); // Soft Teal surface
+  // Classic MASHWAR 3-Service Pillar Tokens (Mapped to Navy, Warm Gold & Teal)
+  static const Color cobalt = Color(0xFF0F2A43);
+  static const Color cobaltSurface = Color(0xFFEAF1F8);
+  static const Color indigo = Color(0xFFB26A00);
+  static const Color indigoSurface = Color(0xFFFCF3E6);
+  static const Color emerald = Color(0xFF1B7F79);
+  static const Color emeraldSurface = Color(0xFFE8F5F3);
 
   // Legacy Regional & Trust Tokens (kept for backward compatibility)
   static const Color qatarMaroon = Color(0xFF8A1538); // العنابي القطري (الأدعم)

@@ -131,15 +131,15 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-          // Radial vignette with Cobalt & Navy depth
+          // Radial vignette with Teal & Navy depth
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
                 radius: 1.0,
                 colors: [
-                  AppColors.cobalt.withValues(alpha: 0.22),
-                  AppColors.navy.withValues(alpha: 0.95),
+                  AppColors.teal.withValues(alpha: 0.24),
+                  AppColors.navy.withValues(alpha: 0.96),
                 ],
               ),
             ),
@@ -158,20 +158,20 @@ class _SplashScreenState extends State<SplashScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Spacer(),
-                        // International Brand Halo + Logo
+                        // Official MASHWAR Brand Halo + Logo
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 30, vertical: 22),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.07),
+                            color: Colors.white.withValues(alpha: 0.06),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: AppColors.cobalt.withValues(alpha: 0.45),
+                              color: AppColors.gold.withValues(alpha: 0.45),
                               width: 1.2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.cobalt.withValues(alpha: 0.22),
+                                color: AppColors.teal.withValues(alpha: 0.22),
                                 blurRadius: 36,
                                 spreadRadius: 2,
                               ),
@@ -216,17 +216,17 @@ class _SplashScreenState extends State<SplashScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.cobalt.withValues(alpha: 0.20),
+                            color: Colors.white.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                                 color:
-                                    AppColors.emerald.withValues(alpha: 0.45)),
+                                    AppColors.gold.withValues(alpha: 0.45)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const MashwarLivePulseDot(
-                                  color: AppColors.emerald, size: 7),
+                                  color: AppColors.gold, size: 7),
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
@@ -254,7 +254,7 @@ class _SplashScreenState extends State<SplashScreen> {
                               minHeight: 4,
                               backgroundColor: Color(0xFF1E3A5F),
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.emerald),
+                                  AppColors.gold),
                             ),
                           ),
                         ),
@@ -264,7 +264,7 @@ class _SplashScreenState extends State<SplashScreen> {
                               ? 'جاري تجهيز تجربة مشوار...'
                               : 'Preparing your MASHWAR workspace...',
                           style: AppTypography.bodySmall(
-                                  color: const Color(0xFF93C5FD))
+                                  color: AppColors.sand)
                               .copyWith(
                             fontWeight: FontWeight.w700,
                           ),

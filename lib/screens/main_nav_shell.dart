@@ -165,7 +165,7 @@ class _MainNavShellState extends State<MainNavShell> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
             decoration: BoxDecoration(
-              color: AppColors.cobalt,
+              color: AppColors.qatarMaroon,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.white, width: 1.2),
             ),
@@ -199,12 +199,14 @@ class _MainNavShellState extends State<MainNavShell> {
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: active ? AppColors.cobaltSurface : Colors.transparent,
+        color: active
+            ? AppColors.navy.withValues(alpha: 0.11)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
       ),
       child: _buildIconWithBadge(
         icon,
-        color: active ? AppColors.cobalt : const Color(0xFF64748B),
+        color: active ? AppColors.navy : const Color(0xFF64748B),
         badgeCount: badgeCount,
       ),
     );

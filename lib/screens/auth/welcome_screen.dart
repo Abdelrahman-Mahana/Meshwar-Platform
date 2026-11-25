@@ -31,7 +31,7 @@ class WelcomeScreen extends StatelessWidget {
     final isAr = settings.isArabic;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFAF8F4),
+      backgroundColor: AppColors.slateBg,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -107,103 +107,104 @@ class WelcomeScreen extends StatelessWidget {
   }
 
   Widget _buildShowcasePanel(bool isAr) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        const MashwarAssetArt(
-          assetPath: 'assets/images/home_hero_mobility.jpg',
-          fit: BoxFit.cover,
-          fallbackIcon: Icons.route_rounded,
-          fallbackBg: AppColors.navy,
-          fallbackColor: AppColors.gold,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.navy,
+            Color(0xFF13334F),
+            Color(0xFF0A1D30),
+          ],
         ),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.navy.withValues(alpha: 0.90),
-                AppColors.navy.withValues(alpha: 0.80),
-                const Color(0xFF0A1D2F).withValues(alpha: 0.92),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const BrandLogo(fontSize: 30, isLight: true),
+            const SizedBox(height: 20),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: const MashwarAssetArt(
+                  assetPath: 'assets/images/hero_banner.jpg',
+                  fit: BoxFit.cover,
+                  fallbackIcon: Icons.route_rounded,
+                  fallbackBg: AppColors.navy,
+                  fallbackColor: AppColors.gold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: AppColors.gold.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: AppColors.gold.withValues(alpha: 0.45),
+                ),
+              ),
+              child: Text(
+                isAr
+                    ? 'منصة مشوار المتكاملة · 3 خدمات في تطبيق واحد'
+                    : 'Shared Trips · Route Parcels · Smart Supply',
+                style: AppTypography.label(color: AppColors.gold)
+                    .copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              isAr
+                  ? 'شارك مقاعد رحلتك، أرسل طرداً على الطريق، أو اطلب توريد احتياجاتك بسهولة وأمان'
+                  : 'Share Empty Seats, Send Parcels Along Active Routes, & Coordinate Smart Supply',
+              style:
+                  AppTypography.title(color: Colors.white).copyWith(fontSize: 21),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              isAr
+                  ? 'منصة حديثة تربط المسافرين وأصحاب الطلبات والمزودين المعتمدين مباشرة مع توثيق الفاتورة ورموز الأمان OTP.'
+                  : 'Connect directly with verified travelers and trusted supply providers with transparent pricing, receipt proof, and OTP handover.',
+              style: AppTypography.bodySecondary(
+                color: Colors.white.withValues(alpha: 0.86),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildServiceShowcaseChip(
+                  MashwarServicePillar.sharedTrips,
+                  isAr ? 'رحلات ومقاعد' : 'Shared Trips',
+                ),
+                _buildServiceShowcaseChip(
+                  MashwarServicePillar.routeParcels,
+                  isAr ? 'طرود على الطريق' : 'Route Parcels',
+                ),
+                _buildServiceShowcaseChip(
+                  MashwarServicePillar.smartSupply,
+                  isAr ? 'توريد ومهام' : 'Smart Supply',
+                ),
               ],
             ),
-          ),
+            const SizedBox(height: 20),
+            MashwarThreeStepsBanner(isAr: isAr, compact: true),
+            const SizedBox(height: 16),
+            Text(
+              AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
+              style: AppTypography.bodySmall(
+                color: Colors.white.withValues(alpha: 0.76),
+              ),
+            ),
+          ],
         ),
-        SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const BrandLogo(fontSize: 30, isLight: true),
-              const SizedBox(height: 30),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.60),
-                  ),
-                ),
-                child: Text(
-                  isAr
-                      ? 'منصة مشوار المتكاملة · 3 خدمات في تطبيق واحد'
-                      : 'Shared Trips · Route Parcels · Smart Supply',
-                  style: AppTypography.label(color: Colors.white)
-                      .copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                isAr
-                    ? 'شارك مقاعد رحلتك، أرسل طرداً على الطريق، أو اطلب توريد احتياجاتك بسهولة وأمان'
-                    : 'Share Empty Seats, Send Parcels Along Active Routes, & Coordinate Smart Supply',
-                style: AppTypography.title(color: Colors.white)
-                    .copyWith(fontSize: 22),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                isAr
-                    ? 'منصة حديثة تربط المسافرين وأصحاب الطلبات والمزودين المعتمدين مباشرة مع توثيق الفاتورة ورموز الأمان OTP.'
-                    : 'Connect directly with verified travelers and trusted supply providers with transparent pricing, receipt proof, and OTP handover.',
-                style: AppTypography.bodySecondary(
-                  color: Colors.white.withValues(alpha: 0.86),
-                ),
-              ),
-              const SizedBox(height: 22),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _buildServiceShowcaseChip(
-                    MashwarServicePillar.sharedTrips,
-                    isAr ? 'رحلات ومقاعد' : 'Shared Trips',
-                  ),
-                  _buildServiceShowcaseChip(
-                    MashwarServicePillar.routeParcels,
-                    isAr ? 'طرود على الطريق' : 'Route Parcels',
-                  ),
-                  _buildServiceShowcaseChip(
-                    MashwarServicePillar.smartSupply,
-                    isAr ? 'توريد ومهام' : 'Smart Supply',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              MashwarThreeStepsBanner(isAr: isAr, compact: true),
-              const SizedBox(height: 20),
-              Text(
-                AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
-                style: AppTypography.bodySmall(
-                  color: Colors.white.withValues(alpha: 0.76),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -279,11 +280,11 @@ class WelcomeScreen extends StatelessWidget {
                 children: [
                   const Positioned.fill(
                     child: MashwarAssetArt(
-                      assetPath: 'assets/images/home_hero_mobility.jpg',
+                      assetPath: 'assets/images/service_ride.jpg',
                       fit: BoxFit.cover,
                       fallbackIcon: Icons.route_rounded,
                       fallbackBg: AppColors.navy,
-                      fallbackColor: AppColors.gold,
+                      fallbackColor: AppColors.cobalt,
                     ),
                   ),
                   Positioned.fill(

@@ -782,13 +782,13 @@ class MashwarThreeStepsBanner extends StatelessWidget {
         title: isAr ? 'حدّد وجهتك أو طلبك' : 'Post Your Route or Request',
         icon: Icons.route_rounded,
         accent: AppColors.navy,
-        surface: AppColors.navySurface,
+        surface: AppColors.sand,
       ),
       (
         numLabel: '2',
         title: isAr ? 'تواصل واختر الأنسب' : 'Match & Connect Directly',
         icon: Icons.handshake_outlined,
-        accent: AppColors.goldDeep,
+        accent: AppColors.goldDark,
         surface: AppColors.goldSurface,
       ),
       (
@@ -802,13 +802,13 @@ class MashwarThreeStepsBanner extends StatelessWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 16,
-        vertical: compact ? 10 : 14,
+        horizontal: compact ? 10 : 14,
+        vertical: compact ? 10 : 12,
       ),
       decoration: BoxDecoration(
         color: AppColors.sand,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.warmBorder),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.32)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1041,21 +1041,21 @@ class MashwarWizardStepHeader extends StatelessWidget {
     required bool isActive,
   }) {
     final bgColor = isActive
-        ? AppColors.goldSurface
-        : (isDone ? AppColors.tealSurface : Colors.white);
+        ? AppColors.cobaltSurface
+        : (isDone ? AppColors.emeraldSurface : Colors.white);
     final borderColor = isActive
-        ? AppColors.gold
+        ? AppColors.cobalt.withValues(alpha: 0.45)
         : (isDone
-            ? AppColors.teal.withValues(alpha: 0.35)
-            : AppColors.warmBorder);
+            ? AppColors.emerald.withValues(alpha: 0.35)
+            : AppColors.slateBorder);
     final badgeBg = isActive
-        ? AppColors.navy
-        : (isDone ? AppColors.teal : AppColors.sand);
+        ? AppColors.cobalt
+        : (isDone ? AppColors.emerald : AppColors.slateBg);
     final badgeFg =
         (isActive || isDone) ? Colors.white : AppColors.textSecondary;
     final textColor = isActive
         ? AppColors.navy
-        : (isDone ? AppColors.teal : AppColors.textSecondary);
+        : (isDone ? AppColors.emerald : AppColors.textSecondary);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
