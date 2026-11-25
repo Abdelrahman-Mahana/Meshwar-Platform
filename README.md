@@ -79,7 +79,7 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 ├── firestore.rules              # 2,552-line AST-optimized ruleset (Collections 1–19 + MVP Collections 20–29)
 ├── firestore.indexes.json       # 14 composite indexes (incl. Worksite Supply queries)
 ├── storage.rules                # Private KYC & participant-scoped invoice/proof image rules (<=10 MB)
-├── scripts/                     # Automation (provision_firebase_auth.ps1, run_emulators_tests.ps1, fetch_firebase_configs.ps1, generate_upload_keystore.ps1)
+├── scripts/                     # Automation (provision_firebase_auth.ps1, seed_demo_all_cases.ps1/.mjs, run_emulators_tests.ps1, fetch_firebase_configs.ps1, generate_upload_keystore.ps1)
 ├── functions/                   # Firebase Cloud Functions v2 (TypeScript, europe-west1)
 │   ├── src/
 │   │   ├── types.ts             # Domain types, DTOs & error codes
@@ -94,8 +94,9 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 ├── lib/
 │   ├── core/config/             # AppEnvironment, AppFlavor, feature flags & legal disclaimers
 │   ├── data/
+│   │   ├── demo/                # MashwarDemoCasesCatalog (14 Qatar worksite cases, 11 statuses, 8 providers, 5 handover codes)
 │   │   ├── models/              # worksite_models.dart (MoneyMinor, WorkRequest, WorkOffer, etc.), user_model.dart
-│   │   ├── repositories/        # Contracts + Firebase (+974 Phone & Email Auth) & dev-gated local implementations
+│   │   ├── repositories/        # Contracts + Firebase (+974 Phone, Email Auth, Spark-safe Firestore fallbacks) & dev-gated local implementations
 │   │   └── services/            # firebase_firestore_service.dart (Callable HTTP v2), media_upload_service.dart (Storage), google_maps_service.dart
 │   ├── state/                   # WorksiteProvider, AuthProvider, AdminProvider, SettingsProvider
 │   ├── screens/                 # Customer Worksite Supply flows, Auth, Safety (url_launcher), Legal (PDPL), Admin Portal (Module 13)
@@ -125,20 +126,36 @@ Push-Location functions; npm install; Pop-Location
 # Idempotently provision Firebase Auth (Email/Password) and localhost/127.0.0.1 authorizedDomains
 powershell -ExecutionPolicy Bypass -File scripts/provision_firebase_auth.ps1
 
+# Seed live Firestore demo cases across all 11 WorkRequestStatus values, grant superAdmin claim to QB0hyc4BVZTkr91EC9KUd2EFbCw1, and verify readback
+powershell -ExecutionPolicy Bypass -File scripts/seed_demo_all_cases.ps1 -DeployRulesAndIndexes
+powershell -ExecutionPolicy Bypass -File scripts/seed_demo_all_cases.ps1 -VerifyOnly
+
 # Optional (for native Android/iOS builds): fetch gitignored google-services.json & GoogleService-Info.plist
 # and generate gitignored android/upload-keystore.jks + android/key.properties
 powershell -ExecutionPolicy Bypass -File scripts/fetch_firebase_configs.ps1
 powershell -ExecutionPolicy Bypass -File scripts/generate_upload_keystore.ps1
 ```
 
-### 2. Run Customer App
+### 2. Run Customer App & All-Cases Demo Showcase
 ```powershell
 # Default: connects directly to Firebase project mashwar-qatar-2026-ec99d
+# In development builds, HomeScreen displays a compact "Load All Demo Cases (14)" toggle (WorksiteProvider.activateDemoShowcase)
 flutter run -d chrome
 
 # Explicit local development with dev mock data (APP_ENV=development & USE_FIREBASE=false)
 flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
 ```
+
+#### Demo Dataset, Admin Claim & Deterministic Handover Test Codes
+- **Primary Seeded Auth & Admin Account:** UID `QB0hyc4BVZTkr91EC9KUd2EFbCw1` (`abdelrahmanmahana01@gmail.com`) provisioned with Firebase Auth custom claim `{ "admin": true, "role": "superAdmin" }`, active `admin_staff/QB0hyc4BVZTkr91EC9KUd2EFbCw1`, and an approved `provider_profiles` entry (`MashwarDemoCasesCatalog`).
+- **All-Cases Demo Coverage (`lib/data/demo/demo_cases_catalog.dart`):** 14 Qatar worksite supply requests covering all **11** `WorkRequestStatus` values, all **7+** Qatar municipalities/hubs, both `PaymentMethod`s (`cash_on_delivery`, `bank_transfer_manual`), all **4** `PaymentSettlementStatus` values, 8 providers across all **4** `ProviderApprovalStatus` values, 3 `SavedWorksite`s, 3 competing offers on `demo_wr_03_offers_mine` (13 live `work_offers` seeded across active/completed/disputed requests), timelines, ratings, bilingual notifications, Qatar `investor_inquiries`, and `admin_audit_logs` (`99 / 99` documents verified in live Firestore).
+- **Spark-Safe Behavior:** `FirebaseWorksiteRepository` executes client-permitted Firestore operations directly when Cloud Functions v2 return `not-found`/`unavailable` on Spark, while throwing clear bilingual `WorksiteRepositoryException`s for Blaze/Admin-SDK gated actions (`acceptWorkOffer`, `verifyHandoverAndComplete`, `submitOffer` `offerCount` update, `verified_settled`).
+- **6-Char Handover Verification Test Codes (Salted SHA-256):**
+  - `demo_wr_06_accepted`: `K7M4P9`
+  - `demo_wr_07_in_prog`: `Q9R3W8`
+  - `demo_wr_08_picked_up`: `M4N8X2`
+  - `demo_wr_09_transit`: `H6P2V5`
+  - `demo_wr_10_deliv_pend`: `T5K9B3` *(assigned to `QB0hyc4BVZTkr91EC9KUd2EFbCw1` as provider so you can verify `delivered_pending_confirmation -> completed`)*
 
 ### 3. Run Admin Operations Portal (`Module 13: Worksite Supply Ops`)
 ```powershell

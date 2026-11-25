@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/config/app_environment.dart';
+import '../../demo/demo_cases_catalog.dart';
 import '../../models/worksite_models.dart';
 import '../../services/firebase_firestore_service.dart';
 import '../contracts/i_provider_repository.dart';
@@ -450,6 +451,68 @@ class WorksiteRepositoryImpl implements IWorksiteRepository {
         createdAt: t3,
       ),
     ];
+  }
+
+  /// Seeds the full "ALL cases" bilingual Qatar demo catalog (14 requests across all
+  /// 11 statuses, 5 offers, 5 handover verification codes, rich timelines, and ratings)
+  /// while keeping the default 3-item [_seedPilotRequests] intact.
+  void seedAllDemoCases({
+    required String currentUserId,
+    String? currentUserName,
+    DateTime? now,
+  }) {
+    _requireDevMockMode();
+    final effectiveNow = (now ?? _now()).toUtc();
+    final bundle = MashwarDemoCasesCatalog.build(
+      currentUserId: currentUserId,
+      currentUserName:
+          currentUserName ?? MashwarDemoCasesCatalog.defaultOwnerName,
+      now: effectiveNow,
+    );
+
+    final provRepo = _providerRepo;
+    if (provRepo is ProviderRepositoryImpl) {
+      provRepo.seedAllDemoProviders(
+        currentUserId: bundle.currentUserId,
+        currentUserName: bundle.currentUserName,
+        now: effectiveNow,
+      );
+    }
+
+    for (final req in bundle.requests) {
+      _requests[req.id] = req;
+    }
+    for (final entry in bundle.offersByRequest.entries) {
+      _offersByRequest[entry.key] = List<WorkOffer>.from(entry.value);
+    }
+    for (final entry in bundle.eventsByRequest.entries) {
+      _eventsByRequest[entry.key] = List<RequestEvent>.from(entry.value);
+    }
+    for (final entry in bundle.handoverCodesByRequest.entries) {
+      final req = _requests[entry.key];
+      if (req == null) continue;
+      final salt = WorksiteHandoverCrypto.generateSalt(_random);
+      final hash = WorksiteHandoverCrypto.hashCodeWithSalt(entry.value, salt);
+      final expiresAt = effectiveNow.add(WorksiteHandoverCrypto.handoverTtl);
+      _secretsByRequest[entry.key] = _HandoverSecretRecord(
+        requestId: entry.key,
+        codeHash: hash,
+        codeSalt: salt,
+        expiresAtUtc: expiresAt,
+        attemptsRemaining: WorksiteHandoverCrypto.maxAttempts,
+        maxAttempts: WorksiteHandoverCrypto.maxAttempts,
+        usedAtUtc: null,
+      );
+      _handoverViewsByRequest[entry.key] = _HandoverViewRecord(
+        requestId: entry.key,
+        requesterId: req.requesterId,
+        handoverCode: entry.value,
+        expiresAtUtc: expiresAt,
+      );
+    }
+    for (final rating in bundle.ratings) {
+      _ratingsById[rating.id] = rating;
+    }
   }
 
   Future<bool> _isProviderApproved(String uid) async {

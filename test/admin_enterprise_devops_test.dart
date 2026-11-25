@@ -607,6 +607,7 @@ void main() {
       final adminProvider = AdminProvider.forTesting();
       final settingsProvider = SettingsProvider()..setLocale(const Locale('en', 'US'));
       final initialLogs = adminProvider.auditLogs.length;
+      final initialPending = adminProvider.pendingVerificationsCount;
 
       await tester.pumpWidget(
         MultiProvider(
@@ -638,7 +639,7 @@ void main() {
 
       expect(adminProvider.auditLogs.length, initialLogs + 1);
       expect(adminProvider.auditLogs.first.action, 'provider_review');
-      expect(adminProvider.pendingVerificationsCount, 1);
+      expect(adminProvider.pendingVerificationsCount, initialPending - 1);
 
       // Switch to Tab B (Requests & Payments) and Tab C (Privileged Audit Trail)
       final tabB = find.textContaining('Requests & Payments');

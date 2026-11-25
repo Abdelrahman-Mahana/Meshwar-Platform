@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../data/demo/demo_cases_catalog.dart';
 import '../data/models/worksite_models.dart';
 import '../data/repositories/app_repositories.dart';
 import '../data/repositories/contracts/i_provider_repository.dart';
@@ -130,6 +131,8 @@ class WorksiteProvider extends ChangeNotifier {
   ProviderProfile? _providerProfile;
   List<SavedWorksite> _savedWorksites = const [];
   final Map<String, String> _reorderedFromMap = {};
+  bool _isDemoShowcaseMode = false;
+  MashwarDemoCasesBundle? _showcaseBundle;
 
   WorksiteProvider({
     IWorksiteRepository? worksiteRepository,
@@ -198,9 +201,83 @@ class WorksiteProvider extends ChangeNotifier {
   ProviderProfile? get providerProfile => _providerProfile;
   bool get isApprovedProvider => _providerProfile?.canAcceptWorksiteJobs ?? false;
   List<SavedWorksite> get savedWorksites => List.unmodifiable(_savedWorksites);
+  bool get isDemoShowcaseMode => _isDemoShowcaseMode;
 
   /// Returns the source request ID if [requestId] was created via Quick Reorder in this session.
   String? sourceRequestIdFor(String requestId) => _reorderedFromMap[requestId];
+
+  /// Loads the full bilingual 14-case Qatar demo showcase into active provider state,
+  /// enabling end-to-end UI inspection even when connected to live Firebase.
+  Future<void> activateDemoShowcase() async {
+    final uid = currentUserId ?? MashwarDemoCasesCatalog.defaultOwnerUid;
+    final name = currentUserName.isNotEmpty
+        ? currentUserName
+        : MashwarDemoCasesCatalog.defaultOwnerName;
+    final bundle = MashwarDemoCasesCatalog.build(
+      currentUserId: uid,
+      currentUserName: name,
+    );
+
+    _showcaseBundle = bundle;
+    _isDemoShowcaseMode = true;
+    _clearErrorSilently();
+    _allLoadedRequests = List<WorkRequest>.from(bundle.requests)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _savedWorksites = bundle.savedWorksites;
+    _providerProfile = bundle.providerProfileFor(uid) ?? _providerProfile;
+    _recomputeFilteredRequests();
+
+    final selectedId = _selectedRequest?.id;
+    if (selectedId != null) {
+      final demoSelected = bundle.requestById(selectedId);
+      if (demoSelected != null) {
+        _selectedRequest = demoSelected;
+        _selectedOffers =
+            List.unmodifiable(bundle.offersByRequest[selectedId] ?? const []);
+        _selectedEvents =
+            List.unmodifiable(bundle.eventsByRequest[selectedId] ?? const []);
+        _activeHandoverCode = (uid == demoSelected.requesterId &&
+                _handoverVisibleStatuses.contains(demoSelected.status))
+            ? bundle.handoverCodesByRequest[selectedId]
+            : null;
+      } else {
+        _selectedRequest = null;
+        _selectedOffers = const [];
+        _selectedEvents = const [];
+        _activeHandoverCode = null;
+      }
+    }
+    notifyListeners();
+  }
+
+  /// Exits the local 14-case showcase overlay and restores normal repository reads.
+  Future<void> exitDemoShowcase() async {
+    _isDemoShowcaseMode = false;
+    _showcaseBundle = null;
+    _selectedRequest = null;
+    _selectedOffers = const [];
+    _selectedEvents = const [];
+    _activeHandoverCode = null;
+    await loadRequests(limit: _lastLimit);
+    final uid = currentUserId;
+    if (uid != null && uid.isNotEmpty) {
+      try {
+        _savedWorksites = await _providerRepo.listSavedWorksites(uid);
+      } catch (_) {
+        _savedWorksites = const [];
+      }
+      try {
+        _providerProfile = await _providerRepo.getProviderProfile(uid);
+      } catch (_) {
+        _providerProfile = null;
+      }
+      notifyListeners();
+    } else {
+      _savedWorksites = const [];
+      _providerProfile = null;
+      notifyListeners();
+    }
+  }
 
   /// Syncs active Firebase/App auth user identity from [AuthProvider] without retaining stale session state.
   void syncAuthSession({
@@ -217,6 +294,8 @@ class WorksiteProvider extends ChangeNotifier {
 
     if (previousUid != normalizedNext) {
       _activeHandoverCode = null;
+      _isDemoShowcaseMode = false;
+      _showcaseBundle = null;
       if (normalizedNext == null) {
         _providerProfile = null;
         _savedWorksites = const [];
@@ -291,6 +370,12 @@ class WorksiteProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_isDemoShowcaseMode && _showcaseBundle != null) {
+        _allLoadedRequests = List<WorkRequest>.from(_showcaseBundle!.requests)
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        _recomputeFilteredRequests();
+        return;
+      }
       final uid = currentUserId;
       final fetched = await _worksiteRepo.listRequests(
         status: _filterStatus,
@@ -409,6 +494,27 @@ class WorksiteProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_isDemoShowcaseMode && _showcaseBundle != null) {
+        final demoReq = _showcaseBundle!.requestById(requestId);
+        if (demoReq != null) {
+          final uid = currentUserId;
+          _selectedRequest = demoReq;
+          _selectedOffers = List.unmodifiable(
+            _showcaseBundle!.offersByRequest[requestId] ?? const [],
+          );
+          _selectedEvents = List.unmodifiable(
+            _showcaseBundle!.eventsByRequest[requestId] ?? const [],
+          );
+          _activeHandoverCode = (uid != null &&
+                  uid == demoReq.requesterId &&
+                  _handoverVisibleStatuses.contains(demoReq.status))
+              ? _showcaseBundle!.handoverCodesByRequest[requestId]
+              : null;
+          _upsertRequestInCache(demoReq);
+          return;
+        }
+      }
+
       final request = await _worksiteRepo.getRequestById(requestId);
       if (request == null) {
         throw const WorksiteRepositoryException(
@@ -856,6 +962,13 @@ class WorksiteProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_isDemoShowcaseMode && _showcaseBundle != null) {
+        final demoProfile = _showcaseBundle!.providerProfileFor(uid);
+        if (demoProfile != null) {
+          _providerProfile = demoProfile;
+          return demoProfile;
+        }
+      }
       final profile = await _providerRepo.getProviderProfile(uid);
       _providerProfile = profile;
       return profile;
@@ -931,6 +1044,12 @@ class WorksiteProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (_isDemoShowcaseMode &&
+          _showcaseBundle != null &&
+          uid.trim() == _showcaseBundle!.currentUserId) {
+        _savedWorksites = _showcaseBundle!.savedWorksites;
+        return _savedWorksites;
+      }
       final sites = await _providerRepo.listSavedWorksites(uid);
       _savedWorksites = sites;
       return sites;

@@ -1,4 +1,5 @@
 import '../../../core/config/app_environment.dart';
+import '../../demo/demo_cases_catalog.dart';
 import '../../models/worksite_models.dart';
 import '../../services/firebase_firestore_service.dart';
 import '../contracts/i_provider_repository.dart';
@@ -148,6 +149,59 @@ class ProviderRepositoryImpl implements IProviderRepository {
         updatedAt: seedTime,
       ),
     ];
+  }
+
+  /// Seeds the full "ALL cases" bilingual Qatar demo providers and saved worksites
+  /// while leaving the default 3-item [_seedPilotProviders] setup untouched.
+  void seedAllDemoProviders({
+    required String currentUserId,
+    String? currentUserName,
+    DateTime? now,
+  }) {
+    _requireDevMockMode();
+    final bundle = MashwarDemoCasesCatalog.build(
+      currentUserId: currentUserId,
+      currentUserName: currentUserName ?? MashwarDemoCasesCatalog.defaultOwnerName,
+      now: now,
+    );
+
+    for (final rec in bundle.providers) {
+      final p = rec.profile;
+      _profiles[p.userId] = p;
+      if (rec.hasVerificationRecord) {
+        _verifications[p.userId] = {
+          'id': p.userId,
+          'providerId': p.userId,
+          'fullName': p.fullName,
+          if (p.qidNumber != null) 'qidNumber': p.qidNumber,
+          if (p.qidFrontUrl != null) 'qidFrontUrl': p.qidFrontUrl,
+          if (p.qidBackUrl != null) 'qidBackUrl': p.qidBackUrl,
+          if (p.selfieUrl != null) 'selfieUrl': p.selfieUrl,
+          if (rec.vehicleLicenseUrl != null)
+            'vehicleLicenseUrl': rec.vehicleLicenseUrl,
+          'status': p.approvalStatus == ProviderApprovalStatus.suspended
+              ? 'approved'
+              : p.approvalStatus.value,
+          if (rec.reviewedBy != null) 'reviewedBy': rec.reviewedBy,
+          if (rec.reviewedAtUtc != null)
+            'reviewedAtUtc': rec.reviewedAtUtc!.toIso8601String(),
+          if (p.rejectionReason != null) 'rejectionReason': p.rejectionReason,
+        };
+      }
+    }
+
+    final existingSites = List<SavedWorksite>.from(
+      _savedWorksitesByOwner[bundle.currentUserId] ?? const [],
+    );
+    for (final site in bundle.savedWorksites) {
+      final idx = existingSites.indexWhere((s) => s.id == site.id);
+      if (idx >= 0) {
+        existingSites[idx] = site;
+      } else {
+        existingSites.add(site);
+      }
+    }
+    _savedWorksitesByOwner[bundle.currentUserId] = existingSites;
   }
 
   /// Internal helper used by [WorksiteRepositoryImpl] to verify approved-provider status.

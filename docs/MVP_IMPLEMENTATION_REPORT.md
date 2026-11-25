@@ -54,6 +54,13 @@ Across Waves 0–6 on `feat/mvp-worksite-supply`, the repository was re-engineer
 - **Wave 6 — Live Firebase Auth Provisioning, Error Mapping & Cross-Screen Error Clearing:**
   - Configured `"auth": { "providers": { "emailPassword": true } }` in `firebase.json` and added idempotent `scripts/provision_firebase_auth.ps1` (`firebase deploy --only auth`, Identity Toolkit config verification/patch, and `127.0.0.1` / `localhost` `authorizedDomains` provisioning verified live with HTTP `200`).
   - Hardened `FirebaseAuthRepository.mapFirebaseAuthException` for `configuration-not-found`, `CONFIGURATION_NOT_FOUND` inner messages, and `unauthorized-domain` (`suggestEmailFallback: false`) and cleared stale `AuthProvider` errors on screen transitions and input edits across `WelcomeScreen`, `PhoneInputScreen`, `OtpVerificationScreen`, and `EmailInputScreen`.
+- **Wave 7 — All-Cases Demo Dataset, In-App Showcase Toggle, Spark-Safe Fallbacks, Admin Auto-Sync & Live Firestore Seeding:**
+  - Authored `MashwarDemoCasesCatalog` (`lib/data/demo/demo_cases_catalog.dart`) covering 14 Qatar worksite supply requests across ALL **11** `WorkRequestStatus` values, ALL **7+** Qatar municipalities/hubs, BOTH `PaymentMethod`s, ALL **4** `PaymentSettlementStatus` values, 8 Qatar provider profiles across ALL **4** `ProviderApprovalStatus` values (including an approved profile for `QB0hyc4BVZTkr91EC9KUd2EFbCw1`), 3 `SavedWorksite`s, 3 competing offers on `demo_wr_03_offers_mine`, timelines, ratings, bilingual notifications, Qatar `investor_inquiries`, `admin_audit_logs`, and 5 deterministic 6-character handover codes (`K7M4P9`, `Q9R3W8`, `M4N8X2`, `H6P2V5`, `T5K9B3`, salted SHA-256 matching `functions/src/handoverCrypto.ts`).
+  - Added `WorksiteProvider.activateDemoShowcase()` / `exitDemoShowcase()` / `isDemoShowcaseMode` and `HomeScreen` `home_demo_all_cases_btn` (dev-mode banner only, keeping `WorksiteRepositoryImpl(seedSampleData: true)` at its default 3 pilot requests).
+  - Implemented Spark-safe direct Firestore fallbacks in `FirebaseWorksiteRepository` (gated strictly to `_FirestoreWorksiteStore` / `SparkWorksiteWriteGateway` on `not-found`/`unavailable` from undeployed Cloud Functions v2, preserving `withDeps` tests) for client-allowed mutations (`createRequest` with string locations and nulled initial fields, `submitOffer`, `withdrawOffer`, requester `cancel`, `submitPaymentTransferProof`, assigned provider stage progression + `invoiceImageUrls`, `reportDispute`, `request_events`, `submitRating`, `markNotificationRead`) while surfacing clear bilingual errors for Blaze-gated ops (`acceptWorkOffer`, `verifyHandoverAndComplete`, `verified_settled`, `offerCount` updates).
+  - Expanded `AdminProvider._buildDevWorksiteProviders()` & `_buildDevWorksiteRequests()` from `MashwarDemoCasesCatalog` and wired fault-tolerant `syncWorksiteOpsFromBackend()` auto-sync into `signInStaffWithFirebase()` and `restoreStaffSession()`.
+  - Added `scripts/seed_demo_all_cases.mjs` & `scripts/seed_demo_all_cases.ps1` (supporting `-DeployRulesAndIndexes` and `-VerifyOnly`), deployed `firestore.rules` (`132,265` bytes, active ruleset `projects/mashwar-qatar-2026-ec99d/rulesets/5fd885a5-9b97-4b5c-bd80-9eb4c9f1d144`) & `firestore.indexes.json` to `mashwar-qatar-2026-ec99d`, provisioned `{ admin: true, role: 'superAdmin' }` custom claim + `admin_staff/QB0hyc4BVZTkr91EC9KUd2EFbCw1`, and seeded/verified **`99 / 99`** live demo documents (`admin_staff` 1, `users` 10, `saved_worksites` 3, `provider_profiles` 8, `provider_verifications` 7, `work_requests` 14, `work_offers` 13, `work_request_secrets` 5, `work_request_handover_view` 5, `request_events` 20, `ratings` 2, `notifications` 4, `investor_inquiries` 3, `admin_audit_logs` 4).
+  - Added `test/demo_all_cases_and_spark_fallback_test.dart` (`8/8` tests covering `MashwarDemoCasesCatalog` completeness, `WorksiteProvider` Showcase Mode toggle, `HomeScreen` `home_demo_all_cases_btn`, Spark-safe fallbacks, and `AdminProvider` dev queues + auto-sync).
 
 ---
 
@@ -179,6 +186,8 @@ Verified directly from `git diff --diff-filter=A --name-only c444e6d..HEAD` on `
 - `scripts/generate_upload_keystore.ps1`
 - `scripts/provision_firebase_auth.ps1`
 - `scripts/run_emulators_tests.ps1`
+- `scripts/seed_demo_all_cases.mjs`
+- `scripts/seed_demo_all_cases.ps1`
 - `storage.rules`
 - `functions/package.json`
 - `functions/package-lock.json`
@@ -190,8 +199,9 @@ Verified directly from `git diff --diff-filter=A --name-only c444e6d..HEAD` on `
 - `functions/src/handlers.ts`
 - `functions/src/index.ts`
 
-### Flutter Config, Domain Models, Repositories, Services & State (`10` files)
+### Flutter Config, Domain Models, Repositories, Services & State (`11` files)
 - `lib/core/config/app_environment.dart`
+- `lib/data/demo/demo_cases_catalog.dart`
 - `lib/data/models/worksite_models.dart`
 - `lib/data/repositories/contracts/i_worksite_repository.dart`
 - `lib/data/repositories/contracts/i_provider_repository.dart`
@@ -209,9 +219,10 @@ Verified directly from `git diff --diff-filter=A --name-only c444e6d..HEAD` on `
 - `lib/screens/worksite/provider_profile_screen.dart`
 - `lib/screens/admin/admin_worksite_ops_screen.dart`
 
-### Automated Test Suites, Playbooks & Implementation Reports (`9` files)
+### Automated Test Suites, Playbooks & Implementation Reports (`10` files)
 - `functions/test/backend_security.test.mjs`
 - `functions/test/emulator_rules.test.mjs`
+- `test/demo_all_cases_and_spark_fallback_test.dart`
 - `test/mvp_models_and_auth_test.dart`
 - `test/mvp_worksite_provider_and_repo_test.dart`
 - `test/mvp_worksite_ui_test.dart`
@@ -342,8 +353,13 @@ flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBA
    Push-Location functions; npm ci; npm run build; npm test; Pop-Location
    firebase deploy --only firestore:rules,firestore:indexes,storage,functions
    ```
-3. **Provision Initial Admin Staff Record:**
-   - Create staff account in Firebase Authentication, set custom claim `{ "admin": true, "role": "superAdmin" }`, and create `admin_staff/{uid}` (`isActive: true`, `role: "superAdmin"`).
+3. **Provision Initial Admin Staff Record & Demo Dataset:**
+   - Primary demo super-admin & user UID `QB0hyc4BVZTkr91EC9KUd2EFbCw1` (`abdelrahmanmahana01@gmail.com`) is provisioned with custom claim `{ "admin": true, "role": "superAdmin" }` and active `admin_staff/QB0hyc4BVZTkr91EC9KUd2EFbCw1` via:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File scripts/seed_demo_all_cases.ps1 -DeployRulesAndIndexes
+     powershell -ExecutionPolicy Bypass -File scripts/seed_demo_all_cases.ps1 -VerifyOnly
+     ```
+   - **Deterministic Handover Test Codes (Salted SHA-256):** `demo_wr_06_accepted` (`K7M4P9`), `demo_wr_07_in_prog` (`Q9R3W8`), `demo_wr_08_picked_up` (`M4N8X2`), `demo_wr_09_transit` (`H6P2V5`), and `demo_wr_10_deliv_pend` (`T5K9B3`, assigned to `QB0hyc4BVZTkr91EC9KUd2EFbCw1` as provider).
 4. **Configure Storage Bucket CORS:**
    - Apply `cors.json` to `gs://mashwar-qatar-2026-ec99d.firebasestorage.app` allowing staging/production web origins for browser `MediaUploadService` `putData` uploads.
 5. **Compile Staging Web Bundles (Fail-Closed Mode, Zero Dev Mocks):**

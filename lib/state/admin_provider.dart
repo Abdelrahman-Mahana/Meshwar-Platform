@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../core/config/app_environment.dart';
 import '../data/api/mashwar_api_client.dart';
+import '../data/demo/demo_cases_catalog.dart';
 import '../data/mock_data.dart';
 import '../data/models/admin_platform_models.dart';
 import '../data/models/board_ad_model.dart';
@@ -1133,6 +1134,9 @@ class AdminProvider extends ChangeNotifier {
         },
         beforeAfter: 'unauthenticated ← ${serverRoleName(serverRole)}',
       );
+      try {
+        await syncWorksiteOpsFromBackend();
+      } catch (_) {}
       return true;
     } catch (e) {
       _isLoggedIn = false;
@@ -1176,6 +1180,9 @@ class AdminProvider extends ChangeNotifier {
       _staffName = (staffRecord['name'] ?? session.displayName ?? '').toString();
       _isLoggedIn = true;
       _authError = null;
+      try {
+        await syncWorksiteOpsFromBackend();
+      } catch (_) {}
       notifyListeners();
       return true;
     } catch (_) {
@@ -3292,6 +3299,8 @@ class AdminProvider extends ChangeNotifier {
     return (raw ?? '').toString();
   }
 
+  Future<void> syncWorksiteOpsFromBackend() => syncWorksiteOpsFromFirestore();
+
   Future<void> syncWorksiteOpsFromFirestore() async {
     _isSyncingWorksiteOps = true;
     _worksiteActionError = null;
@@ -3688,7 +3697,7 @@ class AdminProvider extends ChangeNotifier {
 
   static List<AdminWorksiteProviderRecord> _buildDevWorksiteProviders() {
     final now = DateTime.utc(2026, 11, 24, 18, 0);
-    return [
+    final providers = <AdminWorksiteProviderRecord>[
       AdminWorksiteProviderRecord(
         profile: ProviderProfile(
           id: 'prov_101',
@@ -3779,11 +3788,28 @@ class AdminProvider extends ChangeNotifier {
         reviewedAtUtc: now.subtract(const Duration(days: 3)),
       ),
     ];
+
+    final demoBundle = MashwarDemoCasesCatalog.build();
+    final seenIds = providers.map((p) => p.profile.userId).toSet();
+    for (final entry in demoBundle.providers) {
+      if (seenIds.add(entry.profile.userId)) {
+        providers.add(
+          AdminWorksiteProviderRecord(
+            profile: entry.profile,
+            vehicleLicenseUrl: entry.vehicleLicenseUrl,
+            reviewedBy: entry.reviewedBy,
+            reviewedAtUtc: entry.reviewedAtUtc,
+            hasVerificationRecord: entry.hasVerificationRecord,
+          ),
+        );
+      }
+    }
+    return providers;
   }
 
   static List<WorkRequest> _buildDevWorksiteRequests() {
     final now = DateTime.utc(2026, 11, 24, 18, 0);
-    return [
+    final requests = <WorkRequest>[
       WorkRequest(
         id: 'req_ws_901',
         requesterId: 'biz_almadar',
@@ -3872,6 +3898,15 @@ class AdminProvider extends ChangeNotifier {
         updatedAt: now.subtract(const Duration(days: 1)),
       ),
     ];
+
+    final demoBundle = MashwarDemoCasesCatalog.build();
+    final seenIds = requests.map((r) => r.id).toSet();
+    for (final extra in demoBundle.requests) {
+      if (seenIds.add(extra.id)) {
+        requests.add(extra);
+      }
+    }
+    return requests;
   }
 
   // Landing Page Investor & Partner Inquiries (Firebase investor_inquiries)

@@ -463,7 +463,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // 2. Hero Card: "What do you need done today?" + Saved Worksite Chip + Primary/Secondary CTAs
+                      // 2. Compact Dev-Only All-Cases Showcase Banner (hidden in staging/production)
+                      if (AppEnvironment.current.isDevelopment ||
+                          AppEnvironment.useDevMocks) ...[
+                        _buildDemoShowcaseBanner(context, worksite, isAr),
+                        const SizedBox(height: 12),
+                      ],
+
+                      // 3. Hero Card: "What do you need done today?" + Saved Worksite Chip + Primary/Secondary CTAs
                       Container(
                         padding: EdgeInsets.all(isUltraCompact ? 16 : 22),
                         decoration: BoxDecoration(
@@ -1093,6 +1100,111 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildDemoShowcaseBanner(
+    BuildContext context,
+    WorksiteProvider worksite,
+    bool isAr,
+  ) {
+    final isActive = worksite.isDemoShowcaseMode;
+    final button = OutlinedButton.icon(
+      key: const ValueKey('home_demo_all_cases_btn'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: isActive ? AppColors.qatarMaroon : AppColors.navy,
+        backgroundColor: Colors.white,
+        side: BorderSide(
+          color: isActive ? AppColors.qatarMaroon : AppColors.navy,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      onPressed: () {
+        if (isActive) {
+          worksite.exitDemoShowcase();
+        } else {
+          worksite.activateDemoShowcase();
+        }
+      },
+      icon: Icon(
+        isActive ? Icons.close_rounded : Icons.layers_outlined,
+        size: 15,
+      ),
+      label: Text(
+        isActive
+            ? (isAr ? 'إيقاف العرض التجريبي' : 'Exit Demo Showcase')
+            : (isAr
+                ? 'عرض جميع الحالات التجريبية (14)'
+                : 'Load All Demo Cases (14)'),
+        style: AppTypography.label(
+          color: isActive ? AppColors.qatarMaroon : AppColors.navy,
+        ).copyWith(fontWeight: FontWeight.w800),
+      ),
+    );
+
+    return Container(
+      key: const ValueKey('home_demo_showcase_banner'),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isActive ? AppColors.tealSurface : AppColors.sand,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isActive
+              ? AppColors.teal.withValues(alpha: 0.4)
+              : AppColors.gold.withValues(alpha: 0.45),
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWideRow = constraints.maxWidth >= 560;
+          final headline = Row(
+            children: [
+              Icon(
+                isActive ? Icons.auto_awesome_rounded : Icons.science_outlined,
+                size: 18,
+                color: isActive ? AppColors.teal : AppColors.qatarMaroon,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isActive
+                      ? (isAr
+                          ? 'وضع استعراض جميع الحالات نشط (14 حالة · 11 مرحلة · 5 رموز تسليم)'
+                          : 'All-Cases Showcase Active (14 cases · 11 statuses · 5 handover codes)')
+                      : (isAr
+                          ? 'استعرض جميع حالات التوريد الـ 14 والرموز التجريبية في قطر'
+                          : 'Preview all 14 Qatar worksite cases, offers & handover codes'),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          );
+
+          if (isWideRow) {
+            return Row(
+              children: [
+                Expanded(child: headline),
+                const SizedBox(width: 10),
+                button,
+              ],
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              headline,
+              const SizedBox(height: 8),
+              button,
+            ],
+          );
+        },
       ),
     );
   }
