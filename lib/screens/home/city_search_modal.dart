@@ -27,12 +27,13 @@ class _CitySearchModalState extends State<CitySearchModal> {
   final TextEditingController _searchController = TextEditingController();
   List<LocationItem> _filtered = MockData.locations;
   bool _showCustomMeetingPoint = false;
-  final TextEditingController _customPointController = TextEditingController(text: 'مترو مشيرب، بوابة الدخول الرئيسية');
+  final TextEditingController _customPointController =
+      TextEditingController(text: 'مترو مشيرب، بوابة الدخول الرئيسية');
 
   @override
   void initState() {
     super.initState();
-    if (widget.initialValue != null) {
+    if (widget.initialValue != null && widget.initialValue!.trim().isNotEmpty) {
       _searchController.text = widget.initialValue!;
       _filterList(widget.initialValue!);
     }
@@ -47,10 +48,11 @@ class _CitySearchModalState extends State<CitySearchModal> {
         final localMatches = MockData.locations.where((loc) {
           return loc.name.toLowerCase().contains(q) ||
               loc.region.toLowerCase().contains(q) ||
-              AppStrings.translateCity(loc.name, isArabic: false).toLowerCase().contains(q);
+              AppStrings.translateCity(loc.name, isArabic: false)
+                  .toLowerCase()
+                  .contains(q);
         }).toList();
 
-        // Query Google Maps & Qatar Catalog for matches
         AppRepositories.instance.maps.searchLocations(query).then((results) {
           if (!mounted) return;
           final extraItems = <LocationItem>[];
@@ -75,6 +77,13 @@ class _CitySearchModalState extends State<CitySearchModal> {
     });
   }
 
+  void _confirmTypedDestination() {
+    final typed = _searchController.text.trim();
+    if (typed.isNotEmpty) {
+      Navigator.of(context).pop(typed);
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -85,6 +94,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
   @override
   Widget build(BuildContext context) {
     final isAr = context.isArabic;
+    final typedQuery = _searchController.text.trim();
 
     if (_showCustomMeetingPoint) {
       return Scaffold(
@@ -94,10 +104,14 @@ class _CitySearchModalState extends State<CitySearchModal> {
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: AppColors.navy),
             onPressed: () => setState(() => _showCustomMeetingPoint = false),
           ),
-          title: Text(isAr ? 'نقطة التقاء مخصصة' : 'Custom Meeting Point', style: AppTypography.title()),
+          title: Text(
+            isAr ? 'نقطة التقاء مخصصة' : 'Custom Meeting Point',
+            style: AppTypography.title(),
+          ),
         ),
         body: SafeArea(
           child: Padding(
@@ -106,14 +120,18 @@ class _CitySearchModalState extends State<CitySearchModal> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isAr ? 'اكتب بالتفصيل نقطة الانطلاق أو النزول التي تناسبك' : 'Type detailed pickup or dropoff point that suits you',
+                  isAr
+                      ? 'اكتب بالتفصيل نقطة الانطلاق أو الوصول التي تناسبك'
+                      : 'Type the exact pickup or dropoff point that suits you',
                   style: AppTypography.bodySecondary(),
                 ),
                 const SizedBox(height: AppDimens.space16),
                 MashwarTextField(
                   controller: _customPointController,
-                  label: isAr ? 'نقطة الالتقاء' : 'Meeting Spot',
-                  hint: isAr ? 'مثال: محطة المترو، محطة وقود، مجمع تجاري' : 'e.g. Metro station, WOQOD station, Mall gate',
+                  label: isAr ? 'نقطة الالتقاء أو العنوان' : 'Meeting Spot',
+                  hint: isAr
+                      ? 'مثال: محطة المترو، المطار، بوابة المجمع'
+                      : 'e.g. Metro station, Airport terminal, Mall gate',
                 ),
                 const Spacer(),
                 MashwarButton(
@@ -133,7 +151,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -147,141 +165,334 @@ class _CitySearchModalState extends State<CitySearchModal> {
       body: SafeArea(
         child: Column(
           children: [
-            // Search Input
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 8),
-              child: MashwarTextField(
-                controller: _searchController,
-                hint: isAr ? 'ابحث عن بلدية أو منطقة' : 'Search municipality or district',
-                prefixIcon: const Icon(Icons.search_rounded, color: AppColors.navy),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          _filterList('');
-                        },
-                      )
-                    : null,
-                onChanged: _filterList,
+            // Search & Any-City Direct Input
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(
+                AppDimens.space16,
+                8,
+                AppDimens.space16,
+                10,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    key: const ValueKey('city_search_input'),
+                    controller: _searchController,
+                    textInputAction: TextInputAction.done,
+                    onChanged: _filterList,
+                    onSubmitted: (_) => _confirmTypedDestination(),
+                    style: AppTypography.body(color: AppColors.navy).copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: AppColors.slateBg,
+                      hintText: isAr
+                          ? 'اكتب أي مدينة، مطار، أو وجهة للتأكيد الفوري...'
+                          : 'Type any city, airport, or destination...',
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: AppColors.cobalt,
+                      ),
+                      suffixIcon: typedQuery.isNotEmpty
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  tooltip: isAr ? 'مسح' : 'Clear',
+                                  icon: const Icon(Icons.clear_rounded,
+                                      size: 18),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    _filterList('');
+                                  },
+                                ),
+                                IconButton(
+                                  key: const ValueKey('city_search_submit_icon'),
+                                  tooltip: isAr ? 'تأكيد' : 'Confirm',
+                                  icon: const Icon(
+                                    Icons.arrow_circle_right_rounded,
+                                    color: AppColors.cobalt,
+                                    size: 22,
+                                  ),
+                                  onPressed: _confirmTypedDestination,
+                                ),
+                              ],
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide:
+                            const BorderSide(color: AppColors.slateBorder),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide:
+                            const BorderSide(color: AppColors.slateBorder),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                            color: AppColors.cobalt, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  if (typedQuery.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Material(
+                      color: AppColors.cobaltSurface,
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        key: const ValueKey('city_confirm_custom_btn'),
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: _confirmTypedDestination,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.cobalt.withValues(alpha: 0.35),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: AppColors.cobalt,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isAr
+                                          ? 'استخدم "$typedQuery" كوجهة مباشرة'
+                                          : 'Use "$typedQuery" directly',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.body(
+                                        color: AppColors.navy,
+                                      ).copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13.5,
+                                      ),
+                                    ),
+                                    Text(
+                                      isAr
+                                          ? 'تأكيد فوري لأي مدينة أو نقطة التقاء بنقرة واحدة'
+                                          : '1-tap confirm custom city or destination',
+                                      style: AppTypography.label(
+                                        color: AppColors.cobalt,
+                                      ).copyWith(fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right_rounded,
+                                color: AppColors.cobalt,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
 
-            // Smart Qatar Metro, Expressway & Logistics Hub Chips
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            // Quick Transit, Airport & Hub Chips
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildLandmarkChip(isAr ? 'محطة وقود وقود (WOQOD)' : 'WOQOD Petrol Station', Icons.local_gas_station_outlined),
+                    _buildLandmarkChip(
+                      isAr
+                          ? 'محطة وقود وقود (WOQOD)'
+                          : 'WOQOD Petrol Station',
+                      Icons.local_gas_station_outlined,
+                    ),
                     const SizedBox(width: 8),
-                    _buildLandmarkChip(isAr ? 'محطة مترو الدوحة (الريل)' : 'Doha Metro (Qatar Rail)', Icons.directions_subway_outlined),
+                    _buildLandmarkChip(
+                      isAr
+                          ? 'محطة مترو الدوحة (الريل)'
+                          : 'Doha Metro (Qatar Rail)',
+                      Icons.directions_subway_outlined,
+                    ),
                     const SizedBox(width: 8),
-                    _buildLandmarkChip(isAr ? 'مطار حمد الدولي' : 'Hamad Int\'l Airport', Icons.flight_takeoff_rounded),
+                    _buildLandmarkChip(
+                      isAr ? 'مطار حمد الدولي' : 'Hamad Int\'l Airport',
+                      Icons.flight_takeoff_rounded,
+                    ),
                     const SizedBox(width: 8),
-                    _buildLandmarkChip(isAr ? 'بوابة المدينة التعليمية' : 'Education City Gate', Icons.school_outlined),
+                    _buildLandmarkChip(
+                      isAr ? 'بوابة المدينة التعليمية' : 'Education City Gate',
+                      Icons.school_outlined,
+                    ),
                     const SizedBox(width: 8),
-                    _buildLandmarkChip(isAr ? 'شارع 10 · الصناعية' : 'Industrial Area St 10', Icons.precision_manufacturing_outlined),
+                    _buildLandmarkChip(
+                      isAr ? 'شارع 10 · الصناعية' : 'Industrial Area St 10',
+                      Icons.precision_manufacturing_outlined,
+                    ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            const Divider(height: 1, color: AppColors.slateBorder),
 
-            // Use Current Location Option (Page 16)
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: AppColors.navy,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.my_location_rounded, color: Colors.white, size: 20),
+            // Quick Current Location & Custom Meeting Point
+            Material(
+              color: Colors.white,
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppColors.cobalt,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.my_location_rounded,
+                          color: Colors.white, size: 18),
+                    ),
+                    title: Text(
+                      isAr ? 'استخدم موقعي الحالي' : 'Use Current Location',
+                      style: AppTypography.body()
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      isAr
+                          ? 'تحديد أقرب نقطة انطلاق تلقائياً'
+                          : 'Select nearest pickup hub',
+                      style: AppTypography.label(color: AppColors.emerald),
+                    ),
+                    onTap: () => Navigator.of(context).pop('الدوحة'),
+                  ),
+                  const Divider(height: 1, color: AppColors.slateBorder),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppColors.emeraldSurface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.add_location_alt_outlined,
+                          color: AppColors.emerald, size: 18),
+                    ),
+                    title: Text(
+                      isAr ? 'نقطة التقاء مخصصة' : 'Custom Meeting Point',
+                      style: AppTypography.body()
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      isAr
+                          ? 'حدد شارعاً أو معلماً مميزاً أو بوابة'
+                          : 'Specify landmark, street, or gate',
+                      style: AppTypography.label(),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded,
+                        color: AppColors.navy),
+                    onTap: () => setState(() => _showCustomMeetingPoint = true),
+                  ),
+                ],
               ),
-              title: Text(
-                isAr ? 'استخدم موقعي الحالي' : 'Use Current Location',
-                style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
-              ),
-              subtitle: Text(
-                isAr ? 'الدوحة (بالقرب منك)' : 'Doha (Near you)',
-                style: AppTypography.label(color: AppColors.teal),
-              ),
-              onTap: () {
-                Navigator.of(context).pop('الدوحة');
-              },
             ),
-            const Divider(height: 1, color: AppColors.borderDisabled),
-
-            // Custom Meeting Point Option (Page 16)
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.gold.withValues(alpha: 0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.add_location_alt_outlined, color: AppColors.navy, size: 20),
-              ),
-              title: Text(
-                isAr ? 'نقطة التقاء مخصصة' : 'Custom Meeting Point',
-                style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
-              ),
-              subtitle: Text(
-                isAr ? 'حدد شارعاً أو معلماً مميزاً أو محطة مترو' : 'Specify landmark, street, or metro station',
-                style: AppTypography.label(),
-              ),
-              trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.navy),
-              onTap: () {
-                setState(() => _showCustomMeetingPoint = true);
-              },
-            ),
-            const Divider(height: 1, color: AppColors.borderDisabled),
+            const Divider(height: 1, color: AppColors.slateBorder),
 
             // Section Header
             Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
               child: Align(
                 alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
                 child: Text(
-                  _searchController.text.isEmpty
-                      ? (isAr ? 'البلديات والمناطق في قطر' : 'Qatar Municipalities & Districts')
-                      : (isAr ? 'نتائج البحث' : 'Search Results'),
-                  style: AppTypography.label(color: AppColors.textSecondary),
+                  typedQuery.isEmpty
+                      ? (isAr
+                          ? 'المدن والمحاور السريعة'
+                          : 'Suggested Cities & Hubs')
+                      : (isAr ? 'نتائج البحث' : 'Matching Locations'),
+                  style: AppTypography.label(color: AppColors.textSecondary)
+                      .copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
 
             // Autocomplete Results List
             Expanded(
-              child: ListView.separated(
-                itemCount: _filtered.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderDisabled),
-                itemBuilder: (context, index) {
-                  final item = _filtered[index];
-                  final localizedName = context.trCity(item.name);
-                  final localizedRegion = context.trCity(item.region);
-                  final localizedType = context.tr(item.typeLabel);
+              child: _filtered.isEmpty && typedQuery.isNotEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppDimens.space24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.public_rounded,
+                              size: 40,
+                              color: AppColors.cobalt,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              isAr
+                                  ? 'اضغط لتأكيد "$typedQuery" كوجهة مخصصة'
+                                  : 'Tap below to confirm "$typedQuery"',
+                              textAlign: TextAlign.center,
+                              style: AppTypography.body(color: AppColors.navy)
+                                  .copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 12),
+                            MashwarButton(
+                              text: isAr
+                                  ? 'تأكيد "$typedQuery"'
+                                  : 'Confirm "$typedQuery"',
+                              onPressed: _confirmTypedDestination,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : Material(
+                      color: Colors.white,
+                      child: ListView.separated(
+                        itemCount: _filtered.length,
+                        separatorBuilder: (_, __) => const Divider(
+                            height: 1, color: AppColors.slateBorder),
+                        itemBuilder: (context, index) {
+                          final item = _filtered[index];
+                          final localizedName = context.trCity(item.name);
+                          final localizedRegion = context.trCity(item.region);
+                          final localizedType = context.tr(item.typeLabel);
 
-                  return ListTile(
-                    leading: Icon(
-                      item.isRecent ? Icons.history_rounded : Icons.location_on_outlined,
-                      color: AppColors.textSecondary,
+                          return ListTile(
+                            leading: Icon(
+                              item.isRecent
+                                  ? Icons.history_rounded
+                                  : Icons.location_on_outlined,
+                              color: AppColors.cobalt,
+                            ),
+                            title: Text(
+                              localizedName,
+                              style: AppTypography.body()
+                                  .copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            subtitle: Text(
+                              '$localizedRegion · $localizedType',
+                              style: AppTypography.label(
+                                  color: AppColors.textSecondary),
+                            ),
+                            onTap: () => Navigator.of(context).pop(item.name),
+                          );
+                        },
+                      ),
                     ),
-                    title: Text(
-                      localizedName,
-                      style: AppTypography.body().copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      '$localizedRegion · $localizedType',
-                      style: AppTypography.label(color: AppColors.textSecondary),
-                    ),
-                    onTap: () {
-                      Navigator.of(context).pop(item.name);
-                    },
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -291,14 +502,19 @@ class _CitySearchModalState extends State<CitySearchModal> {
 
   Widget _buildLandmarkChip(String label, IconData icon) {
     return ActionChip(
-      avatar: Icon(icon, size: 14, color: AppColors.teal),
-      label: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.navy)),
-      backgroundColor: const Color(0xFFF3F3F4),
-      side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+      avatar: Icon(icon, size: 14, color: AppColors.cobalt),
+      label: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: AppColors.navy,
+        ),
+      ),
+      backgroundColor: AppColors.slateBg,
+      side: const BorderSide(color: AppColors.slateBorder, width: 0.9),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      onPressed: () {
-        Navigator.of(context).pop(label);
-      },
+      onPressed: () => Navigator.of(context).pop(label),
     );
   }
 }

@@ -51,17 +51,20 @@ void main() {
   }
 
   group('Universal Qatari Community Services & Bilateral Escrow Tests', () {
-    testWidgets('HomeScreen displays focused Worksite Supply MVP prompt and primary/secondary CTAs', (tester) async {
+    testWidgets('HomeScreen displays 3-Service international prompt and primary/secondary CTAs', (tester) async {
       await tester.pumpWidget(wrapWithProviders(const HomeScreen()));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      expect(find.text('شنو تحتاج ينجز اليوم؟'), findsOneWidget);
+      expect(find.text('إلى أين مشوارك أو طلبك اليوم؟'), findsOneWidget);
       expect(find.text('إنشاء طلب توريد'), findsOneWidget);
       expect(find.text('تصفح الطلبات المتاحة'), findsOneWidget);
-      expect(find.text('خدمة توريد مواقع العمل والمشاريع'), findsOneWidget);
+      expect(find.text('شراء وتوريد ومهام خاصة'), findsOneWidget);
 
-      await tester.tap(find.text('تصفح الطلبات المتاحة'));
+      final browseBtn = find.text('تصفح الطلبات المتاحة');
+      await tester.ensureVisible(browseBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(browseBtn);
       await tester.pumpAndSettle();
       expect(find.byType(WorkRequestsFeedScreen), findsOneWidget);
     });

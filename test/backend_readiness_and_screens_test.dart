@@ -189,6 +189,8 @@ void main() {
       await tester.tap(find.text('الحدود التنظيمية والعلامة'));
       await tester.pumpAndSettle();
       expect(find.textContaining('الإفصاح التنظيمي وحدود المرحلة التجريبية'), findsOneWidget);
+      await tester.drag(find.byType(ListView), const Offset(0, -300));
+      await tester.pumpAndSettle();
       expect(find.textContaining('وزارة التجارة والصناعة'), findsWidgets);
 
       // Switch to English and verify all 3 tabs
@@ -305,7 +307,10 @@ void main() {
 
       await tester.pumpWidget(wrapWithProviders(const MainNavShell(), settings: settings));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('الطلبات').first);
+      await tester.tap(find.text('الرحلات والطرود').first);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('التوريد والمهام').first);
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
@@ -427,7 +432,13 @@ void main() {
           expect(find.byType(NavigationRail), findsNothing);
         }
 
-        for (final tabLabel in ['الطلبات', 'نشاطي', 'حسابي', 'الرئيسية']) {
+        for (final tabLabel in [
+          'الرحلات والطرود',
+          'التوريد والمهام',
+          'نشاطي',
+          'حسابي',
+          'الرئيسية',
+        ]) {
           await tester.tap(find.text(tabLabel).first);
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);

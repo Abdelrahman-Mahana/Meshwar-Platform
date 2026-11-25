@@ -102,10 +102,13 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
 
-    // 1. WelcomeScreen renders honest Qatar Worksite Supply onboarding without errors
+    // 1. WelcomeScreen renders international 3-service MASHWAR onboarding without errors
     await tester.pumpWidget(wrapApp(const WelcomeScreen()));
     await tester.pumpAndSettle();
-    expect(find.text('توريد مواقع العمل والمشاريع في قطر'), findsOneWidget);
+    expect(
+      find.text('رحلات تشاركية · طرود على الطريق · توريد ومهام'),
+      findsOneWidget,
+    );
     expect(find.text('المتابعة بالبريد الإلكتروني'), findsOneWidget);
 
     // 2. LocationPermissionScreen displays live Qatar preview card and advances to Notifications
@@ -126,7 +129,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('HomeScreen displays focused Worksite Supply hero and clean action CTAs across all viewports', (tester) async {
+  testWidgets('HomeScreen displays International 3-Service hero and clean action CTAs across all viewports', (tester) async {
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();
@@ -148,7 +151,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('شنو تحتاج ينجز اليوم؟'), findsOneWidget);
+      expect(find.text('إلى أين مشوارك أو طلبك اليوم؟'), findsOneWidget);
       expect(find.text('إنشاء طلب توريد'), findsOneWidget);
       expect(find.text('تصفح الطلبات المتاحة'), findsOneWidget);
     }

@@ -182,8 +182,8 @@ void main() {
       expect(AppEnvironment.useDevMocks, isFalse);
 
       expect(AppEnvironment.enableWorksiteSupply, isTrue);
-      expect(AppEnvironment.enablePassengerRides, isFalse);
-      expect(AppEnvironment.enableCarpooling, isFalse);
+      expect(AppEnvironment.enablePassengerRides, isTrue);
+      expect(AppEnvironment.enableCarpooling, isTrue);
       expect(AppEnvironment.enableCommercialCargo, isFalse);
       expect(AppEnvironment.enableDigitalWallet, isFalse);
       expect(AppEnvironment.enableEscrowClaims, isFalse);
@@ -222,19 +222,20 @@ void main() {
       expect(prodDenied.useDevMocks, isFalse);
     });
 
-    test('provides bilingual legal & regulatory disclaimers for Qatar pilot',
+    test('provides bilingual legal & regulatory disclaimers for 3-service platform',
         () {
       final enDisclaimers = AppEnvironment.allLegalDisclaimers(isArabic: false);
       final arDisclaimers = AppEnvironment.allLegalDisclaimers(isArabic: true);
 
       expect(enDisclaimers, hasLength(4));
       expect(arDisclaimers, hasLength(4));
-      expect(enDisclaimers.join(' '), contains('QAR'));
-      expect(enDisclaimers.join(' '), contains('MoT'));
-      expect(enDisclaimers.join(' '), contains('QCB'));
+      expect(enDisclaimers.join(' '), contains('Shared Trips'));
+      expect(enDisclaimers.join(' '), contains('Parcels'));
+      expect(enDisclaimers.join(' '), contains('OTP'));
       expect(enDisclaimers.join(' '), contains('Trademark'));
-      expect(arDisclaimers.join(' '), contains('قطر'));
-      expect(arDisclaimers.join(' '), contains('QAR'));
+      expect(arDisclaimers.join(' '), contains('الرحلات المشتركة'));
+      expect(arDisclaimers.join(' '), contains('الطرود'));
+      expect(arDisclaimers.join(' '), contains('OTP'));
     });
   });
 

@@ -379,12 +379,15 @@ class MashwarRouteTimeline extends StatelessWidget {
                   ),
                   if (trailingTop != null && trailingTop!.isNotEmpty) ...[
                     const SizedBox(width: 6),
-                    Text(
-                      trailingTop!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.label(color: AppColors.textSecondary).copyWith(
-                        fontSize: 11,
+                    Flexible(
+                      child: Text(
+                        trailingTop!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: AppTypography.label(color: AppColors.textSecondary).copyWith(
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],
@@ -403,7 +406,7 @@ class MashwarRouteTimeline extends StatelessWidget {
                   ),
                   if (trailingBottom != null) ...[
                     const SizedBox(width: 6),
-                    trailingBottom!,
+                    Flexible(child: trailingBottom!),
                   ],
                 ],
               ),
@@ -737,7 +740,8 @@ class _ActionPill extends StatelessWidget {
   }
 }
 
-/// Qatari Al-Adaam heritage Sadu geometric ribbon accent bar.
+/// Deprecated regional Sadu strip — returns [SizedBox.shrink] globally so
+/// zero maroon/gold triangle bars ever render anywhere in the international UI.
 class QatarSaduAccentBar extends StatelessWidget {
   const QatarSaduAccentBar({
     super.key,
@@ -749,58 +753,361 @@ class QatarSaduAccentBar extends StatelessWidget {
   final double borderRadius;
 
   @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+/// Sleek international 3-step visual strip illustrating how MASHWAR connects
+/// travelers, senders, and service providers effortlessly (`pumpAndSettle`-safe).
+class MashwarThreeStepsBanner extends StatelessWidget {
+  const MashwarThreeStepsBanner({
+    super.key,
+    required this.isAr,
+    this.compact = false,
+  });
+
+  final bool isAr;
+  final bool compact;
+
+  @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: SizedBox(
-        height: height,
-        width: double.infinity,
-        child: CustomPaint(
-          painter: _QatarSaduRibbonPainter(),
-        ),
+    final steps = <({
+      String numLabel,
+      String title,
+      IconData icon,
+      Color accent,
+      Color surface,
+    })>[
+      (
+        numLabel: '1',
+        title: isAr ? 'حدّد وجهتك أو طلبك' : 'Post Your Route or Request',
+        icon: Icons.route_rounded,
+        accent: AppColors.cobalt,
+        surface: AppColors.cobaltSurface,
+      ),
+      (
+        numLabel: '2',
+        title: isAr ? 'تواصل واختر الأنسب' : 'Match & Connect Directly',
+        icon: Icons.handshake_outlined,
+        accent: AppColors.indigo,
+        surface: AppColors.indigoSurface,
+      ),
+      (
+        numLabel: '3',
+        title: isAr ? 'تابع وسلّم بكود الأمان' : 'Track & Confirm with OTP',
+        icon: Icons.verified_user_outlined,
+        accent: AppColors.emerald,
+        surface: AppColors.emeraldSurface,
+      ),
+    ];
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 14,
+        vertical: compact ? 10 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.slateBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slateBorder),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 560 && !compact;
+
+          if (isWide) {
+            return Row(
+              children: [
+                for (var i = 0; i < steps.length; i++) ...[
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: steps[i].accent.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: steps[i].surface,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: steps[i].accent.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              steps[i].numLabel,
+                              style: AppTypography.label(
+                                color: steps[i].accent,
+                              ).copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              steps[i].title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.label(
+                                color: AppColors.navy,
+                              ).copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                height: 1.25,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (i < steps.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      child: Icon(
+                        isAr
+                            ? Icons.chevron_left_rounded
+                            : Icons.chevron_right_rounded,
+                        size: 18,
+                        color: AppColors.textSecondary.withValues(alpha: 0.65),
+                      ),
+                    ),
+                ],
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < steps.length; i++) ...[
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: steps[i].surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: steps[i].accent.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          steps[i].numLabel,
+                          style: AppTypography.label(
+                            color: steps[i].accent,
+                          ).copyWith(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        steps[i].title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(
+                          color: AppColors.navy,
+                        ).copyWith(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          height: 1.22,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (i < steps.length - 1)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6, left: 2, right: 2),
+                    child: Container(
+                      width: 12,
+                      height: 1.5,
+                      margin: const EdgeInsets.only(top: 6),
+                      color: AppColors.slateBorder,
+                    ),
+                  ),
+              ],
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _QatarSaduRibbonPainter extends CustomPainter {
+/// Clean international numbered step progress bar (`1 -> 2 -> 3`) with
+/// [AnimatedContainer] pills for creation and booking wizards (`pumpAndSettle`-safe).
+///
+/// [currentStep] is 1-based (`1..stepTitles.length`; values `< 1` clamp to `1`).
+class MashwarWizardStepHeader extends StatelessWidget {
+  const MashwarWizardStepHeader({
+    super.key,
+    required this.currentStep,
+    required this.stepTitles,
+    required this.isAr,
+    this.subtitle,
+  });
+
+  final int currentStep;
+  final List<String> stepTitles;
+  final bool isAr;
+  final String? subtitle;
+
   @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
-    canvas.drawRect(rect, Paint()..color = AppColors.navy);
+  Widget build(BuildContext context) {
+    if (stepTitles.isEmpty) return const SizedBox.shrink();
+    final total = stepTitles.length;
+    final activeStep = currentStep.clamp(1, total);
 
-    // Repeating Qatari Al-Adaam Maroon + Gold geometric triangles
-    final tileW = (size.height * 2.4).clamp(10.0, 22.0);
-    final maroonPaint = Paint()..color = AppColors.qatarMaroon;
-    final goldPaint = Paint()..color = AppColors.gold;
-    final sandPaint = Paint()..color = AppColors.sand.withValues(alpha: 0.72);
-
-    for (double x = -tileW; x < size.width + tileW; x += tileW) {
-      final path = Path()
-        ..moveTo(x, size.height)
-        ..lineTo(x + tileW * 0.5, 0)
-        ..lineTo(x + tileW, size.height)
-        ..close();
-      canvas.drawPath(path, maroonPaint);
-
-      final diamond = Path()
-        ..moveTo(x + tileW * 0.5, size.height * 0.15)
-        ..lineTo(x + tileW * 0.65, size.height * 0.5)
-        ..lineTo(x + tileW * 0.5, size.height * 0.85)
-        ..lineTo(x + tileW * 0.35, size.height * 0.5)
-        ..close();
-      canvas.drawPath(diamond, goldPaint);
-
-      canvas.drawCircle(
-        Offset(x, size.height * 0.5),
-        (size.height * 0.18).clamp(0.8, 2.0),
-        sandPaint,
-      );
-    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.slateBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.slateBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              for (var i = 0; i < total; i++) ...[
+                Expanded(
+                  child: _buildStepPill(
+                    stepNumber: i + 1,
+                    title: stepTitles[i],
+                    isDone: (i + 1) < activeStep,
+                    isActive: (i + 1) == activeStep,
+                  ),
+                ),
+                if (i < total - 1)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      width: 10,
+                      height: 2,
+                      decoration: BoxDecoration(
+                        color: (i + 1) < activeStep
+                            ? AppColors.emerald
+                            : AppColors.slateBorder,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+          if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              subtitle!,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.bodySmall(
+                color: AppColors.textSecondary,
+              ).copyWith(fontSize: 11.5),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
-  @override
-  bool shouldRepaint(covariant _QatarSaduRibbonPainter oldDelegate) => false;
+  Widget _buildStepPill({
+    required int stepNumber,
+    required String title,
+    required bool isDone,
+    required bool isActive,
+  }) {
+    final bgColor = isActive
+        ? AppColors.cobaltSurface
+        : (isDone ? AppColors.emeraldSurface : Colors.white);
+    final borderColor = isActive
+        ? AppColors.cobalt.withValues(alpha: 0.45)
+        : (isDone
+            ? AppColors.emerald.withValues(alpha: 0.35)
+            : AppColors.slateBorder);
+    final badgeBg = isActive
+        ? AppColors.cobalt
+        : (isDone ? AppColors.emerald : AppColors.slateBg);
+    final badgeFg =
+        (isActive || isDone) ? Colors.white : AppColors.textSecondary;
+    final textColor = isActive
+        ? AppColors.navy
+        : (isDone ? AppColors.emerald : AppColors.textSecondary);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor, width: isActive ? 1.2 : 1.0),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: 19,
+            height: 19,
+            decoration: BoxDecoration(
+              color: badgeBg,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: isDone
+                ? const Icon(Icons.check_rounded, size: 12, color: Colors.white)
+                : Text(
+                    '$stepNumber',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: badgeFg,
+                      fontFamily: 'Cairo',
+                      height: 1.0,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.label(color: textColor).copyWith(
+                fontSize: 10.5,
+                fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Compact responsive badge signifying Bilateral MASHWAR Escrow Protection.

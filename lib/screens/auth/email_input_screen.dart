@@ -8,6 +8,7 @@ import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../state/auth_provider.dart';
 import '../main_nav_shell.dart';
 import 'phone_input_screen.dart';
@@ -189,7 +190,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     final activeError = _validationError ?? auth.localizedError(isArabic: isAr);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -208,17 +209,41 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppDimens.space24,
-                vertical: 8,
+                vertical: 10,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const BrandLogo(fontSize: 24),
-                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const BrandLogo(fontSize: 24),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          MashwarServicePillarIcon(
+                            pillar: MashwarServicePillar.sharedTrips,
+                            size: 26,
+                          ),
+                          SizedBox(width: 6),
+                          MashwarServicePillarIcon(
+                            pillar: MashwarServicePillar.routeParcels,
+                            size: 26,
+                          ),
+                          SizedBox(width: 6),
+                          MashwarServicePillarIcon(
+                            pillar: MashwarServicePillar.smartSupply,
+                            size: 26,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
                   Text(
                     _isRegister
                         ? (isAr
-                            ? 'إنشاء حساب في مشوار قطر'
+                            ? 'إنشاء حساب جديد في مشوار'
                             : 'Create Your MASHWAR Account')
                         : (isAr
                             ? 'تسجيل الدخول بالبريد الإلكتروني'
@@ -229,20 +254,20 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                   Text(
                     _isRegister
                         ? (isAr
-                            ? 'أنشئ حساباً حقيقياً لطلب توريد مواقع العمل أو التقدم كمزود معتمد.'
-                            : 'Register with your email and password to create worksite requests or verify as a provider.')
+                            ? 'أنشئ حسابك لنشر وحجز الرحلات، إرسال الطرود على الطريق، وطلب التوريد والمهام.'
+                            : 'Register to share trips, send parcels on active routes, and coordinate smart supply requests.')
                         : (isAr
-                            ? 'أدخل بريدك الإلكتروني وكلمة المرور للوصول إلى طلباتك ومواقعك.'
-                            : 'Enter your email address and password to access your worksite supply account.'),
+                            ? 'أدخل بريدك الإلكتروني وكلمة المرور للوصول إلى رحلاتك وطرودك وطلباتك.'
+                            : 'Enter your email address and password to access your trips, parcels, and requests.'),
                     style: AppTypography.bodySecondary().copyWith(fontSize: 13),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   // Mode Segmented Switch (Sign In vs Create Account)
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
+                      color: const Color(0xFFEFF3F8),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Row(
@@ -358,10 +383,10 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                       key: const ValueKey('auth_info_banner'),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.tealSurface,
+                        color: AppColors.emeraldSurface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: AppColors.teal.withValues(alpha: 0.4)),
+                            color: AppColors.emerald.withValues(alpha: 0.4)),
                       ),
                       child: Text(
                         _infoBanner!,
@@ -383,7 +408,9 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                       key: const ValueKey('auth_fullname_input'),
                       controller: _fullNameController,
                       decoration: InputDecoration(
-                        hintText: isAr ? 'م. فهد المري' : 'Eng. Fahad Al-Marri',
+                        filled: true,
+                        fillColor: Colors.white,
+                        hintText: isAr ? 'م. فهد المري' : 'Alex Morgan',
                         prefixIcon: const Icon(Icons.person_outline_rounded,
                             color: AppColors.navy),
                       ),
@@ -396,8 +423,8 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
 
                     Text(
                       isAr
-                          ? 'رقم الجوال القطري (+974 - اختياري)'
-                          : 'Qatar Mobile (+974 - Optional)',
+                          ? 'رقم الجوال (اختياري)'
+                          : 'Mobile Number (Optional)',
                       style: AppTypography.label(color: AppColors.navy)
                           .copyWith(fontWeight: FontWeight.w700),
                     ),
@@ -409,6 +436,8 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
                           hintText: '55123456',
                           prefixIcon: Icon(Icons.phone_iphone_rounded,
                               color: AppColors.navy),
@@ -435,7 +464,9 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
                       decoration: const InputDecoration(
-                        hintText: 'name@company.qa',
+                        filled: true,
+                        fillColor: Colors.white,
+                        hintText: 'name@mashwar.app',
                         prefixIcon: Icon(Icons.mail_outline_rounded,
                             color: AppColors.navy),
                       ),
@@ -460,6 +491,8 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
                         hintText: '••••••••',
                         prefixIcon: const Icon(Icons.lock_outline_rounded,
                             color: AppColors.navy),
@@ -496,6 +529,8 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                         controller: _confirmPasswordController,
                         obscureText: _obscurePassword,
                         decoration: const InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white,
                           hintText: '••••••••',
                           prefixIcon: Icon(Icons.lock_reset_rounded,
                               color: AppColors.navy),
@@ -514,7 +549,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                         onPressed: () => _handleForgotPassword(context, isAr),
                         child: Text(
                           isAr ? 'نسيت كلمة المرور؟' : 'Forgot password?',
-                          style: AppTypography.label(color: AppColors.teal)
+                          style: AppTypography.label(color: AppColors.cobalt)
                               .copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -536,12 +571,12 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                         });
                       },
                       icon: const Icon(Icons.bolt_rounded,
-                          size: 16, color: AppColors.teal),
+                          size: 16, color: AppColors.cobalt),
                       label: Text(
                         isAr
                             ? 'تعبئة تجريبية (وضع التطوير فقط)'
                             : 'Autofill Dev Credentials',
-                        style: AppTypography.label(color: AppColors.teal),
+                        style: AppTypography.label(color: AppColors.cobalt),
                       ),
                     ),
                   ],

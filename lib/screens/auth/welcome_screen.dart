@@ -15,12 +15,12 @@ import '../main_nav_shell.dart';
 import 'email_input_screen.dart';
 import 'phone_input_screen.dart';
 
-/// Clean, honest Welcome & Entry screen for MASHWAR Qatar Worksite Supply MVP.
+/// Clean, international 3-Service Welcome & Entry screen for MASHWAR:
+/// Shared Trips · Route Parcels · Smart Supply.
 ///
 /// - Real Email+Password Sign In & Create Account CTAs.
 /// - Dev quick-demo entry shown ONLY when `AppEnvironment.useDevMocks` is `true`.
 /// - Clear explanatory copy when SMS phone OTP provider is unavailable.
-/// - Zero fake live counters, fake moving cars, or fake verified personas.
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
@@ -31,7 +31,7 @@ class WelcomeScreen extends StatelessWidget {
     final isAr = settings.isArabic;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -46,7 +46,7 @@ class WelcomeScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: AppColors.borderDisabled),
+                        border: Border.all(color: AppColors.slateBorder),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.navy.withValues(alpha: 0.08),
@@ -111,11 +111,11 @@ class WelcomeScreen extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         const MashwarAssetArt(
-          assetPath: 'assets/images/mvp_hero_lusail_supply.jpg',
+          assetPath: 'assets/images/service_ride.jpg',
           fit: BoxFit.cover,
-          fallbackIcon: Icons.local_shipping_rounded,
+          fallbackIcon: Icons.route_rounded,
           fallbackBg: AppColors.navy,
-          fallbackColor: AppColors.gold,
+          fallbackColor: AppColors.cobalt,
         ),
         DecoratedBox(
           decoration: BoxDecoration(
@@ -123,101 +123,95 @@ class WelcomeScreen extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.navy.withValues(alpha: 0.90),
-                const Color(0xFF173654).withValues(alpha: 0.84),
-                AppColors.qatarMaroonDark.withValues(alpha: 0.92),
+                AppColors.navy.withValues(alpha: 0.94),
+                const Color(0xFF132F4C).withValues(alpha: 0.90),
+                const Color(0xFF0F172A).withValues(alpha: 0.94),
               ],
             ),
           ),
         ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const QatarSaduAccentBar(height: 5, borderRadius: 0),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const BrandLogo(fontSize: 30, isLight: true),
-                    const SizedBox(height: 36),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Text(
-                        isAr
-                            ? 'قطر · المرحلة التجريبية الأولى (QAR)'
-                            : 'Qatar Pilot Phase 1 · QAR',
-                        style: AppTypography.label(color: AppColors.gold)
-                            .copyWith(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      isAr
-                          ? 'تنسيق توريد ومشتريات مواقع العمل في دولة قطر'
-                          : 'Worksite Supply & Material Delivery Coordination in Qatar',
-                      style: AppTypography.title(color: Colors.white)
-                          .copyWith(fontSize: 22),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      isAr
-                          ? 'اربط مهندسي ومشرفي المواقع بمزودي التوريد المعتمدين بالبطاقة القطرية (QID)، مع توثيق الفاتورة ورمز تسليم سري من 6 خانات.'
-                          : 'Connect site supervisors with QID-approved providers across Doha, Industrial Area, Lusail, Al Wakrah & Al Khor with verified receipts and 6-char handover codes.',
-                      style: AppTypography.bodySecondary(
-                        color: Colors.white.withValues(alpha: 0.88),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildTrustPill(
-                          MashwarTrustType.qatarIdCrest,
-                          isAr ? 'مراجعة QID' : 'QID Reviewed',
-                        ),
-                        _buildTrustPill(
-                          MashwarTrustType.verifiedReceipt,
-                          isAr ? 'فاتورة موثّقة' : 'Invoice Proof',
-                        ),
-                        _buildTrustPill(
-                          MashwarTrustType.handoverShield,
-                          isAr ? 'رمز تسليم 6 خانات' : '6-Char Handover',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 28),
-                    Text(
-                      AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
-                      style: AppTypography.bodySmall(
-                        color: Colors.white.withValues(alpha: 0.78),
-                      ),
-                    ),
-                  ],
+        SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const BrandLogo(fontSize: 30, isLight: true),
+              const SizedBox(height: 30),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.cobalt.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: const Color(0xFF60A5FA).withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Text(
+                  isAr
+                      ? 'منصة مشوار المتكاملة · 3 خدمات في تطبيق واحد'
+                      : 'Shared Trips · Route Parcels · Smart Supply',
+                  style: AppTypography.label(color: Colors.white)
+                      .copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Text(
+                isAr
+                    ? 'شارك مقاعد رحلتك، أرسل طرداً على الطريق، أو اطلب توريد احتياجاتك بسهولة وأمان'
+                    : 'Share Empty Seats, Send Parcels Along Active Routes, & Coordinate Smart Supply',
+                style: AppTypography.title(color: Colors.white)
+                    .copyWith(fontSize: 22),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                isAr
+                    ? 'منصة حديثة تربط المسافرين وأصحاب الطلبات والمزودين المعتمدين مباشرة مع توثيق الفاتورة ورموز الأمان OTP.'
+                    : 'Connect directly with verified travelers and trusted supply providers with transparent pricing, receipt proof, and OTP handover.',
+                style: AppTypography.bodySecondary(
+                  color: Colors.white.withValues(alpha: 0.86),
+                ),
+              ),
+              const SizedBox(height: 22),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _buildServiceShowcaseChip(
+                    MashwarServicePillar.sharedTrips,
+                    isAr ? 'رحلات ومقاعد' : 'Shared Trips',
+                  ),
+                  _buildServiceShowcaseChip(
+                    MashwarServicePillar.routeParcels,
+                    isAr ? 'طرود على الطريق' : 'Route Parcels',
+                  ),
+                  _buildServiceShowcaseChip(
+                    MashwarServicePillar.smartSupply,
+                    isAr ? 'توريد ومهام' : 'Smart Supply',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              MashwarThreeStepsBanner(isAr: isAr, compact: true),
+              const SizedBox(height: 20),
+              Text(
+                AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
+                style: AppTypography.bodySmall(
+                  color: Colors.white.withValues(alpha: 0.76),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildTrustPill(MashwarTrustType type, String label) {
+  Widget _buildServiceShowcaseChip(MashwarServicePillar pillar, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.22),
@@ -226,19 +220,12 @@ class WelcomeScreen extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: MashwarTrustEmblem(type: type, size: 20),
-          ),
-          const SizedBox(width: 6),
+          MashwarServicePillarIcon(pillar: pillar, size: 24),
+          const SizedBox(width: 7),
           Text(
             label,
             style: AppTypography.label(color: Colors.white).copyWith(
-              fontSize: 11,
+              fontSize: 11.5,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -265,23 +252,23 @@ class WelcomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Single ActionChip for language toggle
+          // Single ActionChip for language toggle (verified by dynamic_language_switcher_test)
           Align(
             alignment: AlignmentDirectional.centerEnd,
             child: _buildLanguageButton(settings, isAr),
           ),
-          SizedBox(height: isCompact ? 6 : 18),
+          SizedBox(height: isCompact ? 6 : 14),
 
           if (!isWide)
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(isCompact ? 16 : 20),
                 border: Border.all(
-                  color: AppColors.navy.withValues(alpha: 0.14),
+                  color: AppColors.navy.withValues(alpha: 0.12),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.08),
+                    color: AppColors.navy.withValues(alpha: 0.07),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -292,11 +279,11 @@ class WelcomeScreen extends StatelessWidget {
                 children: [
                   const Positioned.fill(
                     child: MashwarAssetArt(
-                      assetPath: 'assets/images/mvp_hero_lusail_supply.jpg',
+                      assetPath: 'assets/images/service_ride.jpg',
                       fit: BoxFit.cover,
-                      fallbackIcon: Icons.local_shipping_rounded,
+                      fallbackIcon: Icons.route_rounded,
                       fallbackBg: AppColors.navy,
-                      fallbackColor: AppColors.gold,
+                      fallbackColor: AppColors.cobalt,
                     ),
                   ),
                   Positioned.fill(
@@ -306,157 +293,154 @@ class WelcomeScreen extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            AppColors.navy.withValues(alpha: 0.90),
-                            AppColors.qatarMaroonDark.withValues(alpha: 0.84),
+                            AppColors.navy.withValues(alpha: 0.92),
+                            const Color(0xFF0F172A).withValues(alpha: 0.88),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const QatarSaduAccentBar(height: 3.5, borderRadius: 0),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: isCompact ? 8 : 16,
-                        ),
-                        child: isCompact
-                            ? Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  const BrandLogo(
-                                    fontSize: 22,
-                                    showEnglish: false,
-                                    isLight: true,
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: isCompact ? 8 : 16,
+                    ),
+                    child: isCompact
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const BrandLogo(
+                                fontSize: 22,
+                                showEnglish: false,
+                                isLight: true,
+                              ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  MashwarServicePillarIcon(
+                                    pillar: MashwarServicePillar.sharedTrips,
+                                    size: 24,
                                   ),
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      _buildCompactTrustIcon(
-                                          MashwarTrustType.qatarIdCrest),
-                                      const SizedBox(width: 6),
-                                      _buildCompactTrustIcon(
-                                          MashwarTrustType.verifiedReceipt),
-                                      const SizedBox(width: 6),
-                                      _buildCompactTrustIcon(
-                                          MashwarTrustType.handoverShield),
-                                    ],
+                                  SizedBox(width: 6),
+                                  MashwarServicePillarIcon(
+                                    pillar: MashwarServicePillar.routeParcels,
+                                    size: 24,
                                   ),
-                                ],
-                              )
-                            : Column(
-                                children: [
-                                  const BrandLogo(
-                                    fontSize: 34,
-                                    isLight: true,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Wrap(
-                                    spacing: 6,
-                                    runSpacing: 6,
-                                    alignment: WrapAlignment.center,
-                                    children: [
-                                      _buildTrustPill(
-                                        MashwarTrustType.qatarIdCrest,
-                                        isAr ? 'مراجعة QID' : 'QID Reviewed',
-                                      ),
-                                      _buildTrustPill(
-                                        MashwarTrustType.verifiedReceipt,
-                                        isAr
-                                            ? 'فاتورة موثّقة'
-                                            : 'Invoice Proof',
-                                      ),
-                                      _buildTrustPill(
-                                        MashwarTrustType.handoverShield,
-                                        isAr ? 'رمز تسليم' : 'Handover Code',
-                                      ),
-                                    ],
+                                  SizedBox(width: 6),
+                                  MashwarServicePillarIcon(
+                                    pillar: MashwarServicePillar.smartSupply,
+                                    size: 24,
                                   ),
                                 ],
                               ),
-                      ),
-                    ],
+                            ],
+                          )
+                        : Column(
+                            children: [
+                              const BrandLogo(
+                                fontSize: 34,
+                                isLight: true,
+                              ),
+                              const SizedBox(height: 12),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                alignment: WrapAlignment.center,
+                                children: [
+                                  _buildServiceShowcaseChip(
+                                    MashwarServicePillar.sharedTrips,
+                                    isAr ? 'رحلات تشاركية' : 'Shared Trips',
+                                  ),
+                                  _buildServiceShowcaseChip(
+                                    MashwarServicePillar.routeParcels,
+                                    isAr ? 'طرود بالطريق' : 'Route Parcels',
+                                  ),
+                                  _buildServiceShowcaseChip(
+                                    MashwarServicePillar.smartSupply,
+                                    isAr ? 'توريد ومهام' : 'Smart Supply',
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                   ),
                 ],
               ),
             )
           else
-            const BrandLogo(fontSize: 40),
+            const BrandLogo(fontSize: 38),
           SizedBox(height: isCompact ? 6 : 14),
           Text(
             isAr
-                ? 'توريد مواقع العمل والمشاريع في قطر'
-                : 'Qatar Worksite Supply & Site Errands',
+                ? 'رحلات تشاركية · طرود على الطريق · توريد ومهام'
+                : 'Shared Trips · Route Parcels · Smart Supply',
             textAlign: TextAlign.center,
             style: AppTypography.title(color: AppColors.navy).copyWith(
               fontWeight: FontWeight.w800,
-              fontSize: isCompact ? 14.5 : 17.5,
+              fontSize: isCompact ? 14.5 : 17,
             ),
           ),
           SizedBox(height: isCompact ? 3 : 6),
           Text(
             isAr
-                ? 'سجّل الدخول أو أنشئ حساباً لإدارة طلبات التوريد وعروض المزودين المعتمدين بالريال القطري.'
-                : 'Sign in or create an account to manage worksite supply requests and approved provider offers in QAR.',
+                ? 'سجّل الدخول أو أنشئ حساباً لمشاركة المقاعد الشاغرة، إرسال الطرود مع المسافرين، أو طلب التوريد والمشتريات.'
+                : 'Sign in or create an account to share trips, send parcels on active routes, and coordinate smart supply requests.',
             textAlign: TextAlign.center,
             maxLines: isCompact ? 2 : null,
             overflow: isCompact ? TextOverflow.ellipsis : null,
             style: AppTypography.bodySecondary().copyWith(
-              fontSize: isCompact ? 12.5 : 14,
+              fontSize: isCompact ? 12.5 : 13.5,
             ),
           ),
-          SizedBox(height: isCompact ? 8 : 22),
+          SizedBox(height: isCompact ? 8 : 18),
 
-          // Value pillars card (honest MVP features)
+          // Clean 3-Service Value Card
           Container(
             padding: EdgeInsets.all(isCompact ? 10 : 14),
             decoration: BoxDecoration(
-              color: AppColors.sand,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                  color: AppColors.qatarMaroon.withValues(alpha: 0.22)),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.slateBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildFeatureBullet(
-                  Icons.receipt_long_outlined,
+                  Icons.directions_car_outlined,
+                  AppColors.cobalt,
                   isAr
-                      ? 'ميزانيات دقيقة بالريال القطري وإرفاق فاتورة الشراء'
-                      : 'Integer QAR budgets & store purchase invoice proof',
+                      ? 'سفر ومقاعد تشاركية: انشر رحلتك أو احجز مقعدك بمرونة'
+                      : 'Shared Trips: Publish empty seats or find rides along your route',
                   compact: isCompact,
                 ),
                 SizedBox(height: isCompact ? 4 : 8),
                 _buildFeatureBullet(
-                  Icons.verified_user_outlined,
+                  Icons.inventory_2_outlined,
+                  AppColors.indigo,
                   isAr
-                      ? 'مزودون معتمدون بعد مراجعة البطاقة القطرية (QID)'
-                      : 'Providers verified via 11-digit Qatar ID (QID) review',
+                      ? 'طرود على الطريق: أرسل أو وصّل الأغراض مع مسافر بكود OTP'
+                      : 'Route Parcels: Send or carry items on the way with 4-digit OTP',
                   compact: isCompact,
                 ),
                 SizedBox(height: isCompact ? 4 : 8),
                 _buildFeatureBullet(
-                  Icons.key_rounded,
+                  Icons.fact_check_outlined,
+                  AppColors.emerald,
                   isAr
-                      ? 'تأكيد الاستلام بالموقع عبر رمز تسليم أحادي من 6 خانات'
-                      : 'On-site completion gated by single-use 6-char handover code',
+                      ? 'توريد ومهام خاصة: فواتير شراء موثّقة ورمز تسليم من 6 خانات'
+                      : 'Smart Supply: Verified store receipts & 6-char handover code',
                   compact: isCompact,
                 ),
               ],
             ),
           ),
-          SizedBox(height: isCompact ? 10 : 22),
+          SizedBox(height: isCompact ? 10 : 20),
 
           // Primary CTA: Sign In with Email & Password
           MashwarButton(
             key: const ValueKey('welcome_email_login_btn'),
             height: isCompact ? 44 : AppDimens.minTouchTarget,
-            text: isAr
-                ? 'المتابعة بالبريد الإلكتروني'
-                : 'Continue with Email',
+            text: isAr ? 'المتابعة بالبريد الإلكتروني' : 'Continue with Email',
             icon: const Icon(Icons.mail_outline_rounded,
                 size: 20, color: Colors.white),
             onPressed: () {
@@ -491,14 +475,14 @@ class WelcomeScreen extends StatelessWidget {
           ),
           SizedBox(height: isCompact ? 8 : 14),
 
-          // Phone OTP (+974): enabled when Firebase Phone Auth or explicit dev-mock auth is available;
-          // otherwise shows honest unavailable notice with direct Email+Password sign-in guidance.
+          // Phone OTP: enabled when Firebase Phone Auth or explicit dev-mock auth is available
           if (auth.isPhoneAuthAvailable) ...[
             OutlinedButton.icon(
               key: const ValueKey('welcome_phone_btn'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.navy,
-                side: const BorderSide(color: AppColors.borderDisabled),
+                side: const BorderSide(color: AppColors.slateBorder),
+                backgroundColor: Colors.white,
                 minimumSize: Size(0, isCompact ? 40 : AppDimens.minTouchTarget),
                 padding: EdgeInsets.symmetric(vertical: isCompact ? 8 : 12),
                 shape: RoundedRectangleBorder(
@@ -522,8 +506,8 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 isAr
-                    ? 'ملاحظة: رسائل التحقق (+974 SMS) تتطلب تفعيل فوترة الرسائل في Firebase Console، أو يمكنك الدخول فوراً بالبريد الإلكتروني وكلمة المرور أعلاه.'
-                    : 'Note: +974 SMS OTP requires SMS billing enabled in Firebase Console, or sign in anytime with Email & Password above.',
+                    ? 'ملاحظة: رسائل التحقق عبر SMS تتطلب تفعيل فوترة الرسائل في Firebase Console، أو يمكنك الدخول فوراً بالبريد الإلكتروني وكلمة المرور أعلاه.'
+                    : 'Note: SMS OTP requires SMS billing enabled in Firebase Console, or sign in anytime with Email & Password above.',
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySmall(color: AppColors.textSecondary)
                     .copyWith(fontSize: 11.5),
@@ -534,7 +518,7 @@ class WelcomeScreen extends StatelessWidget {
               key: const ValueKey('welcome_sms_unavailable_notice'),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.slateBg,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: AppColors.slateBorder),
               ),
@@ -550,8 +534,8 @@ class WelcomeScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           isAr
-                              ? 'الدخول عبر رسائل SMS (+974) يتطلب تفعيل Firebase Auth وفوترة الرسائل في Firebase Console؛ يرجى استخدام البريد الإلكتروني وكلمة المرور.'
-                              : 'Phone SMS OTP (+974) requires Firebase Auth & SMS billing enabled in Firebase Console. Please sign in with Email & Password.',
+                              ? 'الدخول عبر رسائل SMS يتطلب تفعيل Firebase Auth وفوترة الرسائل؛ يرجى استخدام البريد الإلكتروني وكلمة المرور.'
+                              : 'Phone SMS OTP requires Firebase Auth & SMS billing enabled. Please sign in with Email & Password.',
                           style: AppTypography.bodySmall(),
                         ),
                       ),
@@ -572,18 +556,18 @@ class WelcomeScreen extends StatelessWidget {
                         auth.clearError();
                         Navigator.of(context).push(
                           MashwarPageRoute(
-                            builder: (_) =>
-                                const EmailInputScreen(initialIsRegister: false),
+                            builder: (_) => const EmailInputScreen(
+                                initialIsRegister: false),
                           ),
                         );
                       },
                       icon: const Icon(Icons.mail_outline_rounded,
-                          size: 15, color: AppColors.teal),
+                          size: 15, color: AppColors.cobalt),
                       label: Text(
                         isAr
                             ? 'الدخول بالبريد وكلمة المرور'
                             : 'Use Email & Password',
-                        style: AppTypography.label(color: AppColors.teal)
+                        style: AppTypography.label(color: AppColors.cobalt)
                             .copyWith(fontWeight: FontWeight.w800),
                       ),
                     ),
@@ -610,12 +594,12 @@ class WelcomeScreen extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.developer_mode_rounded,
-                  size: 16, color: AppColors.teal),
+                  size: 16, color: AppColors.cobalt),
               label: Text(
                 isAr
                     ? 'دخول سريع لبيئة التطوير (Dev Demo)'
                     : 'Quick Dev Environment Entry (Dev Demo)',
-                style: AppTypography.label(color: AppColors.teal)
+                style: AppTypography.label(color: AppColors.cobalt)
                     .copyWith(fontWeight: FontWeight.w800),
               ),
             ),
@@ -635,26 +619,16 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCompactTrustIcon(MashwarTrustType type) {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(7),
-      ),
-      child: MashwarTrustEmblem(type: type, size: 18),
-    );
-  }
-
   Widget _buildFeatureBullet(
     IconData icon,
+    Color iconColor,
     String text, {
     bool compact = false,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: compact ? 15 : 17, color: AppColors.teal),
+        Icon(icon, size: compact ? 15 : 17, color: iconColor),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -672,7 +646,7 @@ class WelcomeScreen extends StatelessWidget {
   Widget _buildLanguageButton(SettingsProvider settings, bool isAr) {
     return ActionChip(
       backgroundColor: Colors.white,
-      side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+      side: const BorderSide(color: AppColors.slateBorder, width: 0.9),
       avatar:
           const Icon(Icons.language_rounded, size: 16, color: AppColors.navy),
       label: Text(

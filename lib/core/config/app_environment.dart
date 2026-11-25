@@ -177,62 +177,64 @@ class AppEnvironment {
   }
 
   // ---------------------------------------------------------------------------
-  // MVP Phase 1 Feature Flags (Qatar Worksite Supply Pilot)
+  // MASHWAR International 3-Service Platform Feature Flags
   // ---------------------------------------------------------------------------
 
-  /// Core MVP workflow: B2B/site hardware & supply errands in Qatar (QAR).
+  /// Pillar 3: Smart Supply, Errands & Worksite Fulfillment.
   static const bool enableWorksiteSupply = true;
 
-  /// Deferred pending Qatar Ministry of Transport (MoT) passenger licensing.
-  static const bool enablePassengerRides = false;
+  /// Pillar 1: Shared Trips & Empty Seats along active corridors.
+  static const bool enablePassengerRides = true;
 
-  /// Deferred pending Qatar MoT regulatory approval.
-  static const bool enableCarpooling = false;
+  /// Pillar 1 & 2: Bidirectional Carpooling & Parcels Along the Route.
+  static const bool enableCarpooling = true;
 
-  /// Deferred pending commercial transport/cargo licensing.
+  /// Heavy commercial freight fleet dispatch remains gated separately.
   static const bool enableCommercialCargo = false;
 
-  /// Deferred pending Qatar Central Bank (QCB) PSP / stored-value compliance.
+  /// Stored-value wallet custody remains disabled in favor of direct settlement.
   static const bool enableDigitalWallet = false;
 
-  /// Deferred pending QCB-compliant payment custody & PSP escrow integration.
+  /// Automated PSP escrow custody remains disabled (Cash / Manual Transfer + OTP).
   static const bool enableEscrowClaims = false;
 
   // ---------------------------------------------------------------------------
-  // Legal, Regulatory & Scope Disclaimers
+  // Platform Scope, Settlement & Legal Notices
   // ---------------------------------------------------------------------------
 
   static const String pilotCountryCode = 'QA';
   static const String pilotCurrencyCode = 'QAR';
 
   static const String pilotScopeDisclaimerEn =
-      'Pilot Scope: MASHWAR MVP Phase 1 supports Qatar worksite supply and '
-      'material delivery coordination priced in QAR using Cash on Delivery or '
-      'manual bank transfer tracking only.';
+      'Platform Scope: MASHWAR is an international 3-service mobility, parcel, '
+      'and fulfillment platform uniting Shared Trips & Empty Seats, Parcels '
+      'Along the Route, and Smart Supply & Errands with Cash on Delivery, '
+      'verified manual transfer proof, and Handover OTP confirmation.';
 
   static const String pilotScopeDisclaimerAr =
-      'نطاق المرحلة التجريبية: يدعم إصدار MVP الأول من مشوار تنسيق توريد '
-      'ومستلزمات مواقع العمل داخل دولة قطر بالريال القطري (QAR) عبر الدفع عند '
-      'الاستلام أو التحويل البنكي اليدوي الموثق فقط.';
+      'نطاق المنصة: مشوار منصة عالمية ثلاثية الخدمات تجمع الرحلات المشتركة '
+      'والمقاعد الشاغرة، والطرود على الطريق، والتوريد والمهام الذكية عبر الدفع '
+      'النقدي عند التسليم أو التحويل البنكي اليدوي الموثق وتأكيد الاستلام برمز الأمان OTP.';
 
   static const String passengerTransportNoticeEn =
-      'Regulatory Prerequisite: Passenger rides, carpooling, and commercial '
-      'cargo features remain disabled until applicable Qatar Ministry of '
-      'Transport (MoT) licensing is obtained.';
+      'Shared Mobility & Route Parcels: Trips and on-route parcel deliveries '
+      'connect independent community travelers heading along the same corridor '
+      'with transparent seat/parcel pricing and dual OTP handover verification.';
 
   static const String passengerTransportNoticeAr =
-      'متطلب تنظيمي: تظل خدمات نقل الركاب والتشارك والشحن التجاري معطّلة إلى '
-      'حين استكمال التراخيص النظامية المطلوبة من وزارة المواصلات في قطر.';
+      'التنقل التشاركي والطرود على المسار: تربط المنصة المسافرين المستقلين '
+      'المتجهين على نفس الخط لمشاركة المقاعد الشاغرة أو توصيل الطرود الخفيفة '
+      'بتسعير واضح وتأكيد استلام وتسليم عبر رمز التحقق الرقمي OTP.';
 
   static const String paymentsEscrowNoticeEn =
-      'Payment & Custody Prerequisite: In-app digital wallet custody, online '
-      'card/PSP processing, and regulated escrow claims remain disabled pending '
-      'Qatar Central Bank (QCB) payment compliance and licensed PSP onboarding.';
+      'Direct Settlement Notice: Settlements use Cash on Handover or verified '
+      'manual transfer receipts without stored-value wallet custody; invoice '
+      'photos and OTP codes protect both parties at handover.';
 
   static const String paymentsEscrowNoticeAr =
-      'متطلب مالي: تظل المحفظة الرقمية وبوابات الدفع الإلكتروني وحفظ مبالغ '
-      'الضمان المالي معطّلة إلى حين استكمال متطلبات مصرف قطر المركزي والتعاقد '
-      'مع مزود دفع مرخص.';
+      'تنويه التسوية المالية: تتم التسويات مباشرة نقداً عند التسليم أو عبر إرفاق '
+      'إيصال التحويل البنكي اليدوي دون احتجاز محفظة رقمية؛ وتوثّق الفواتير ورموز '
+      'التسليم OTP حقوق الطرفين.';
 
   static const String trademarkNoticeEn =
       'Trademark Notice: MASHWAR / مشوار brand registration and third-party '

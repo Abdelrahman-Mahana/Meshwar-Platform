@@ -241,7 +241,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
             const SizedBox(width: 8),
             Flexible(
               child: Text(
-                isAr ? 'طلبات توريد المواقع' : 'Worksite Supply Requests',
+                isAr ? 'طلبات التوريد والمهام' : 'Supply & Task Requests',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.title().copyWith(fontSize: 18),
@@ -356,8 +356,8 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 9),
                     hintText: isAr
-                        ? 'ابحث بالعنوان أو المواد أو الموقع في قطر...'
-                        : 'Search title, materials, store, or Qatar area...',
+                        ? 'ابحث بالعنوان أو المواد أو المتجر أو المنطقة...'
+                        : 'Search title, materials, store, or area...',
                     hintStyle: AppTypography.label(
                             color: AppColors.textSecondary)
                         .copyWith(fontSize: 12),
@@ -543,7 +543,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   key: const ValueKey('feed_perspective_assigned'),
                   label: isAr ? 'مهامي كمزود' : 'Assigned Jobs',
                   selected: provider.filterAssignedToMe,
-                  accentColor: AppColors.qatarMaroon,
+                  accentColor: AppColors.indigo,
                   onTap: () {
                     setState(() => _openMarketOnly = false);
                     provider.applyFilters(
@@ -635,7 +635,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
               children: _areaFilterOptions.map((area) {
                 final selected = activeArea == area;
                 final label = area.isEmpty
-                    ? (isAr ? 'كل مناطق قطر' : 'All Qatar Areas')
+                    ? (isAr ? 'كل المناطق' : 'All Areas')
                     : AppStrings.translateCity(area, isArabic: isAr);
                 return Padding(
                   padding: const EdgeInsetsDirectional.only(end: 6),
@@ -699,7 +699,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   key: const ValueKey('feed_urgent_toggle'),
                   label: isAr ? 'عاجل فقط' : 'Urgent Only',
                   selected: _urgentOnly,
-                  accentColor: AppColors.qatarMaroon,
+                  accentColor: AppColors.cobalt,
                   onTap: () => setState(() => _urgentOnly = !_urgentOnly),
                 ),
                 const SizedBox(width: 10),
@@ -729,7 +729,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                     onPressed: () => _resetAllFilters(provider),
                     child: Text(
                       isAr ? 'مسح الفلاتر' : 'Clear Filters',
-                      style: AppTypography.label(color: AppColors.qatarMaroon)
+                      style: AppTypography.label(color: AppColors.cobalt)
                           .copyWith(fontWeight: FontWeight.w800),
                     ),
                   ),
@@ -976,9 +976,9 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
       key: ValueKey('feed_request_card_${req.id}'),
       borderRadius: BorderRadius.circular(16),
       borderColor: urgent
-          ? AppColors.qatarMaroon.withValues(alpha: 0.35)
+          ? AppColors.cobalt.withValues(alpha: 0.35)
           : AppColors.borderDisabled,
-      hoverBorderColor: urgent ? AppColors.qatarMaroon : AppColors.navy,
+      hoverBorderColor: urgent ? AppColors.cobalt : AppColors.navy,
       padding: const EdgeInsets.all(16),
       onTap: () {
         Navigator.of(context).push(
@@ -1019,24 +1019,24 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.qatarMaroonSurface,
+                        color: AppColors.cobaltSurface,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: AppColors.qatarMaroon.withValues(alpha: 0.3),
+                          color: AppColors.cobalt.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const MashwarLivePulseDot(
-                            color: AppColors.qatarMaroon,
+                            color: AppColors.cobalt,
                             size: 6.5,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             isAr ? 'عاجل' : 'Urgent',
                             style:
-                                AppTypography.label(color: AppColors.qatarMaroon)
+                                AppTypography.label(color: AppColors.cobalt)
                                     .copyWith(
                               fontWeight: FontWeight.w800,
                               fontSize: 10.5,
@@ -1051,10 +1051,9 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.sand,
+                  color: AppColors.slateBg,
                   borderRadius: BorderRadius.circular(10),
-                  border:
-                      Border.all(color: AppColors.gold.withValues(alpha: 0.4)),
+                  border: Border.all(color: AppColors.slateBorder),
                 ),
                 child: Text(
                   req.effectiveTotalMinor.format(isArabic: isAr),
@@ -1145,13 +1144,13 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.local_offer_outlined,
-                      size: 14, color: AppColors.qatarMaroon),
+                      size: 14, color: AppColors.cobalt),
                   const SizedBox(width: 4),
                   Text(
                     isAr
                         ? '${req.offerCount} عروض'
                         : '${req.offerCount} offers',
-                    style: AppTypography.label(color: AppColors.qatarMaroon)
+                    style: AppTypography.label(color: AppColors.cobalt)
                         .copyWith(fontWeight: FontWeight.w700),
                   ),
                 ],

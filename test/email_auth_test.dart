@@ -77,7 +77,10 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('توريد مواقع العمل والمشاريع في قطر'), findsOneWidget);
+        expect(
+          find.text('رحلات تشاركية · طرود على الطريق · توريد ومهام'),
+          findsOneWidget,
+        );
         expect(find.text('المتابعة بالبريد الإلكتروني'), findsOneWidget);
         expect(find.text('إنشاء حساب جديد'), findsOneWidget);
         expect(

@@ -70,7 +70,7 @@ class MashwarOnboardingShell extends StatelessWidget {
                 clipBehavior: Clip.antiAlias,
                 child: Row(
                   children: [
-                    // Showcase Column: Live Qatar Multi-Service Corridor Map + Qatari Heritage Ribbon
+                    // Showcase Column: Live International Multi-Service Corridor Map
                     Expanded(
                       flex: 5,
                       child: Container(
@@ -78,13 +78,20 @@ class MashwarOnboardingShell extends StatelessWidget {
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [AppColors.navy, Color(0xFF172742), Color(0xFF3E1025)],
+                            colors: [
+                              AppColors.navy,
+                              Color(0xFF133352),
+                              Color(0xFF0E3A47),
+                            ],
                           ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            const QatarSaduAccentBar(height: 5, borderRadius: 0),
+                            Container(
+                              height: 1,
+                              color: AppColors.slateBorder.withValues(alpha: 0.18),
+                            ),
                             Expanded(
                               child: Padding(
                                 padding: const EdgeInsets.all(28),
@@ -101,20 +108,20 @@ class MashwarOnboardingShell extends StatelessWidget {
                                           child: Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                             decoration: BoxDecoration(
-                                              color: AppColors.qatarMaroon.withValues(alpha: 0.45),
+                                              color: AppColors.cobalt.withValues(alpha: 0.24),
                                               borderRadius: BorderRadius.circular(20),
                                               border: Border.all(
-                                                color: AppColors.gold.withValues(alpha: 0.4),
+                                                color: Colors.white.withValues(alpha: 0.24),
                                               ),
                                             ),
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
-                                                const MashwarLivePulseDot(color: AppColors.gold, size: 7),
+                                                const MashwarLivePulseDot(color: AppColors.emerald, size: 7),
                                                 const SizedBox(width: 6),
                                                 Flexible(
                                                   child: Text(
-                                                    showcaseBadge ?? (isAr ? 'شبكة قطر الحية' : 'Qatar Live Network'),
+                                                    showcaseBadge ?? (isAr ? 'شبكة المسارات الحية' : 'Live Route Network'),
                                                     maxLines: 1,
                                                     overflow: TextOverflow.ellipsis,
                                                     style: AppTypography.label(color: Colors.white).copyWith(
@@ -151,8 +158,8 @@ class MashwarOnboardingShell extends StatelessWidget {
                                     Text(
                                       showcaseTitle ??
                                           (isAr
-                                              ? 'منصة قطر للخدمات اليومية والمشاوير الموثقة'
-                                              : 'Qatar community services & verified transit on one platform'),
+                                              ? 'رحلات مشتركة وطرود على الطريق وتوريد ذكي في منصة واحدة'
+                                              : 'Shared trips, route parcels & smart supply on one platform'),
                                       style: AppTypography.title(color: Colors.white).copyWith(
                                         fontSize: 19,
                                         fontWeight: FontWeight.w800,
@@ -162,8 +169,8 @@ class MashwarOnboardingShell extends StatelessWidget {
                                     Text(
                                       showcaseSubtitle ??
                                           (isAr
-                                              ? 'شراء بفاتورة، توريد لمواقع العمل، مشاوير حضانات ومقاعد بين المدن بحماية الضمان المالي المزدوج.'
-                                              : 'Shop errands, site supplies, daily & school rides, and shared travel backed by Bilateral Escrow & QID.'),
+                                              ? 'شارك المقاعد الشاغرة، أرسل الطرود مع مسافرين على نفس الخط، وأنجز طلبات التوريد والمشتريات بكود التحقق الرقمي OTP.'
+                                              : 'Share empty seats, send parcels along active routes, and coordinate verified supply & errands with OTP handover.'),
                                       style: AppTypography.bodySecondary(
                                         color: Colors.white.withValues(alpha: 0.8),
                                       ).copyWith(fontSize: 13),
@@ -174,16 +181,16 @@ class MashwarOnboardingShell extends StatelessWidget {
                                       runSpacing: 6,
                                       children: [
                                         _buildTrustPill(
-                                          Icons.verified_user_rounded,
-                                          isAr ? 'ضمان Escrow 100%' : 'Escrow 100% Safe',
+                                          Icons.directions_car_filled_rounded,
+                                          isAr ? 'مقاعد ورحلات مشتركة' : 'Shared Trips',
                                         ),
                                         _buildTrustPill(
-                                          Icons.flash_on_rounded,
-                                          isAr ? 'فوراً Fawran & QPay' : 'Fawran & QPay',
+                                          Icons.inventory_2_outlined,
+                                          isAr ? 'طرود بكود OTP' : 'OTP Route Parcels',
                                         ),
                                         _buildTrustPill(
-                                          Icons.location_city_rounded,
-                                          isAr ? 'كل بلديات قطر' : 'All Qatar Hubs',
+                                          Icons.fact_check_outlined,
+                                          isAr ? 'توريد وفواتير موثقة' : 'Verified Supply',
                                         ),
                                       ],
                                     ),

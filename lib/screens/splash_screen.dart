@@ -8,6 +8,7 @@ import '../core/constants/app_typography.dart';
 import '../core/localization/app_strings.dart';
 import '../core/widgets/brand_logo.dart';
 import '../core/widgets/mashwar_animations.dart';
+import '../core/widgets/mashwar_worksite_icons.dart';
 import '../core/widgets/qatar_live_map_canvas.dart';
 import '../state/auth_provider.dart';
 import 'auth/welcome_screen.dart';
@@ -116,10 +117,10 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Ambient animated Qatar map corridors in deep navy
+          // Ambient corridor network in deep international navy
           const Positioned.fill(
             child: Opacity(
-              opacity: 0.34,
+              opacity: 0.28,
               child: QatarLiveMapCanvas(
                 style: QatarMapStyle.darkExecutive,
                 activeFromCity: 'الدوحة',
@@ -130,15 +131,15 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-          // Radial vignette with Qatari Al-Adaam Maroon & Navy depth
+          // Radial vignette with Cobalt & Navy depth
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
-                radius: 0.95,
+                radius: 1.0,
                 colors: [
-                  AppColors.qatarMaroon.withValues(alpha: 0.24),
-                  AppColors.navy.withValues(alpha: 0.94),
+                  AppColors.cobalt.withValues(alpha: 0.22),
+                  AppColors.navy.withValues(alpha: 0.95),
                 ],
               ),
             ),
@@ -146,7 +147,7 @@ class _SplashScreenState extends State<SplashScreen> {
           SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
+                constraints: const BoxConstraints(maxWidth: 460),
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: AppDimens.space24),
@@ -157,71 +158,81 @@ class _SplashScreenState extends State<SplashScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Spacer(),
-                        // Concentric brand halo + Qatari heritage bar + Logo
+                        // International Brand Halo + Logo
                         Container(
-                          clipBehavior: Clip.antiAlias,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 22),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.07),
                             borderRadius: BorderRadius.circular(28),
                             border: Border.all(
-                              color: AppColors.gold.withValues(alpha: 0.42),
+                              color: AppColors.cobalt.withValues(alpha: 0.45),
                               width: 1.2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.qatarMaroon
-                                    .withValues(alpha: 0.26),
+                                color: AppColors.cobalt.withValues(alpha: 0.22),
                                 blurRadius: 36,
                                 spreadRadius: 2,
                               ),
                             ],
                           ),
-                          child: const Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              QatarSaduAccentBar(height: 5, borderRadius: 0),
-                              Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 28, vertical: 20),
-                                child: BrandLogo(fontSize: 44, isLight: true),
-                              ),
-                            ],
-                          ),
+                          child: const BrandLogo(fontSize: 44, isLight: true),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 20),
                         Text(
                           isAr
-                              ? 'توريد مواقع العمل والخدمات في قطر'
-                              : 'Worksite Supply & Services in Qatar',
+                              ? 'رحلات تشاركية · طرود على الطريق · توريد ومهام'
+                              : 'Shared Trips · Route Parcels · Smart Supply',
                           textAlign: TextAlign.center,
                           style: AppTypography.title(color: Colors.white)
                               .copyWith(
-                            fontSize: 17,
+                            fontSize: 16.5,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: const [
+                            MashwarServicePillarIcon(
+                              pillar: MashwarServicePillar.sharedTrips,
+                              size: 36,
+                            ),
+                            MashwarServicePillarIcon(
+                              pillar: MashwarServicePillar.routeParcels,
+                              size: 36,
+                            ),
+                            MashwarServicePillarIcon(
+                              pillar: MashwarServicePillar.smartSupply,
+                              size: 36,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 14, vertical: 6),
                           decoration: BoxDecoration(
-                            color:
-                                AppColors.qatarMaroon.withValues(alpha: 0.36),
+                            color: AppColors.cobalt.withValues(alpha: 0.20),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                                color: AppColors.gold.withValues(alpha: 0.45)),
+                                color:
+                                    AppColors.emerald.withValues(alpha: 0.45)),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const MashwarLivePulseDot(
-                                  color: AppColors.gold, size: 7),
+                                  color: AppColors.emerald, size: 7),
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
                                   isAr
-                                      ? 'توريد مواقع · عروض مزودين معتمدين · توثيق تسليم'
-                                      : 'Site Supply · Approved Providers · Verified Handover',
+                                      ? 'توصيل موثّق بكود الأمان OTP · تواصل مباشر'
+                                      : 'OTP-Verified Handover · Direct Connection',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTypography.label(color: Colors.white)
@@ -236,23 +247,24 @@ class _SplashScreenState extends State<SplashScreen> {
                         ),
                         const Spacer(),
                         SizedBox(
-                          width: 140,
+                          width: 148,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(6),
                             child: const LinearProgressIndicator(
                               minHeight: 4,
-                              backgroundColor: Color(0xFF1F3E5D),
+                              backgroundColor: Color(0xFF1E3A5F),
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.gold),
+                                  AppColors.emerald),
                             ),
                           ),
                         ),
                         const SizedBox(height: AppDimens.space12),
                         Text(
                           isAr
-                              ? 'جاري تجهيز شبكة الخدمات الحية في قطر...'
-                              : 'Connecting live Qatar services...',
-                          style: AppTypography.bodySmall(color: AppColors.gold)
+                              ? 'جاري تجهيز تجربة مشوار...'
+                              : 'Preparing your MASHWAR workspace...',
+                          style: AppTypography.bodySmall(
+                                  color: const Color(0xFF93C5FD))
                               .copyWith(
                             fontWeight: FontWeight.w700,
                           ),

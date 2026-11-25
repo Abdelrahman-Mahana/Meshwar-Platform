@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -13,30 +12,32 @@ import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/worksite_models.dart';
 import '../../state/auth_provider.dart';
+import '../../state/board_provider.dart';
+import '../../state/parcels_provider.dart';
+import '../../state/rides_provider.dart';
 import '../../state/settings_provider.dart';
 import '../../state/worksite_provider.dart';
-import '../auth/id_verification_screen.dart';
 import '../auth/welcome_screen.dart';
 import '../board/board_extra_screens.dart';
+import '../driver/driver_rides_management_screens.dart';
 import '../settings/settings_screen.dart';
-import '../wallet/wallet_screen.dart';
 import '../worksite/provider_profile_screen.dart';
 import '../worksite/work_request_details_screen.dart';
 
-// الملف الشخصي للمستخدم (User Profile Screen)
+// الملف الشخصي للمستخدم (Unified International 3-Service User Profile Screen)
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
-
-  static const bool _isMvpWorksiteOnly =
-      AppEnvironment.enableWorksiteSupply &&
-      !AppEnvironment.enablePassengerRides;
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final user = context.watch<AuthProvider>().user;
     final worksite = context.watch<WorksiteProvider?>();
-    final isIdVerified = user.idVerificationStatus == IdVerificationStatus.verified;
+    final rides = context.watch<RidesProvider?>();
+    final parcels = context.watch<ParcelsProvider?>();
+    final board = context.watch<BoardProvider?>();
+    final isIdVerified =
+        user.idVerificationStatus == IdVerificationStatus.verified;
     final prov = worksite?.providerProfile;
     final uid = worksite?.currentUserId ?? user.id;
 
@@ -54,22 +55,29 @@ class UserProfileScreen extends StatelessWidget {
             .length;
     final completedSuppliesCount =
         prov?.completedJobsCount ?? completedOwnedCount;
+    final publishedTripsCount = rides?.myPublishedRides.length ?? 0;
+    final activeParcelsCount = parcels?.parcels.length ?? 0;
+    final routeAdsCount = board?.myAds.length ?? 0;
     final realRating =
         (prov != null && prov.rating > 0) ? prov.rating : user.rating;
     final unreadNotificationsCount = worksite?.unreadNotificationsCount ?? 0;
     final savedSites = worksite?.savedWorksites ?? const <SavedWorksite>[];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(isAr ? 'الملف الشخصي' : 'My Profile', style: AppTypography.title()),
+        title: Text(
+          isAr ? 'الملف الشخصي' : 'My Profile',
+          style: AppTypography.title(),
+        ),
         actions: [
           TextButton.icon(
             onPressed: () {
@@ -77,10 +85,12 @@ class UserProfileScreen extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const EditProfileScreen()),
               );
             },
-            icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.teal),
+            icon: const Icon(Icons.edit_outlined,
+                size: 18, color: AppColors.cobalt),
             label: Text(
               isAr ? 'تعديل' : 'Edit',
-              style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700),
+              style: AppTypography.label(color: AppColors.cobalt)
+                  .copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -99,14 +109,18 @@ class UserProfileScreen extends StatelessWidget {
                       width: 78,
                       height: 78,
                       decoration: BoxDecoration(
-                        color: AppColors.gold,
+                        color: AppColors.cobaltSurface,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.navy.withValues(alpha: 0.16), width: 2),
+                        border: Border.all(
+                          color: AppColors.cobalt.withValues(alpha: 0.25),
+                          width: 2,
+                        ),
                       ),
                       child: Center(
                         child: Text(
                           user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
-                          style: AppTypography.largeTitle(color: AppColors.navy).copyWith(fontSize: 32),
+                          style: AppTypography.largeTitle(color: AppColors.navy)
+                              .copyWith(fontSize: 32),
                         ),
                       ),
                     ),
@@ -116,15 +130,19 @@ class UserProfileScreen extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            user.fullName,
+                            user.fullName.isNotEmpty
+                                ? user.fullName
+                                : (isAr ? 'عضو مشوار' : 'MASHWAR Member'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.title().copyWith(fontSize: 20),
                           ),
                         ),
-                        if (isIdVerified || (prov?.canAcceptWorksiteJobs ?? false)) ...[
+                        if (isIdVerified ||
+                            (prov?.canAcceptWorksiteJobs ?? false)) ...[
                           const SizedBox(width: 6),
-                          const Icon(Icons.verified_rounded, color: AppColors.teal, size: 20),
+                          const Icon(Icons.verified_rounded,
+                              color: AppColors.emerald, size: 20),
                         ],
                       ],
                     ),
@@ -133,7 +151,11 @@ class UserProfileScreen extends StatelessWidget {
                       Text(user.phone, style: AppTypography.bodySecondary()),
                     if (user.email != null && user.email!.isNotEmpty) ...[
                       const SizedBox(height: 2),
-                      Text(user.email!, style: AppTypography.label(color: AppColors.textSecondary)),
+                      Text(
+                        user.email!,
+                        style:
+                            AppTypography.label(color: AppColors.textSecondary),
+                      ),
                     ],
                     const SizedBox(height: 10),
                     Wrap(
@@ -142,414 +164,392 @@ class UserProfileScreen extends StatelessWidget {
                       alignment: WrapAlignment.center,
                       children: [
                         MashwarBadge(
-                          type: isIdVerified ? BadgeType.verified : BadgeType.pending,
+                          type: isIdVerified
+                              ? BadgeType.verified
+                              : BadgeType.pending,
                           customLabel: isIdVerified
-                              ? (isAr ? 'موثق بالبطاقة القطرية' : 'Qatar ID Verified')
-                              : (isAr ? 'غير موثق' : 'Unverified'),
+                              ? (isAr ? 'هوية موثّقة' : 'Identity Verified')
+                              : (isAr ? 'بانتظار التوثيق' : 'Unverified'),
                         ),
-                        if (_isMvpWorksiteOnly && prov != null)
+                        if (prov != null)
                           MashwarBadge(
-                            type: prov.approvalStatus == ProviderApprovalStatus.approved
+                            type: prov.approvalStatus ==
+                                    ProviderApprovalStatus.approved
                                 ? BadgeType.verified
-                                : (prov.approvalStatus == ProviderApprovalStatus.rejected
+                                : (prov.approvalStatus ==
+                                        ProviderApprovalStatus.rejected
                                     ? BadgeType.rejected
                                     : BadgeType.pending),
-                            customLabel: prov.approvalStatus.label(isArabic: isAr),
+                            customLabel:
+                                prov.approvalStatus.label(isArabic: isAr),
                           ),
-                        if (user.governorate != null)
+                        if (user.governorate != null &&
+                            user.governorate!.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3F3F4),
+                              color: AppColors.slateBg,
                               borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: AppColors.slateBorder),
                             ),
                             child: Text(
-                              user.city != null ? '${user.governorate} · ${user.city}' : user.governorate!,
-                              style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                              user.city != null
+                                  ? '${user.governorate} · ${user.city}'
+                                  : user.governorate!,
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
-                        if (user.occupation != null)
+                        if (user.occupation != null &&
+                            user.occupation!.isNotEmpty)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppColors.tealSurface,
+                              color: AppColors.emeraldSurface,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
                               user.occupation!,
-                              style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700),
+                              style:
+                                  AppTypography.label(color: AppColors.emerald)
+                                      .copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    const Divider(height: 1, color: Color(0xFFE5E5EA)),
                     const SizedBox(height: 14),
-                    if (_isMvpWorksiteOnly)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Expanded(
-                            child: _buildStatItem(
-                              '$myRequestsCount',
-                              isAr ? 'طلباتي' : 'My Requests',
-                            ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: [
+                        _buildPillarMiniTag(
+                          MashwarServicePillar.sharedTrips,
+                          isAr
+                              ? 'رحلات ($publishedTripsCount)'
+                              : 'Trips ($publishedTripsCount)',
+                        ),
+                        _buildPillarMiniTag(
+                          MashwarServicePillar.routeParcels,
+                          isAr
+                              ? 'طرود ($activeParcelsCount)'
+                              : 'Parcels ($activeParcelsCount)',
+                        ),
+                        _buildPillarMiniTag(
+                          MashwarServicePillar.smartSupply,
+                          isAr
+                              ? 'توريد ($myRequestsCount)'
+                              : 'Supply ($myRequestsCount)',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(height: 1, color: AppColors.slateBorder),
+                    const SizedBox(height: 14),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Expanded(
+                          child: _buildStatItem(
+                            '$myRequestsCount',
+                            isAr ? 'طلباتي' : 'My Requests',
                           ),
-                          Container(width: 1, height: 28, color: const Color(0xFFE5E5EA)),
-                          Expanded(
-                            child: _buildStatItem(
-                              '$completedSuppliesCount',
-                              isAr ? 'توريدات مكتملة' : 'Completed Jobs',
-                            ),
+                        ),
+                        Container(
+                            width: 1,
+                            height: 28,
+                            color: AppColors.slateBorder),
+                        Expanded(
+                          child: _buildStatItem(
+                            '$completedSuppliesCount',
+                            isAr ? 'مهام مكتملة' : 'Completed Jobs',
                           ),
-                          Container(width: 1, height: 28, color: const Color(0xFFE5E5EA)),
-                          Expanded(
-                            child: _buildStatItem(
-                              realRating > 0 ? '${realRating.toStringAsFixed(1)} ★' : '—',
-                              isAr ? 'التقييم' : 'Rating',
-                            ),
+                        ),
+                        Container(
+                            width: 1,
+                            height: 28,
+                            color: AppColors.slateBorder),
+                        Expanded(
+                          child: _buildStatItem(
+                            realRating > 0
+                                ? '${realRating.toStringAsFixed(1)} ★'
+                                : '—',
+                            isAr ? 'التقييم' : 'Rating',
                           ),
-                        ],
-                      )
-                    else
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Expanded(
-                            child: _buildStatItem('${user.completedRides}', isAr ? 'رحلة مكتملة' : 'Rides'),
-                          ),
-                          Container(width: 1, height: 28, color: const Color(0xFFE5E5EA)),
-                          Expanded(
-                            child: _buildStatItem('${user.completedParcels}', isAr ? 'طرد مُوصل' : 'Parcels'),
-                          ),
-                          Container(width: 1, height: 28, color: const Color(0xFFE5E5EA)),
-                          Expanded(
-                            child: _buildStatItem('${user.rating} ★', isAr ? 'التقييم' : 'Rating'),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
             );
 
-            final preferencesAndAccount = _isMvpWorksiteOnly
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+            final preferencesAndAccount = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  isAr
+                      ? 'حالة التوثيق والمواقع المحفوظة'
+                      : 'QID Verification & Worksites',
+                  style: AppTypography.title().copyWith(fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                MashwarSectionCard(
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  borderRadius: 14,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isAr ? 'حالة التوثيق ومواقع العمل' : 'QID Verification & Worksites',
-                        style: AppTypography.title().copyWith(fontSize: 15),
-                      ),
-                      const SizedBox(height: 8),
-                      MashwarSectionCard(
-                        padding: const EdgeInsets.all(AppDimens.space16),
-                        borderRadius: 14,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      Row(
+                        children: [
+                          const MashwarTrustEmblem(
+                            type: MashwarTrustType.qatarIdCrest,
+                            size: 32,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const MashwarTrustEmblem(
-                                  type: MashwarTrustType.qatarIdCrest,
-                                  size: 32,
+                                Text(
+                                  isAr
+                                      ? 'حالة توثيق الهوية والمزود'
+                                      : 'Identity & Provider Status',
+                                  style: AppTypography.label(
+                                      color: AppColors.textSecondary),
                                 ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        isAr
-                                            ? 'حالة المزود / البطاقة القطرية (QID)'
-                                            : 'Provider / QID Status',
-                                        style: AppTypography.label(color: AppColors.textSecondary),
-                                      ),
-                                      Text(
-                                        prov != null
-                                            ? prov.approvalStatus.label(isArabic: isAr)
-                                            : (isIdVerified
-                                                ? (isAr ? 'هوية موثقة' : 'Identity Verified')
-                                                : (isAr ? 'حساب طالب توريد' : 'Requester Profile')),
-                                        style: AppTypography.body(color: AppColors.navy)
-                                            .copyWith(fontWeight: FontWeight.w800, fontSize: 14),
-                                      ),
-                                    ],
-                                  ),
+                                Text(
+                                  prov != null
+                                      ? prov.approvalStatus
+                                          .label(isArabic: isAr)
+                                      : (isIdVerified
+                                          ? (isAr
+                                              ? 'هوية موثّقة'
+                                              : 'Identity Verified')
+                                          : (isAr
+                                              ? 'عضو نشط (رحلات · طرود · توريد)'
+                                              : 'Active Member (Trips · Parcels · Supply)')),
+                                  style: AppTypography.body(
+                                          color: AppColors.navy)
+                                      .copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 14),
                                 ),
                               ],
                             ),
-                            const Divider(height: 20, color: Color(0xFFF1F1F4)),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    isAr ? 'مواقع العمل المحفوظة' : 'Saved Worksites',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.bodySecondary(),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                TextButton(
-                                  style: TextButton.styleFrom(
-                                    padding: EdgeInsets.zero,
-                                    minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  onPressed: () {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => const ProviderProfileScreen(
-                                          focusSavedWorksites: true,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Text(
-                                    isAr ? 'إدارة' : 'Manage',
-                                    style: AppTypography.label(color: AppColors.teal)
-                                        .copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            if (savedSites.isEmpty)
-                              Text(
-                                isAr
-                                    ? 'لم تتم إضافة مواقع عمل محفوظة بعد.'
-                                    : 'No saved worksites added yet.',
-                                style: AppTypography.bodySmall(),
-                              )
-                            else
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: savedSites.take(4).map((site) {
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.sand,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: AppColors.gold.withValues(alpha: 0.35),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      '${site.label} · ${AppStrings.translateCity(site.municipality, isArabic: isAr)}',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTypography.label(color: AppColors.navy)
-                                          .copyWith(fontWeight: FontWeight.w700),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: AppDimens.space20),
-                      Text(
-                        isAr ? 'إدارة الحساب' : 'Account Management',
-                        style: AppTypography.title().copyWith(fontSize: 15),
+                      const Divider(height: 20, color: AppColors.slateBorder),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isAr
+                                  ? 'المواقع ومقار العمل المحفوظة'
+                                  : 'Saved Locations & Worksites',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.bodySecondary(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ProviderProfileScreen(
+                                    focusSavedWorksites: true,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              isAr ? 'إدارة' : 'Manage',
+                              style: AppTypography.label(color: AppColors.cobalt)
+                                  .copyWith(fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
-                      Material(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+                      if (savedSites.isEmpty)
+                        Text(
+                          isAr
+                              ? 'لم تتم إضافة مواقع محفوظة بعد.'
+                              : 'No saved worksites added yet.',
+                          style: AppTypography.bodySmall(),
+                        )
+                      else
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: savedSites.take(4).map((site) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.cobaltSurface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color:
+                                      AppColors.cobalt.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Text(
+                                '${site.label} · ${AppStrings.translateCity(site.municipality, isArabic: isAr)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.label(color: AppColors.navy)
+                                    .copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            );
+                          }).toList(),
                         ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          children: [
-                            _buildActionTile(
-                              icon: Icons.person_outline_rounded,
-                              title: isAr ? 'تعديل البيانات الشخصية' : 'Edit Personal Info',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.badge_outlined,
-                              title: isAr
-                                  ? 'ملف المزود وتوثيق البطاقة القطرية (QID)'
-                                  : 'Provider Profile & QID Verification',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const ProviderProfileScreen()),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.factory_outlined,
-                              title: isAr ? 'مواقع العمل المحفوظة' : 'Saved Worksites',
-                              trailingText: '${savedSites.length}',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const ProviderProfileScreen(
-                                      focusSavedWorksites: true,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.notifications_active_outlined,
-                              title: isAr ? 'مركز الإشعارات' : 'Notifications Center',
-                              trailingText: unreadNotificationsCount > 0
-                                  ? '$unreadNotificationsCount'
-                                  : null,
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                      builder: (_) => const NotificationsCenterScreen()),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.support_agent_rounded,
-                              title: isAr ? 'المساعدة والدعم' : 'Help & Support',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.settings_outlined,
-                              title: isAr ? 'الإعدادات' : 'Settings',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space20),
+                Text(
+                  isAr ? 'إدارة الحساب والخدمات' : 'Account & Services',
+                  style: AppTypography.title().copyWith(fontSize: 15),
+                ),
+                const SizedBox(height: 8),
+                Material(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: const BorderSide(
+                        color: AppColors.slateBorder, width: 0.9),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
                     children: [
-                      Text(
-                        isAr ? 'تفضيلات السفر والبيانات' : 'Travel Preferences & Info',
-                        style: AppTypography.title().copyWith(fontSize: 15),
+                      _buildActionTile(
+                        icon: Icons.person_outline_rounded,
+                        title: isAr
+                            ? 'تعديل البيانات الشخصية'
+                            : 'Edit Personal Info',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const EditProfileScreen()),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(AppDimens.space16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                        ),
-                        child: Column(
-                          children: [
-                            _buildInfoRow(
-                              Icons.smoke_free_rounded,
-                              isAr ? 'التدخين' : 'Smoking Preference',
-                              user.smokingPreference ?? (isAr ? 'غير مدخن' : 'Non-smoker'),
-                            ),
-                            const Divider(height: 20, color: Color(0xFFF1F1F4)),
-                            _buildInfoRow(
-                              Icons.airline_seat_recline_normal_rounded,
-                              isAr ? 'طبيعة الرحلة' : 'Trip Vibe',
-                              user.tripVibe ?? (isAr ? 'هادئ ومريح' : 'Calm & Comfortable'),
-                            ),
-                            if (user.emergencyContactName != null) ...[
-                              const Divider(height: 20, color: Color(0xFFF1F1F4)),
-                              _buildInfoRow(
-                                Icons.emergency_outlined,
-                                isAr ? 'جهة اتصال الطوارئ' : 'Emergency Contact',
-                                '${user.emergencyContactName} (${user.emergencyContactPhone ?? ""})',
+                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildActionTile(
+                        icon: Icons.directions_car_outlined,
+                        title: isAr
+                            ? 'رحلاتي المنشورة'
+                            : 'My Published Trips',
+                        trailingText: publishedTripsCount > 0
+                            ? '$publishedTripsCount'
+                            : null,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const DriverRidesScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildActionTile(
+                        icon: Icons.campaign_outlined,
+                        title: isAr
+                            ? 'طلبات السفر والطرود على الطريق'
+                            : 'Trip & Parcel Route Requests',
+                        trailingText:
+                            routeAdsCount > 0 ? '$routeAdsCount' : null,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const MyBoardAdsScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildActionTile(
+                        icon: Icons.badge_outlined,
+                        title: isAr
+                            ? 'ملف المزود وتوثيق الهوية'
+                            : 'Provider Profile & QID Verification',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const ProviderProfileScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildActionTile(
+                        icon: Icons.location_city_outlined,
+                        title: isAr
+                            ? 'المواقع المحفوظة'
+                            : 'Saved Worksites',
+                        trailingText: '${savedSites.length}',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ProviderProfileScreen(
+                                focusSavedWorksites: true,
                               ),
-                            ],
-                          ],
-                        ),
+                            ),
+                          );
+                        },
                       ),
-                      const SizedBox(height: AppDimens.space20),
-                      Text(
-                        isAr ? 'إدارة الحساب' : 'Account Management',
-                        style: AppTypography.title().copyWith(fontSize: 15),
+                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildActionTile(
+                        icon: Icons.notifications_active_outlined,
+                        title: isAr
+                            ? 'مركز الإشعارات'
+                            : 'Notifications Center',
+                        trailingText: unreadNotificationsCount > 0
+                            ? '$unreadNotificationsCount'
+                            : null,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) =>
+                                    const NotificationsCenterScreen()),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 8),
-                      Material(
-                        color: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Column(
-                          children: [
-                            _buildActionTile(
-                              icon: Icons.person_outline_rounded,
-                              title: isAr ? 'تعديل البيانات الشخصية' : 'Edit Personal Info',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.badge_outlined,
-                              title: isAr ? 'توثيق البطاقة الشخصية القطرية (QID)' : 'Qatar ID (QID) Verification',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const IdVerificationScreen(isOnboarding: false)),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.campaign_outlined,
-                              title: isAr ? 'إعلاناتي وعروضي في اللوحة' : 'My Board Ads & Offers',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const MyBoardAdsScreen()),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.account_balance_wallet_outlined,
-                              title: isAr ? 'محفظة مشوار' : 'Wallet',
-                              trailingText: '${user.walletBalance.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const WalletScreen()),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, color: Color(0xFFF1F1F4)),
-                            _buildActionTile(
-                              icon: Icons.settings_outlined,
-                              title: isAr ? 'الإعدادات' : 'Settings',
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
+                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildActionTile(
+                        icon: Icons.support_agent_rounded,
+                        title: isAr ? 'المساعدة والدعم' : 'Help & Support',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const HelpSupportScreen()),
+                          );
+                        },
+                      ),
+                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildActionTile(
+                        icon: Icons.settings_outlined,
+                        title: isAr ? 'الإعدادات' : 'Settings',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const SettingsScreen()),
+                          );
+                        },
                       ),
                     ],
-                  );
+                  ),
+                ),
+              ],
+            );
 
             return Center(
               child: ConstrainedBox(
@@ -586,6 +586,29 @@ class UserProfileScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildPillarMiniTag(MashwarServicePillar pillar, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.slateBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.slateBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MashwarServicePillarIcon(pillar: pillar, size: 20),
+          const SizedBox(width: 5),
+          Text(
+            text,
+            style: AppTypography.label(color: AppColors.navy)
+                .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatItem(String value, String label) {
     return Column(
       children: [
@@ -593,7 +616,8 @@ class UserProfileScreen extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.title(color: AppColors.navy).copyWith(fontSize: 16),
+          style: AppTypography.title(color: AppColors.navy)
+              .copyWith(fontSize: 16),
         ),
         const SizedBox(height: 2),
         Text(
@@ -601,41 +625,6 @@ class UserProfileScreen extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: AppTypography.label(color: AppColors.textSecondary),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Flexible(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: AppColors.teal),
-              const SizedBox(width: 10),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySecondary(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.end,
-            style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
-          ),
         ),
       ],
     );
@@ -652,20 +641,29 @@ class UserProfileScreen extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: const BoxDecoration(
-          color: Color(0xFFF3F3F4),
+          color: AppColors.slateBg,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 18, color: AppColors.navy),
+        child: Icon(icon, size: 18, color: AppColors.cobalt),
       ),
-      title: Text(title, style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+      title: Text(
+        title,
+        style: AppTypography.body()
+            .copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+      ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (trailingText != null) ...[
-            Text(trailingText, style: AppTypography.label(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              trailingText,
+              style: AppTypography.label(color: AppColors.cobalt)
+                  .copyWith(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(width: 6),
           ],
-          const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
+          const Icon(Icons.chevron_right_rounded,
+              size: 20, color: AppColors.textSecondary),
         ],
       ),
       onTap: onTap,
@@ -696,9 +694,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthProvider>().user;
     _nameController = TextEditingController(text: user.fullName);
     _phoneController = TextEditingController(text: user.phone);
-    _govController = TextEditingController(text: user.governorate ?? 'بلدية الدوحة');
+    _govController =
+        TextEditingController(text: user.governorate ?? 'بلدية الدوحة');
     _cityController = TextEditingController(text: user.city ?? 'الدوحة');
-    _occupationController = TextEditingController(text: user.occupation ?? 'مهندس برمجيات');
+    _occupationController =
+        TextEditingController(text: user.occupation ?? 'مهندس مشاريع');
   }
 
   @override
@@ -715,7 +715,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final name = _nameController.text.trim();
     if (!name.contains(' ') || name.split(' ').length < 2) {
       setState(() {
-        _nameError = isAr ? 'اكتب اسمك بالكامل (اسمين على الأقل)' : 'Please enter your full name (at least 2 words)';
+        _nameError = isAr
+            ? 'اكتب اسمك بالكامل (اسمين على الأقل)'
+            : 'Please enter your full name (at least 2 words)';
       });
       return;
     }
@@ -737,8 +739,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isAr ? 'تم حفظ التعديلات بنجاح' : 'Profile updated successfully'),
-          backgroundColor: AppColors.teal,
+          content: Text(
+            isAr ? 'تم حفظ التعديلات بنجاح' : 'Profile updated successfully',
+          ),
+          backgroundColor: AppColors.emerald,
         ),
       );
       Navigator.of(context).pop();
@@ -751,16 +755,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.watch<AuthProvider>().user;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(isAr ? 'تعديل الملف الشخصي' : 'Edit Profile', style: AppTypography.title()),
+        title: Text(
+          isAr ? 'تعديل الملف الشخصي' : 'Edit Profile',
+          style: AppTypography.title(),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -768,74 +776,112 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Avatar with Gold Accent Ring
               Center(
                 child: Container(
                   padding: const EdgeInsets.all(3),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.gold, width: 2),
+                    border: Border.all(color: AppColors.cobalt, width: 2),
                   ),
                   child: CircleAvatar(
                     radius: 36,
-                    backgroundColor: AppColors.goldSurface,
+                    backgroundColor: AppColors.cobaltSurface,
                     child: Text(
                       user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
-                      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.navy),
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.navy,
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: AppDimens.space24),
-
-              Text(isAr ? 'الاسم الكامل' : 'Full Name', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                isAr ? 'الاسم الكامل' : 'Full Name',
+                style:
+                    AppTypography.label().copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 6),
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: const Color(0xFFF3F3F4),
+                  fillColor: Colors.white,
                   errorText: _nameError,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
+                  ),
                 ),
               ),
               const SizedBox(height: AppDimens.space16),
-
-              Text(isAr ? 'رقم الجوال' : 'Mobile Number', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                isAr ? 'رقم الجوال' : 'Mobile Number',
+                style:
+                    AppTypography.label().copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 6),
               TextField(
                 controller: _phoneController,
                 readOnly: true,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: const Color(0xFFF3F3F4),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                  fillColor: AppColors.slateBg,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
+                  ),
                 ),
               ),
               const SizedBox(height: 6),
               Text(
-                isAr ? 'يتطلب تغيير رقم الجوال رمز تأكيد جديد.' : 'Changing mobile number requires SMS OTP verification.',
+                isAr
+                    ? 'يتطلب تغيير رقم الجوال رمز تأكيد جديد.'
+                    : 'Changing mobile number requires SMS OTP verification.',
                 style: AppTypography.label(color: AppColors.textSecondary),
               ),
               const SizedBox(height: AppDimens.space16),
-
               Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(isAr ? 'البلدية / المنطقة' : 'Municipality', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                        Text(
+                          isAr ? 'المنطقة / البلدية' : 'Region / Municipality',
+                          style: AppTypography.label()
+                              .copyWith(fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 6),
                         TextField(
                           controller: _govController,
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: const Color(0xFFF3F3F4),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: AppColors.slateBorder, width: 0.9),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: AppColors.slateBorder, width: 0.9),
+                            ),
                           ),
                         ),
                       ],
@@ -846,15 +892,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(isAr ? 'المدينة / المركز' : 'City', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                        Text(
+                          isAr ? 'المدينة' : 'City',
+                          style: AppTypography.label()
+                              .copyWith(fontWeight: FontWeight.bold),
+                        ),
                         const SizedBox(height: 6),
                         TextField(
                           controller: _cityController,
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: const Color(0xFFF3F3F4),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                            fillColor: Colors.white,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: AppColors.slateBorder, width: 0.9),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                  color: AppColors.slateBorder, width: 0.9),
+                            ),
                           ),
                         ),
                       ],
@@ -863,22 +921,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ],
               ),
               const SizedBox(height: AppDimens.space16),
-
-              Text(isAr ? 'المهنة / التخصص' : 'Occupation', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                isAr ? 'المهنة / التخصص' : 'Occupation',
+                style:
+                    AppTypography.label().copyWith(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 6),
               TextField(
                 controller: _occupationController,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: const Color(0xFFF3F3F4),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8)),
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide:
+                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
+                  ),
                 ),
               ),
-
               const SizedBox(height: AppDimens.space32),
               MashwarButton(
-                text: _isSaving ? (isAr ? 'جاري الحفظ...' : 'Saving...') : (isAr ? 'حفظ' : 'Save Changes'),
+                text: _isSaving
+                    ? (isAr ? 'جاري الحفظ...' : 'Saving...')
+                    : (isAr ? 'حفظ' : 'Save Changes'),
                 isLoading: _isSaving,
                 onPressed: () => _handleSave(isAr),
               ),
@@ -891,89 +961,75 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 }
 
-// Page 60: المساعدة والدعم (Help & Support FAQ)
+// Page 60: المساعدة والدعم (Unified International 3-Service Help & Support)
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
-
-  static const bool _isMvpWorksiteOnly =
-      AppEnvironment.enableWorksiteSupply &&
-      !AppEnvironment.enablePassengerRides;
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
 
-    final faqs = _isMvpWorksiteOnly
-        ? (isAr
-            ? [
-                {
-                  'q': 'كيف أنشئ طلب توريد لموقع العمل؟',
-                  'a': 'اضغط «إنشاء طلب توريد»، حدد الفئة والمواد والكمية، اختر موقع العمل المحفوظ أو أدخل الموقع في قطر، ثم حدد الميزانية التقديرية وأجرة التوصيل بالريال القطري (QAR).',
-                },
-                {
-                  'q': 'كيف يتم اعتماد مزودي التوريد في قطر؟',
-                  'a': 'يرفع المزود البطاقة الشخصية القطرية (QID من 11 خانة) ومناطق الخدمة والتخصصات، ولا يُسمح له بتقديم عروض أو قبول مهام إلا بعد المراجعة والاعتماد.',
-                },
-                {
-                  'q': 'كيف أضمن مطابقة المشتريات والفاتورة؟',
-                  'a': 'يلتزم المزود بإرفاق صورة فاتورة الشراء الفعلية وعدم تجاوز السقف الأقصى المعتمد للمواد (QAR) دون موافقتك.',
-                },
-                {
-                  'q': 'كيف يعمل رمز التسليم السري (6 خانات)؟',
-                  'a': 'بعد ترسية العرض يظهر رمز سري من 6 خانات لدى طالب التوريد فقط؛ عند وصول المواد لبوابة الموقع ومطابقة الفاتورة تسلمه للمزود لإغلاق الطلب كمكتمل.',
-                },
-                {
-                  'q': 'ما طرق الدفع المتاحة في المرحلة التجريبية؟',
-                  'a': 'تتوفر حالياً خدمة الدفع نقداً عند الاستلام (COD) أو التحويل البنكي اليدوي مع رفع إيصال التحويل، ولا توجد محفظة رقمية مفعّلة في هذه المرحلة.',
-                },
-              ]
-            : [
-                {
-                  'q': 'How do I create a worksite supply request?',
-                  'a': 'Tap "Create a Request", select the supply category and items, pick a saved Qatar worksite or enter delivery details, and set QAR item cap and delivery fee.',
-                },
-                {
-                  'q': 'How are Qatar supply providers verified?',
-                  'a': 'Providers submit their 11-digit Qatar ID (QID), service municipalities, and specialties for review. Only approved providers can submit offers.',
-                },
-                {
-                  'q': 'How are material purchases and store invoices verified?',
-                  'a': 'Providers attach the actual store purchase receipt image and total in QAR within your approved maximum item cap.',
-                },
-                {
-                  'q': 'How does the 6-character handover code work?',
-                  'a': 'Once an offer is accepted, a private 6-char handover code is generated for the requester. Share it at the worksite gate after verifying items and invoice to close the order.',
-                },
-                {
-                  'q': 'Which settlement methods are supported in Pilot Phase 1?',
-                  'a': 'Cash on Delivery (COD) and Manual Bank Transfer with proof tracking are supported in QAR. In-app digital wallet custody remains disabled in Phase 1.',
-                },
-              ])
-        : (isAr
-            ? [
-                {'q': 'كيف أحجز مقعداً؟', 'a': 'ابحث عن خط سيرك، اختر السائق الأنسب، واضغط حجز مقعد. لدى السائق 30 دقيقة للموافقة.'},
-                {'q': 'كيف أرسل طرداً؟', 'a': 'اختر خدمة الطرود، حدد الحجم والوزن وموقع الاستلام والتسليم، وأتمم التسليم برمز التحقق OTP.'},
-                {'q': 'ماذا لو لم يحضر السائق؟', 'a': 'يمكنك تسجيل "لم يحضر" بعد 15 دقيقة من الموعد، وسيتم إلغاء الحجز واسترداد المبلغ فوراً.'},
-                {'q': 'كيف أوثق حسابي كسائق؟', 'a': 'ادخل إلى حسابك واضغط توثيق السائق، ثم ارفع البطاقة الشخصية القطرية (QID) ورخص القيادة والمركبة.'},
-              ]
-            : [
-                {'q': 'How do I book a seat?', 'a': 'Search your corridor, pick a verified driver, and request seat. Driver has 30 mins to confirm.'},
-                {'q': 'How do I send a parcel?', 'a': 'Toggle parcels mode, select package size & weight, and hand over to verified driver with OTP.'},
-                {'q': 'What if the driver does not show up?', 'a': 'Mark as "No Show" 15 mins past schedule. Booking is cancelled with zero penalty.'},
-                {'q': 'How do I verify as a driver?', 'a': 'Go to account, select driver verification, and upload your Qatar ID (QID) and valid licenses.'},
-              ]);
+    final faqs = isAr
+        ? [
+            {
+              'q': 'كيف أشارك مقاعد رحلتي أو أنشر طلب سفر على الطريق؟',
+              'a': 'يمكنك نشر رحلتك وتحديد المقاعد الشاغرة وإمكانية قبول الطرود في 3 خطوات سريعة، أو نشر طلب سفر ليصلك عرض مباشر من مسافر في نفس المسار.',
+            },
+            {
+              'q': 'كيف أرسل طرداً أو غرضاً مع مسافر موثّق؟',
+              'a': 'اختر «إرسال طرد»، حدد نقطة الانطلاق والوصول وحجم الغرض، واختر مسافراً متجهاً لنفس الوجهة أو انشر طلب طرد مفتوح، مع تأمين الاستلام والتسليم بكود OTP من 4 أرقام.',
+            },
+            {
+              'q': 'كيف أنشئ طلب شراء وتوريد للمواقع أو المهام الخاصة؟',
+              'a': 'اضغط «إنشاء طلب توريد»، حدد الفئة والمواد والكمية والموقع، ثم عيّن سقف المشتريات وأجرة التوصيل لاستقبال عروض المزودين المعتمدين.',
+            },
+            {
+              'q': 'كيف أضمن مطابقة المشتريات والتسليم بأمان؟',
+              'a': 'يرفق المزود صورة الفاتورة الفعلية ضمن السقف المعتمد، ولا يُغلق طلب التوريد إلا بإدخال رمز التسليم السري المكون من 6 خانات عند الاستلام.',
+            },
+            {
+              'q': 'كيف يتم اعتماد المزودين وطرق التسوية؟',
+              'a': 'يخضع المزودون لمراجعة الوثائق الرسمية قبل تقديم العروض، وتتم التسوية بشفافية نقداً عند التسليم أو بتحويل بنكي موثّق بإيصال.',
+            },
+          ]
+        : [
+            {
+              'q': 'How do I share empty seats or request a trip along a route?',
+              'a': 'Publish your upcoming trip with empty seats and optional parcel space in 3 quick steps, or post a passenger route request so verified travelers heading your way can connect.',
+            },
+            {
+              'q': 'How do I send a parcel or item with a traveler on the way?',
+              'a': 'Open Send Parcel, choose origin, destination, and package size, then match with a parcel-friendly traveler or post an open route parcel request protected by 4-digit pickup & delivery OTPs.',
+            },
+            {
+              'q': 'How do I create a smart supply or worksite request?',
+              'a': 'Tap "Create a Request", select the supply category and items, pick a saved location or enter delivery details, and set your item cap and delivery fee.',
+            },
+            {
+              'q': 'How are store purchases, invoices, and handovers verified?',
+              'a': 'Approved providers attach actual store receipt photos within your maximum item cap, and completion is gated by your private 6-character handover code.',
+            },
+            {
+              'q': 'Which settlement methods are supported?',
+              'a': 'Direct settlement via Cash on Delivery (COD) or Manual Bank Transfer with receipt proof tracking is supported transparently.',
+            },
+          ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text(isAr ? 'المساعدة والدعم' : 'Help & Support', style: AppTypography.title()),
+        title: Text(
+          isAr ? 'المساعدة والدعم' : 'Help & Support',
+          style: AppTypography.title(),
+        ),
       ),
       body: SafeArea(
         child: Center(
@@ -985,50 +1041,49 @@ class HelpSupportScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (_isMvpWorksiteOnly) ...[
-                      MashwarSectionCard(
-                        backgroundColor: AppColors.sand,
-                        borderColor: AppColors.gold.withValues(alpha: 0.35),
-                        padding: const EdgeInsets.all(14),
-                        borderRadius: 14,
-                        child: Row(
-                          children: [
-                            const MashwarTrustEmblem(
-                              type: MashwarTrustType.handoverShield,
-                              size: 36,
+                    MashwarSectionCard(
+                      backgroundColor: Colors.white,
+                      borderColor: AppColors.cobalt.withValues(alpha: 0.25),
+                      padding: const EdgeInsets.all(14),
+                      borderRadius: 14,
+                      child: Row(
+                        children: [
+                          const MashwarTrustEmblem(
+                            type: MashwarTrustType.handoverShield,
+                            size: 36,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isAr
+                                      ? 'مكتب عمليات ودعم مشوار (الرحلات · الطرود · التوريد)'
+                                      : 'Qatar Worksite Operations Desk',
+                                  style: AppTypography.label(
+                                          color: AppColors.navy)
+                                      .copyWith(fontWeight: FontWeight.w800),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'ops@mashwar.qa · +974 4400 9999',
+                                  style: AppTypography.bodySmall(
+                                          color: AppColors.cobalt)
+                                      .copyWith(fontWeight: FontWeight.w700),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    isAr
-                                        ? 'مركز عمليات توريد المواقع · قطر'
-                                        : 'Qatar Worksite Operations Desk',
-                                    style: AppTypography.label(color: AppColors.navy)
-                                        .copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'ops@mashwar.qa · +974 4400 9999',
-                                    style: AppTypography.bodySmall(color: AppColors.teal)
-                                        .copyWith(fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 14),
-                    ],
+                    ),
+                    const SizedBox(height: 14),
                     Text(
                       isAr ? 'أسئلة شائعة' : 'Frequently Asked Questions',
                       style: AppTypography.title().copyWith(fontSize: 16),
                     ),
                     const SizedBox(height: 12),
-
                     Expanded(
                       child: ListView(
                         children: faqs.map((f) {
@@ -1039,12 +1094,18 @@ class HelpSupportScreen extends StatelessWidget {
                             child: ExpansionTile(
                               title: Text(
                                 f['q']!,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
                               ),
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.all(14),
-                                  child: Text(f['a']!, style: AppTypography.bodySecondary()),
+                                  child: Text(
+                                    f['a']!,
+                                    style: AppTypography.bodySecondary(),
+                                  ),
                                 ),
                               ],
                             ),
@@ -1052,10 +1113,12 @@ class HelpSupportScreen extends StatelessWidget {
                         }).toList(),
                       ),
                     ),
-
                     MashwarButton(
-                      text: isAr ? 'محادثة مباشرة عبر واتساب' : 'Chat via WhatsApp Support',
-                      icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
+                      text: isAr
+                          ? 'محادثة مباشرة عبر واتساب'
+                          : 'Chat via WhatsApp Support',
+                      icon: const Icon(Icons.chat_bubble_outline_rounded,
+                          color: Colors.white, size: 18),
                       onPressed: () async {
                         final messenger = ScaffoldMessenger.maybeOf(context);
                         final uri = Uri.parse('https://wa.me/97444009999');
@@ -1086,15 +1149,17 @@ class HelpSupportScreen extends StatelessWidget {
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
-                        side: const BorderSide(color: Color(0xFFE5E5EA), width: 0.8),
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                            color: AppColors.slateBorder, width: 0.9),
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                       icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
                       onPressed: () async {
                         final messenger = ScaffoldMessenger.maybeOf(context);
-                        final targetPhone = _isMvpWorksiteOnly ? '+97444009999' : '19884';
-                        final uri = Uri(scheme: 'tel', path: targetPhone);
+                        final uri = Uri(scheme: 'tel', path: '+97444009999');
                         bool launched = false;
                         try {
                           launched = await launchUrl(uri);
@@ -1105,13 +1170,9 @@ class HelpSupportScreen extends StatelessWidget {
                           messenger?.showSnackBar(
                             SnackBar(
                               content: Text(
-                                _isMvpWorksiteOnly
-                                    ? (isAr
-                                        ? 'لا يدعم هذا الجهاز الاتصال المباشر. تواصل مع دعم مشوار قطر على +974 4400 9999.'
-                                        : 'This device lacks a phone handler. Contact MASHWAR Qatar Support at +974 4400 9999.')
-                                    : (isAr
-                                        ? 'لا يدعم هذا الجهاز الاتصال المباشر. اتصل بالخط الساخن 19884 من هاتفك.'
-                                        : 'This device lacks a phone handler. Dial 19884 on your phone.'),
+                                isAr
+                                    ? 'لا يدعم هذا الجهاز الاتصال المباشر. تواصل مع الدعم على +974 4400 9999.'
+                                    : 'This device lacks a phone handler. Contact Support at +974 4400 9999.',
                               ),
                               backgroundColor: AppColors.navy,
                             ),
@@ -1119,58 +1180,57 @@ class HelpSupportScreen extends StatelessWidget {
                         }
                       },
                       label: Text(
-                        _isMvpWorksiteOnly
-                            ? (isAr
-                                ? 'الاتصال بدعم قطر (+974 4400 9999)'
-                                : 'Call Qatar Support (+974 4400 9999)')
-                            : (isAr ? 'الاتصال بالخط الساخن' : 'Call Support Hotline'),
+                        isAr
+                            ? 'الاتصال بالدعم المباشر (+974 4400 9999)'
+                            : 'Call Qatar Support (+974 4400 9999)',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
-                    if (_isMvpWorksiteOnly) ...[
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.teal,
-                          side: BorderSide(color: AppColors.teal.withValues(alpha: 0.45)),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: const Icon(Icons.mail_outline_rounded, size: 18),
-                        onPressed: () async {
-                          final messenger = ScaffoldMessenger.maybeOf(context);
-                          final uri = Uri(
-                            scheme: 'mailto',
-                            path: 'ops@mashwar.qa',
-                            query: 'subject=MASHWAR%20Qatar%20Worksite%20Support',
-                          );
-                          bool launched = false;
-                          try {
-                            launched = await launchUrl(uri);
-                          } catch (_) {
-                            launched = false;
-                          }
-                          if (!launched) {
-                            messenger?.showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isAr
-                                      ? 'راسل فريق العمليات مباشرة على ops@mashwar.qa'
-                                      : 'Email our operations desk directly at ops@mashwar.qa',
-                                ),
-                                backgroundColor: AppColors.navy,
-                              ),
-                            );
-                          }
-                        },
-                        label: Text(
-                          isAr
-                              ? 'مراسلة العمليات (ops@mashwar.qa)'
-                              : 'Email Operations (ops@mashwar.qa)',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.cobalt,
+                        backgroundColor: Colors.white,
+                        side: BorderSide(
+                            color: AppColors.cobalt.withValues(alpha: 0.45)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
                       ),
-                    ],
+                      icon: const Icon(Icons.mail_outline_rounded, size: 18),
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.maybeOf(context);
+                        final uri = Uri(
+                          scheme: 'mailto',
+                          path: 'ops@mashwar.qa',
+                          query: 'subject=MASHWAR%20Support',
+                        );
+                        bool launched = false;
+                        try {
+                          launched = await launchUrl(uri);
+                        } catch (_) {
+                          launched = false;
+                        }
+                        if (!launched) {
+                          messenger?.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isAr
+                                    ? 'راسل فريق العمليات مباشرة على ops@mashwar.qa'
+                                    : 'Email our operations desk directly at ops@mashwar.qa',
+                              ),
+                              backgroundColor: AppColors.navy,
+                            ),
+                          );
+                        }
+                      },
+                      label: Text(
+                        isAr
+                            ? 'مراسلة العمليات (ops@mashwar.qa)'
+                            : 'Email Operations (ops@mashwar.qa)',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
                     const SizedBox(height: AppDimens.space16),
                   ],
                 ),
@@ -1359,8 +1419,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 child: Text(
                   _errorMessage ??
                       (isAr
-                          ? 'لا يمكن حذف الحساب حالياً لوجود طلبات توريد نشطة مرتبطة بحسابك. يرجى إتمامها أو تسويتها أولاً.'
-                          : 'Cannot delete account right now: You have active worksite supply requests that must be completed or resolved first.'),
+                          ? 'لا يمكن حذف الحساب حالياً لوجود طلبات نشطة مرتبطة بحسابك. يرجى إتمامها أو تسويتها أولاً.'
+                          : 'Cannot delete account right now: You have active requests that must be completed or resolved first.'),
                   style: const TextStyle(
                     color: Color(0xFF92400E),
                     fontWeight: FontWeight.bold,
@@ -1380,7 +1440,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
+              border: Border.all(color: AppColors.slateBorder, width: 0.9),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1421,10 +1481,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                       );
                     },
                     icon: const Icon(Icons.open_in_new_rounded,
-                        size: 15, color: AppColors.teal),
+                        size: 15, color: AppColors.cobalt),
                     label: Text(
                       isAr ? 'فتح تفاصيل الطلب' : 'Open Request Details',
-                      style: AppTypography.label(color: AppColors.teal)
+                      style: AppTypography.label(color: AppColors.cobalt)
                           .copyWith(fontWeight: FontWeight.w800),
                     ),
                   ),
@@ -1497,8 +1557,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
         const SizedBox(height: 16),
         Text(
           isAr
-              ? 'سيتم حذف ملفك الشخصي وملف المزود وبيانات التوثيق وحساب المصادقة نهائياً عبر الخادم، مع الاحتفاظ بسجلات التدقيق القانونية وفقاً للقانون القطري لحماية خصوصية البيانات رقم 13 لسنة 2016.'
-              : 'Your user profile, provider/business records, QID verification record, and authentication account will be permanently deleted on the server. Mandatory audit records are retained per Qatar Personal Data Privacy Law No. 13 of 2016.',
+              ? 'سيتم حذف ملفك الشخصي وملف المزود وبيانات التوثيق وحساب المصادقة نهائياً عبر الخادم، مع الاحتفاظ بسجلات التدقيق القانونية وفقاً لقوانين حماية خصوصية البيانات.'
+              : 'Your user profile, provider/business records, verification record, and authentication account will be permanently deleted on the server. Mandatory audit records are retained per applicable data privacy laws.',
           style: AppTypography.bodySecondary().copyWith(fontSize: 13),
         ),
         if (_errorMessage != null) ...[
@@ -1536,24 +1596,23 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           decoration: InputDecoration(
             hintText: isAr ? 'حذف' : 'delete',
             filled: true,
-            fillColor: AppColors.chipInactiveBg,
+            fillColor: AppColors.slateBg,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimens.radiusField),
               borderSide:
-                  const BorderSide(color: AppColors.borderDisabled, width: 0.8),
+                  const BorderSide(color: AppColors.slateBorder, width: 0.9),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimens.radiusField),
               borderSide:
-                  const BorderSide(color: AppColors.borderDisabled, width: 0.8),
+                  const BorderSide(color: AppColors.slateBorder, width: 0.9),
             ),
           ),
         ),
         const SizedBox(height: AppDimens.space32),
         MashwarButton(
           key: const ValueKey('delete_account_submit_btn'),
-          text:
-              isAr ? 'حذف الحساب نهائياً' : 'Delete My Account Permanently',
+          text: isAr ? 'حذف الحساب نهائياً' : 'Delete My Account Permanently',
           variant: MashwarButtonVariant.danger,
           isLoading: auth.isLoading,
           onPressed: () => _handleConfirmDelete(
@@ -1610,8 +1669,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
       case 'new_offer':
         return (
           Icons.local_offer_outlined,
-          AppColors.teal,
-          AppColors.tealSurface,
+          AppColors.emerald,
+          AppColors.emeraldSurface,
         );
       case 'handover_pending':
         return (
@@ -1628,15 +1687,15 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
       case 'request_completed':
         return (
           Icons.task_alt_rounded,
-          AppColors.escrowGreen,
-          AppColors.escrowSurface,
+          AppColors.emerald,
+          AppColors.emeraldSurface,
         );
       case 'status_update':
       default:
         return (
           Icons.local_shipping_outlined,
-          AppColors.info,
-          AppColors.infoBg,
+          AppColors.cobalt,
+          AppColors.cobaltSurface,
         );
     }
   }
@@ -1663,20 +1722,21 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final worksite = context.watch<WorksiteProvider?>();
-    final allItems = worksite?.notifications ?? const <WorksiteNotificationItem>[];
+    final allItems =
+        worksite?.notifications ?? const <WorksiteNotificationItem>[];
     final unreadCount = worksite?.unreadNotificationsCount ?? 0;
-    final displayed = _unreadOnly
-        ? allItems.where((n) => !n.isRead).toList()
-        : allItems;
+    final displayed =
+        _unreadOnly ? allItems.where((n) => !n.isRead).toList() : allItems;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: AppColors.navy),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Row(
@@ -1695,15 +1755,15 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.qatarMaroonSurface,
+                  color: AppColors.cobaltSurface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: AppColors.qatarMaroon.withValues(alpha: 0.35),
+                    color: AppColors.cobalt.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Text(
                   '$unreadCount',
-                  style: AppTypography.label(color: AppColors.qatarMaroon)
+                  style: AppTypography.label(color: AppColors.cobalt)
                       .copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -1718,7 +1778,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   : () => worksite.markAllNotificationsRead(),
               child: Text(
                 isAr ? 'تحديد الكل كمقروء' : 'Mark All Read',
-                style: AppTypography.label(color: AppColors.teal)
+                style: AppTypography.label(color: AppColors.cobalt)
                     .copyWith(fontWeight: FontWeight.w800),
               ),
             ),
@@ -1770,7 +1830,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                             builder: (context, constraints) {
                               return SingleChildScrollView(
                                 physics: const AlwaysScrollableScrollPhysics(),
-                                padding: const EdgeInsets.all(AppDimens.space24),
+                                padding:
+                                    const EdgeInsets.all(AppDimens.space24),
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
                                     minHeight: (constraints.maxHeight - 48)
@@ -1804,10 +1865,11 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                           const SizedBox(height: 6),
                                           Text(
                                             isAr
-                                                ? 'ستظهر هنا تحديثات العروض وحالة التوريد ورموز التسليم الخاصة بطلباتك في قطر.'
-                                                : 'Offer alerts, worksite delivery updates, and handover notifications will appear here.',
+                                                ? 'ستظهر هنا تحديثات الرحلات والطرود وعروض التوريد ورموز الاستلام.'
+                                                : 'Trip matches, parcel updates, supply offers, and handover alerts will appear here.',
                                             textAlign: TextAlign.center,
-                                            style: AppTypography.bodySecondary(),
+                                            style:
+                                                AppTypography.bodySecondary(),
                                           ),
                                           if (_unreadOnly &&
                                               allItems.isNotEmpty) ...[
@@ -1843,12 +1905,11 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                               return MashwarFadeSlideIn(
                                 offsetY: 8,
                                 child: MashwarHoverCard(
-                                  backgroundColor: isUnread
-                                      ? const Color(0xFFF8FAFC)
-                                      : Colors.white,
+                                  backgroundColor:
+                                      isUnread ? Colors.white : AppColors.slateBg,
                                   borderColor: isUnread
                                       ? visual.$2.withValues(alpha: 0.45)
-                                      : const Color(0xFFE5E5EA),
+                                      : AppColors.slateBorder,
                                   hoverBorderColor: visual.$2,
                                   padding:
                                       const EdgeInsets.all(AppDimens.space16),

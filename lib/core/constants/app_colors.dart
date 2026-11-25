@@ -11,7 +11,15 @@ class AppColors {
   static const Color sand = Color(0xFFFAF7F0); // رملي (براند)
   static const Color surfaceLight = Color(0xFFF8F9FA); // سطح محايد ناعم وعصري
 
-  // Qatari Al-Adaam Heritage & Bilateral Escrow Trust Tokens
+  // International 3-Service Pillar Accent & Surface Tokens
+  static const Color cobalt = Color(0xFF2563EB);
+  static const Color cobaltSurface = Color(0xFFEFF6FF);
+  static const Color indigo = Color(0xFF4F46E5);
+  static const Color indigoSurface = Color(0xFFEEF2FF);
+  static const Color emerald = Color(0xFF0D9488);
+  static const Color emeraldSurface = Color(0xFFF0FDFA);
+
+  // Legacy Regional & Trust Tokens (kept for backward compatibility)
   static const Color qatarMaroon = Color(0xFF8A1538); // العنابي القطري (الأدعم)
   static const Color qatarMaroonDark = Color(0xFF5C0E26); // عنابي داكن للتدرجات
   static const Color qatarMaroonSurface = Color(0xFFFDF2F5); // خلفية عنابية ناعمة

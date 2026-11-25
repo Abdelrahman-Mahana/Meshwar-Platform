@@ -86,7 +86,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.gavel_rounded, color: AppColors.qatarMaroon, size: 22),
+            const Icon(Icons.gavel_rounded, color: AppColors.cobalt, size: 22),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -98,8 +98,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         ),
         content: Text(
           isAr
-              ? 'عند تفعيل التجميد، يوقف مشوار تحويل أي مبلغ من الضمان فوراً لحين مراجعة سجل الدردشة، صورة الفاتورة، إحداثيات GPS، والهوية القطرية QID لكلا الطرفين خلال 2 ساعة.'
-              : 'Freezing immediately pauses all Escrow transfers while MASHWAR Trust & Safety audits chat logs, receipt photos, GPS trail, and QID verification within 2 hours.',
+              ? 'عند تفعيل التجميد، يوقف مشوار تحويل أي مبلغ من الضمان فوراً لحين مراجعة سجل الدردشة، صورة الفاتورة، وإحداثيات GPS لكلا الطرفين خلال 2 ساعة.'
+              : 'Freezing immediately pauses all Escrow transfers while MASHWAR Trust & Safety audits chat logs, receipt photos, and GPS trail within 2 hours.',
           style: AppTypography.bodySecondary(),
         ),
         actions: [
@@ -109,7 +109,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.qatarMaroon,
+              backgroundColor: AppColors.navy,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
@@ -123,7 +123,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                         ? 'تم تجميد المبلغ في محفظة الضمان وحفظ حقوق الطرفين'
                         : 'Escrow funds frozen securely pending arbitration',
                   ),
-                  backgroundColor: AppColors.qatarMaroon,
+                  backgroundColor: AppColors.navy,
                 ),
               );
             },
@@ -151,7 +151,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.verified_user_rounded, color: AppColors.qatarMaroon, size: 20),
+            const Icon(Icons.verified_user_rounded, color: AppColors.cobalt, size: 20),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -258,7 +258,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         gradient: const LinearGradient(
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
-          colors: [AppColors.navy, Color(0xFF1A2847), AppColors.qatarMaroonDark],
+          colors: [AppColors.navy, Color(0xFF132F4C), Color(0xFF0F172A)],
         ),
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
@@ -270,92 +270,86 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const QatarSaduAccentBar(height: 5, borderRadius: 0),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.14),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const MashwarLivePulseDot(color: AppColors.gold, size: 7),
-                            const SizedBox(width: 6),
-                            Flexible(
-                              child: Text(
-                                isAr ? 'عقد مشوار الذكي · قطر' : 'MASHWAR Smart Escrow · Qatar',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  fontFamily: 'Cairo',
-                                ),
-                              ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const MashwarLivePulseDot(color: AppColors.emerald, size: 7),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            isAr ? 'عقد مشوار الذكي للضمان' : 'MASHWAR Smart Escrow',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              fontFamily: 'Cairo',
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        isAr
-                            ? 'حق الطالب وحق المنفّذ محفوظ 100% قبل التحرك'
-                            : '100% Bilateral Protection Before Execution',
-                        style: AppTypography.title(color: Colors.white).copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        '${ad.displaySubTag(isAr)} · ${context.trRoute(ad.route)} ($totalLocked ${isAr ? "ر.ق" : "QAR"})',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontFamily: 'Cairo',
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: AppColors.sand,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: AppColors.gold, width: 1.5),
+                  const SizedBox(height: 10),
+                  Text(
+                    isAr
+                        ? 'حق الطالب وحق المنفّذ محفوظ 100% قبل التحرك'
+                        : '100% Bilateral Protection Before Execution',
+                    style: AppTypography.title(color: Colors.white).copyWith(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
-                  child: const MashwarAssetArt(
-                    assetPath: 'assets/images/escrow_trust_shield.jpg',
-                    width: 82,
-                    height: 82,
-                    fit: BoxFit.contain,
-                    borderRadius: BorderRadius.all(Radius.circular(14)),
-                    fallbackIcon: Icons.shield_rounded,
-                    fallbackColor: AppColors.qatarMaroon,
+                  const SizedBox(height: 5),
+                  Text(
+                    '${ad.displaySubTag(isAr)} · ${context.trRoute(ad.route)} ($totalLocked ${isAr ? "ر.ق" : "QAR"})',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontFamily: 'Cairo',
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: AppColors.slateBg,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.cobalt.withValues(alpha: 0.45), width: 1.5),
+              ),
+              child: const MashwarAssetArt(
+                assetPath: 'assets/images/escrow_trust_shield.jpg',
+                width: 82,
+                height: 82,
+                fit: BoxFit.contain,
+                borderRadius: BorderRadius.all(Radius.circular(14)),
+                fallbackIcon: Icons.shield_rounded,
+                fallbackColor: AppColors.cobalt,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -364,20 +358,20 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.qatarMaroonSurface,
+        color: AppColors.cobaltSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.qatarMaroon.withValues(alpha: 0.45)),
+        border: Border.all(color: AppColors.cobalt.withValues(alpha: 0.45)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lock_clock_rounded, color: AppColors.qatarMaroon, size: 22),
+          const Icon(Icons.lock_clock_rounded, color: AppColors.cobalt, size: 22),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               isAr
-                  ? 'حساب الضمان مجمّد قيد المراجعة المحايدة من فريق ثقة مشوار — لن يُصرف أي ريال قبل الفصل.'
+                  ? 'حساب الضمان مجمّد قيد المراجعة المحايدة من فريق ثقة مشوار — لن يُصرف أي مبلغ قبل الفصل.'
                   : 'Escrow frozen under neutral MASHWAR arbitration — zero funds move until resolved.',
-              style: AppTypography.bodySmall(color: AppColors.qatarMaroonDark).copyWith(
+              style: AppTypography.bodySmall(color: AppColors.navy).copyWith(
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -470,7 +464,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                   child: _buildRoleSegmentBtn(
                     label: isAr ? 'حماية طالب الخدمة' : 'Requester Shield',
                     selected: _viewAsRequester,
-                    activeColor: AppColors.qatarMaroon,
+                    activeColor: AppColors.cobalt,
                     onTap: () => setState(() => _viewAsRequester = true),
                   ),
                 ),
@@ -496,14 +490,14 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
                       color: _viewAsRequester
-                          ? AppColors.qatarMaroonSurface
+                          ? AppColors.cobaltSurface
                           : AppColors.tealSurface,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       pt.$1,
                       size: 16,
-                      color: _viewAsRequester ? AppColors.qatarMaroon : AppColors.teal,
+                      color: _viewAsRequester ? AppColors.cobalt : AppColors.teal,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -1308,7 +1302,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           final msgRow = Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.support_agent_rounded, color: AppColors.qatarMaroon, size: 20),
+              const Icon(Icons.support_agent_rounded, color: AppColors.cobalt, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1327,8 +1321,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           );
           final disputeBtn = OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.qatarMaroon,
-              side: BorderSide(color: AppColors.qatarMaroon.withValues(alpha: 0.45)),
+              foregroundColor: AppColors.navy,
+              side: BorderSide(color: AppColors.cobalt.withValues(alpha: 0.45)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),

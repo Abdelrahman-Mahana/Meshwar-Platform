@@ -266,7 +266,7 @@ void main() {
 
   group('Qatar Worksite Supply MVP Customer UI & Responsive Journey Tests', () {
     testWidgets(
-      '4-tab MainNavShell & HomeScreen render AR RTL & EN LTR cleanly across 360x780 and 1280x800 with zero fake balances or overflow',
+      '5-tab MainNavShell & HomeScreen render AR RTL & EN LTR cleanly across 360x780 and 1280x800 with zero fake balances or overflow',
       (tester) async {
         addTearDown(() {
           tester.view.resetPhysicalSize();
@@ -305,24 +305,30 @@ void main() {
             TextDirection.rtl,
           );
 
-          // Exact 4 clean MVP tabs (no legacy 5-tab Board/Messages clutter)
+          // Exact 5 international tabs
           if (size.width >= 840) {
             final rail =
                 tester.widget<NavigationRail>(find.byType(NavigationRail));
-            expect(rail.destinations.length, 4);
+            expect(rail.destinations.length, 5);
           } else {
             final bar = tester
                 .widget<BottomNavigationBar>(find.byType(BottomNavigationBar));
-            expect(bar.items.length, 4);
+            expect(bar.items.length, 5);
           }
 
-          expect(find.text('شنو تحتاج ينجز اليوم؟'), findsOneWidget);
+          expect(find.text('إلى أين مشوارك أو طلبك اليوم؟'), findsOneWidget);
           expect(find.text('450 ر.ق'), findsNothing);
           expect(find.text('450 QAR'), findsNothing);
           expect(find.textContaining('18 منفّذ'), findsNothing);
 
-          // Navigate across all 4 tabs cleanly in Arabic
-          for (final label in ['الطلبات', 'نشاطي', 'حسابي', 'الرئيسية']) {
+          // Navigate across all 5 tabs cleanly in Arabic
+          for (final label in [
+            'الرحلات والطرود',
+            'التوريد والمهام',
+            'نشاطي',
+            'حسابي',
+            'الرئيسية',
+          ]) {
             await tester.tap(find.text(label).first);
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
@@ -336,9 +342,18 @@ void main() {
             Directionality.of(tester.element(find.byType(HomeScreen))),
             TextDirection.ltr,
           );
-          expect(find.text('What do you need done today?'), findsOneWidget);
+          expect(
+            find.text('Where does your journey take you today?'),
+            findsOneWidget,
+          );
 
-          for (final label in ['Requests', 'My Activity', 'Account', 'Home']) {
+          for (final label in [
+            'Trips & Parcels',
+            'Supply & Tasks',
+            'My Activity',
+            'Account',
+            'Home',
+          ]) {
             await tester.tap(find.text(label).first);
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);

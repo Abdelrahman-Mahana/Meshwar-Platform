@@ -1247,3 +1247,278 @@ class _MashwarTrustEmblemPainter extends CustomPainter {
   bool shouldRepaint(covariant _MashwarTrustEmblemPainter oldDelegate) =>
       oldDelegate.type != type;
 }
+
+/// Core pillars of the international MASHWAR 3-Service platform.
+enum MashwarServicePillar {
+  sharedTrips,
+  routeParcels,
+  smartSupply,
+}
+
+/// Crisp custom vector duotone icon for MASHWAR's 3 international pillars:
+/// - [MashwarServicePillar.sharedTrips]: sleek touring car + route seat pin
+/// - [MashwarServicePillar.routeParcels]: express route parcel + OTP shield
+/// - [MashwarServicePillar.smartSupply]: verified checklist + supply crate
+class MashwarServicePillarIcon extends StatelessWidget {
+  const MashwarServicePillarIcon({
+    super.key,
+    required this.pillar,
+    this.size = 42,
+    this.showSurface = true,
+  });
+
+  final MashwarServicePillar pillar;
+  final double size;
+  final bool showSurface;
+
+  (Color accent, Color surface, String labelEn) _tokens() {
+    switch (pillar) {
+      case MashwarServicePillar.sharedTrips:
+        return (AppColors.cobalt, AppColors.cobaltSurface, 'Shared Trips');
+      case MashwarServicePillar.routeParcels:
+        return (AppColors.indigo, AppColors.indigoSurface, 'Parcels on Route');
+      case MashwarServicePillar.smartSupply:
+        return (AppColors.emerald, AppColors.emeraldSurface, 'Smart Supply');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (accent, surface, labelEn) = _tokens();
+    final innerSize = showSurface ? size * 0.64 : size;
+    final vector = SizedBox.square(
+      dimension: innerSize,
+      child: CustomPaint(
+        painter: _MashwarServicePillarPainter(pillar: pillar),
+      ),
+    );
+
+    if (!showSurface) {
+      return Semantics(label: labelEn, child: vector);
+    }
+
+    return Semantics(
+      label: labelEn,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular((size * 0.30).clamp(8.0, 16.0)),
+          border: Border.all(
+            color: accent.withValues(alpha: 0.22),
+            width: 1.0,
+          ),
+        ),
+        child: Center(child: vector),
+      ),
+    );
+  }
+}
+
+class _MashwarServicePillarPainter extends CustomPainter {
+  const _MashwarServicePillarPainter({required this.pillar});
+
+  final MashwarServicePillar pillar;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = math.min(size.width, size.height);
+    if (s <= 0) return;
+
+    switch (pillar) {
+      case MashwarServicePillar.sharedTrips:
+        _paintSharedTrips(canvas, s);
+        break;
+      case MashwarServicePillar.routeParcels:
+        _paintRouteParcels(canvas, s);
+        break;
+      case MashwarServicePillar.smartSupply:
+        _paintSmartSupply(canvas, s);
+        break;
+    }
+  }
+
+  void _paintSharedTrips(Canvas canvas, double s) {
+    final stroke = Paint()
+      ..color = AppColors.navy
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (s * 0.072).clamp(1.2, 2.6)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // Touring car lower body
+    final body = RRect.fromRectAndRadius(
+      Rect.fromLTWH(s * 0.08, s * 0.48, s * 0.72, s * 0.24),
+      Radius.circular(s * 0.08),
+    );
+    canvas.drawRRect(body, Paint()..color = AppColors.cobalt.withValues(alpha: 0.20));
+    canvas.drawRRect(body, stroke);
+
+    // Aerodynamic cabin roof
+    final cabin = Path()
+      ..moveTo(s * 0.20, s * 0.48)
+      ..lineTo(s * 0.30, s * 0.30)
+      ..lineTo(s * 0.58, s * 0.30)
+      ..lineTo(s * 0.68, s * 0.48)
+      ..close();
+    canvas.drawPath(cabin, Paint()..color = AppColors.cobalt.withValues(alpha: 0.12));
+    canvas.drawPath(cabin, stroke);
+
+    // Wheels
+    for (final wx in [0.25, 0.63]) {
+      canvas.drawCircle(
+        Offset(s * wx, s * 0.74),
+        s * 0.085,
+        Paint()..color = AppColors.navy,
+      );
+      canvas.drawCircle(
+        Offset(s * wx, s * 0.74),
+        s * 0.036,
+        Paint()..color = Colors.white,
+      );
+    }
+
+    // Floating route seat pin on top-right
+    final pin = Path()
+      ..moveTo(s * 0.79, s * 0.47)
+      ..cubicTo(s * 0.66, s * 0.34, s * 0.65, s * 0.19, s * 0.71, s * 0.13)
+      ..arcToPoint(
+        Offset(s * 0.87, s * 0.13),
+        radius: Radius.circular(s * 0.11),
+      )
+      ..cubicTo(s * 0.93, s * 0.19, s * 0.92, s * 0.34, s * 0.79, s * 0.47)
+      ..close();
+    canvas.drawPath(pin, Paint()..color = AppColors.cobalt);
+    canvas.drawCircle(
+      Offset(s * 0.79, s * 0.23),
+      s * 0.045,
+      Paint()..color = Colors.white,
+    );
+  }
+
+  void _paintRouteParcels(Canvas canvas, double s) {
+    final stroke = Paint()
+      ..color = AppColors.navy
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (s * 0.072).clamp(1.2, 2.6)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // Express motion lines on left
+    final motionPaint = Paint()
+      ..color = AppColors.indigo.withValues(alpha: 0.55)
+      ..strokeWidth = (s * 0.065).clamp(1.1, 2.2)
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(s * 0.06, s * 0.38), Offset(s * 0.18, s * 0.38), motionPaint);
+    canvas.drawLine(Offset(s * 0.09, s * 0.54), Offset(s * 0.18, s * 0.54), motionPaint);
+
+    // Isometric/sealed parcel box
+    final box = RRect.fromRectAndRadius(
+      Rect.fromLTWH(s * 0.20, s * 0.22, s * 0.56, s * 0.56),
+      Radius.circular(s * 0.09),
+    );
+    canvas.drawRRect(box, Paint()..color = AppColors.indigo.withValues(alpha: 0.16));
+    canvas.drawRRect(box, stroke);
+
+    // Center parcel tape band
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(s * 0.41, s * 0.22, s * 0.14, s * 0.24),
+        Radius.circular(s * 0.03),
+      ),
+      Paint()..color = AppColors.gold,
+    );
+    canvas.drawLine(Offset(s * 0.20, s * 0.40), Offset(s * 0.76, s * 0.40), stroke);
+
+    // Protective OTP shield badge on bottom-right
+    final shield = Path()
+      ..moveTo(s * 0.76, s * 0.48)
+      ..lineTo(s * 0.94, s * 0.54)
+      ..lineTo(s * 0.94, s * 0.69)
+      ..cubicTo(s * 0.94, s * 0.82, s * 0.76, s * 0.91, s * 0.76, s * 0.91)
+      ..cubicTo(s * 0.76, s * 0.91, s * 0.58, s * 0.82, s * 0.58, s * 0.69)
+      ..lineTo(s * 0.58, s * 0.54)
+      ..close();
+    canvas.drawPath(shield, Paint()..color = AppColors.indigo);
+    canvas.drawPath(
+      shield,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = (s * 0.045).clamp(1.0, 1.8),
+    );
+    final check = Path()
+      ..moveTo(s * 0.69, s * 0.69)
+      ..lineTo(s * 0.74, s * 0.75)
+      ..lineTo(s * 0.84, s * 0.63);
+    canvas.drawPath(
+      check,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = (s * 0.06).clamp(1.1, 2.1)
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  void _paintSmartSupply(Canvas canvas, double s) {
+    final stroke = Paint()
+      ..color = AppColors.navy
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (s * 0.072).clamp(1.2, 2.6)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    // Verified supply checklist clipboard (back-left)
+    final board = RRect.fromRectAndRadius(
+      Rect.fromLTWH(s * 0.12, s * 0.16, s * 0.50, s * 0.66),
+      Radius.circular(s * 0.08),
+    );
+    canvas.drawRRect(board, Paint()..color = AppColors.emerald.withValues(alpha: 0.15));
+    canvas.drawRRect(board, stroke);
+
+    // Top clip bar
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(s * 0.26, s * 0.10, s * 0.22, s * 0.11),
+        Radius.circular(s * 0.04),
+      ),
+      Paint()..color = AppColors.navy,
+    );
+
+    // Checklist lines
+    final linePaint = Paint()
+      ..color = AppColors.emerald
+      ..strokeWidth = (s * 0.065).clamp(1.1, 2.2)
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(s * 0.22, s * 0.36), Offset(s * 0.48, s * 0.36), linePaint);
+    canvas.drawLine(Offset(s * 0.22, s * 0.50), Offset(s * 0.42, s * 0.50), linePaint);
+
+    // Supply crate overlapping front-right
+    final crate = RRect.fromRectAndRadius(
+      Rect.fromLTWH(s * 0.48, s * 0.48, s * 0.42, s * 0.38),
+      Radius.circular(s * 0.07),
+    );
+    canvas.drawRRect(crate, Paint()..color = AppColors.emerald);
+    canvas.drawRRect(
+      crate,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = (s * 0.045).clamp(1.0, 1.8),
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(s * 0.63, s * 0.48, s * 0.12, s * 0.15),
+        Radius.circular(s * 0.025),
+      ),
+      Paint()..color = AppColors.gold,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _MashwarServicePillarPainter oldDelegate) =>
+      oldDelegate.pillar != pillar;
+}

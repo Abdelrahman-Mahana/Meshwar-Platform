@@ -1,57 +1,54 @@
-# مشوار (MASHWAR) — Qatar Worksite Supply & Field Procurement MVP
+# مشوار (MASHWAR) — International 3-Service Mobility, Route Parcels & Smart Supply Platform
 
 <p align="center">
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white" alt="Dart" />
   <img src="https://img.shields.io/badge/Firebase-mashwar--qatar--2026--ec99d-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
   <img src="https://img.shields.io/badge/Cloud%20Functions-v2%20(Node%2020%20TS)-4285F4" alt="Cloud Functions v2" />
-  <img src="https://img.shields.io/badge/Market-Qatar%20(QAR)-8A1538" alt="Qatar QAR" />
+  <img src="https://img.shields.io/badge/Architecture-3--Service%20Global%20Platform-2563EB" alt="3-Service Platform" />
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
 </p>
 
 <p align="center">
-  <b>منصة تنسيق توريد مستلزمات ومشتريات مواقع العمل في دولة قطر</b><br/>
-  <i>Qatar B2B / Contractor Worksite Supply Coordination — Verified Providers, Invoice Proof & Cryptographic Handover Verification</i>
+  <b>منصة عالمية ثلاثية الخدمات تجمع الرحلات التشاركية والطرود على الطريق والتوريد الذكي</b><br/>
+  <i>Shared Trips & Empty Seats · Parcels & Items on the Way · Smart Shopping, Supply & Errands</i>
 </p>
 
 ---
 
-## 1. Product Overview (نظرة عامة على المنتج — المرحلة التجريبية الأولى)
+## 1. Product Overview (نظرة عامة على المنصة ثلاثية الخدمات)
 
-**MASHWAR (مشوار)** Phase 1 MVP is a focused **Worksite Supply & Urgent Field Material Coordination** platform built for contractors, site engineers, maintenance teams, and approved supply runners operating across the **State of Qatar**.
+**MASHWAR (مشوار)** is an international, bidirectional 3-service mobility, parcel-on-route, and smart fulfillment platform built with a clean global visual system (Navy `#0F172A`, Cobalt `#2563EB`, Indigo `#4F46E5`, Emerald `#10B981`, and Slate `#F8FAFC` — zero regional Sadu strips or single-country lock-in chrome):
 
-Instead of losing skilled technician hours on traffic runs to hardware stores and wholesale yards, a site requester posts a structured supply order (items, specifications, pickup store/zone, target worksite, and QAR budget). Admin-approved providers submit transparent offers, procure the items with store invoice proof, deliver them to the worksite, and complete the job only after verifying a single-use 6-character handover code with the site contact.
-
-### Core Qatar Corridors & Hubs
-- **Supply Origins:** Doha Industrial Area (`المنطقة الصناعية`), Salwa Road hardware yards, Al Wakrah supply depots, Al Rayyan wholesale stores.
-- **Worksite Destinations:** Doha (`الدوحة`), Lusail (`لوسيل`), Al Rayyan (`الريان`), Al Wakrah (`الوكرة`), Al Khor (`الخور`), Mesaieed (`مسيعيد`), Ras Laffan (`رأس لفان`), Umm Salal (`أم صلال`), Al Daayen (`الضعاين`), and Al Shahaniya (`الشيحانية`).
+1. **Shared Trips & Empty Seats (`سفر ومقاعد تشاركية`):** Travelers publish intercity or daily trips with `1..6` empty car seats (`PublishRideScreen` 3-step wizard), while passengers browse live corridors or post destination ride requests (`TripsAndParcelsHubScreen` & `PostAdScreen`) to receive direct offers (`MakeOfferSheet`).
+2. **Parcels & Items on the Way (`طرود وأغراض مع مسافر`):** Travelers optionally enable **"Carry Parcels / Items Along Your Route"** (`publish_accepts_parcels_switch`) with package-size limits (`envelope`, `small`, `medium`), while senders ship documents or items directly with an active traveler or as an open route request (`SendParcelScreen` -> `ParcelTrackingScreen`) protected by **dual 4-digit Pickup & Delivery OTPs**.
+3. **Smart Shopping, Supply & Errands (`شراء وتوريد ومهام خاصة`):** Requesters and contractors post structured shopping, hardware, and site supply orders (`CreateWorkRequestScreen`), receive competing offers from verified providers, review store invoice photos, and confirm completion via a single-use **6-character salted SHA-256 handover code**.
 
 ```mermaid
 flowchart LR
-    R["🏗️ Site Engineer / Requester<br/>Posts QAR supply request"] --> O["🚚 Approved Provider<br/>Submits offer (QID-verified)"]
-    O --> A["🔐 Offer Accepted<br/>6-char salted SHA-256 code minted"]
-    A --> F["🧾 Procurement & Transit<br/>Store invoice attached"]
-    F --> H["✅ Site Handover Verified<br/>Single-use code completes order"]
+    S1["🚗 1. Shared Trips & Empty Seats<br/>Publish seats or request a ride"] --> M["🤝 Direct Route Matching<br/>5-Tab International Hub"]
+    S2["📦 2. Parcels & Items on the Way<br/>Dual 4-digit Pickup & Delivery OTP"] --> M
+    S3["🛠️ 3. Smart Shopping, Supply & Errands<br/>Invoice proof & 6-char SHA-256 code"] --> M
+    M --> H["✅ Verified Handover & Settlement<br/>Cash or Manual Transfer Proof"]
 ```
 
 ---
 
-## 2. MVP Scope, Deferred Features & Regulatory / Trademark Notice
+## 2. Platform Scope, Feature Flags & Settlement Model
 
-### Active Phase 1 Scope (`AppEnvironment` Flags)
- Controlled centrally in [`lib/core/config/app_environment.dart`](lib/core/config/app_environment.dart):
+### Active Platform Scope (`AppEnvironment` Flags)
+Controlled centrally in [`lib/core/config/app_environment.dart`](lib/core/config/app_environment.dart):
 
-| Capability | Flag | Phase 1 Status | Rationale |
+| Capability | Flag | Status | Rationale |
 | :--- | :--- | :---: | :--- |
-| **Worksite Supply Coordination** | `enableWorksiteSupply` | **`true` (Active)** | Core B2B/site procurement & delivery coordination in Qatar (`QAR`). |
-| **Passenger Rides** | `enablePassengerRides` | `false` (Deferred) | Deferred pending Qatar Ministry of Transport (MoT) passenger transport licensing. |
-| **Paid Carpooling** | `enableCarpooling` | `false` (Deferred) | Deferred pending Qatar MoT shared-mobility regulatory approval. |
-| **Commercial Heavy Cargo** | `enableCommercialCargo` | `false` (Deferred) | Deferred pending commercial freight/transport licensing. |
-| **In-App Digital Wallet** | `enableDigitalWallet` | `false` (Deferred) | Deferred pending Qatar Central Bank (QCB) stored-value & PSP compliance. |
-| **Automated Escrow Custody** | `enableEscrowClaims` | `false` (Deferred) | Deferred pending QCB-compliant escrow custody & licensed PSP integration. |
-| **AI Matching & Super-App Modules** | — | Deferred | Multi-category super-app flows remain disabled behind feature flags in Phase 1. |
+| **Shared Trips & Empty Seats** | `enablePassengerRides` | **`true` (Active)** | Pillar 1: Bidirectional shared trips, seat bookings & passenger route requests. |
+| **Carpooling & Route Parcels** | `enableCarpooling` | **`true` (Active)** | Pillar 1 & 2: Empty-seat cost sharing & parcels carried along a traveler's route with dual 4-digit OTPs. |
+| **Smart Supply & Errands** | `enableWorksiteSupply` | **`true` (Active)** | Pillar 3: Structured shopping, site supply & errands with invoice proof & 6-char handover verification. |
+| **Commercial Heavy Cargo** | `enableCommercialCargo` | `false` (Deferred) | Heavy commercial fleet freight dispatch remains gated separately. |
+| **In-App Digital Wallet** | `enableDigitalWallet` | `false` (Deferred) | Stored-value wallet custody remains disabled in favor of direct settlement. |
+| **Automated Escrow Custody** | `enableEscrowClaims` | `false` (Deferred) | Automated PSP escrow custody remains disabled (`cash_on_delivery` / `bank_transfer_manual` + OTP). |
 
-> **Pilot Settlement Model:** Phase 1 supports **`cash_on_delivery`** (Cash on Delivery at the worksite) and **`bank_transfer_manual`** (Manual Bank Transfer with uploaded transfer proof verified by operations staff: `unpaid -> transfer_proof_submitted -> verified_settled`). No customer funds are held in automated in-app wallet custody.
+> **Direct Settlement Model:** MASHWAR uses **`cash_on_delivery`** (Cash on Handover) and **`bank_transfer_manual`** (Direct Bank Transfer with uploaded transfer proof: `unpaid -> transfer_proof_submitted -> verified_settled`), paired with store invoice verification and cryptographic OTP handover codes without holding stored-value wallet balances.
 
 ### Legal, Regulatory & Trademark Readiness Notice
 - **No Transport or Financial Custody License Held:** The repository owner holds **no** passenger transport or commercial freight license from the Qatar Ministry of Transport (MoT) and **no** Payment Service Provider (PSP), e-money wallet, or financial escrow license from the Qatar Central Bank (QCB). Regulated transport and custodial payment modules are disabled in code (`false`) until formal licensing and licensed partner onboarding are completed.
@@ -170,12 +167,20 @@ flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=development -
 ### 4. Run Static Analysis, Unit/Widget Suites & Live Emulator Security Tests
 ```powershell
 flutter analyze --no-pub
-flutter test --no-pub                                           # 155/155 passing (incl. Wave 8 UI/UX & feature suite)
+flutter test --no-pub                                           # 161/161 passing (incl. Wave 9 International 3-Services E2E suite)
 Push-Location functions; npm run build; npm test; Pop-Location  # 11/11 passing
 powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1  # 10/10 live Firestore + Storage suites passing
-flutter build web --release --base-href / --dart-define=USE_FIREBASE=true                                # Production consumer web bundle
+flutter build web --release --dart-define=USE_FIREBASE=true                                              # Production consumer web bundle
 flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin --dart-define=USE_FIREBASE=true  # Admin web bundle
 ```
+
+### Wave 9 International 3-Service Architecture & Global Brand Summary
+- **Three Unified Bidirectional Services:**
+  1. **Shared Trips & Empty Seats (`سفر ومقاعد تشاركية`):** 3-step `PublishRideScreen` traveler wizard (`1..6` empty seats, flexible `5..2000` contribution, optional stopover, and **"Carry Parcels / Items Along Your Route"** toggle) synced across `RidesProvider` & `BoardProvider`, paired with `TripsAndParcelsHubScreen` (`hub_tab_trips` & `hub_tab_requests`), `PostAdScreen`, and `MakeOfferSheet`.
+  2. **Parcels & Items on the Way (`طرود وأغراض مع مسافر`):** 3-step `SendParcelScreen({ride, initialFromCity, initialToCity})` supporting direct dispatch with a parcel-friendly traveler (`RideDetailsScreen` dual CTA `ride_details_send_parcel_btn`) or standalone open route requests mirrored to `BoardProvider`, plus `ParcelTrackingScreen` displaying **dual 4-digit Pickup & Delivery OTPs**.
+  3. **Smart Shopping, Supply & Errands (`شراء وتوريد ومهام خاصة`):** `CreateWorkRequestScreen`, `WorkRequestsFeedScreen`, and `WorkRequestDetailsScreen` with verified store receipts, `MoneyMinor` integer accounting, and 6-character salted SHA-256 handover verification.
+- **3-Step Visual Journey, Wizard Headers & 5-Tab Navigation:** Added `MashwarThreeStepsBanner`, `MashwarWizardStepHeader` (`1 -> 2 -> 3` step pills), custom duotone `MashwarServicePillarIcon` vector emblems, and the 5-tab `MainNavShell` (`الرئيسية` / `Home`, `الرحلات والطرود` / `Trips & Parcels`, `التوريد والمهام` / `Supply & Tasks`, `نشاطي` / `My Activity` with `All`/`Trips`/`Parcels`/`Supply` filters, and `حسابي` / `Account`).
+- **Complete Removal of Regional Sadu & Lock-In Chrome:** Neutralized `QatarSaduAccentBar` (`SizedBox.shrink()` -> `0.0` height) and removed regional maroon/Sadu strips and single-vertical lock-in phrasing across `HomeScreen` (`"إلى أين مشوارك أو طلبك اليوم؟"` / `"Where does your journey take you today?"`), `WelcomeScreen`, `SplashScreen`, `EmailInputScreen`, `CitySearchModal` (1-tap custom city entry), `ServiceEscrowScreen`, and `WalletScreen`.
 
 ### Wave 8 UI/UX & Marketplace Polish Summary
 - **Photography & Custom Vector System:** Added `assets/images/mvp_hero_lusail_supply.jpg` and `assets/images/cat_tools_ppe.jpg`, plus `lib/core/widgets/mashwar_worksite_icons.dart` (`MashwarCategoryIcon`, `MashwarCategoryVisualBanner` with photography + `electrical`/`plumbing` `CustomPainter` dioramas, and `MashwarTrustEmblem`) and `lib/core/widgets/mashwar_animations.dart` (`MashwarShimmerBox`, `MashwarHoverCard`, `MashwarWorksiteStatusStepper`, `MashwarAttachmentThumbnail`, `MashwarImagePreviewDialog`).

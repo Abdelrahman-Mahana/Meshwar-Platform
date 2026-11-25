@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_text_field.dart';
-import '../../core/localization/app_strings.dart';
+import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/board_ad_model.dart';
+import '../../data/repositories/app_repositories.dart';
+import '../../data/repositories/contracts/i_maps_repository.dart';
 import '../../state/board_provider.dart';
 import '../home/city_search_modal.dart';
 import 'board_extra_screens.dart';
-import '../../data/repositories/app_repositories.dart';
-import '../../data/repositories/contracts/i_maps_repository.dart';
 
 class PostAdScreen extends StatefulWidget {
   final bool initialIsOffer;
@@ -34,23 +36,33 @@ class PostAdScreen extends StatefulWidget {
 
 class _PostAdScreenState extends State<PostAdScreen> {
   late BoardAdType _selectedCategory;
-  int _intentIndex = 0; // 0 = أنا أطلب خدمة (Requests), 1 = أنا أقدم خدمة / مسافر (Offers)
+  int _intentIndex = 0; // 0 = Request, 1 = Offer / Traveler
+  int _visualStep = 1; // 1..3 visual progress indicator
   bool _isSubmitted = false;
   bool _didApplyInitialPreset = false;
   String? _formError;
+  double _swapTurns = 0.0;
 
   // Form Controllers
-  final TextEditingController _fromController = TextEditingController(text: 'الدوحة');
-  final TextEditingController _toController = TextEditingController(text: 'الخور');
-  final TextEditingController _timeController = TextEditingController(text: 'الجمعة بعد الظهر');
-  final TextEditingController _seatsController = TextEditingController(text: '3');
-  final TextEditingController _priceController = TextEditingController(text: '35');
-  final TextEditingController _parcelDescController = TextEditingController(text: 'أوراق ومستندات رسمية');
-  final TextEditingController _weightController = TextEditingController(text: '2');
+  final TextEditingController _fromController =
+      TextEditingController(text: 'الدوحة');
+  final TextEditingController _toController =
+      TextEditingController(text: 'الخور');
+  final TextEditingController _timeController =
+      TextEditingController(text: 'الجمعة بعد الظهر');
+  final TextEditingController _seatsController =
+      TextEditingController(text: '3');
+  final TextEditingController _priceController =
+      TextEditingController(text: '35');
+  final TextEditingController _parcelDescController =
+      TextEditingController(text: 'أوراق ومستندات رسمية');
+  final TextEditingController _weightController =
+      TextEditingController(text: '2');
   final TextEditingController _errandDescController = TextEditingController();
   final TextEditingController _goodsDescController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  final TextEditingController _itemBudgetController = TextEditingController(text: '150');
+  final TextEditingController _itemBudgetController =
+      TextEditingController(text: '150');
   bool _ladiesOnly = false;
   bool _acceptsParcels = true;
   bool _hasEscrowProtection = true;
@@ -64,10 +76,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
     super.initState();
     if (widget.initialCategory != null) {
       _selectedCategory = widget.initialCategory!;
-      _intentIndex = widget.initialIntent ?? (widget.initialCategory == BoardAdType.rideOffer ? 1 : 0);
+      _intentIndex = widget.initialIntent ??
+          (widget.initialCategory == BoardAdType.rideOffer ? 1 : 0);
     } else if (widget.initialIntent != null) {
       _intentIndex = widget.initialIntent!;
-      _selectedCategory = _intentIndex == 1 ? BoardAdType.rideOffer : BoardAdType.rideRequest;
+      _selectedCategory = _intentIndex == 1
+          ? BoardAdType.rideOffer
+          : BoardAdType.rideRequest;
     } else if (widget.initialIsOffer) {
       _selectedCategory = BoardAdType.rideOffer;
       _intentIndex = 1;
@@ -75,7 +90,8 @@ class _PostAdScreenState extends State<PostAdScreen> {
       _selectedCategory = BoardAdType.rideRequest;
       _intentIndex = 0;
     }
-    if (_selectedCategory == BoardAdType.parcelRequest || _selectedCategory == BoardAdType.goodsDelivery) {
+    if (_selectedCategory == BoardAdType.parcelRequest ||
+        _selectedCategory == BoardAdType.goodsDelivery) {
       _requiresReceiptProof = true;
     }
   }
@@ -92,9 +108,9 @@ class _PostAdScreenState extends State<PostAdScreen> {
   void _applyQuickPreset(int index, bool isAr) {
     setState(() {
       _activePresetIndex = index;
+      _visualStep = 3;
       _formError = null;
       if (index == 0) {
-        // Engineer Site Supply
         _intentIndex = 0;
         _selectedCategory = BoardAdType.goodsDelivery;
         _fromController.text = 'المنطقة الصناعية';
@@ -114,7 +130,6 @@ class _PostAdScreenState extends State<PostAdScreen> {
         _subTagAr = 'توريد موقع هندسي';
         _subTagEn = 'Site Supply';
       } else if (index == 1) {
-        // Nursery & Daily Commute
         _intentIndex = 0;
         _selectedCategory = BoardAdType.localTrip;
         _fromController.text = 'أم صلال';
@@ -123,15 +138,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
         _priceController.text = '40';
         _seatsController.text = '2';
         _notesController.text = isAr
-            ? 'توصيل أطفال صباحي للحضانة بالدفنة بسيارة عائلية موثقة بالـ QID'
-            : 'Morning nursery drop-off in Al Dafna with QID-verified family car';
+            ? 'توصيل أطفال صباحي للحضانة بسيارة عائلية موثقة'
+            : 'Morning nursery drop-off with verified family car';
         _requiresReceiptProof = false;
         _hasEscrowProtection = true;
         _ladiesOnly = true;
         _subTagAr = 'توصيل حضانة ويومي';
         _subTagEn = 'Nursery & Daily';
       } else if (index == 2) {
-        // Cross-City Document Fetch
         _intentIndex = 0;
         _selectedCategory = BoardAdType.errandService;
         _fromController.text = 'الدوحة';
@@ -142,7 +156,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
             ? 'جلب شهادة / مستند رسمي مختوم مع مسافر متجه للخور'
             : 'Collect stamped official document with traveler heading to Al Khor';
         _notesController.text = isAr
-            ? 'بدل السفر من الخور مخصوص — التسليم بكود 4 أرقام OTP'
+            ? 'تسليم يداً بيد بكود 4 أرقام OTP'
             : 'Delivered hand-to-hand with 4-digit OTP protection';
         _requiresReceiptProof = false;
         _hasEscrowProtection = true;
@@ -150,7 +164,6 @@ class _PostAdScreenState extends State<PostAdScreen> {
         _subTagAr = 'جلب مستند مع مسافر';
         _subTagEn = 'Doc Fetch';
       } else if (index == 3) {
-        // Buy & Deliver from Store
         _intentIndex = 0;
         _selectedCategory = BoardAdType.parcelRequest;
         _fromController.text = 'الدوحة';
@@ -159,10 +172,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
         _priceController.text = '30';
         _itemBudgetController.text = '95';
         _parcelDescController.text = isAr
-            ? 'شراء مستلزمات صيدلية أو محل من فيلاجيو وتوصيلها للريان'
-            : 'Buy store/pharmacy items from Villaggio and deliver to Al Rayyan';
+            ? 'شراء مستلزمات من المتجر وتوصيلها للريان'
+            : 'Buy store items and deliver to Al Rayyan';
         _notesController.text = isAr
-            ? 'المشتريات والفاتورة محفوظة في ضمان مشوار Escrow حتى التسليم'
+            ? 'الفاتورة محمية في ضمان مشوار حتى التسليم'
             : 'Purchases & fee held in MASHWAR Escrow until OTP confirmation';
         _requiresReceiptProof = true;
         _hasEscrowProtection = true;
@@ -170,7 +183,6 @@ class _PostAdScreenState extends State<PostAdScreen> {
         _subTagAr = 'شراء وتوصيل بفاتورة';
         _subTagEn = 'Shop with Receipt';
       } else if (index == 4) {
-        // Shared Intercity 3 Empty Seats
         _intentIndex = 1;
         _selectedCategory = BoardAdType.rideOffer;
         _fromController.text = 'الخور';
@@ -183,8 +195,8 @@ class _PostAdScreenState extends State<PostAdScreen> {
         _hasEscrowProtection = true;
         _ladiesOnly = false;
         _notesController.text = isAr
-            ? 'معي 3 مقاعد شاغرة بسيارتي الخاصة على طريق الشمال وأقبل أمانات بالطريق'
-            : '3 empty seats available on North Road & can bring docs along route';
+            ? 'معي 3 مقاعد شاغرة بسيارتي الخاصة وأقبل أمانات بالطريق'
+            : '3 empty seats available & can carry parcels along route';
         _subTagAr = '3 مقاعد شاغرة';
         _subTagEn = '3 Empty Seats';
       }
@@ -216,9 +228,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
         ),
       ),
     );
-    if (selected != null && selected.trim().isNotEmpty) {
+    if (selected != null && selected.trim().isNotEmpty && mounted) {
       setState(() {
         controller.text = selected;
+        _visualStep = 2;
         _formError = null;
       });
     }
@@ -226,6 +239,8 @@ class _PostAdScreenState extends State<PostAdScreen> {
 
   void _swapCities() {
     setState(() {
+      _swapTurns += 0.5;
+      _visualStep = 2;
       final tmp = _fromController.text;
       _fromController.text = _toController.text;
       _toController.text = tmp;
@@ -234,8 +249,9 @@ class _PostAdScreenState extends State<PostAdScreen> {
 
   void _adjustPrice(int delta) {
     final current = int.tryParse(_priceController.text.trim()) ?? 80;
-    final next = (current + delta).clamp(10, 5000);
+    final next = (current + delta).clamp(5, 5000);
     setState(() {
+      _visualStep = 3;
       _priceController.text = '$next';
     });
   }
@@ -244,6 +260,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
     final current = int.tryParse(_seatsController.text.trim()) ?? 1;
     final next = (current + delta).clamp(1, 8);
     setState(() {
+      _visualStep = 3;
       _seatsController.text = '$next';
     });
   }
@@ -254,7 +271,11 @@ class _PostAdScreenState extends State<PostAdScreen> {
     final timeText = _timeController.text.trim();
     final price = int.tryParse(_priceController.text.trim());
 
-    if (fromCity.isEmpty || toCity.isEmpty || timeText.isEmpty || price == null || price <= 0) {
+    if (fromCity.isEmpty ||
+        toCity.isEmpty ||
+        timeText.isEmpty ||
+        price == null ||
+        price <= 0) {
       setState(() {
         _formError = isAr
             ? 'برجاء استكمال نقطة الانطلاق والوجهة والموعد والسعر بشكل صحيح'
@@ -266,7 +287,9 @@ class _PostAdScreenState extends State<PostAdScreen> {
     final board = context.read<BoardProvider>();
     final type = _selectedCategory;
     final seats = int.tryParse(_seatsController.text.trim()) ?? 1;
-    final itemCost = _requiresReceiptProof ? int.tryParse(_itemBudgetController.text.trim()) : null;
+    final itemCost = _requiresReceiptProof
+        ? int.tryParse(_itemBudgetController.text.trim())
+        : null;
 
     String computedTimeText = timeText;
     String computedDesc;
@@ -277,34 +300,48 @@ class _PostAdScreenState extends State<PostAdScreen> {
           : '$timeText · ${_weightController.text.trim()} kg';
       computedDesc = isAr
           ? 'طلب/طرد: ${_parcelDescController.text.trim()} · المكافأة: $price ر.ق'
-          : 'Shop/Parcel: ${_parcelDescController.text.trim()} · Reward: $price QAR';
+          : 'Parcel/Item: ${_parcelDescController.text.trim()} · Reward: $price QAR';
     } else if (type == BoardAdType.rideOffer) {
       computedTimeText = isAr
           ? '$timeText · $seats مقاعد شاغرة'
           : '$timeText · $seats empty seats';
       computedDesc = _acceptsParcels
-          ? (isAr ? 'متاح مقاعد شاغرة وتوصيل أمانات أو أوراق على الطريق' : 'Accepts seats & parcels along route')
-          : (isAr ? 'رحلة سفر تشاركي مباشرة · السعر للمقعد $price ر.ق' : 'Direct ride · $price QAR per seat');
+          ? (isAr
+              ? 'متاح مقاعد شاغرة وتوصيل أمانات أو طرود على الطريق'
+              : 'Accepts seats & parcels along route')
+          : (isAr
+              ? 'رحلة سفر تشاركي مباشرة · السعر للمقعد $price ر.ق'
+              : 'Direct ride · $price QAR per seat');
     } else if (type == BoardAdType.localTrip) {
-      computedTimeText = isAr ? '$timeText · مشوار يومي وحضانات' : '$timeText · Daily / Nursery ride';
+      computedTimeText = isAr
+          ? '$timeText · مشوار يومي وحضانات'
+          : '$timeText · Daily / Nursery ride';
       computedDesc = _notesController.text.trim().isNotEmpty
           ? _notesController.text.trim()
           : (isAr
-              ? 'طلب توصيل ومشوار محلي موثق بالـ QID · الأجرة المقترحة: $price ر.ق'
-              : 'QID-verified local/school commute · Proposed fare: $price QAR');
+              ? 'طلب توصيل ومشوار محلي موثق · الأجرة المقترحة: $price ر.ق'
+              : 'Verified local/school commute · Proposed fare: $price QAR');
     } else if (type == BoardAdType.errandService) {
-      computedTimeText = isAr ? '$timeText · إنجاز معاملة أو جلب أوراق' : '$timeText · Doc & Errand';
+      computedTimeText = isAr
+          ? '$timeText · إنجاز معاملة أو جلب أوراق'
+          : '$timeText · Doc & Errand';
       final errandText = _errandDescController.text.trim().isNotEmpty
           ? _errandDescController.text.trim()
-          : (isAr ? 'جلب أوراق ومستندات رسمية بالطريق' : 'Official documents & items along route');
+          : (isAr
+              ? 'جلب أوراق ومستندات رسمية بالطريق'
+              : 'Official documents & items along route');
       computedDesc = isAr
           ? '$errandText · أتعاب الخدمة: $price ر.ق'
           : '$errandText · Service fee: $price QAR';
     } else if (type == BoardAdType.goodsDelivery) {
-      computedTimeText = isAr ? '$timeText · توريد مواقع وبضائع' : '$timeText · Worksite & Cargo';
+      computedTimeText = isAr
+          ? '$timeText · توريد مواقع وبضائع'
+          : '$timeText · Worksite & Cargo';
       final goodsText = _goodsDescController.text.trim().isNotEmpty
           ? _goodsDescController.text.trim()
-          : (isAr ? 'توريد مستلزمات ومعدات لموقع العمل أو المحل' : 'Worksite supplies & store goods');
+          : (isAr
+              ? 'توريد مستلزمات ومعدات لموقع العمل أو المحل'
+              : 'Worksite supplies & store goods');
       computedDesc = isAr
           ? '$goodsText · الأجرة: $price ر.ق'
           : '$goodsText · Fare: $price QAR';
@@ -324,7 +361,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
       timeText: computedTimeText,
       description: computedDesc,
       priceOrBudget: price,
-      notes: _notesController.text.trim().isNotEmpty ? _notesController.text.trim() : null,
+      seatsNeeded:
+          (type == BoardAdType.rideRequest || type == BoardAdType.rideOffer)
+              ? seats
+              : null,
+      notes: _notesController.text.trim().isNotEmpty
+          ? _notesController.text.trim()
+          : null,
       isLadiesOnly: _ladiesOnly,
       serviceSubTagAr: _subTagAr,
       serviceSubTagEn: _subTagEn,
@@ -364,385 +407,413 @@ class _PostAdScreenState extends State<PostAdScreen> {
             '3 Empty Car Seats',
           ];
 
+    final wizardTitles = isAr
+        ? ['1. نوع الخدمة', '2. المسار والموعد', '3. التفاصيل والنشر']
+        : ['1. Service Type', '2. Route & Time', '3. Details & Publish'];
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         title: Text(
           isAr ? 'انشر إعلان على اللوحة' : 'Post Ad on Board',
-          style: AppTypography.title().copyWith(fontSize: 18),
+          style: AppTypography.title().copyWith(fontSize: 17.5),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.navy,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Quick 1-Tap Real-Life Qatari Service Templates
-                  Text(
-                    isAr ? 'قوالب سريعة جاهزة (تعبئة بنقرة واحدة)' : 'Quick 1-Tap Service Templates',
-                    style: AppTypography.label(color: AppColors.qatarMaroon).copyWith(fontWeight: FontWeight.w800),
+            constraints: const BoxConstraints(maxWidth: 740),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                  child: MashwarWizardStepHeader(
+                    currentStep: _visualStep,
+                    stepTitles: wizardTitles,
+                    isAr: isAr,
                   ),
-                  const SizedBox(height: 6),
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: List.generate(quickPresets.length, (i) {
-                        final isSel = _activePresetIndex == i;
-                        return Padding(
-                          padding: const EdgeInsetsDirectional.only(end: 8),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(18),
-                            onTap: () => _applyQuickPreset(i, isAr),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 160),
-                              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: isSel ? AppColors.qatarMaroon : Colors.white,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: isSel ? AppColors.qatarMaroon : const Color(0xFFE2E8F0),
-                                ),
-                              ),
-                              child: Text(
-                                quickPresets[i],
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isSel ? Colors.white : AppColors.navy,
-                                  fontFamily: 'Cairo',
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Section Title: Category Selection
-                  Text(
-                    isAr ? '١. ما الذي ترغب في نشره؟' : '1. What would you like to post?',
-                    style: AppTypography.title().copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Master Intent Segmented Switch
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildIntentTab(
-                            index: 0,
-                            label: isAr ? 'أنا أطلب خدمة / مشوار' : 'I Need a Service',
-                            icon: Icons.person_search_rounded,
-                            onTap: () {
-                              setState(() {
-                                _intentIndex = 0;
-                                if (_selectedCategory == BoardAdType.rideOffer) {
-                                  _selectedCategory = BoardAdType.rideRequest;
-                                }
-                              });
-                            },
-                          ),
-                        ),
-                        Expanded(
-                          child: _buildIntentTab(
-                            index: 1,
-                            label: isAr ? 'أنا مسافر / أقدم خدمة' : 'I Offer a Service',
-                            icon: Icons.handshake_rounded,
-                            onTap: () {
-                              setState(() {
-                                _intentIndex = 1;
-                                _selectedCategory = BoardAdType.rideOffer;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // Category Cards Grid (2-Columns Layout)
-                  _buildCategoryGrid(isAr),
-
-                  const SizedBox(height: 20),
-
-                  // Error Box if validation fails
-                  if (_formError != null) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEE2E2),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFFECACA)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _formError!,
-                              style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Section Title: Route & Location
-                  Text(
-                    isAr ? '٢. خط السير والموقع' : '2. Route & Location',
-                    style: AppTypography.title().copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Connected Route Card
-                  _buildConnectedRouteCard(isAr),
-
-                  const SizedBox(height: 20),
-
-                  // Section Title: Timing & Schedule
-                  Text(
-                    isAr ? '٣. الموعد والتوقيت المفضل' : '3. Schedule & Timing',
-                    style: AppTypography.title().copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Quick Schedule Chips
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildScheduleChip(isAr ? 'الآن / فوري' : 'Now / Instant'),
-                        const SizedBox(width: 8),
-                        _buildScheduleChip(isAr ? 'اليوم مساءً' : 'Tonight'),
-                        const SizedBox(width: 8),
-                        _buildScheduleChip(isAr ? 'غداً صباحاً' : 'Tomorrow morning'),
-                        const SizedBox(width: 8),
-                        _buildScheduleChip(isAr ? 'الجمعة بعد الظهر' : 'Friday afternoon'),
-                        const SizedBox(width: 8),
-                        _buildScheduleChip(isAr ? 'خلال الأسبوع' : 'This week'),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  MashwarTextField(
-                    controller: _timeController,
-                    hint: isAr ? 'حدد اليوم والساعة المناسبة لك' : 'Specify day and preferred time',
-                    prefixIcon: const Icon(Icons.access_time_rounded, color: AppColors.teal, size: 20),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Section Title: Dynamic Category-Specific Fields
-                  _buildDynamicFields(isAr),
-
-                  const SizedBox(height: 20),
-
-                  // Section Title: Proposed Budget / Fare
-                  Text(
-                    isAr ? '٤. المقابل المادي / الميزانية المقترحة' : '4. Proposed Budget & Fare',
-                    style: AppTypography.title().copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Price Card with Quick Stepper & Presets
-                  _buildPriceSection(isAr),
-
-                  const SizedBox(height: 16),
-
-                  // Bilateral Anti-Fraud & Escrow Toggle Card
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
+                ),
+                const Divider(height: 1, color: AppColors.slateBorder),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.space16,
+                      vertical: 14,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Quick 1-Tap Templates
                         Row(
                           children: [
-                            const Icon(Icons.verified_user_rounded, color: AppColors.escrowGreen, size: 19),
-                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.bolt_rounded,
+                              size: 16,
+                              color: AppColors.cobalt,
+                            ),
+                            const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                isAr ? 'حماية الضمان المزدوج وإثبات الفاتورة (Escrow)' : 'Bilateral Escrow & Receipt Protection',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13.5,
-                                  color: AppColors.navy,
-                                  fontFamily: 'Cairo',
-                                ),
+                                isAr
+                                    ? 'قوالب سريعة جاهزة (تعبئة بنقرة واحدة)'
+                                    : 'Quick 1-Tap Service Templates',
+                                style: AppTypography.label(
+                                  color: AppColors.cobalt,
+                                ).copyWith(fontWeight: FontWeight.w800),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () => setState(() => _hasEscrowProtection = !_hasEscrowProtection),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: List.generate(quickPresets.length, (i) {
+                              final isSel = _activePresetIndex == i;
+                              return Padding(
+                                padding:
+                                    const EdgeInsetsDirectional.only(end: 8),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(18),
+                                  onTap: () => _applyQuickPreset(i, isAr),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 160),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          isSel ? AppColors.cobalt : Colors.white,
+                                      borderRadius: BorderRadius.circular(18),
+                                      border: Border.all(
+                                        color: isSel
+                                            ? AppColors.cobalt
+                                            : AppColors.slateBorder,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      quickPresets[i],
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color:
+                                            isSel ? Colors.white : AppColors.navy,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Step 1 Section: Intent & Category
+                        Text(
+                          isAr
+                              ? '1. ما الذي ترغب في نشره؟'
+                              : '1. What would you like to post?',
+                          style: AppTypography.title().copyWith(fontSize: 15.5),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE2E8F0),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           child: Row(
                             children: [
-                              Checkbox(
-                                value: _hasEscrowProtection,
-                                activeColor: AppColors.escrowGreen,
-                                onChanged: (v) => setState(() => _hasEscrowProtection = v ?? true),
+                              Expanded(
+                                child: _buildIntentTab(
+                                  index: 0,
+                                  label: isAr
+                                      ? 'أنا أطلب خدمة / مشوار'
+                                      : 'I Need a Service',
+                                  icon: Icons.person_search_rounded,
+                                  onTap: () {
+                                    setState(() {
+                                      _intentIndex = 0;
+                                      _visualStep = 1;
+                                      if (_selectedCategory ==
+                                          BoardAdType.rideOffer) {
+                                        _selectedCategory =
+                                            BoardAdType.rideRequest;
+                                      }
+                                    });
+                                  },
+                                ),
                               ),
                               Expanded(
-                                child: Text(
-                                  isAr
-                                      ? 'حجز المبلغ في ضمان مشوار حتى إدخال كود OTP'
-                                      : 'Hold payment in MASHWAR Escrow until OTP handover',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'Cairo'),
+                                child: _buildIntentTab(
+                                  index: 1,
+                                  label: isAr
+                                      ? 'أنا مسافر / أقدم خدمة'
+                                      : 'I Offer a Service',
+                                  icon: Icons.handshake_outlined,
+                                  onTap: () {
+                                    setState(() {
+                                      _intentIndex = 1;
+                                      _visualStep = 1;
+                                      _selectedCategory = BoardAdType.rideOffer;
+                                    });
+                                  },
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () => setState(() => _requiresReceiptProof = !_requiresReceiptProof),
-                          child: Row(
-                            children: [
-                              Checkbox(
-                                value: _requiresReceiptProof,
-                                activeColor: AppColors.qatarMaroon,
-                                onChanged: (v) => setState(() => _requiresReceiptProof = v ?? false),
+                        const SizedBox(height: 12),
+                        _buildCategoryGrid(isAr),
+                        const SizedBox(height: 20),
+
+                        if (_formError != null) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.dangerBg,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.danger.withValues(alpha: 0.35),
                               ),
-                              Expanded(
-                                child: Text(
-                                  isAr
-                                      ? 'يشترط تصوير الفاتورة الأصلية + الغرض (للمشتريات وتوريد المواقع)'
-                                      : 'Require live store receipt & item photo before dispatch',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'Cairo'),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.error_outline_rounded,
+                                  color: AppColors.danger,
+                                  size: 20,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _formError!,
+                                    style: const TextStyle(
+                                      color: AppColors.danger,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        if (_requiresReceiptProof) ...[
-                          const SizedBox(height: 6),
-                          MashwarTextField(
-                            controller: _itemBudgetController,
-                            label: isAr ? 'السقف التقديري لفاتورة الشراء (ر.ق)' : 'Estimated Store Receipt Cap (QAR)',
-                            hint: '150',
-                            keyboardType: TextInputType.number,
-                          ),
+                          const SizedBox(height: 16),
                         ],
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(height: 20),
+                        // Step 2 Section: Route & Schedule
+                        Text(
+                          isAr
+                              ? '2. المسار والموعد المفضل'
+                              : '2. Route & Schedule',
+                          style: AppTypography.title().copyWith(fontSize: 15.5),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildConnectedRouteCard(isAr),
+                        const SizedBox(height: 14),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _buildScheduleChip(
+                                isAr ? 'الآن / فوري' : 'Now / Instant',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildScheduleChip(
+                                isAr ? 'اليوم مساءً' : 'Tonight',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildScheduleChip(
+                                isAr ? 'غداً صباحاً' : 'Tomorrow morning',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildScheduleChip(
+                                isAr ? 'الجمعة بعد الظهر' : 'Friday afternoon',
+                              ),
+                              const SizedBox(width: 8),
+                              _buildScheduleChip(
+                                isAr ? 'خلال الأسبوع' : 'This week',
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        MashwarTextField(
+                          controller: _timeController,
+                          hint: isAr
+                              ? 'حدد اليوم والساعة المناسبة لك'
+                              : 'Specify day and preferred time',
+                          prefixIcon: const Icon(
+                            Icons.access_time_rounded,
+                            color: AppColors.cobalt,
+                            size: 20,
+                          ),
+                          onChanged: (_) {
+                            if (_visualStep != 2) {
+                              setState(() => _visualStep = 2);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 20),
 
-                  // Section Title: Additional Notes
-                  Text(
-                    isAr ? '٥. تفاصيل وملاحظات إضافية (اختياري)' : '5. Additional Details (Optional)',
-                    style: AppTypography.title().copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 8),
-                  MashwarTextField(
-                    controller: _notesController,
-                    hint: _getNotesHint(isAr),
-                    maxLines: 3,
-                  ),
+                        // Step 3 Section: Details, Budget & Verification
+                        Text(
+                          isAr
+                              ? '3. التفاصيل والميزانية المقترحة'
+                              : '3. Details & Proposed Budget',
+                          style: AppTypography.title().copyWith(fontSize: 15.5),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDynamicFields(isAr),
+                        const SizedBox(height: 16),
+                        _buildPriceSection(isAr),
+                        const SizedBox(height: 16),
 
-                  const SizedBox(height: 16),
-
-                  // Guarantee Box
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.escrowSurface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.shield_outlined, color: AppColors.escrowGreen, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
+                        // Verification & Receipt Protection Card
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.emerald.withValues(alpha: 0.35),
+                            ),
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                isAr ? 'حماية وأمان المعاملات في مشوار' : 'MASHWAR Bilateral Escrow Security',
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.escrowGreen),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.verified_user_outlined,
+                                    color: AppColors.emerald,
+                                    size: 19,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      isAr
+                                          ? 'توثيق التسليم وإثبات الفاتورة'
+                                          : 'OTP Handover & Receipt Verification',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 13.5,
+                                        color: AppColors.navy,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 3),
-                              Text(
-                                isAr
-                                    ? '• حق الطالب وحق المنفّذ محفوظ بالضمان المالي وتوثيق البطاقة القطرية QID.\n• تسليم الطلبات والمشتريات والمستندات مؤمّن بصورة الفاتورة وكود 4 أرقام OTP.'
-                                    : '• Phone numbers stay private inside encrypted chat.\n• Payments, purchases & handovers are protected by Escrow & 4-digit OTP.',
-                                style: const TextStyle(fontSize: 11.5, color: AppColors.navy, height: 1.4),
+                              const SizedBox(height: 6),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () => setState(() {
+                                  _visualStep = 3;
+                                  _hasEscrowProtection = !_hasEscrowProtection;
+                                }),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _hasEscrowProtection,
+                                      activeColor: AppColors.emerald,
+                                      onChanged: (v) => setState(() {
+                                        _visualStep = 3;
+                                        _hasEscrowProtection = v ?? true;
+                                      }),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        isAr
+                                            ? 'توثيق الاستلام والتسليم بكود الأمان OTP'
+                                            : 'Confirm handover with 4-digit OTP protection',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'Cairo',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+                              InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () => setState(() {
+                                  _visualStep = 3;
+                                  _requiresReceiptProof =
+                                      !_requiresReceiptProof;
+                                }),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _requiresReceiptProof,
+                                      activeColor: AppColors.cobalt,
+                                      onChanged: (v) => setState(() {
+                                        _visualStep = 3;
+                                        _requiresReceiptProof = v ?? false;
+                                      }),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        isAr
+                                            ? 'يشترط إرفاق صورة الفاتورة الأصلية + الغرض (للمشتريات والتوريد)'
+                                            : 'Require store receipt & item photo before dispatch',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'Cairo',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (_requiresReceiptProof) ...[
+                                const SizedBox(height: 6),
+                                MashwarTextField(
+                                  controller: _itemBudgetController,
+                                  label: isAr
+                                      ? 'السقف التقديري لفاتورة الشراء (ر.ق)'
+                                      : 'Estimated Store Receipt Cap (QAR)',
+                                  hint: '150',
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ],
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                        const SizedBox(height: 16),
 
-                  const SizedBox(height: 12),
-
-                  // Reassuring Zero-Upfront-Charge Escrow Preview Strip
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: AppColors.sand,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.gold.withValues(alpha: 0.45)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.flash_on_rounded, color: AppColors.qatarMaroon, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            isAr
-                                ? 'النشر مجاني 100% · يُحجز المبلغ في ضمان مشوار عبر فوراً Fawran أو QPay فقط عند قبولك للعرض.'
-                                : 'Posting is 100% free · Funds lock in MASHWAR Escrow via Fawran / QPay only when you accept an offer.',
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.navy,
-                              fontFamily: 'Cairo',
-                            ),
-                          ),
+                        MashwarTextField(
+                          controller: _notesController,
+                          label: isAr
+                              ? 'ملاحظات إضافية (اختياري)'
+                              : 'Additional Notes (Optional)',
+                          hint: _getNotesHint(isAr),
+                          maxLines: 2,
                         ),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -750,10 +821,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          border: const Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+          border: const Border(top: BorderSide(color: AppColors.slateBorder)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, -3),
             ),
@@ -763,10 +834,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
         child: SafeArea(
           top: false,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
+            constraints: const BoxConstraints(maxWidth: 740),
             child: MashwarButton(
-              text: isAr ? 'نشر الإعلان على اللوحة بالضمان' : 'Publish Protected Ad Free',
-              icon: const Icon(Icons.campaign_rounded),
+              text: isAr ? 'نشر الطلب أو العرض الآن' : 'Publish Request / Offer',
+              icon: const Icon(Icons.send_rounded, size: 18),
               onPressed: () => _submit(isAr),
             ),
           ),
@@ -775,7 +846,6 @@ class _PostAdScreenState extends State<PostAdScreen> {
     );
   }
 
-  // Master Intent Tab Widget
   Widget _buildIntentTab({
     required int index,
     required String label,
@@ -807,7 +877,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
             Icon(
               icon,
               size: 18,
-              color: isSelected ? AppColors.navy : const Color(0xFF64748B),
+              color: isSelected ? AppColors.cobalt : const Color(0xFF64748B),
             ),
             const SizedBox(width: 6),
             Flexible(
@@ -828,94 +898,113 @@ class _PostAdScreenState extends State<PostAdScreen> {
     );
   }
 
-  // 2-Columns Responsive Category Cards Grid
   Widget _buildCategoryGrid(bool isAr) {
     final List<Map<String, dynamic>> items;
 
     if (_intentIndex == 0) {
-      // Requests (طلبات ومصالح)
       items = [
         {
-          'type': BoardAdType.goodsDelivery,
-          'title': isAr ? 'لوجستيات وتوريد' : 'Site & Store Supply',
-          'subtitle': isAr ? 'توريد لمواقع الهندسة أو مستلزمات محلات بفاتورة' : 'Engineer site parts & shop stock',
-          'icon': Icons.engineering_rounded,
-          'asset': 'assets/images/service_site_supply.jpg',
-          'color': AppColors.qatarMaroon,
-        },
-        {
-          'type': BoardAdType.errandService,
-          'title': isAr ? 'إنجاز معاملات رسمية' : 'Docs & Errands',
-          'subtitle': isAr ? 'جلب ورقة أو شراء طلبات مع مسافر بالطريق' : 'Buying items, errands or papers',
-          'icon': Icons.description_rounded,
-          'asset': 'assets/images/service_errand.jpg',
-          'color': const Color(0xFFD97706),
-        },
-        {
-          'type': BoardAdType.localTrip,
-          'title': isAr ? 'مشاوير وحضانات يومية' : 'Nursery & Daily',
-          'subtitle': isAr ? 'توصيل مدارس أو مناطق قليلة المواصلات' : 'School/nursery & remote commute',
-          'icon': Icons.family_restroom_rounded,
-          'color': AppColors.teal,
+          'type': BoardAdType.rideRequest,
+          'title': isAr ? 'طلب سفر ومقعد' : 'Need a Ride',
+          'subtitle': isAr
+              ? 'حجز مقعد مع مسافر متجه لنفس الوجهة'
+              : 'Book a seat with a traveler',
+          'icon': Icons.person_search_rounded,
+          'pillar': MashwarServicePillar.sharedTrips,
+          'color': AppColors.cobalt,
         },
         {
           'type': BoardAdType.parcelRequest,
           'title': isAr ? 'شراء من محل وشحن أمانات' : 'Shop & Parcel',
-          'subtitle': isAr ? 'شراء وتوصيل طلبات أو طرود بكود OTP' : 'Store purchase & OTP delivery',
-          'icon': Icons.inventory_2_rounded,
-          'asset': 'assets/images/service_parcel.jpg',
-          'color': const Color(0xFF10B981),
+          'subtitle': isAr
+              ? 'توصيل طرد أو طلبات على الطريق بكود OTP'
+              : 'Route parcel & OTP delivery',
+          'icon': Icons.inventory_2_outlined,
+          'pillar': MashwarServicePillar.routeParcels,
+          'color': AppColors.indigo,
         },
         {
-          'type': BoardAdType.rideRequest,
-          'title': isAr ? 'طلب سفر ومقعد' : 'Need a Ride',
-          'subtitle': isAr ? 'حجز مقعد مع مسافر متجه لنفس المدينة' : 'Book a seat with a traveler',
-          'icon': Icons.person_search_rounded,
-          'asset': 'assets/images/service_ride.jpg',
-          'color': const Color(0xFF0284C7),
+          'type': BoardAdType.goodsDelivery,
+          'title': isAr ? 'لوجستيات وتوريد' : 'Site & Store Supply',
+          'subtitle': isAr
+              ? 'توريد لمواقع العمل أو مستلزمات محلات بفاتورة'
+              : 'Site parts & store stock with receipt',
+          'icon': Icons.inventory_outlined,
+          'pillar': MashwarServicePillar.smartSupply,
+          'color': AppColors.emerald,
+        },
+        {
+          'type': BoardAdType.errandService,
+          'title': isAr ? 'إنجاز معاملات رسمية' : 'Docs & Errands',
+          'subtitle': isAr
+              ? 'جلب مستند أو شراء غرض مع مسافر بالطريق'
+              : 'Collect papers or items along route',
+          'icon': Icons.description_outlined,
+          'pillar': MashwarServicePillar.routeParcels,
+          'color': AppColors.indigo,
+        },
+        {
+          'type': BoardAdType.localTrip,
+          'title': isAr ? 'مشاوير وحضانات يومية' : 'Nursery & Daily',
+          'subtitle': isAr
+              ? 'توصيل مدارس أو تنقل يومي منتظم'
+              : 'Daily school & district commute',
+          'icon': Icons.family_restroom_rounded,
+          'pillar': MashwarServicePillar.sharedTrips,
+          'color': AppColors.teal,
         },
       ];
     } else {
-      // Offers (عروض ومنفّذين)
       items = [
         {
           'type': BoardAdType.rideOffer,
           'title': isAr ? 'عرض سفر تشاركي' : 'Offer Seats',
-          'subtitle': isAr ? 'مسافر ومعي مقاعد شاغرة في سيارتي' : 'Empty seats in my private car',
-          'icon': Icons.directions_car_rounded,
-          'asset': 'assets/images/service_ride.jpg',
-          'color': AppColors.navy,
+          'subtitle': isAr
+              ? 'مسافر ومعي مقاعد شاغرة في سيارتي'
+              : 'Empty seats in my private car',
+          'icon': Icons.directions_car_outlined,
+          'pillar': MashwarServicePillar.sharedTrips,
+          'color': AppColors.cobalt,
+        },
+        {
+          'type': BoardAdType.parcelRequest,
+          'title': isAr ? 'استقبال أمانات في الطريق' : 'Carry Parcels',
+          'subtitle': isAr
+              ? 'مسافر ومستعد لتوصيل طرود وأمانات بكود OTP'
+              : 'Traveler ready to carry parcels',
+          'icon': Icons.inventory_2_outlined,
+          'pillar': MashwarServicePillar.routeParcels,
+          'color': AppColors.indigo,
+        },
+        {
+          'type': BoardAdType.goodsDelivery,
+          'title': isAr ? 'عرض توريد مواقع وبضائع' : 'Supply & Freight',
+          'subtitle': isAr
+              ? 'مركبة مجهزة لتوريد المواقع والمحلات بالفاتورة'
+              : 'Vehicle ready for site/store supply',
+          'icon': Icons.local_shipping_outlined,
+          'pillar': MashwarServicePillar.smartSupply,
+          'color': AppColors.emerald,
         },
         {
           'type': BoardAdType.errandService,
           'title': isAr ? 'جلب طلبات وأوراق بالطريق' : 'Errand & Shopping',
-          'subtitle': isAr ? 'متحرك بطريقي ومستعد لشراء طلبات أو جلب أوراق' : 'Traveler ready to buy or fetch docs',
-          'icon': Icons.description_rounded,
-          'asset': 'assets/images/service_errand.jpg',
-          'color': const Color(0xFFD97706),
-        },
-        {
-          'type': BoardAdType.goodsDelivery,
-          'title': isAr ? 'عرض توريد مواقع وبضائع' : 'Worksite Freight',
-          'subtitle': isAr ? 'مركبة مجهزة لتوريد المواقع والمحلات بالفاتورة' : 'Vehicle ready for site/store logistics',
-          'icon': Icons.engineering_rounded,
-          'asset': 'assets/images/service_site_supply.jpg',
-          'color': AppColors.qatarMaroon,
+          'subtitle': isAr
+              ? 'متحرك بطريقي ومستعد لشراء طلبات أو جلب أوراق'
+              : 'Traveler ready to buy or fetch docs',
+          'icon': Icons.description_outlined,
+          'pillar': MashwarServicePillar.routeParcels,
+          'color': AppColors.indigo,
         },
         {
           'type': BoardAdType.localTrip,
           'title': isAr ? 'عرض مشاوير وحضانات' : 'Offer Daily Rides',
-          'subtitle': isAr ? 'سائق موثق لتوصيل المدارس والأسر والمناطق البعيدة' : 'QID-verified daily & school rides',
+          'subtitle': isAr
+              ? 'مسافر موثق لتوصيل المدارس والمشاوير اليومية'
+              : 'Verified daily & school rides',
           'icon': Icons.family_restroom_rounded,
+          'pillar': MashwarServicePillar.sharedTrips,
           'color': AppColors.teal,
-        },
-        {
-          'type': BoardAdType.parcelRequest,
-          'title': isAr ? 'استقبال أمانات في الطريق' : 'Accept Parcels',
-          'subtitle': isAr ? 'مسافر ومستعد لتوصيل طرود وأمانات بكود OTP' : 'Traveler ready to take parcels',
-          'icon': Icons.inventory_2_rounded,
-          'asset': 'assets/images/service_parcel.jpg',
-          'color': const Color(0xFF10B981),
         },
       ];
     }
@@ -929,24 +1018,92 @@ class _PostAdScreenState extends State<PostAdScreen> {
           children: items.map((item) {
             final type = item['type'] as BoardAdType;
             final isSelected = _selectedCategory == type;
+            final accentColor = item['color'] as Color;
             return SizedBox(
               width: cardWidth,
-              child: _buildCategoryCard(
-                type: type,
-                title: item['title'] as String,
-                subtitle: item['subtitle'] as String,
-                icon: item['icon'] as IconData,
-                assetPath: item['asset'] as String?,
-                accentColor: item['color'] as Color,
-                isSelected: isSelected,
+              child: InkWell(
                 onTap: () {
                   setState(() {
                     _selectedCategory = type;
-                    if (type == BoardAdType.goodsDelivery || type == BoardAdType.parcelRequest) {
+                    _visualStep = 2;
+                    if (type == BoardAdType.goodsDelivery ||
+                        type == BoardAdType.parcelRequest) {
                       _requiresReceiptProof = true;
                     }
                   });
                 },
+                borderRadius: BorderRadius.circular(16),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? accentColor.withValues(alpha: 0.06)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: isSelected ? accentColor : AppColors.slateBorder,
+                      width: isSelected ? 1.8 : 1.0,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          MashwarServicePillarIcon(
+                            pillar: item['pillar'] as MashwarServicePillar,
+                            size: 36,
+                          ),
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isSelected
+                                  ? accentColor
+                                  : Colors.transparent,
+                              border: Border.all(
+                                color: isSelected
+                                    ? accentColor
+                                    : const Color(0xFFCBD5E1),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: isSelected
+                                ? const Icon(
+                                    Icons.check_rounded,
+                                    size: 13,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        item['title'] as String,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.title().copyWith(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        item['subtitle'] as String,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.bodySmall(
+                          color: AppColors.textSecondary,
+                        ).copyWith(fontSize: 11, height: 1.3),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             );
           }).toList(),
@@ -955,125 +1112,6 @@ class _PostAdScreenState extends State<PostAdScreen> {
     );
   }
 
-  // Individual Category Card
-  Widget _buildCategoryCard({
-    required BoardAdType type,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    String? assetPath,
-    required Color accentColor,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? accentColor.withValues(alpha: 0.06) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? accentColor : const Color(0xFFE2E8F0),
-            width: isSelected ? 2.0 : 1.0,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? accentColor.withValues(alpha: 0.12)
-                  : Colors.black.withValues(alpha: 0.02),
-              blurRadius: isSelected ? 10 : 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (assetPath != null)
-                  Container(
-                    width: 40,
-                    height: 40,
-                    padding: const EdgeInsets.all(3),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(11),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: MashwarAssetArt(
-                      assetPath: assetPath,
-                      width: 34,
-                      height: 34,
-                      fit: BoxFit.contain,
-                      borderRadius: BorderRadius.circular(8),
-                      fallbackIcon: icon,
-                      fallbackColor: accentColor,
-                    ),
-                  )
-                else
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: isSelected ? accentColor : accentColor.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      icon,
-                      size: 20,
-                      color: isSelected ? Colors.white : accentColor,
-                    ),
-                  ),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected ? accentColor : Colors.transparent,
-                    border: Border.all(
-                      color: isSelected ? accentColor : const Color(0xFFCBD5E1),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: isSelected
-                      ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
-                      : null,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.title().copyWith(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w800,
-                color: isSelected ? AppColors.navy : const Color(0xFF1E293B),
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.bodySmall(
-                color: isSelected ? const Color(0xFF334155) : AppColors.textSecondary,
-              ).copyWith(fontSize: 11, height: 1.3),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Connected Route Card (Departure 🟢 -> Destination 📍)
   Widget _buildConnectedRouteCard(bool isAr) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1082,14 +1120,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 10,
-                offset: const Offset(0, 3),
-              ),
-            ],
+            border: Border.all(color: AppColors.slateBorder),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           child: Stack(
@@ -1097,306 +1128,317 @@ class _PostAdScreenState extends State<PostAdScreen> {
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Visual Route Connector
-              Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFDCFCE7),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Container(
-                        width: 9,
-                        height: 9,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
                         decoration: const BoxDecoration(
-                          color: Color(0xFF16A34A),
+                          color: AppColors.emeraldSurface,
                           shape: BoxShape.circle,
                         ),
+                        alignment: Alignment.center,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: AppColors.emerald,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Container(
-                    width: 2,
-                    height: 38,
-                    margin: const EdgeInsets.symmetric(vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFCBD5E1),
-                      borderRadius: BorderRadius.circular(1),
-                    ),
-                  ),
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFFEE2E2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        Icons.location_on_rounded,
-                        size: 14,
-                        color: Color(0xFFDC2626),
+                      Container(
+                        width: 2,
+                        height: 36,
+                        margin: const EdgeInsets.symmetric(vertical: 3),
+                        color: AppColors.slateBorder,
                       ),
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          color: AppColors.cobaltSurface,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.location_on_rounded,
+                          size: 13,
+                          color: AppColors.cobalt,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                isAr
+                                    ? 'نقطة الانطلاق (من وين؟)'
+                                    : 'Pickup / Departure',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF64748B),
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            InkWell(
+                              onTap: () => _pickCity(
+                                _fromController,
+                                isAr ? 'نقطة الانطلاق' : 'Departure Point',
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 1,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.location_city_rounded,
+                                      size: 13,
+                                      color: AppColors.cobalt,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      isAr ? 'المدن' : 'Cities',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.cobalt,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextField(
+                          controller: _fromController,
+                          style: const TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                            fontFamily: 'Cairo',
+                          ),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 4),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            hintText: isAr
+                                ? 'اكتب المنطقة، المدينة أو العنوان'
+                                : 'Area, city or address',
+                          ),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 4),
+                          child: Divider(height: 1, color: AppColors.slateBorder),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                isAr
+                                    ? 'وجهة الوصول (إلى أين؟)'
+                                    : 'Destination / Drop-off',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF64748B),
+                                  fontFamily: 'Cairo',
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            InkWell(
+                              onTap: () => _pickCity(
+                                _toController,
+                                isAr ? 'الوجهة' : 'Destination Point',
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 1,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.location_city_rounded,
+                                      size: 13,
+                                      color: AppColors.cobalt,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      isAr ? 'المدن' : 'Cities',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.cobalt,
+                                        fontFamily: 'Cairo',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        TextField(
+                          controller: _toController,
+                          style: const TextStyle(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                            fontFamily: 'Cairo',
+                          ),
+                          decoration: InputDecoration(
+                            isDense: true,
+                            contentPadding:
+                                const EdgeInsets.symmetric(vertical: 4),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            hintText: isAr
+                                ? 'المنطقة، المدينة أو العنوان'
+                                : 'Area, city or address',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(width: 36),
                 ],
               ),
-              const SizedBox(width: 12),
-
-              // Inputs Column
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Departure Row (Authentic Qatari dialect: من وين؟)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            isAr ? 'نقطة الانطلاق (من وين؟)' : 'Pickup / Departure',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
-                              fontFamily: 'Cairo',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        InkWell(
-                          onTap: () => _pickCity(_fromController, isAr ? 'نقطة الانطلاق' : 'Departure Point'),
-                          borderRadius: BorderRadius.circular(6),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.location_city_rounded, size: 13, color: AppColors.teal),
-                                const SizedBox(width: 3),
-                                Text(
-                                  isAr ? 'المدن' : 'Cities',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.teal,
-                                    fontFamily: 'Cairo',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextField(
-                      controller: _fromController,
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.navy,
-                        fontFamily: 'Cairo',
-                      ),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        focusedErrorBorder: InputBorder.none,
-                        hintText: isAr ? 'اكتب المنطقة، المدينة أو العنوان' : 'Area, city or address',
-                        hintStyle: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.normal,
-                          color: Color(0xFF94A3B8),
+              Positioned(
+                left: isAr ? 0 : null,
+                right: isAr ? null : 0,
+                child: Material(
+                  color: AppColors.slateBg,
+                  shape: const CircleBorder(
+                    side: BorderSide(color: AppColors.slateBorder),
+                  ),
+                  child: InkWell(
+                    customBorder: const CircleBorder(),
+                    onTap: _swapCities,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: AnimatedRotation(
+                        turns: _swapTurns,
+                        duration: const Duration(milliseconds: 240),
+                        child: const Icon(
+                          Icons.swap_vert_rounded,
+                          size: 20,
+                          color: AppColors.cobalt,
                         ),
                       ),
                     ),
-
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 4),
-                      child: Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
-                    ),
-
-                    // Destination Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            isAr ? 'وجهة الوصول (إلى أين؟)' : 'Destination / Drop-off',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF64748B),
-                              fontFamily: 'Cairo',
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        InkWell(
-                          onTap: () => _pickCity(_toController, isAr ? 'الوجهة' : 'Destination Point'),
-                          borderRadius: BorderRadius.circular(6),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.location_city_rounded, size: 13, color: AppColors.teal),
-                                const SizedBox(width: 3),
-                                Text(
-                                  isAr ? 'المدن' : 'Cities',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.teal,
-                                    fontFamily: 'Cairo',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    TextField(
-                      controller: _toController,
-                      style: const TextStyle(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.navy,
-                        fontFamily: 'Cairo',
-                      ),
-                      decoration: InputDecoration(
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        errorBorder: InputBorder.none,
-                        focusedErrorBorder: InputBorder.none,
-                        hintText: isAr ? 'المنطقة، المدينة أو العنوان' : 'Area, city or address',
-                        hintStyle: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.normal,
-                          color: Color(0xFF94A3B8),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-
-              // Trailing spacing so text doesn't overlap the floating swap button
-              const SizedBox(width: 32),
             ],
           ),
-
-          // Floating Circular Swap Button
-          Positioned(
-            left: isAr ? 0 : null,
-            right: isAr ? null : 0,
-            child: Material(
-              color: Colors.white,
-              shape: const CircleBorder(
-                side: BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
-              ),
-              elevation: 2,
-              shadowColor: Colors.black26,
-              child: InkWell(
-                customBorder: const CircleBorder(),
-                onTap: _swapCities,
-                child: const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Icon(
-                    Icons.swap_vert_rounded,
-                    size: 20,
-                    color: AppColors.teal,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    ),
-    // Dynamic Google Maps Route Estimate
-    ValueListenableBuilder<TextEditingValue>(
-      valueListenable: _fromController,
-      builder: (_, fromVal, __) {
-        return ValueListenableBuilder<TextEditingValue>(
-          valueListenable: _toController,
-          builder: (_, toVal, __) {
-            final from = fromVal.text.trim();
-            final to = toVal.text.trim();
-            if (from.isEmpty || to.isEmpty || from == to) {
-              return const SizedBox.shrink();
-            }
-            return FutureBuilder<RouteDetails>(
-              future: AppRepositories.instance.maps.getRouteDetails(from, to),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const SizedBox.shrink();
-                final details = snapshot.data!;
-                final hours = details.durationMinutes ~/ 60;
-                final mins = details.durationMinutes % 60;
-                final timeStr = hours > 0
-                    ? (isAr ? '$hours س و $mins د' : '${hours}h ${mins}m')
-                    : (isAr ? '$mins دقيقة' : '${mins}m');
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8, right: 4, left: 4),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.teal.withValues(alpha: 0.07),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.teal.withValues(alpha: 0.18)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.alt_route_rounded, color: AppColors.teal, size: 15),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            isAr
-                                ? 'المسافة المقدرة عبر خرائط جوجل: ${details.distanceKm.round()} كم · زمن السفر: $timeStr تقريباً'
-                                : 'Google Maps Est: ${details.distanceKm.round()} km · Travel Time: ~$timeStr',
-                            style: const TextStyle(
-                              fontSize: 11.5,
-                              color: AppColors.navy,
-                              fontWeight: FontWeight.w600,
-                            ),
+        ),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _fromController,
+          builder: (_, fromVal, __) {
+            return ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _toController,
+              builder: (_, toVal, __) {
+                final from = fromVal.text.trim();
+                final to = toVal.text.trim();
+                if (from.isEmpty || to.isEmpty || from == to) {
+                  return const SizedBox.shrink();
+                }
+                return FutureBuilder<RouteDetails>(
+                  future:
+                      AppRepositories.instance.maps.getRouteDetails(from, to),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const SizedBox.shrink();
+                    final details = snapshot.data!;
+                    final hours = details.durationMinutes ~/ 60;
+                    final mins = details.durationMinutes % 60;
+                    final timeStr = hours > 0
+                        ? (isAr ? '$hours س و $mins د' : '${hours}h ${mins}m')
+                        : (isAr ? '$mins دقيقة' : '${mins}m');
+                    return Padding(
+                      padding:
+                          const EdgeInsets.only(top: 8, right: 2, left: 2),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.cobaltSurface,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.cobalt.withValues(alpha: 0.2),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.alt_route_rounded,
+                              color: AppColors.cobalt,
+                              size: 15,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                isAr
+                                    ? 'المسافة التقديرية للمسار: ${details.distanceKm.round()} كم · ~$timeStr'
+                                    : 'Estimated Route: ${details.distanceKm.round()} km · ~$timeStr',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.navy,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             );
           },
-        );
-      },
-    ),
-  ],
-);
-}
+        ),
+      ],
+    );
+  }
 
-  // Quick Schedule Chip
   Widget _buildScheduleChip(String text) {
     final isSelected = _timeController.text.trim() == text;
     return GestureDetector(
       onTap: () {
         setState(() {
+          _visualStep = 2;
           _timeController.text = text;
         });
       },
@@ -1404,9 +1446,11 @@ class _PostAdScreenState extends State<PostAdScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.navy : Colors.white,
+          color: isSelected ? AppColors.cobalt : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
+          border: Border.all(
+            color: isSelected ? AppColors.cobalt : AppColors.slateBorder,
+          ),
         ),
         child: Text(
           text,
@@ -1420,7 +1464,6 @@ class _PostAdScreenState extends State<PostAdScreen> {
     );
   }
 
-  // Category-Specific Dynamic Form Fields
   Widget _buildDynamicFields(bool isAr) {
     if (_selectedCategory == BoardAdType.parcelRequest) {
       return Column(
@@ -1428,13 +1471,15 @@ class _PostAdScreenState extends State<PostAdScreen> {
         children: [
           Text(
             isAr ? 'مواصفات الأمانة أو الطرد' : 'Parcel Specifications',
-            style: AppTypography.title().copyWith(fontSize: 15),
+            style: AppTypography.title().copyWith(fontSize: 14.5),
           ),
           const SizedBox(height: 8),
           MashwarTextField(
             controller: _parcelDescController,
             label: isAr ? 'وصف الأمانة' : 'Parcel Contents',
-            hint: isAr ? 'مثال: دوسيه أوراق رسمية، شنطة هدايا، جهاز إلكتروني' : 'e.g. Official documents folder, gift bag',
+            hint: isAr
+                ? 'مثال: ملف أوراق رسمية، حقيبة، جهاز إلكتروني'
+                : 'e.g. Official documents folder, gift bag',
           ),
           const SizedBox(height: 10),
           MashwarTextField(
@@ -1442,10 +1487,6 @@ class _PostAdScreenState extends State<PostAdScreen> {
             label: isAr ? 'الوزن التقريبي (كجم)' : 'Approximate Weight (kg)',
             hint: '2',
             keyboardType: TextInputType.number,
-            suffixIcon: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(isAr ? 'كجم' : 'kg', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
-            ),
           ),
         ],
       );
@@ -1455,13 +1496,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
       final quickErrands = isAr
           ? [
               'شراء قطع غيار ومستلزمات',
-              'شراء طلبات وإحضارها من الدوحة',
+              'شراء طلبات وإحضارها على الطريق',
               'تخليص شهادات وأوراق رسمية',
               'وصفة طبية وأدوية ضرورية',
             ]
           : [
               'Buy parts & supplies',
-              'Shop items from Doha',
+              'Shop items along route',
               'Official certificates & papers',
               'Pharmacy prescription',
             ];
@@ -1470,8 +1511,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isAr ? 'تفاصيل المعاملة والأوراق الرسمية' : 'Official Errand Details',
-            style: AppTypography.title().copyWith(fontSize: 15),
+            isAr
+                ? 'تفاصيل المعاملة والأوراق الرسمية'
+                : 'Official Errand Details',
+            style: AppTypography.title().copyWith(fontSize: 14.5),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1486,10 +1529,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected ? Colors.white : AppColors.textPrimary,
                 ),
-                backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
-                side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
+                backgroundColor:
+                    isSelected ? AppColors.indigo : Colors.white,
+                side: BorderSide(
+                  color: isSelected ? AppColors.indigo : AppColors.slateBorder,
+                ),
                 onPressed: () {
                   setState(() {
+                    _visualStep = 3;
                     _errandDescController.text = chipText;
                   });
                 },
@@ -1499,10 +1546,12 @@ class _PostAdScreenState extends State<PostAdScreen> {
           const SizedBox(height: 8),
           MashwarTextField(
             controller: _errandDescController,
-            label: isAr ? 'نوع المعاملة أو طلب الشراء' : 'Errand / Shopping Description',
+            label: isAr
+                ? 'نوع المعاملة أو طلب الشراء'
+                : 'Errand / Shopping Description',
             hint: isAr
-                ? 'مثال: شراء قطع غيار من المنطقة الصناعية، أو استلام شهادة من المدينة التعليمية'
-                : 'e.g. Buying parts from Industrial Area, or certificate from Education City',
+                ? 'مثال: استلام شهادة مختومة أو شراء غرض من متجر'
+                : 'e.g. Collect stamped document or store item',
           ),
         ],
       );
@@ -1526,7 +1575,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
         children: [
           Text(
             isAr ? 'تفاصيل البضاعة والتوريد' : 'Commercial Cargo Details',
-            style: AppTypography.title().copyWith(fontSize: 15),
+            style: AppTypography.title().copyWith(fontSize: 14.5),
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1541,10 +1590,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected ? Colors.white : AppColors.textPrimary,
                 ),
-                backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
-                side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
+                backgroundColor:
+                    isSelected ? AppColors.emerald : Colors.white,
+                side: BorderSide(
+                  color: isSelected ? AppColors.emerald : AppColors.slateBorder,
+                ),
                 onPressed: () {
                   setState(() {
+                    _visualStep = 3;
                     _goodsDescController.text = chipText;
                   });
                 },
@@ -1555,132 +1608,15 @@ class _PostAdScreenState extends State<PostAdScreen> {
           MashwarTextField(
             controller: _goodsDescController,
             label: isAr ? 'وصف المستلزمات والكمية' : 'Goods & Quantity',
-            hint: isAr ? 'مثال: 5 كراتين مستلزمات لمحل ملابس، أدوات كهربائية' : 'e.g. 5 stock boxes for retail shop',
+            hint: isAr
+                ? 'مثال: 5 كراتين مستلزمات، أدوات كهربائية...'
+                : 'e.g. 5 stock boxes, electrical tools...',
           ),
         ],
       );
     }
 
-    if (_selectedCategory == BoardAdType.localTrip) {
-      final quickTrips = isAr
-          ? [
-              'مشوار فوري (لا تتوفر مواصلات بالمنطقة)',
-              'تنقّل بين المناطق والضواحي',
-              'مشوار طوارئ أو مستشفى',
-            ]
-          : [
-              'Instant trip (no local transit)',
-              'Inter-area / district commute',
-              'Hospital or clinic trip',
-            ];
-
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isAr ? 'نوع المشوار المحلي وسبب الانتقال' : 'Local Mobility Context',
-            style: AppTypography.title().copyWith(fontSize: 15),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: quickTrips.map((chipText) {
-              final isSelected = _notesController.text.trim() == chipText;
-              return ActionChip(
-                label: Text(chipText),
-                labelStyle: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                ),
-                backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
-                side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
-                onPressed: () {
-                  setState(() {
-                    _notesController.text = chipText;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  isAr ? 'عدد الركاب' : 'Number of Passengers',
-                  style: AppTypography.title().copyWith(fontSize: 14),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFCBD5E1)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      iconSize: 18,
-                      padding: const EdgeInsets.all(4),
-                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                      onPressed: () => _adjustSeats(-1),
-                      icon: const Icon(Icons.remove_rounded, color: AppColors.navy),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: Text(
-                        _seatsController.text,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.navy),
-                      ),
-                    ),
-                    IconButton(
-                      iconSize: 18,
-                      padding: const EdgeInsets.all(4),
-                      constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                      onPressed: () => _adjustSeats(1),
-                      icon: const Icon(Icons.add_rounded, color: AppColors.navy),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Row(
-              children: [
-                Checkbox(
-                  value: _ladiesOnly,
-                  activeColor: AppColors.teal,
-                  onChanged: (val) => setState(() => _ladiesOnly = val ?? false),
-                ),
-                Expanded(
-                  child: Text(
-                    isAr ? 'مشوار مخصص للسيدات فقط 🌸' : 'Ladies Only Ride 🌸',
-                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Rides & Mobility (rideOffer, rideRequest)
+    // Rides & Local Trips
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1698,12 +1634,11 @@ class _PostAdScreenState extends State<PostAdScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            // Compact Stepper controls
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFCBD5E1)),
+                border: Border.all(color: AppColors.slateBorder),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1711,7 +1646,8 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   IconButton(
                     iconSize: 18,
                     padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                    constraints:
+                        const BoxConstraints(minWidth: 34, minHeight: 34),
                     onPressed: () => _adjustSeats(-1),
                     icon: const Icon(Icons.remove_rounded, color: AppColors.navy),
                   ),
@@ -1719,13 +1655,18 @@ class _PostAdScreenState extends State<PostAdScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
                       _seatsController.text,
-                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: AppColors.navy),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15,
+                        color: AppColors.navy,
+                      ),
                     ),
                   ),
                   IconButton(
                     iconSize: 18,
                     padding: const EdgeInsets.all(4),
-                    constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
+                    constraints:
+                        const BoxConstraints(minWidth: 34, minHeight: 34),
                     onPressed: () => _adjustSeats(1),
                     icon: const Icon(Icons.add_rounded, color: AppColors.navy),
                   ),
@@ -1735,61 +1676,30 @@ class _PostAdScreenState extends State<PostAdScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        // Quick Seat Selection Chips
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            {'label': isAr ? '1 مقعد' : '1 seat', 'val': '1'},
-            {'label': isAr ? '2 مقاعد' : '2 seats', 'val': '2'},
-            {'label': isAr ? '3 مقاعد (شائع)' : '3 seats (common)', 'val': '3'},
-            {'label': isAr ? '4 مقاعد' : '4 seats', 'val': '4'},
-          ].map((item) {
-            final isSelected = _seatsController.text.trim() == item['val'];
-            return ActionChip(
-              label: Text(item['label']!),
-              labelStyle: TextStyle(
-                fontSize: 11.5,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-              ),
-              backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
-              side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFCBD5E1)),
-              onPressed: () {
-                setState(() {
-                  _seatsController.text = item['val']!;
-                });
-              },
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 6),
-
-        // Ladies Only Checkbox
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.slateBorder),
           ),
           child: Row(
             children: [
               Checkbox(
                 value: _ladiesOnly,
-                activeColor: AppColors.teal,
+                activeColor: AppColors.ladiesPink,
                 onChanged: (val) => setState(() => _ladiesOnly = val ?? false),
               ),
               Expanded(
                 child: Text(
-                  isAr ? 'رحلة مخصصة للسيدات فقط 🌸' : 'Ladies Only Ride 🌸',
-                  style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                  isAr ? 'مخصص للسيدات فقط' : 'Ladies Only Ride',
+                  style: AppTypography.body()
+                      .copyWith(fontWeight: FontWeight.w600, fontSize: 13),
                 ),
               ),
             ],
           ),
         ),
-
         if (_selectedCategory == BoardAdType.rideOffer) ...[
           const SizedBox(height: 8),
           Container(
@@ -1797,19 +1707,23 @@ class _PostAdScreenState extends State<PostAdScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.slateBorder),
             ),
             child: Row(
               children: [
                 Checkbox(
                   value: _acceptsParcels,
-                  activeColor: AppColors.teal,
-                  onChanged: (val) => setState(() => _acceptsParcels = val ?? true),
+                  activeColor: AppColors.indigo,
+                  onChanged: (val) =>
+                      setState(() => _acceptsParcels = val ?? true),
                 ),
                 Expanded(
                   child: Text(
-                    isAr ? 'أقبل توصيل أمانات وطرود خفيفة على طريقي 📦' : 'Accept small parcels along my route 📦',
-                    style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                    isAr
+                        ? 'أقبل توصيل أمانات وطرود خفيفة على طريقي'
+                        : 'Accept light parcels along my route',
+                    style: AppTypography.body()
+                        .copyWith(fontWeight: FontWeight.w600, fontSize: 13),
                   ),
                 ),
               ],
@@ -1820,44 +1734,34 @@ class _PostAdScreenState extends State<PostAdScreen> {
     );
   }
 
-  // Price & Budget Section with Quick Stepper and Preset Chips
   Widget _buildPriceSection(bool isAr) {
-    String label;
-    if (_selectedCategory == BoardAdType.parcelRequest) {
-      label = isAr ? 'أجرة / مكافأة شحن الأمانة (ر.ق)' : 'Offered Parcel Reward (QAR)';
-    } else if (_selectedCategory == BoardAdType.rideOffer) {
-      label = isAr ? 'سعر المقعد الواحد بالسيارة (ر.ق)' : 'Price per Seat (QAR)';
-    } else if (_selectedCategory == BoardAdType.localTrip) {
-      label = isAr ? 'أجرة الانتقال المقترحة (ر.ق)' : 'Proposed Local Fare (QAR)';
-    } else if (_selectedCategory == BoardAdType.errandService) {
-      label = isAr ? 'أتعاب إنجاز المعاملة أو إحضار الأوراق (ر.ق)' : 'Errand Service Fee (QAR)';
-    } else if (_selectedCategory == BoardAdType.goodsDelivery) {
-      label = isAr ? 'أجرة نقل وتوريد البضاعة (ر.ق)' : 'Cargo Transport Fee (QAR)';
-    } else {
-      label = isAr ? 'ميزانيتك المقترحة للمقعد (ر.ق)' : 'Offered Budget per Seat (QAR)';
-    }
+    final label = _selectedCategory == BoardAdType.parcelRequest
+        ? (isAr ? 'مكافأة توصيل الطرد (ر.ق)' : 'Offered Parcel Reward (QAR)')
+        : _selectedCategory == BoardAdType.rideOffer
+            ? (isAr ? 'سعر المقعد الواحد (ر.ق)' : 'Price per Seat (QAR)')
+            : (isAr
+                ? 'الميزانية أو الأتعاب المقترحة (ر.ق)'
+                : 'Proposed Budget / Fee (QAR)');
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.navy)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: AppColors.navy,
+            ),
+          ),
           const SizedBox(height: 10),
-
-          // Stepper + Big Price Display
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -1868,18 +1772,23 @@ class _PostAdScreenState extends State<PostAdScreen> {
               ),
               const SizedBox(width: 12),
               Container(
-                width: 108,
+                width: 112,
                 alignment: Alignment.center,
                 child: TextField(
                   controller: _priceController,
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.navy),
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.navy,
+                  ),
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     isDense: true,
                     suffixText: isAr ? 'ر.ق' : 'QAR',
-                    suffixStyle: AppTypography.body(color: AppColors.teal).copyWith(fontSize: 15, fontWeight: FontWeight.bold),
+                    suffixStyle: AppTypography.body(color: AppColors.cobalt)
+                        .copyWith(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -1891,10 +1800,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 8),
-
-          // Quick preset chips
           Wrap(
             spacing: 8,
             runSpacing: 6,
@@ -1908,10 +1814,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected ? Colors.white : AppColors.textPrimary,
                 ),
-                backgroundColor: isSelected ? AppColors.navy : const Color(0xFFF1F5F9),
-                side: BorderSide(color: isSelected ? AppColors.navy : const Color(0xFFE2E8F0)),
+                backgroundColor:
+                    isSelected ? AppColors.cobalt : AppColors.slateBg,
+                side: BorderSide(
+                  color: isSelected ? AppColors.cobalt : AppColors.slateBorder,
+                ),
                 onPressed: () {
                   setState(() {
+                    _visualStep = 3;
                     _priceController.text = preset;
                   });
                 },
@@ -1924,110 +1834,83 @@ class _PostAdScreenState extends State<PostAdScreen> {
   }
 
   String _getNotesHint(bool isAr) {
-    switch (_selectedCategory) {
-      case BoardAdType.errandService:
-        return isAr
-            ? 'مثال: الأوراق جاهزة للاستلام من مركز الخدمات الحكومية بالدفنة، يرجى التواصل فور الاستلام...'
-            : 'e.g. Papers ready for pickup at Al Dafna Services Complex...';
-      case BoardAdType.goodsDelivery:
-        return isAr
-            ? 'مثال: البضاعة في كراتين محكمة، التسليم عند المحل التجاري في المنطقة الصناعية...'
-            : 'e.g. Stock packaged in sealed cartons, deliver to store in Industrial Area...';
-      case BoardAdType.parcelRequest:
-        return isAr
-            ? 'مثال: ظرف أوراق مغلق بإحكام، التسليم برمز التحقق (OTP) للمستلم...'
-            : 'e.g. Sealed documents envelope, deliver via OTP...';
-      case BoardAdType.localTrip:
-        return isAr
-            ? 'مثال: المشوار مباشر من الوكرة إلى مؤسسة حمد الطبية...'
-            : 'e.g. Direct trip from Al Wakrah to Hamad Medical City...';
-      default:
-        return isAr
-            ? 'مثال: التجمع عند محطة الوقود بمدخل المدينة، حقيبة سفر متوسطة...'
-            : 'e.g. Pickup near station entrance, medium suitcase...';
-    }
+    return isAr
+        ? 'مثال: نقطة الالتقاء، تفاصيل إضافية للمسافر أو المنفذ...'
+        : 'e.g. Meeting spot, handling instructions...';
   }
 
-  // Success Screen
   Widget _buildSuccessScreen(bool isAr) {
-    final routeText = context.trRoute('${_fromController.text.trim()} ← ${_toController.text.trim()}');
+    final routeText = context.trRoute(
+      '${_fromController.text.trim()} ← ${_toController.text.trim()}',
+    );
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.slateBg,
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 560),
+            constraints: const BoxConstraints(maxWidth: 540),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-              child: Column(
-                children: [
-                  const Spacer(flex: 2),
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: AppColors.slateBorder),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: const BoxDecoration(
+                        color: AppColors.emeraldSurface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.emerald,
+                        size: 44,
+                      ),
                     ),
-                    child: const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 48),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    isAr ? 'تم نشر إعلانك على اللوحة بنجاح!' : 'Ad Published Successfully!',
-                    style: AppTypography.largeTitle().copyWith(fontSize: 22),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    isAr
-                        ? 'إعلانك ($routeText) ظاهر الآن لكل المستخدمين والمسافرين، وستتلقى إشعاراً فورياً عند وصول أي عرض.'
-                        : 'Your ad ($routeText) is now live on the Board. You will be notified instantly when offers arrive.',
-                    textAlign: TextAlign.center,
-                    style: AppTypography.bodySecondary().copyWith(fontSize: 14),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // WhatsApp Share Action
-                  OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF25D366),
-                      side: const BorderSide(color: Color(0xFF25D366)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.radiusButton)),
+                    const SizedBox(height: 18),
+                    Text(
+                      isAr
+                          ? 'تم نشر إعلانك بنجاح!'
+                          : 'Published Successfully!',
+                      style: AppTypography.largeTitle().copyWith(fontSize: 22),
+                      textAlign: TextAlign.center,
                     ),
-                    icon: const Icon(Icons.share_rounded),
-                    label: Text(
-                      isAr ? 'شارك الإعلان على واتساب' : 'Share Ad on WhatsApp',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    const SizedBox(height: 8),
+                    Text(
+                      isAr
+                          ? 'طلبك أو عرضك على مسار ($routeText) متاح الآن للمسافرين والمنفذين.'
+                          : 'Your listing on ($routeText) is now live for travelers and providers.',
+                      textAlign: TextAlign.center,
+                      style: AppTypography.bodySecondary(),
                     ),
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            isAr ? 'تم نسخ رابط الإعلان للمشاركة على واتساب' : 'Ad link copied for WhatsApp sharing',
+                    const SizedBox(height: 22),
+                    MashwarButton(
+                      text: isAr
+                          ? 'عرض إعلاناتي وعروضي'
+                          : 'View My Listings & Offers',
+                      variant: MashwarButtonVariant.secondary,
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) => const MyBoardAdsScreen(),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  const Spacer(flex: 3),
-
-                  MashwarButton(
-                    text: isAr ? 'عرض إعلاناتي في اللوحة' : 'View My Board Ads',
-                    variant: MashwarButtonVariant.secondary,
-                    onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const MyBoardAdsScreen()),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  MashwarButton(
-                    text: isAr ? 'الرجوع للوحة' : 'Back to Board',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    MashwarButton(
+                      text: isAr ? 'تم' : 'Done',
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -6,7 +6,6 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_button.dart';
-import '../../core/widgets/mashwar_animations.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 import '../escrow/service_escrow_screen.dart';
@@ -323,7 +322,6 @@ class _WalletScreenState extends State<WalletScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const QatarSaduAccentBar(height: 4.5, borderRadius: 0),
                   Padding(
                     padding: const EdgeInsets.all(AppDimens.space20),
                     child: Column(
@@ -539,7 +537,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         ),
                         child: Text(
                           isAr ? 'سقف فواتير: 180 ر.ق' : 'Receipt Cap: 180 QAR',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.qatarMaroon, fontFamily: 'Cairo'),
+                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.cobalt, fontFamily: 'Cairo'),
                         ),
                       ),
                     ],
@@ -575,7 +573,7 @@ class _WalletScreenState extends State<WalletScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isAr ? 'طرق الدفع المدعومة في قطر' : 'Qatar Payment Methods',
+                  isAr ? 'طرق الدفع المدعومة' : 'Supported Payment Methods',
                   style: AppTypography.title().copyWith(fontSize: 16),
                 ),
                 const SizedBox(height: AppDimens.space12),
@@ -590,7 +588,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     children: [
                       _buildPaymentTile(
                         icon: Icons.flash_on_rounded,
-                        iconColor: const Color(0xFF8A1538),
+                        iconColor: AppColors.cobalt,
                         title: isAr ? 'فوراً Fawran (التحويل اللحظي)' : 'Fawran (QCB Instant Transfer)',
                         subtitle: isAr ? 'تحويل بنكي فوري في قطر بدون رسوم إضافية' : 'Instant zero-fee bank transfer in Qatar',
                         isDefault: auth.selectedPaymentMethod == 'fawran',
