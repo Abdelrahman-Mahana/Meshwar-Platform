@@ -241,8 +241,8 @@ class _MashwarAppState extends State<MashwarApp> {
 
           return MaterialApp(
             title: settings.isArabic
-                ? 'مشوار | توريد المواقع والخدمات في قطر'
-                : 'MASHWAR | Qatar Worksite Supply & Services',
+                ? 'مشوار | رحلات تشاركية، طرود وتوريد ذكي'
+                : 'MASHWAR | Shared Trips, Parcels & Smart Supply',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             locale: settings.locale,

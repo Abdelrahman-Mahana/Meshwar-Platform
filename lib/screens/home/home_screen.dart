@@ -31,10 +31,10 @@ import '../worksite/work_request_details_screen.dart';
 import '../worksite/work_requests_feed_screen.dart';
 import 'city_search_modal.dart';
 
-/// Unified International 3-Service Home Screen for MASHWAR:
-/// 1. Shared Trips & Empty Seats (`سفر ومقاعد تشاركية`)
-/// 2. Parcels & Items on the Way (`طرود وأغراض مع مسافر`)
-/// 3. Smart Shopping, Supply & Tasks (`شراء وتوريد ومهام خاصة`)
+/// Flagship International 3-Service Home Screen for MASHWAR
+/// Built on MASHWAR's original luxury palette (Navy · Gold · Teal · Warm Sand)
+/// with 3 prominent top interactive service icons and full-frame, zero-crop,
+/// zero-repetition 16:9 editorial photography.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -249,11 +249,11 @@ class _HomeScreenState extends State<HomeScreen> {
         (rides.toCity.trim().isNotEmpty ? rides.toCity.trim() : 'لوسيل');
 
     return Scaffold(
-      backgroundColor: AppColors.slateBg,
+      backgroundColor: const Color(0xFFFAF8F4),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final isWide = constraints.maxWidth >= 840;
+            final isWide = constraints.maxWidth >= 860;
             final isDesktopThreeCol = constraints.maxWidth >= 960;
             final isUltraCompact = constraints.maxWidth < 360;
             final hPad = isWide
@@ -261,7 +261,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 : (isUltraCompact ? 14.0 : AppDimens.space20);
 
             return RefreshIndicator(
-              color: AppColors.cobalt,
+              color: AppColors.navy,
+              backgroundColor: Colors.white,
               onRefresh: () async {
                 await Future.wait([
                   rides.loadRides(),
@@ -279,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: isWide ? 1140 : 740),
+                    constraints: BoxConstraints(maxWidth: isWide ? 1160 : 740),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -289,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(height: 12),
                         ],
 
-                        // 1. Clean International Top Brand Header
+                        // 1. Clean Top Brand Header (Navy · Gold · Teal)
                         _buildTopBrandHeader(
                           context: context,
                           auth: auth,
@@ -299,20 +300,21 @@ class _HomeScreenState extends State<HomeScreen> {
                           isAr: isAr,
                           isUltraCompact: isUltraCompact,
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
 
                         // Dev-Only All-Cases Showcase Toggle
                         if (AppEnvironment.current.isDevelopment ||
                             AppEnvironment.useDevMocks) ...[
                           _buildDemoShowcaseBanner(context, worksite, isAr),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                         ],
 
-                        // 2. Hero Route & Service Search Card
+                        // 2. Signature Opening Block: "مشوارك أو طلبك"
+                        //    3 Prominent Service Icon Tiles + Full-Frame 16:9 Editorial Visual + Route Bar
                         MashwarFadeSlideIn(
-                          duration: const Duration(milliseconds: 280),
+                          duration: const Duration(milliseconds: 260),
                           offsetY: 10,
-                          child: _buildHeroSearchCard(
+                          child: _buildSignatureHeroSection(
                             context: context,
                             rides: rides,
                             board: board,
@@ -325,11 +327,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             isUltraCompact: isUltraCompact,
                           ),
                         ),
-                        const SizedBox(height: 22),
+                        const SizedBox(height: 28),
 
-                        // 3. Three Core Services Showcase (Bidirectional Dual CTAs)
+                        // 3. Core 3 Services Editorial Gallery (Unique Full-Size 16:9 Media per Card)
                         MashwarFadeSlideIn(
-                          duration: const Duration(milliseconds: 320),
+                          duration: const Duration(milliseconds: 300),
                           offsetY: 12,
                           child: _buildThreeServicesShowcase(
                             context: context,
@@ -338,18 +340,33 @@ class _HomeScreenState extends State<HomeScreen> {
                             isDesktopThreeCol: isDesktopThreeCol,
                           ),
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 24),
 
-                        // 4. "How MASHWAR Works in 3 Steps"
+                        // 4. "How MASHWAR Works in 3 Steps" (Navy · Gold · Teal)
                         MashwarFadeSlideIn(
-                          duration: const Duration(milliseconds: 340),
+                          duration: const Duration(milliseconds: 320),
                           offsetY: 10,
-                          child: MashwarThreeStepsBanner(
-                            isAr: isAr,
-                            compact: isUltraCompact,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: Text(
+                                  isAr
+                                      ? 'كيف يعمل مشوار في 3 خطوات'
+                                      : 'How MASHWAR Works in 3 Steps',
+                                  style: AppTypography.title()
+                                      .copyWith(fontSize: 17.5),
+                                ),
+                              ),
+                              MashwarThreeStepsBanner(
+                                isAr: isAr,
+                                compact: isUltraCompact,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 22),
+                        const SizedBox(height: 28),
 
                         // 5. Live Available Travelers (Seats + Parcel Space)
                         _buildAvailableTravelersSection(
@@ -359,9 +376,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           isAr: isAr,
                           isWide: isWide,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
-                        // 6. Quick Supply Categories Strip (1-Tap Supply Shortcuts)
+                        // 6. Quick Supply Categories Strip
                         _buildQuickSupplyCategoriesCard(
                           context: context,
                           activeSite: activeSite,
@@ -377,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           openOffersCount: openOffersCount,
                           isAr: isAr,
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
                         // 8. Active Supply & Route Requests
                         _buildRecentSupplyRequestsSection(
@@ -386,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           recentToShow: recentToShow,
                           isAr: isAr,
                         ),
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 22),
 
                         // 9. Clean Collapsible Interactive Corridor Map
                         _buildCollapsibleCorridorMapCard(
@@ -397,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           isAr: isAr,
                           isWide: isWide,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -416,9 +433,9 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: isWarning ? AppColors.goldSurface : AppColors.navy,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isWarning ? AppColors.gold : AppColors.cobalt,
+          color: isWarning ? AppColors.gold : AppColors.navy,
         ),
       ),
       child: Row(
@@ -426,7 +443,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Icon(
             Icons.campaign_rounded,
             size: 18,
-            color: isWarning ? AppColors.navy : Colors.white,
+            color: isWarning ? AppColors.navy : AppColors.gold,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -459,145 +476,174 @@ class _HomeScreenState extends State<HomeScreen> {
         ? (isAr ? 'أهلاً بك، $firstName' : 'Welcome, $firstName')
         : (isAr ? 'أهلاً بك في مشوار' : 'Welcome to MASHWAR');
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Wrap(
-            spacing: 12,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              BrandLogo(
-                fontSize: isUltraCompact ? 22 : 25,
-                showEnglish: !isUltraCompact,
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
-                      greetingText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.body(color: AppColors.navy).copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: isUltraCompact ? 13.5 : 15,
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isUltraCompact ? 10 : 16,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.warmBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.navy.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Wrap(
+              spacing: isUltraCompact ? 8 : 12,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                BrandLogo(
+                  fontSize: isUltraCompact ? 20 : 25,
+                  showEnglish: !isUltraCompact,
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        greetingText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            AppTypography.body(color: AppColors.navy).copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontSize: isUltraCompact ? 12.5 : 14.5,
+                        ),
                       ),
                     ),
-                  ),
-                  if (auth.user.isVerified || worksite.isApprovedProvider) ...[
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.verified_rounded,
-                      size: 16,
-                      color: AppColors.emerald,
-                    ),
+                    if (auth.user.isVerified || worksite.isApprovedProvider) ...[
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.verified_rounded,
+                        size: 16,
+                        color: AppColors.teal,
+                      ),
+                    ],
                   ],
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-        ),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              key: const ValueKey('home_notifications_bell_btn'),
-              tooltip: isAr ? 'الإشعارات' : 'Notifications',
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const NotificationsCenterScreen(),
-                  ),
-                );
-              },
-              icon: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.slateBorder),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                key: const ValueKey('home_notifications_bell_btn'),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                tooltip: isAr ? 'الإشعارات' : 'Notifications',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsCenterScreen(),
                     ),
-                    child: Icon(
-                      unreadCount > 0
-                          ? Icons.notifications_active_rounded
-                          : Icons.notifications_none_rounded,
-                      color: AppColors.navy,
-                      size: 20,
+                  );
+                },
+                icon: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: AppColors.sand,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.warmBorder),
+                      ),
+                      child: Icon(
+                        unreadCount > 0
+                            ? Icons.notifications_active_rounded
+                            : Icons.notifications_none_rounded,
+                        color: AppColors.navy,
+                        size: 20,
+                      ),
                     ),
-                  ),
-                  if (unreadCount > 0)
-                    PositionedDirectional(
-                      top: -3,
-                      end: -3,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 5,
-                          vertical: 1.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.cobalt,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white, width: 1.4),
-                        ),
-                        constraints: const BoxConstraints(minWidth: 17),
-                        child: Text(
-                          unreadCount > 9 ? '9+' : '$unreadCount',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w800,
-                            height: 1.1,
+                    if (unreadCount > 0)
+                      PositionedDirectional(
+                        top: -3,
+                        end: -3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.white, width: 1.5),
+                          ),
+                          constraints: const BoxConstraints(minWidth: 18),
+                          child: Text(
+                            unreadCount > 9 ? '9+' : '$unreadCount',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: AppColors.navy,
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w900,
+                              height: 1.1,
+                            ),
                           ),
                         ),
                       ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 4),
+              InkWell(
+                key: const ValueKey('home_profile_avatar_btn'),
+                customBorder: const CircleBorder(),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const UserProfileScreen(),
                     ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 4),
-            InkWell(
-              key: const ValueKey('home_profile_avatar_btn'),
-              customBorder: const CircleBorder(),
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const UserProfileScreen(),
+                  );
+                },
+                child: Container(
+                  width: isUltraCompact ? 38 : 42,
+                  height: isUltraCompact ? 38 : 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.navy,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.gold,
+                      width: 1.8,
+                    ),
                   ),
-                );
-              },
-              child: Container(
-                width: isUltraCompact ? 38 : 42,
-                height: isUltraCompact ? 38 : 42,
-                decoration: BoxDecoration(
-                  color: AppColors.cobaltSurface,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.cobalt.withValues(alpha: 0.35),
-                    width: 1.8,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    auth.user.fullName.isNotEmpty ? auth.user.fullName[0] : 'ع',
-                    style: AppTypography.title(color: AppColors.navy),
+                  child: Center(
+                    child: Text(
+                      auth.user.fullName.isNotEmpty
+                          ? auth.user.fullName[0]
+                          : 'م',
+                      style: AppTypography.title(color: Colors.white)
+                          .copyWith(fontSize: 16),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildHeroSearchCard({
+  /// First Signature Hero Module:
+  /// - Headline ("إلى أين مشوارك أو طلبك اليوم؟")
+  /// - 3 Prominent Interactive Service Icon Tiles right at the top
+  /// - Full-Size Uncropped 16:9 Editorial Photograph (unique per mode, never repeated below!)
+  /// - Clean Route Picker (`من أين` <-> `إلى أين`) + Navy/Gold CTA Button
+  Widget _buildSignatureHeroSection({
     required BuildContext context,
     required RidesProvider rides,
     required BoardProvider board,
@@ -609,437 +655,545 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool isWide,
     required bool isUltraCompact,
   }) {
-    final heroAsset = _selectedHeroMode == 0
-        ? 'assets/images/service_ride.jpg'
-        : (_selectedHeroMode == 1
-            ? 'assets/images/service_parcel.jpg'
-            : 'assets/images/mvp_hero_lusail_supply.jpg');
+    // Dedicated 16:9 Hero visuals — ZERO overlap with the 3 service cards below!
+    final heroMeta = switch (_selectedHeroMode) {
+      0 => (
+          asset: 'assets/images/home_hero_mobility.jpg',
+          caption: isAr
+              ? 'مقاعد مريحة مع مسافرين موثّقين على نفس مسارك'
+              : 'Comfortable shared seats with verified travelers on your route',
+          cta: isAr ? 'ابحث عن الرحلات والمقاعد' : 'Search Available Trips',
+          ctaIcon: Icons.directions_car_filled_rounded,
+          tag: isAr ? 'سفر مشترك' : 'Shared Mobility',
+        ),
+      1 => (
+          asset: 'assets/images/hero_banner.jpg',
+          caption: isAr
+              ? 'أرسل طردك أو مستنداتك مع مسافر متجه لنفس الوجهة بكود OTP'
+              : 'Send parcels & documents with a verified traveler using dual OTP',
+          cta: isAr ? 'ابدأ إرسال طرد على الطريق' : 'Send Parcel on Route',
+          ctaIcon: Icons.inventory_2_rounded,
+          tag: isAr ? 'طرود موثّقة' : 'Route Parcels',
+        ),
+      _ => (
+          asset: 'assets/images/mvp_hero_lusail_supply.jpg',
+          caption: isAr
+              ? 'شراء وتوريد احتياجاتك ومهامك بفاتورة معتمدة وتسليم سريع'
+              : 'Verified shopping, site supply & errands with receipt protection',
+          cta: isAr ? 'ابدأ طلب توريد ومهام' : 'Start Supply Request',
+          ctaIcon: Icons.add_task_rounded,
+          tag: isAr ? 'توريد ومهام' : 'Smart Supply',
+        ),
+    };
 
-    final modes = <({int index, String label, IconData icon, Color accent})>[
+    final modes = <({
+      int index,
+      Key key,
+      MashwarServicePillar pillar,
+      String title,
+      String subtitle,
+      Color activeBorder,
+      Color activeSurface,
+    })>[
       (
         index: 0,
-        label: isAr ? 'رحلة ومقاعد' : 'Shared Trips',
-        icon: Icons.directions_car_outlined,
-        accent: AppColors.cobalt,
+        key: const ValueKey('home_hero_mode_trips'),
+        pillar: MashwarServicePillar.sharedTrips,
+        title: isAr ? 'رحلة ومقاعد' : 'Shared Trips',
+        subtitle: isAr ? 'مقاعد شاغرة' : 'Empty seats',
+        activeBorder: AppColors.navy,
+        activeSurface: AppColors.navySurface,
       ),
       (
         index: 1,
-        label: isAr ? 'إرسال طرد' : 'Send Parcel',
-        icon: Icons.inventory_2_outlined,
-        accent: AppColors.indigo,
+        key: const ValueKey('home_hero_mode_parcels'),
+        pillar: MashwarServicePillar.routeParcels,
+        title: isAr ? 'إرسال طرد' : 'Send Parcel',
+        subtitle: isAr ? 'على الطريق' : 'On the way',
+        activeBorder: AppColors.gold,
+        activeSurface: AppColors.goldSurface,
       ),
       (
         index: 2,
-        label: isAr ? 'توريد ومهام' : 'Supply & Tasks',
-        icon: Icons.fact_check_outlined,
-        accent: AppColors.emerald,
+        key: const ValueKey('home_hero_mode_supply'),
+        pillar: MashwarServicePillar.smartSupply,
+        title: isAr ? 'توريد ومهام' : 'Supply & Tasks',
+        subtitle: isAr ? 'شراء وتوصيل' : 'Smart supply',
+        activeBorder: AppColors.teal,
+        activeSurface: AppColors.tealSurface,
       ),
     ];
 
-    final heroButtonLabel = _selectedHeroMode == 0
-        ? (isAr ? 'ابحث عن الرحلات والمقاعد' : 'Search Available Trips')
-        : (_selectedHeroMode == 1
-            ? (isAr ? 'ابدأ إرسال طرد على الطريق' : 'Send Parcel on Route')
-            : (isAr ? 'ابدأ طلب توريد ومهام' : 'Start Supply Request'));
-
     final fromDisplay = rides.fromCity.trim().isNotEmpty
         ? context.trCity(rides.fromCity)
-        : (isAr ? 'من أين؟ (اختر مدينة الانطلاق)' : 'From where? (Origin)');
+        : (isAr ? 'من أين؟ (نقطة الانطلاق)' : 'From where? (Origin)');
     final toDisplay = rides.toCity.trim().isNotEmpty
         ? context.trCity(rides.toCity)
-        : (isAr ? 'إلى أين؟ (اختر الوجهة)' : 'Where to? (Destination)');
+        : (isAr ? 'إلى أين؟ (الوجهة)' : 'Where to? (Destination)');
+
+    // Full-Size Uncropped 16:9 Hero Visual Showcase (zero dark veil covering the photo)
+    final heroVisual = ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.navy,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.warmBorder),
+        ),
+        child: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 260),
+            child: Stack(
+              key: ValueKey(heroMeta.asset),
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  heroMeta.asset,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  gaplessPlayback: true,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.navy,
+                    child: const Center(
+                      child: Icon(
+                        Icons.route_rounded,
+                        color: AppColors.gold,
+                        size: 44,
+                      ),
+                    ),
+                  ),
+                ),
+                // Light bottom-only edge fade ONLY under the compact caption pill so 90% of photo stays crystal clear
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 62,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          AppColors.navy.withValues(alpha: 0.72),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                PositionedDirectional(
+                  top: 12,
+                  start: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.navy.withValues(alpha: 0.88),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.gold.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: AppColors.gold,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          heroMeta.tag,
+                          style: AppTypography.label(color: Colors.white)
+                              .copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                PositionedDirectional(
+                  bottom: 10,
+                  start: 12,
+                  end: 12,
+                  child: Text(
+                    heroMeta.caption,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.label(color: Colors.white).copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    // 3 Prominent Interactive Icon Tiles right at the top ("أيقونة مشوارك أو طلبك")
+    final threeIconSelector = Row(
+      key: const ValueKey('home_hero_three_icons_bar'),
+      children: [
+        for (var i = 0; i < modes.length; i++) ...[
+          if (i > 0) SizedBox(width: isUltraCompact ? 6 : 10),
+          Expanded(
+            child: MashwarPressable(
+              borderRadius: BorderRadius.circular(18),
+              onTap: () => setState(() => _selectedHeroMode = modes[i].index),
+              child: AnimatedContainer(
+                key: modes[i].key,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isUltraCompact ? 6 : 10,
+                  vertical: isUltraCompact ? 10 : 12,
+                ),
+                decoration: BoxDecoration(
+                  color: _selectedHeroMode == modes[i].index
+                      ? modes[i].activeSurface
+                      : AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: _selectedHeroMode == modes[i].index
+                        ? modes[i].activeBorder
+                        : AppColors.warmBorder,
+                    width: _selectedHeroMode == modes[i].index ? 1.8 : 1.0,
+                  ),
+                  boxShadow: _selectedHeroMode == modes[i].index
+                      ? [
+                          BoxShadow(
+                            color: AppColors.navy.withValues(alpha: 0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    MashwarHeroServiceMedallion(
+                      pillar: modes[i].pillar,
+                      isSelected: _selectedHeroMode == modes[i].index,
+                      size: isUltraCompact ? 40 : 46,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      modes[i].title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: AppTypography.label(color: AppColors.navy).copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: isUltraCompact ? 10.5 : 12.5,
+                      ),
+                    ),
+                    if (!isUltraCompact) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        modes[i].subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodySmall(
+                          color: AppColors.textSecondary,
+                        ).copyWith(fontSize: 10.5),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+
+    // Clean Route Search Bar (`من أين` <-> `إلى أين` + Instant Action Button)
+    final routeControls = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Stack(
+          alignment: AlignmentDirectional.centerEnd,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildRouteFieldTile(
+                  key: const ValueKey('home_hero_from_field'),
+                  label: isAr ? 'من أين' : 'Origin',
+                  value: fromDisplay,
+                  hasValue: rides.fromCity.trim().isNotEmpty,
+                  dotColor: AppColors.teal,
+                  onTap: () => _pickHeroCity(
+                    context: context,
+                    rides: rides,
+                    board: board,
+                    isFrom: true,
+                    isAr: isAr,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildRouteFieldTile(
+                  key: const ValueKey('home_hero_to_field'),
+                  label: isAr ? 'إلى أين' : 'Destination',
+                  value: toDisplay,
+                  hasValue: rides.toCity.trim().isNotEmpty,
+                  dotColor: AppColors.gold,
+                  onTap: () => _pickHeroCity(
+                    context: context,
+                    rides: rides,
+                    board: board,
+                    isFrom: false,
+                    isAr: isAr,
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 12),
+              child: _buildSwapButton(rides, board, isAr),
+            ),
+          ],
+        ),
+        if (rides.hasCorridorQuery)
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TextButton.icon(
+              key: const ValueKey('home_hero_clear_route_btn'),
+              onPressed: () {
+                rides.clearRoute();
+                board.clearRouteFilter();
+              },
+              icon: const Icon(
+                Icons.close_rounded,
+                size: 15,
+                color: AppColors.navy,
+              ),
+              label: Text(
+                isAr ? 'مسح المسار' : 'Clear route',
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+          )
+        else
+          const SizedBox(height: 12),
+        SizedBox(
+          height: 50,
+          child: ElevatedButton.icon(
+            key: const ValueKey('home_hero_action_btn'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _selectedHeroMode == 1
+                  ? AppColors.gold
+                  : (_selectedHeroMode == 2 ? AppColors.teal : AppColors.navy),
+              foregroundColor:
+                  _selectedHeroMode == 1 ? AppColors.navy : Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: () => _triggerHeroAction(
+              context: context,
+              rides: rides,
+              board: board,
+              activeSite: activeSite,
+            ),
+            icon: Icon(
+              heroMeta.ctaIcon,
+              size: 19,
+              color: _selectedHeroMode == 1 ? AppColors.navy : AppColors.gold,
+            ),
+            label: Text(
+              heroMeta.cta,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                fontFamily: 'Cairo',
+                color: _selectedHeroMode == 1 ? AppColors.navy : Colors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final heroTopMetaBar = Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.sand,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.warmBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const MashwarLivePulseDot(
+                color: AppColors.teal,
+                size: 7.5,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  isAr
+                      ? '$activeTripsCount رحلة متاحة · $activeSupplyCount طلب نشط'
+                      : '$activeTripsCount Trips · $activeSupplyCount Open Requests',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(color: AppColors.navy).copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        InkWell(
+          key: const ValueKey('home_saved_worksite_chip'),
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _showSavedWorksitePicker(context, worksite, isAr),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.goldSurface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: AppColors.gold.withValues(alpha: 0.45),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.bookmark_rounded,
+                  size: 15,
+                  color: AppColors.goldDeep,
+                ),
+                const SizedBox(width: 4),
+                Flexible(
+                  child: Text(
+                    activeSite != null
+                        ? activeSite.label
+                        : (isAr ? 'المواقع المحفوظة' : 'Saved Locations'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.label(color: AppColors.navy)
+                        .copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: AppColors.navy,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final heroHeading = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isAr
+              ? 'إلى أين مشوارك أو طلبك اليوم؟'
+              : 'Where does your journey take you today?',
+          style: AppTypography.largeTitle(color: AppColors.navy).copyWith(
+            fontSize: isUltraCompact ? 20 : (isWide ? 27 : 23),
+            height: 1.25,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          isAr
+              ? 'اختر خدمتك من الأيقونات الثلاث: شارك مقعداً في رحلة، أرسل طرداً مع مسافر، أو اطلب توريد ومهام موثّقة.'
+              : 'Choose from 3 integrated services: share seats on a route, send parcels with travelers, or request verified supply.',
+          style: AppTypography.bodySecondary().copyWith(
+            fontSize: isUltraCompact ? 12.5 : 13.5,
+            height: 1.45,
+          ),
+        ),
+      ],
+    );
 
     return Container(
+      padding: EdgeInsets.all(isUltraCompact ? 14 : (isWide ? 24 : 18)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.slateBorder),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppColors.warmBorder),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.07),
+            color: AppColors.navy.withValues(alpha: 0.06),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Top Vivid Photography Header with Clean International Navy/Cobalt Scrim
-          Stack(
-            children: [
-              Positioned.fill(
-                child: MashwarAssetArt(
-                  assetPath: heroAsset,
-                  fit: BoxFit.cover,
-                  fallbackIcon: Icons.route_rounded,
-                  fallbackBg: AppColors.navy,
-                  fallbackColor: AppColors.cobalt,
-                ),
-              ),
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: AlignmentDirectional.topStart,
-                      end: AlignmentDirectional.bottomEnd,
-                      colors: [
-                        const Color(0xFF0F172A).withValues(alpha: 0.93),
-                        AppColors.navy.withValues(alpha: 0.86),
-                        const Color(0xFF1E3A8A).withValues(alpha: 0.82),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.all(isUltraCompact ? 16 : 22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.13),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.24),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const MashwarLivePulseDot(
-                                color: AppColors.emerald,
-                                size: 7.5,
-                              ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  isAr
-                                      ? '$activeTripsCount رحلة متاحة · $activeSupplyCount طلب نشط'
-                                      : '$activeTripsCount Trips · $activeSupplyCount Open Requests',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style:
-                                      AppTypography.label(color: Colors.white)
-                                          .copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          key: const ValueKey('home_saved_worksite_chip'),
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () =>
-                              _showSavedWorksitePicker(context, worksite, isAr),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.bookmark_border_rounded,
-                                  size: 15,
-                                  color: AppColors.cobalt,
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    activeSite != null
-                                        ? activeSite.label
-                                        : (isAr
-                                            ? 'المواقع المحفوظة'
-                                            : 'Saved Locations'),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.label(
-                                      color: AppColors.navy,
-                                    ).copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                ),
-                                const SizedBox(width: 2),
-                                const Icon(
-                                  Icons.keyboard_arrow_down_rounded,
-                                  size: 16,
-                                  color: AppColors.cobalt,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      isAr
-                          ? 'إلى أين مشوارك أو طلبك اليوم؟'
-                          : 'Where does your journey take you today?',
-                      style: AppTypography.largeTitle(
-                        color: Colors.white,
-                      ).copyWith(
-                        fontSize: isUltraCompact ? 20 : 25,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      isAr
-                          ? 'تنقّل بمقاعد تشاركية مريحة، أرسل طردك مع مسافر في نفس الطريق، أو اطلب توريد احتياجاتك بفاتورة موثّقة.'
-                          : 'Share seats on intercity & daily routes, send parcels with verified travelers, or coordinate smart supply.',
-                      style: AppTypography.bodySecondary(
-                        color: Colors.white.withValues(alpha: 0.88),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Interactive 3-Service Mode Pills
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: modes.map((mode) {
-                        final selected = _selectedHeroMode == mode.index;
-                        final modeKey = mode.index == 0
-                            ? const ValueKey('home_hero_mode_trips')
-                            : (mode.index == 1
-                                ? const ValueKey('home_hero_mode_parcels')
-                                : const ValueKey('home_hero_mode_supply'));
-                        return InkWell(
-                          key: modeKey,
-                          borderRadius: BorderRadius.circular(14),
-                          onTap: () =>
-                              setState(() => _selectedHeroMode = mode.index),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? Colors.white
-                                  : Colors.white.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: selected
-                                    ? Colors.white
-                                    : Colors.white.withValues(alpha: 0.26),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  mode.icon,
-                                  size: 16,
-                                  color: selected ? mode.accent : Colors.white,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  mode.label,
-                                  style: AppTypography.label(
-                                    color: selected
-                                        ? AppColors.navy
-                                        : Colors.white,
-                                  ).copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          // Route Search Bar (`من أين -> إلى أين` + Swap + Instant Action Button)
-          Padding(
-            padding: EdgeInsets.all(isUltraCompact ? 14 : 18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          heroTopMetaBar,
+          const SizedBox(height: 16),
+          if (isWide)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (isWide)
-                  Row(
+                Expanded(
+                  flex: 11,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: _buildRouteFieldTile(
-                          key: const ValueKey('home_hero_from_field'),
-                          label: isAr ? 'من أين' : 'Origin',
-                          value: fromDisplay,
-                          hasValue: rides.fromCity.trim().isNotEmpty,
-                          dotColor: AppColors.emerald,
-                          onTap: () => _pickHeroCity(
-                            context: context,
-                            rides: rides,
-                            board: board,
-                            isFrom: true,
-                            isAr: isAr,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildSwapButton(rides, board, isAr),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildRouteFieldTile(
-                          key: const ValueKey('home_hero_to_field'),
-                          label: isAr ? 'إلى أين' : 'Destination',
-                          value: toDisplay,
-                          hasValue: rides.toCity.trim().isNotEmpty,
-                          dotColor: AppColors.cobalt,
-                          onTap: () => _pickHeroCity(
-                            context: context,
-                            rides: rides,
-                            board: board,
-                            isFrom: false,
-                            isAr: isAr,
-                          ),
-                        ),
-                      ),
-                      if (rides.hasCorridorQuery) ...[
-                        const SizedBox(width: 6),
-                        IconButton(
-                          key: const ValueKey('home_hero_clear_route_btn'),
-                          tooltip: isAr ? 'مسح المسار' : 'Clear route',
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: AppColors.textSecondary,
-                          ),
-                          onPressed: () {
-                            rides.clearRoute();
-                            board.clearRouteFilter();
-                          },
-                        ),
-                      ],
-                      const SizedBox(width: 12),
-                      SizedBox(
-                        width: 240,
-                        child: MashwarButton(
-                          key: const ValueKey('home_hero_action_btn'),
-                          text: heroButtonLabel,
-                          icon: const Icon(
-                            Icons.arrow_forward_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          onPressed: () => _triggerHeroAction(
-                            context: context,
-                            rides: rides,
-                            board: board,
-                            activeSite: activeSite,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                else ...[
-                  Stack(
-                    alignment: AlignmentDirectional.centerEnd,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildRouteFieldTile(
-                            key: const ValueKey('home_hero_from_field'),
-                            label: isAr ? 'من أين' : 'Origin',
-                            value: fromDisplay,
-                            hasValue: rides.fromCity.trim().isNotEmpty,
-                            dotColor: AppColors.emerald,
-                            onTap: () => _pickHeroCity(
-                              context: context,
-                              rides: rides,
-                              board: board,
-                              isFrom: true,
-                              isAr: isAr,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildRouteFieldTile(
-                            key: const ValueKey('home_hero_to_field'),
-                            label: isAr ? 'إلى أين' : 'Destination',
-                            value: toDisplay,
-                            hasValue: rides.toCity.trim().isNotEmpty,
-                            dotColor: AppColors.cobalt,
-                            onTap: () => _pickHeroCity(
-                              context: context,
-                              rides: rides,
-                              board: board,
-                              isFrom: false,
-                              isAr: isAr,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(end: 12),
-                        child: _buildSwapButton(rides, board, isAr),
-                      ),
+                      heroHeading,
+                      const SizedBox(height: 16),
+                      threeIconSelector,
+                      const SizedBox(height: 16),
+                      routeControls,
                     ],
                   ),
-                  if (rides.hasCorridorQuery)
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: TextButton.icon(
-                        key: const ValueKey('home_hero_clear_route_btn'),
-                        onPressed: () {
-                          rides.clearRoute();
-                          board.clearRouteFilter();
-                        },
-                        icon: const Icon(Icons.close_rounded,
-                            size: 15, color: AppColors.cobalt),
-                        label: Text(
-                          isAr ? 'مسح المسار' : 'Clear route',
-                          style: AppTypography.label(color: AppColors.cobalt)
-                              .copyWith(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    )
-                  else
-                    const SizedBox(height: 12),
-                  MashwarButton(
-                    key: const ValueKey('home_hero_action_btn'),
-                    text: heroButtonLabel,
-                    icon: const Icon(
-                      Icons.search_rounded,
-                      color: Colors.white,
-                      size: 19,
-                    ),
-                    onPressed: () => _triggerHeroAction(
-                      context: context,
-                      rides: rides,
-                      board: board,
-                      activeSite: activeSite,
-                    ),
-                  ),
-                ],
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  flex: 10,
+                  child: heroVisual,
+                ),
               ],
-            ),
-          ),
+            )
+          else ...[
+            heroHeading,
+            const SizedBox(height: 16),
+            threeIconSelector,
+            const SizedBox(height: 16),
+            heroVisual,
+            const SizedBox(height: 16),
+            routeControls,
+          ],
         ],
       ),
     );
@@ -1054,20 +1208,20 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: AppColors.slateBg,
+      color: AppColors.sand,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         key: key,
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: hasValue
-                  ? dotColor.withValues(alpha: 0.45)
-                  : AppColors.slateBorder,
+                  ? dotColor.withValues(alpha: 0.65)
+                  : AppColors.warmBorder,
             ),
           ),
           child: Row(
@@ -1123,12 +1277,12 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isAr,
   ) {
     return Material(
-      color: Colors.white,
+      color: AppColors.navy,
       shape: const CircleBorder(
-        side: BorderSide(color: AppColors.slateBorder),
+        side: BorderSide(color: AppColors.gold, width: 1.4),
       ),
-      elevation: 2,
-      shadowColor: AppColors.navy.withValues(alpha: 0.12),
+      elevation: 3,
+      shadowColor: AppColors.navy.withValues(alpha: 0.18),
       child: InkWell(
         key: const ValueKey('home_route_swap_btn'),
         customBorder: const CircleBorder(),
@@ -1146,7 +1300,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: const Icon(
               Icons.swap_vert_rounded,
               size: 19,
-              color: AppColors.cobalt,
+              color: AppColors.gold,
             ),
           ),
         ),
@@ -1154,6 +1308,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// 3 Core Services Editorial Showcase:
+  /// Each service has a 100% UNIQUE, FULL-SIZE 16:9 visual — NEVER cropped into a thin strip
+  /// and NEVER repeated from the hero above!
   Widget _buildThreeServicesShowcase({
     required BuildContext context,
     required SavedWorksite? activeSite,
@@ -1161,14 +1318,21 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool isDesktopThreeCol,
   }) {
     final cards = <Widget>[
-      // Pillar 1: Shared Trips & Empty Seats
+      // Pillar 1: Shared Trips & Empty Seats (Unique 16:9 Lifestyle Photo)
       _buildServicePillarCard(
         pillar: MashwarServicePillar.sharedTrips,
-        imageAsset: 'assets/images/service_ride.jpg',
-        accent: AppColors.cobalt,
+        stepTag: isAr ? '01 · سفر ومقاعد' : '01 · Shared Trips',
+        imageAsset: 'assets/images/pillar_shared_trips.jpg',
+        useStudioContainFrame: false,
+        primaryBg: AppColors.navy,
+        primaryFg: Colors.white,
+        primaryIconColor: AppColors.gold,
+        secondaryBg: AppColors.sand,
+        secondaryBorder: AppColors.navy.withValues(alpha: 0.28),
+        secondaryAccent: AppColors.navy,
         title: isAr ? 'سفر ومقاعد تشاركية' : 'Shared Trips & Empty Seats',
         benefit: isAr
-            ? 'شارك مقاعد سيارتك الشاغرة لتغطية تكاليف الطريق أو احجز مقعداً مع مسافر موثّق.'
+            ? 'انشر مقاعد سيارتك الشاغرة لتقاسم تكاليف الطريق أو احجز مقعداً مريحاً مع مسافر موثّق.'
             : 'Share empty seats along your route or book a comfortable ride with verified travelers.',
         primaryKey: const ValueKey('home_publish_trip_cta'),
         primaryLabel: isAr
@@ -1194,14 +1358,21 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
 
-      // Pillar 2: Parcels & Items on the Way
+      // Pillar 2: Parcels & Items on the Way (Unique Full-Size Studio Product Frame — 0% Cropping!)
       _buildServicePillarCard(
         pillar: MashwarServicePillar.routeParcels,
+        stepTag: isAr ? '02 · طرود مع مسافر' : '02 · Route Parcels',
         imageAsset: 'assets/images/service_parcel.jpg',
-        accent: AppColors.indigo,
+        useStudioContainFrame: true,
+        primaryBg: AppColors.gold,
+        primaryFg: AppColors.navy,
+        primaryIconColor: AppColors.navy,
+        secondaryBg: AppColors.goldSurface,
+        secondaryBorder: AppColors.gold.withValues(alpha: 0.55),
+        secondaryAccent: AppColors.goldDeep,
         title: isAr ? 'طرود وأغراض مع مسافر' : 'Parcels & Items on the Way',
         benefit: isAr
-            ? 'أرسل الطرود والمستندات بسرعة مع مسافر متجه لنفس الوجهة بتأكيد كود OTP.'
+            ? 'أرسل الطرود والمستندات والأغراض الشخصية بسرعة مع مسافر في نفس الوجهة بتأكيد كود OTP.'
             : 'Send documents and packages faster with travelers already heading that way.',
         primaryKey: const ValueKey('home_send_parcel_cta'),
         primaryLabel: isAr ? 'أرسل طرداً مع مسافر' : 'Send Parcel with Traveler',
@@ -1227,11 +1398,18 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
 
-      // Pillar 3: Smart Shopping, Supply & Tasks
+      // Pillar 3: Smart Shopping, Supply & Tasks (Unique 16:9 Editorial Studio Photo)
       _buildServicePillarCard(
         pillar: MashwarServicePillar.smartSupply,
-        imageAsset: 'assets/images/cat_tools_ppe.jpg',
-        accent: AppColors.emerald,
+        stepTag: isAr ? '03 · توريد ومهام' : '03 · Smart Supply',
+        imageAsset: 'assets/images/pillar_smart_supply.jpg',
+        useStudioContainFrame: false,
+        primaryBg: AppColors.teal,
+        primaryFg: Colors.white,
+        primaryIconColor: Colors.white,
+        secondaryBg: AppColors.tealSurface,
+        secondaryBorder: AppColors.teal.withValues(alpha: 0.40),
+        secondaryAccent: AppColors.teal,
         title: isAr ? 'شراء وتوريد ومهام خاصة' : 'Smart Shopping & Supply',
         benefit: isAr
             ? 'اطلب شراء وتوريد المواد والمعدات لموقعك بفاتورة موثّقة ورمز تسليم من 6 خانات.'
@@ -1274,33 +1452,36 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Text(
               isAr ? 'خدمات مشوار الأساسية' : 'Core MASHWAR Services',
-              style: AppTypography.title().copyWith(fontSize: 18),
+              style: AppTypography.title().copyWith(fontSize: 19),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.cobaltSurface,
+                color: AppColors.goldSurface,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.gold.withValues(alpha: 0.45),
+                ),
               ),
               child: Text(
                 isAr ? 'ثنائي الاتجاه: اطلب أو نفّذ' : 'Request or Earn on Route',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.label(color: AppColors.cobalt)
+                style: AppTypography.label(color: AppColors.navy)
                     .copyWith(fontWeight: FontWeight.w800),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         if (isDesktopThreeCol)
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: cards[0]),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               Expanded(child: cards[1]),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               Expanded(child: cards[2]),
             ],
           )
@@ -1309,9 +1490,9 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               cards[0],
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               cards[1],
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               cards[2],
             ],
           ),
@@ -1321,8 +1502,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildServicePillarCard({
     required MashwarServicePillar pillar,
+    required String stepTag,
     required String imageAsset,
-    required Color accent,
+    required bool useStudioContainFrame,
+    required Color primaryBg,
+    required Color primaryFg,
+    required Color primaryIconColor,
+    required Color secondaryBg,
+    required Color secondaryBorder,
+    required Color secondaryAccent,
     required String title,
     required String benefit,
     required Key primaryKey,
@@ -1335,119 +1523,181 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onSecondary,
   }) {
     return MashwarHoverCard(
-      borderRadius: BorderRadius.circular(20),
-      borderColor: AppColors.slateBorder,
-      hoverBorderColor: accent,
+      borderRadius: BorderRadius.circular(22),
+      borderColor: AppColors.warmBorder,
+      hoverBorderColor: AppColors.gold,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            height: 112,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                MashwarAssetArt(
-                  assetPath: imageAsset,
-                  fit: BoxFit.cover,
-                  fallbackIcon: primaryIcon,
-                  fallbackBg: AppColors.navy,
-                  fallbackColor: accent,
-                ),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.navy.withValues(alpha: 0.25),
-                        AppColors.navy.withValues(alpha: 0.78),
-                      ],
+          // Full-Size 16:9 Uncropped Media Area — ZERO dark mud covering the subject!
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(21)),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (useStudioContainFrame)
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        border: Border(
+                          bottom: BorderSide(color: AppColors.warmBorder),
+                        ),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                      child: Image.asset(
+                        imageAsset,
+                        fit: BoxFit.contain,
+                        alignment: Alignment.center,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, __, ___) => Center(
+                          child: Icon(
+                            primaryIcon,
+                            size: 46,
+                            color: AppColors.goldDeep,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Image.asset(
+                      imageAsset,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                      gaplessPlayback: true,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: AppColors.navy,
+                        child: Center(
+                          child: Icon(
+                            primaryIcon,
+                            size: 46,
+                            color: AppColors.gold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Crisp Top-Start Pillar Pill (never obscures the main subject!)
+                  PositionedDirectional(
+                    top: 10,
+                    start: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.94),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.warmBorder),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.navy.withValues(alpha: 0.10),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        stepTag,
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                PositionedDirectional(
-                  top: 12,
-                  start: 12,
-                  child: MashwarServicePillarIcon(
-                    pillar: pillar,
-                    size: 40,
-                  ),
-                ),
-                PositionedDirectional(
-                  bottom: 10,
-                  start: 14,
-                  end: 14,
-                  child: Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppTypography.title(color: Colors.white).copyWith(
-                      fontSize: 16.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+
+          // Clean Pure-White Editorial Body Below Full-Size Image
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 15),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Row(
+                  children: [
+                    MashwarServicePillarIcon(
+                      pillar: pillar,
+                      size: 40,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.title(color: AppColors.navy)
+                            .copyWith(
+                          fontSize: 16.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 Text(
                   benefit,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.bodySecondary().copyWith(
                     fontSize: 12.5,
-                    height: 1.35,
+                    height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 SizedBox(
-                  height: 42,
+                  height: 44,
                   child: ElevatedButton.icon(
                     key: primaryKey,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: accent,
-                      foregroundColor: Colors.white,
+                      backgroundColor: primaryBg,
+                      foregroundColor: primaryFg,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: onPrimary,
-                    icon: Icon(primaryIcon, size: 17, color: Colors.white),
+                    icon: Icon(primaryIcon, size: 17, color: primaryIconColor),
                     label: Text(
                       primaryLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
                         fontSize: 12.5,
                         fontFamily: 'Cairo',
+                        color: primaryFg,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: 40,
+                  height: 42,
                   child: OutlinedButton.icon(
                     key: secondaryKey,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.navy,
-                      backgroundColor: AppColors.slateBg,
-                      side: BorderSide(color: accent.withValues(alpha: 0.32)),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      backgroundColor: secondaryBg,
+                      side: BorderSide(color: secondaryBorder),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: onSecondary,
-                    icon: Icon(secondaryIcon, size: 16, color: accent),
+                    icon: Icon(secondaryIcon, size: 16, color: secondaryAccent),
                     label: Text(
                       secondaryLabel,
                       maxLines: 1,
@@ -1475,6 +1725,215 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool isAr,
     required bool isWide,
   }) {
+    Widget buildTripCard(RideModel ride) {
+      return MashwarHoverCard(
+        key: ValueKey('home_live_trip_${ride.id}'),
+        borderRadius: BorderRadius.circular(18),
+        borderColor: AppColors.warmBorder,
+        hoverBorderColor: AppColors.gold,
+        padding: const EdgeInsets.all(13),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RideDetailsScreen(ride: ride),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 15,
+                  backgroundColor: AppColors.navy,
+                  child: Text(
+                    ride.driverName.isNotEmpty ? ride.driverName[0] : 'M',
+                    style: AppTypography.label(color: AppColors.gold)
+                        .copyWith(fontWeight: FontWeight.w900),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${ride.driverName} · ${ride.driverRating.toStringAsFixed(1)} ★',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.body(color: AppColors.navy).copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                    ),
+                  ),
+                ),
+                if (ride.isVerified) ...[
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.verified_rounded,
+                    size: 16,
+                    color: AppColors.teal,
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.navySurface,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    isAr
+                        ? '${ride.remainingSeats} مقاعد شاغرة'
+                        : '${ride.remainingSeats} empty seats',
+                    style: AppTypography.label(color: AppColors.navy)
+                        .copyWith(fontWeight: FontWeight.w800),
+                  ),
+                ),
+                if (ride.acceptsParcels)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.tealSurface,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      isAr ? 'يقبل طرود' : 'Accepts Parcels',
+                      style: AppTypography.label(color: AppColors.teal)
+                          .copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            MashwarRouteTimeline(
+              from: context.trCity(ride.fromCity),
+              to: context.trCity(ride.toCity),
+              trailingTop: '${ride.departureDate} · ${ride.departureTime}',
+              compact: true,
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.sand,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.warmBorder),
+                  ),
+                  child: Text(
+                    isAr
+                        ? '${ride.pricePerSeat} ر.ق / مقعد${ride.acceptsParcels ? " · طرد ${ride.parcelPrice} ر.ق" : ""}'
+                        : '${ride.pricePerSeat} QAR / seat${ride.acceptsParcels ? " · Parcel ${ride.parcelPrice} QAR" : ""}',
+                    style: AppTypography.body(color: AppColors.navy).copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12.5,
+                    ),
+                  ),
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    ElevatedButton(
+                      key: ValueKey('home_book_trip_${ride.id}'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.navy,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 13,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => RideDetailsScreen(ride: ride),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        isAr ? 'حجز مقعد' : 'Book Seat',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'Cairo',
+                        ),
+                      ),
+                    ),
+                    if (ride.acceptsParcels)
+                      OutlinedButton.icon(
+                        key: ValueKey('home_trip_parcel_${ride.id}'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.navy,
+                          backgroundColor: AppColors.goldSurface,
+                          side: BorderSide(
+                            color: AppColors.gold.withValues(alpha: 0.65),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => SendParcelScreen(ride: ride),
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.inventory_2_outlined,
+                          size: 14,
+                          color: AppColors.goldDeep,
+                        ),
+                        label: Text(
+                          isAr ? 'أرسل طرداً' : 'Send Parcel',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Cairo',
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1486,7 +1945,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isAr
                     ? 'مسافرون متاحون الآن (مقاعد ومساحة طرود)'
                     : 'Available Travelers (Seats & Parcel Space)',
-                style: AppTypography.title().copyWith(fontSize: 17.5),
+                style: AppTypography.title().copyWith(fontSize: 18),
               ),
             ),
             TextButton(
@@ -1500,13 +1959,13 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: Text(
                 isAr ? 'كل الرحلات' : 'See All Trips',
-                style: AppTypography.label(color: AppColors.cobalt)
+                style: AppTypography.label(color: AppColors.teal)
                     .copyWith(fontWeight: FontWeight.w800),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         if (isLoading && topTrips.isEmpty)
           const MashwarShimmerBox(height: 110, borderRadius: 16)
         else if (topTrips.isEmpty)
@@ -1542,206 +2001,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           )
         else
-          ...topTrips.map((ride) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: MashwarHoverCard(
-                key: ValueKey('home_live_trip_${ride.id}'),
-                borderRadius: BorderRadius.circular(18),
-                borderColor: AppColors.slateBorder,
-                hoverBorderColor: AppColors.cobalt,
-                padding: const EdgeInsets.all(14),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => RideDetailsScreen(ride: ride),
-                    ),
-                  );
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircleAvatar(
-                              radius: 15,
-                              backgroundColor: AppColors.cobaltSurface,
-                              child: Text(
-                                ride.driverName.isNotEmpty
-                                    ? ride.driverName[0]
-                                    : 'M',
-                                style: AppTypography.label(
-                                        color: AppColors.cobalt)
-                                    .copyWith(fontWeight: FontWeight.w900),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                '${ride.driverName} · ${ride.driverRating.toStringAsFixed(1)} ★',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: AppTypography.body(color: AppColors.navy)
-                                    .copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13.5,
-                                ),
-                              ),
-                            ),
-                            if (ride.isVerified) ...[
-                              const SizedBox(width: 4),
-                              const Icon(Icons.verified_rounded,
-                                  size: 15, color: AppColors.emerald),
-                            ],
-                          ],
-                        ),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.cobaltSurface,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                isAr
-                                    ? '${ride.remainingSeats} مقاعد شاغرة'
-                                    : '${ride.remainingSeats} empty seats',
-                                style:
-                                    AppTypography.label(color: AppColors.cobalt)
-                                        .copyWith(fontWeight: FontWeight.w800),
-                              ),
-                            ),
-                            if (ride.acceptsParcels)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: AppColors.emeraldSurface,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  isAr ? 'يقبل طرود' : 'Accepts Parcels',
-                                  style: AppTypography.label(
-                                          color: AppColors.emerald)
-                                      .copyWith(fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    MashwarRouteTimeline(
-                      from: context.trCity(ride.fromCity),
-                      to: context.trCity(ride.toCity),
-                      trailingTop: '${ride.departureDate} · ${ride.departureTime}',
-                      compact: true,
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        Text(
-                          isAr
-                              ? '${ride.pricePerSeat} ر.ق / مقعد${ride.acceptsParcels ? " · طرد ${ride.parcelPrice} ر.ق" : ""}'
-                              : '${ride.pricePerSeat} QAR / seat${ride.acceptsParcels ? " · Parcel ${ride.parcelPrice} QAR" : ""}',
-                          style: AppTypography.body(color: AppColors.navy)
-                              .copyWith(
-                                  fontWeight: FontWeight.w800, fontSize: 13),
-                        ),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          children: [
-                            ElevatedButton(
-                              key: ValueKey('home_book_trip_${ride.id}'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.cobalt,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 7),
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10)),
-                              ),
-                              onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        RideDetailsScreen(ride: ride),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                isAr ? 'حجز مقعد' : 'Book Seat',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  fontFamily: 'Cairo',
-                                ),
-                              ),
-                            ),
-                            if (ride.acceptsParcels)
-                              OutlinedButton.icon(
-                                key: ValueKey('home_trip_parcel_${ride.id}'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.indigo,
-                                  side: BorderSide(
-                                    color:
-                                        AppColors.indigo.withValues(alpha: 0.4),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 7),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                ),
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          SendParcelScreen(ride: ride),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.inventory_2_outlined,
-                                    size: 14),
-                                label: Text(
-                                  isAr ? 'أرسل طرداً' : 'Send Parcel',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    fontFamily: 'Cairo',
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
+          ...topTrips.map(
+            (ride) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: buildTripCard(ride),
+            ),
+          ),
       ],
     );
   }
@@ -1762,11 +2027,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       key: const ValueKey('home_worksite_supply_card'),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.slateBorder),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.warmBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1775,7 +2040,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const MashwarCategoryIcon(
                 category: 'general_site_supply',
-                size: 38,
+                size: 40,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1786,7 +2051,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       isAr
                           ? 'فئات التوريد السريع للمشاريع والمهام'
                           : 'Quick Supply & Hardware Categories',
-                      style: AppTypography.title().copyWith(fontSize: 15.5),
+                      style: AppTypography.title().copyWith(fontSize: 16),
                     ),
                     Text(
                       isAr
@@ -1799,7 +2064,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -1819,9 +2084,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.slateBg,
+                    color: AppColors.sand,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: meta.accentColor.withValues(alpha: 0.25),
@@ -1866,10 +2131,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return MashwarHoverCard(
       key: const ValueKey('home_notifications_summary'),
       borderRadius: BorderRadius.circular(16),
-      backgroundColor: hasActivity ? AppColors.cobaltSurface : Colors.white,
+      backgroundColor: hasActivity ? AppColors.goldSurface : Colors.white,
       borderColor: hasActivity
-          ? AppColors.cobalt.withValues(alpha: 0.35)
-          : AppColors.slateBorder,
+          ? AppColors.gold.withValues(alpha: 0.55)
+          : AppColors.warmBorder,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       onTap: () {
         Navigator.of(context).push(
@@ -1881,12 +2146,10 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         children: [
           Container(
-            width: 34,
-            height: 34,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: hasActivity
-                  ? AppColors.cobalt.withValues(alpha: 0.14)
-                  : AppColors.slateBg,
+              color: hasActivity ? AppColors.navy : AppColors.sand,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -1894,7 +2157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? Icons.notifications_active_outlined
                   : Icons.notifications_none_rounded,
               size: 18,
-              color: hasActivity ? AppColors.cobalt : AppColors.textSecondary,
+              color: hasActivity ? AppColors.gold : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 10),
@@ -1924,8 +2187,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         : '$unreadCount unread alert(s) · Tap to open',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySmall(color: AppColors.cobalt)
-                        .copyWith(fontSize: 11, fontWeight: FontWeight.w700),
+                    style: AppTypography.bodySmall(color: AppColors.goldDeep)
+                        .copyWith(fontSize: 11, fontWeight: FontWeight.w800),
                   ),
               ],
             ),
@@ -1958,7 +2221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isAr
                     ? 'طلبات التوريد والمهام النشطة'
                     : 'Active Supply & Errand Requests',
-                style: AppTypography.title().copyWith(fontSize: 17.5),
+                style: AppTypography.title().copyWith(fontSize: 18),
               ),
             ),
             TextButton(
@@ -1971,13 +2234,13 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: Text(
                 isAr ? 'عرض الكل' : 'View All',
-                style: AppTypography.label(color: AppColors.emerald)
+                style: AppTypography.label(color: AppColors.teal)
                     .copyWith(fontWeight: FontWeight.w800),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         if (worksite.isLoading && recentToShow.isEmpty)
           Column(
             children: List.generate(
@@ -2007,9 +2270,9 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.only(bottom: 10),
               child: MashwarHoverCard(
                 key: ValueKey('home_recent_req_${req.id}'),
-                borderRadius: BorderRadius.circular(16),
-                borderColor: AppColors.slateBorder,
-                hoverBorderColor: AppColors.emerald,
+                borderRadius: BorderRadius.circular(18),
+                borderColor: AppColors.warmBorder,
+                hoverBorderColor: AppColors.teal,
                 padding: const EdgeInsets.all(14),
                 onTap: () {
                   Navigator.of(context).push(
@@ -2026,7 +2289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         MashwarCategoryIcon(
                           category: req.supplyCategory,
-                          size: 34,
+                          size: 36,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
@@ -2040,13 +2303,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 type: req.status == WorkRequestStatus.completed
                                     ? BadgeType.verified
                                     : BadgeType.confirmed,
-                                customLabel:
-                                    req.status.label(isArabic: isAr),
+                                customLabel: req.status.label(isArabic: isAr),
                               ),
                               Text(
                                 req.effectiveTotalMinor.format(isArabic: isAr),
-                                style: AppTypography.body(
-                                        color: AppColors.emerald)
+                                style: AppTypography.body(color: AppColors.teal)
                                     .copyWith(fontWeight: FontWeight.w800),
                               ),
                             ],
@@ -2075,10 +2336,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         OutlinedButton.icon(
                           key: ValueKey('home_quick_reorder_${req.id}'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.emerald,
-                            side: const BorderSide(color: AppColors.emerald),
+                            foregroundColor: AppColors.teal,
+                            backgroundColor: AppColors.tealSurface,
+                            side: const BorderSide(color: AppColors.teal),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
@@ -2095,15 +2359,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: const Icon(Icons.replay_rounded, size: 15),
                           label: Text(
                             isAr ? 'إعادة طلب سريعة' : 'Quick Reorder',
-                            style:
-                                AppTypography.label(color: AppColors.emerald)
-                                    .copyWith(fontWeight: FontWeight.w800),
+                            style: AppTypography.label(color: AppColors.teal)
+                                .copyWith(fontWeight: FontWeight.w800),
                           ),
                         ),
                         TextButton(
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
@@ -2152,9 +2417,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return MashwarSectionCard(
       key: const ValueKey('home_corridor_map_card'),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       backgroundColor: Colors.white,
-      borderColor: AppColors.slateBorder,
+      borderColor: AppColors.warmBorder,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2162,7 +2427,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const MashwarTrustEmblem(
                 type: MashwarTrustType.liveCorridor,
-                size: 36,
+                size: 38,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -2180,7 +2445,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       '${AppStrings.translateCity(corridorFrom, isArabic: isAr)} → ${AppStrings.translateCity(previewHub, isArabic: isAr)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.label(color: AppColors.cobalt)
+                      style: AppTypography.label(color: AppColors.teal)
                           .copyWith(fontWeight: FontWeight.w800),
                     ),
                   ],
@@ -2195,13 +2460,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? Icons.unfold_less_rounded
                       : Icons.unfold_more_rounded,
                   size: 18,
-                  color: AppColors.cobalt,
+                  color: AppColors.navy,
                 ),
                 label: Text(
                   _isMapExpanded
                       ? (isAr ? 'تصغير' : 'Compact')
                       : (isAr ? 'توسيع' : 'Expand'),
-                  style: AppTypography.label(color: AppColors.cobalt)
+                  style: AppTypography.label(color: AppColors.navy)
                       .copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
@@ -2216,7 +2481,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : (isWide ? 205 : 165),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.slateBorder),
+              border: Border.all(color: AppColors.warmBorder),
             ),
             child: QatarLiveMapCanvas(
               style: QatarMapStyle.light,
@@ -2230,17 +2495,16 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          // Cobalt / Emerald International Legend
           Wrap(
             spacing: 14,
             runSpacing: 6,
             children: [
               _buildLegendDot(
-                AppColors.cobalt,
+                AppColors.gold,
                 isAr ? 'مسارات الرحلات والطرود' : 'Trips & Parcels Routes',
               ),
               _buildLegendDot(
-                AppColors.emerald,
+                AppColors.teal,
                 isAr ? 'نقاط التوريد والتسليم' : 'Supply & Handover Hubs',
               ),
             ],
@@ -2257,14 +2521,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.cobalt : AppColors.slateBg,
+                    color: isSelected ? AppColors.navy : AppColors.sand,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
                       color: isSelected
-                          ? AppColors.cobalt
-                          : AppColors.slateBorder,
+                          ? AppColors.gold
+                          : AppColors.warmBorder,
                     ),
                   ),
                   child: Text(
@@ -2292,10 +2556,14 @@ class _HomeScreenState extends State<HomeScreen> {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: AppTypography.label(color: AppColors.textSecondary)
-              .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTypography.label(color: AppColors.textSecondary)
+                .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+          ),
         ),
       ],
     );
@@ -2310,10 +2578,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final button = OutlinedButton.icon(
       key: const ValueKey('home_demo_all_cases_btn'),
       style: OutlinedButton.styleFrom(
-        foregroundColor: isActive ? AppColors.emerald : AppColors.cobalt,
+        foregroundColor: isActive ? AppColors.teal : AppColors.navy,
         backgroundColor: Colors.white,
         side: BorderSide(
-          color: isActive ? AppColors.emerald : AppColors.cobalt,
+          color: isActive ? AppColors.teal : AppColors.gold,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         minimumSize: Size.zero,
@@ -2337,21 +2605,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? 'عرض جميع الحالات التجريبية (14)'
                 : 'Load All Demo Cases (14)'),
         style: AppTypography.label(
-          color: isActive ? AppColors.emerald : AppColors.cobalt,
+          color: isActive ? AppColors.teal : AppColors.navy,
         ).copyWith(fontWeight: FontWeight.w800),
       ),
     );
 
     return Container(
       key: const ValueKey('home_demo_showcase_banner'),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: isActive ? AppColors.emeraldSurface : AppColors.cobaltSurface,
+        color: isActive ? AppColors.tealSurface : AppColors.goldSurface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isActive
-              ? AppColors.emerald.withValues(alpha: 0.35)
-              : AppColors.cobalt.withValues(alpha: 0.28),
+              ? AppColors.teal.withValues(alpha: 0.4)
+              : AppColors.gold.withValues(alpha: 0.45),
         ),
       ),
       child: LayoutBuilder(
@@ -2362,7 +2630,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(
                 isActive ? Icons.auto_awesome_rounded : Icons.science_outlined,
                 size: 18,
-                color: isActive ? AppColors.emerald : AppColors.cobalt,
+                color: isActive ? AppColors.teal : AppColors.goldDeep,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -2424,9 +2692,7 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  isAr
-                      ? 'اختيار الموقع المحفوظ'
-                      : 'Select Saved Location',
+                  isAr ? 'اختيار الموقع المحفوظ' : 'Select Saved Location',
                   style: AppTypography.title().copyWith(fontSize: 18),
                 ),
                 const SizedBox(height: 12),
@@ -2441,11 +2707,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ...sites.map(
                     (site) => ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(Icons.location_on_rounded,
-                          color: AppColors.cobalt),
+                      leading: const Icon(
+                        Icons.location_on_rounded,
+                        color: AppColors.goldDeep,
+                      ),
                       title: Text(site.label),
                       subtitle: Text(
-                          '${AppStrings.translateCity(site.municipality, isArabic: isAr)} · ${site.zoneOrStreet}'),
+                        '${AppStrings.translateCity(site.municipality, isArabic: isAr)} · ${site.zoneOrStreet}',
+                      ),
                       onTap: () {
                         setState(() => _selectedSavedWorksiteId = site.id);
                         Navigator.of(sheetCtx).pop();

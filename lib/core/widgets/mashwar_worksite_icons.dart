@@ -1274,11 +1274,11 @@ class MashwarServicePillarIcon extends StatelessWidget {
   (Color accent, Color surface, String labelEn) _tokens() {
     switch (pillar) {
       case MashwarServicePillar.sharedTrips:
-        return (AppColors.cobalt, AppColors.cobaltSurface, 'Shared Trips');
+        return (AppColors.navy, AppColors.navySurface, 'Shared Trips');
       case MashwarServicePillar.routeParcels:
-        return (AppColors.indigo, AppColors.indigoSurface, 'Parcels on Route');
+        return (AppColors.goldDeep, AppColors.goldSurface, 'Parcels on Route');
       case MashwarServicePillar.smartSupply:
-        return (AppColors.emerald, AppColors.emeraldSurface, 'Smart Supply');
+        return (AppColors.teal, AppColors.tealSurface, 'Smart Supply');
     }
   }
 
@@ -1379,7 +1379,7 @@ class _MashwarServicePillarPainter extends CustomPainter {
       );
     }
 
-    // Floating route seat pin on top-right
+    // Floating route seat pin on top-right (Signature MASHWAR Gold)
     final pin = Path()
       ..moveTo(s * 0.79, s * 0.47)
       ..cubicTo(s * 0.66, s * 0.34, s * 0.65, s * 0.19, s * 0.71, s * 0.13)
@@ -1389,11 +1389,11 @@ class _MashwarServicePillarPainter extends CustomPainter {
       )
       ..cubicTo(s * 0.93, s * 0.19, s * 0.92, s * 0.34, s * 0.79, s * 0.47)
       ..close();
-    canvas.drawPath(pin, Paint()..color = AppColors.cobalt);
+    canvas.drawPath(pin, Paint()..color = AppColors.gold);
     canvas.drawCircle(
       Offset(s * 0.79, s * 0.23),
       s * 0.045,
-      Paint()..color = Colors.white,
+      Paint()..color = AppColors.navy,
     );
   }
 
@@ -1407,7 +1407,7 @@ class _MashwarServicePillarPainter extends CustomPainter {
 
     // Express motion lines on left
     final motionPaint = Paint()
-      ..color = AppColors.indigo.withValues(alpha: 0.55)
+      ..color = AppColors.gold.withValues(alpha: 0.78)
       ..strokeWidth = (s * 0.065).clamp(1.1, 2.2)
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(Offset(s * 0.06, s * 0.38), Offset(s * 0.18, s * 0.38), motionPaint);
@@ -1418,7 +1418,7 @@ class _MashwarServicePillarPainter extends CustomPainter {
       Rect.fromLTWH(s * 0.20, s * 0.22, s * 0.56, s * 0.56),
       Radius.circular(s * 0.09),
     );
-    canvas.drawRRect(box, Paint()..color = AppColors.indigo.withValues(alpha: 0.16));
+    canvas.drawRRect(box, Paint()..color = AppColors.gold.withValues(alpha: 0.22));
     canvas.drawRRect(box, stroke);
 
     // Center parcel tape band
@@ -1431,7 +1431,7 @@ class _MashwarServicePillarPainter extends CustomPainter {
     );
     canvas.drawLine(Offset(s * 0.20, s * 0.40), Offset(s * 0.76, s * 0.40), stroke);
 
-    // Protective OTP shield badge on bottom-right
+    // Protective OTP shield badge on bottom-right (Signature MASHWAR Teal)
     final shield = Path()
       ..moveTo(s * 0.76, s * 0.48)
       ..lineTo(s * 0.94, s * 0.54)
@@ -1440,7 +1440,7 @@ class _MashwarServicePillarPainter extends CustomPainter {
       ..cubicTo(s * 0.76, s * 0.91, s * 0.58, s * 0.82, s * 0.58, s * 0.69)
       ..lineTo(s * 0.58, s * 0.54)
       ..close();
-    canvas.drawPath(shield, Paint()..color = AppColors.indigo);
+    canvas.drawPath(shield, Paint()..color = AppColors.teal);
     canvas.drawPath(
       shield,
       Paint()
@@ -1476,7 +1476,7 @@ class _MashwarServicePillarPainter extends CustomPainter {
       Rect.fromLTWH(s * 0.12, s * 0.16, s * 0.50, s * 0.66),
       Radius.circular(s * 0.08),
     );
-    canvas.drawRRect(board, Paint()..color = AppColors.emerald.withValues(alpha: 0.15));
+    canvas.drawRRect(board, Paint()..color = AppColors.teal.withValues(alpha: 0.16));
     canvas.drawRRect(board, stroke);
 
     // Top clip bar
@@ -1490,7 +1490,7 @@ class _MashwarServicePillarPainter extends CustomPainter {
 
     // Checklist lines
     final linePaint = Paint()
-      ..color = AppColors.emerald
+      ..color = AppColors.teal
       ..strokeWidth = (s * 0.065).clamp(1.1, 2.2)
       ..strokeCap = StrokeCap.round;
     canvas.drawLine(Offset(s * 0.22, s * 0.36), Offset(s * 0.48, s * 0.36), linePaint);
@@ -1501,7 +1501,7 @@ class _MashwarServicePillarPainter extends CustomPainter {
       Rect.fromLTWH(s * 0.48, s * 0.48, s * 0.42, s * 0.38),
       Radius.circular(s * 0.07),
     );
-    canvas.drawRRect(crate, Paint()..color = AppColors.emerald);
+    canvas.drawRRect(crate, Paint()..color = AppColors.teal);
     canvas.drawRRect(
       crate,
       Paint()
@@ -1521,4 +1521,92 @@ class _MashwarServicePillarPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _MashwarServicePillarPainter oldDelegate) =>
       oldDelegate.pillar != pillar;
+}
+
+/// Flagship Hero Service Medallion rendered inside the top 3-Icon Selector
+/// on HomeScreen ("إلى أين مشوارك أو طلبك اليوم؟") using MASHWAR's original
+/// Navy, Gold, and Teal luxury palette.
+class MashwarHeroServiceMedallion extends StatelessWidget {
+  const MashwarHeroServiceMedallion({
+    super.key,
+    required this.pillar,
+    required this.isSelected,
+    this.size = 48,
+  });
+
+  final MashwarServicePillar pillar;
+  final bool isSelected;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = switch (pillar) {
+      MashwarServicePillar.sharedTrips =>
+        isSelected ? AppColors.navy : AppColors.navySurface,
+      MashwarServicePillar.routeParcels =>
+        isSelected ? AppColors.gold : AppColors.goldSurface,
+      MashwarServicePillar.smartSupply =>
+        isSelected ? AppColors.teal : AppColors.tealSurface,
+    };
+
+    final iconData = switch (pillar) {
+      MashwarServicePillar.sharedTrips => Icons.directions_car_filled_rounded,
+      MashwarServicePillar.routeParcels => Icons.inventory_2_rounded,
+      MashwarServicePillar.smartSupply => Icons.shopping_bag_rounded,
+    };
+
+    final iconColor = switch (pillar) {
+      MashwarServicePillar.sharedTrips =>
+        isSelected ? AppColors.gold : AppColors.navy,
+      MashwarServicePillar.routeParcels =>
+        isSelected ? AppColors.navy : AppColors.goldDeep,
+      MashwarServicePillar.smartSupply =>
+        isSelected ? Colors.white : AppColors.teal,
+    };
+
+    final badgeAccent = switch (pillar) {
+      MashwarServicePillar.sharedTrips => AppColors.gold,
+      MashwarServicePillar.routeParcels => AppColors.navy,
+      MashwarServicePillar.smartSupply => AppColors.gold,
+    };
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: AppColors.navy.withValues(alpha: 0.16),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(iconData, size: size * 0.52, color: iconColor),
+          if (isSelected)
+            PositionedDirectional(
+              top: 6,
+              end: 6,
+              child: Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: badgeAccent,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }

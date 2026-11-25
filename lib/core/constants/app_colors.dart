@@ -4,20 +4,23 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Primary Brand Colors (Keep navy, gold, teal, sand exact hexes for widget tests)
+  // Primary Brand Colors (Original MASHWAR Luxury Palette: Navy, Gold, Teal, Warm Sand)
   static const Color navy = Color(0xFF0F2A43); // كحلي ليلي (أساسي)
+  static const Color navySurface = Color(0xFFEDF2F7); // خلفية كحلية ناعمة
   static const Color gold = Color(0xFFF5A524); // ذهبي (تمييز)
+  static const Color goldDeep = Color(0xFFB26A00); // ذهبي داكن لتباين نصوص AA
   static const Color teal = Color(0xFF1B7F79); // فيروزي (نجاح)
-  static const Color sand = Color(0xFFFAF7F0); // رملي (براند)
+  static const Color sand = Color(0xFFFAF7F0); // رملي دافئ (براند)
+  static const Color warmBorder = Color(0xFFE7E1D6); // حدود رملية راقية
   static const Color surfaceLight = Color(0xFFF8F9FA); // سطح محايد ناعم وعصري
 
-  // International 3-Service Pillar Accent & Surface Tokens
-  static const Color cobalt = Color(0xFF2563EB);
-  static const Color cobaltSurface = Color(0xFFEFF6FF);
-  static const Color indigo = Color(0xFF4F46E5);
-  static const Color indigoSurface = Color(0xFFEEF2FF);
-  static const Color emerald = Color(0xFF0D9488);
-  static const Color emeraldSurface = Color(0xFFF0FDFA);
+  // 3-Service Pillar Tokens mapped to Original MASHWAR Palette (Navy · Warm Gold · Teal)
+  static const Color cobalt = Color(0xFF0F2A43); // Mapped to signature MASHWAR Navy
+  static const Color cobaltSurface = Color(0xFFEDF2F7); // Soft Navy surface
+  static const Color indigo = Color(0xFFB26A00); // Mapped to warm MASHWAR Amber/Gold
+  static const Color indigoSurface = Color(0xFFFCF3E6); // Warm Gold surface
+  static const Color emerald = Color(0xFF1B7F79); // Mapped to signature MASHWAR Teal
+  static const Color emeraldSurface = Color(0xFFE8F5F3); // Soft Teal surface
 
   // Legacy Regional & Trust Tokens (kept for backward compatibility)
   static const Color qatarMaroon = Color(0xFF8A1538); // العنابي القطري (الأدعم)

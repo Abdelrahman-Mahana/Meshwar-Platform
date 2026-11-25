@@ -781,34 +781,34 @@ class MashwarThreeStepsBanner extends StatelessWidget {
         numLabel: '1',
         title: isAr ? 'حدّد وجهتك أو طلبك' : 'Post Your Route or Request',
         icon: Icons.route_rounded,
-        accent: AppColors.cobalt,
-        surface: AppColors.cobaltSurface,
+        accent: AppColors.navy,
+        surface: AppColors.navySurface,
       ),
       (
         numLabel: '2',
         title: isAr ? 'تواصل واختر الأنسب' : 'Match & Connect Directly',
         icon: Icons.handshake_outlined,
-        accent: AppColors.indigo,
-        surface: AppColors.indigoSurface,
+        accent: AppColors.goldDeep,
+        surface: AppColors.goldSurface,
       ),
       (
         numLabel: '3',
         title: isAr ? 'تابع وسلّم بكود الأمان' : 'Track & Confirm with OTP',
         icon: Icons.verified_user_outlined,
-        accent: AppColors.emerald,
-        surface: AppColors.emeraldSurface,
+        accent: AppColors.teal,
+        surface: AppColors.tealSurface,
       ),
     ];
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 10 : 14,
-        vertical: compact ? 10 : 12,
+        horizontal: compact ? 8 : 16,
+        vertical: compact ? 10 : 14,
       ),
       decoration: BoxDecoration(
-        color: AppColors.slateBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.slateBorder),
+        color: AppColors.sand,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.warmBorder),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1041,21 +1041,21 @@ class MashwarWizardStepHeader extends StatelessWidget {
     required bool isActive,
   }) {
     final bgColor = isActive
-        ? AppColors.cobaltSurface
-        : (isDone ? AppColors.emeraldSurface : Colors.white);
+        ? AppColors.goldSurface
+        : (isDone ? AppColors.tealSurface : Colors.white);
     final borderColor = isActive
-        ? AppColors.cobalt.withValues(alpha: 0.45)
+        ? AppColors.gold
         : (isDone
-            ? AppColors.emerald.withValues(alpha: 0.35)
-            : AppColors.slateBorder);
+            ? AppColors.teal.withValues(alpha: 0.35)
+            : AppColors.warmBorder);
     final badgeBg = isActive
-        ? AppColors.cobalt
-        : (isDone ? AppColors.emerald : AppColors.slateBg);
+        ? AppColors.navy
+        : (isDone ? AppColors.teal : AppColors.sand);
     final badgeFg =
         (isActive || isDone) ? Colors.white : AppColors.textSecondary;
     final textColor = isActive
         ? AppColors.navy
-        : (isDone ? AppColors.emerald : AppColors.textSecondary);
+        : (isDone ? AppColors.teal : AppColors.textSecondary);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),

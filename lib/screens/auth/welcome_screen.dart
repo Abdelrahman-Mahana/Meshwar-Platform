@@ -31,7 +31,7 @@ class WelcomeScreen extends StatelessWidget {
     final isAr = settings.isArabic;
 
     return Scaffold(
-      backgroundColor: AppColors.slateBg,
+      backgroundColor: const Color(0xFFFAF8F4),
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -111,11 +111,11 @@ class WelcomeScreen extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         const MashwarAssetArt(
-          assetPath: 'assets/images/service_ride.jpg',
+          assetPath: 'assets/images/home_hero_mobility.jpg',
           fit: BoxFit.cover,
           fallbackIcon: Icons.route_rounded,
           fallbackBg: AppColors.navy,
-          fallbackColor: AppColors.cobalt,
+          fallbackColor: AppColors.gold,
         ),
         DecoratedBox(
           decoration: BoxDecoration(
@@ -123,9 +123,9 @@ class WelcomeScreen extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppColors.navy.withValues(alpha: 0.94),
-                const Color(0xFF132F4C).withValues(alpha: 0.90),
-                const Color(0xFF0F172A).withValues(alpha: 0.94),
+                AppColors.navy.withValues(alpha: 0.90),
+                AppColors.navy.withValues(alpha: 0.80),
+                const Color(0xFF0A1D2F).withValues(alpha: 0.92),
               ],
             ),
           ),
@@ -141,10 +141,10 @@ class WelcomeScreen extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
-                  color: AppColors.cobalt.withValues(alpha: 0.22),
+                  color: AppColors.gold.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: const Color(0xFF60A5FA).withValues(alpha: 0.45),
+                    color: AppColors.gold.withValues(alpha: 0.60),
                   ),
                 ),
                 child: Text(
@@ -279,11 +279,11 @@ class WelcomeScreen extends StatelessWidget {
                 children: [
                   const Positioned.fill(
                     child: MashwarAssetArt(
-                      assetPath: 'assets/images/service_ride.jpg',
+                      assetPath: 'assets/images/home_hero_mobility.jpg',
                       fit: BoxFit.cover,
                       fallbackIcon: Icons.route_rounded,
                       fallbackBg: AppColors.navy,
-                      fallbackColor: AppColors.cobalt,
+                      fallbackColor: AppColors.gold,
                     ),
                   ),
                   Positioned.fill(

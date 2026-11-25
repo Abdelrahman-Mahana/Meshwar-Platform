@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:mashwar/core/constants/app_colors.dart';
 import 'package:mashwar/core/localization/app_strings.dart';
 import 'package:mashwar/core/theme/app_theme.dart';
 import 'package:mashwar/core/widgets/mashwar_animations.dart';
@@ -634,6 +635,77 @@ void main() {
         }
 
         worksite.dispose();
+        settings.dispose();
+      },
+    );
+
+    testWidgets(
+      'Flagship Home UI/UX — Original Navy/Gold/Teal palette, top 3 Hero icon tiles, full-size 16:9 frames, and zero repeated images',
+      (tester) async {
+        tester.view.physicalSize = const Size(1280, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        // 1. Original MASHWAR Brand Palette restored across all tokens
+        expect(AppColors.navy, const Color(0xFF0F2A43));
+        expect(AppColors.gold, const Color(0xFFF5A524));
+        expect(AppColors.teal, const Color(0xFF1B7F79));
+        expect(AppColors.sand, const Color(0xFFFAF7F0));
+        expect(AppColors.cobalt, AppColors.navy);
+        expect(AppColors.emerald, AppColors.teal);
+        expect(AppColors.indigo, AppColors.goldDeep);
+
+        final settings = SettingsProvider()..setLocale(const Locale('ar', 'QA'));
+        await tester.pumpWidget(
+          buildIntlHarness(home: const HomeScreen(), settings: settings),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+
+        // 2. First Hero Module renders 3 prominent interactive service icon tiles
+        expect(
+          find.byKey(const ValueKey('home_hero_three_icons_bar')),
+          findsOneWidget,
+        );
+        expect(find.byType(MashwarHeroServiceMedallion), findsNWidgets(3));
+
+        // 3. All 4 rendered Home showcase frames (1 Hero + 3 Service Cards) use true 16:9 AspectRatio and 100% unique image assets
+        final aspectRatios = tester
+            .widgetList<AspectRatio>(find.byType(AspectRatio))
+            .where((a) => (a.aspectRatio - (16 / 9)).abs() < 0.01)
+            .toList();
+        expect(aspectRatios.length, greaterThanOrEqualTo(4));
+
+        List<String> collectAssetNames() {
+          return tester
+              .widgetList<Image>(find.byType(Image))
+              .map((img) => img.image)
+              .whereType<AssetImage>()
+              .map((a) => a.assetName)
+              .toList();
+        }
+
+        // Verify zero duplicate images in every hero mode (0, 1, 2)
+        for (final modeKey in const [
+          ValueKey('home_hero_mode_trips'),
+          ValueKey('home_hero_mode_parcels'),
+          ValueKey('home_hero_mode_supply'),
+        ]) {
+          await tester.tap(find.byKey(modeKey));
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+          final renderedAssets = collectAssetNames();
+          expect(renderedAssets.length, greaterThanOrEqualTo(4));
+          expect(
+            renderedAssets.toSet().length,
+            renderedAssets.length,
+            reason: 'HomeScreen must never repeat image assets: $renderedAssets',
+          );
+        }
+
         settings.dispose();
       },
     );
