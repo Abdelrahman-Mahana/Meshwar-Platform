@@ -918,5 +918,55 @@ void main() {
       expect(phoneOpDisabled.suggestEmailFallback, isTrue);
       expect(phoneOpDisabled.messageEn, contains('Phone authentication'));
     });
+
+    test(
+        'FirebaseAuthRepository.mapFirebaseAuthException handles configuration-not-found, internal-error CONFIGURATION_NOT_FOUND, and unauthorized-domain cleanly',
+        () {
+      for (final isEmail in [false, true]) {
+        final configNotFound =
+            FirebaseAuthRepository.mapFirebaseAuthException(
+          fb_auth.FirebaseAuthException(code: 'configuration-not-found'),
+          isEmailFlow: isEmail,
+        );
+        expect(configNotFound.code, 'configuration-not-found');
+        expect(configNotFound.suggestEmailFallback, isFalse);
+        expect(configNotFound.messageAr, contains('Firebase Authentication'));
+        expect(configNotFound.messageEn, contains('not initialized'));
+        expect(
+          configNotFound.messageAr,
+          isNot(contains('تعذّر إتمام التحقق عبر الجوال')),
+        );
+
+        final internalConfigNotFound =
+            FirebaseAuthRepository.mapFirebaseAuthException(
+          fb_auth.FirebaseAuthException(
+            code: 'internal-error',
+            message:
+                'An internal error has occurred. [ CONFIGURATION_NOT_FOUND ]',
+          ),
+          isEmailFlow: isEmail,
+        );
+        expect(internalConfigNotFound.code, 'configuration-not-found');
+        expect(internalConfigNotFound.suggestEmailFallback, isFalse);
+        expect(
+          internalConfigNotFound.messageAr,
+          isNot(contains('تعذّر إتمام التحقق عبر الجوال')),
+        );
+
+        final unauthorizedDomain =
+            FirebaseAuthRepository.mapFirebaseAuthException(
+          fb_auth.FirebaseAuthException(code: 'unauthorized-domain'),
+          isEmailFlow: isEmail,
+        );
+        expect(unauthorizedDomain.code, 'unauthorized-domain');
+        expect(unauthorizedDomain.suggestEmailFallback, isFalse);
+        expect(unauthorizedDomain.messageAr, contains('Authorized Domains'));
+        expect(unauthorizedDomain.messageEn, contains('Authorized Domains'));
+        expect(
+          unauthorizedDomain.messageAr,
+          isNot(contains('تعذّر إتمام التحقق عبر الجوال')),
+        );
+      }
+    });
   });
 }

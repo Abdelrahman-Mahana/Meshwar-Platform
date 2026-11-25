@@ -31,7 +31,7 @@ As documented in [`docs/MVP_BASELINE_AUDIT.md`](MVP_BASELINE_AUDIT.md), the pre-
 
 ## 3. What Was Implemented
 
-Across Waves 0–5 on `feat/mvp-worksite-supply`, the repository was re-engineered into an honest, security-hardened **Qatar Worksite Supply MVP**:
+Across Waves 0–6 on `feat/mvp-worksite-supply`, the repository was re-engineered into an honest, security-hardened **Qatar Worksite Supply MVP**:
 - **Wave 0 — Repo Hygiene & Baseline Audit:** Untracked generated `node_modules/`, hardened `.gitignore` (`functions/node_modules/`, `functions/lib/`, `.env*`, keystores), and recorded the baseline audit (`docs/MVP_BASELINE_AUDIT.md`).
 - **Wave 1 — Backend Authority, Security Rules & Indexes:**
   - Created `functions/` (TypeScript, Node.js 20, Firebase Cloud Functions v2 `onCall` in `europe-west1`) implementing transactional handlers, an 11-state `WorkRequest` state machine, constant-time salted SHA-256 6-char handover verification (`5` attempts max, `24h` TTL, single-use), and a `node:test` security suite.
@@ -51,6 +51,9 @@ Across Waves 0–5 on `feat/mvp-worksite-supply`, the repository was re-engineer
   - **Live Firebase Emulators & AST Rule Optimization:** Provisioned OpenJDK `21.0.13.1` LTS + `firebase-tools` `15.37.0`, optimized `firestore.rules` (`2,344` lines) to keep max-schema `work_requests` updates well below Firestore's 1,000 AST expression cap, and added `functions/test/emulator_rules.test.mjs` + `scripts/run_emulators_tests.ps1` (`9/9` live Cloud Firestore `v1.22.0` + Storage `v1.1.3` rule suites passing).
   - **Firebase Storage Media Uploads, `+974` Phone Auth, `url_launcher` & Account Erasure:** Added cross-platform `MediaUploadService` (`firebase_storage` + `image_picker`, `<= 10 MB`, `image/*`, zero `dart:io`) across 4 KYC/worksite upload screens; implemented real Qatar `+974` (`[3567]xxxxxxx`) Firebase Phone Auth (`signInWithPhoneNumber` on Web, `verifyPhoneNumber` on Mobile) with bilingual error mapping and Email+Password fallback CTAs; wired `url_launcher` (`tel:999`, `tel:`, `mailto:`, console URLs); and added server-side `deleteUserAccount` (`10`th callable handler in `functions/`) + `DeleteAccountScreen` enforcing active-order guards, profile/KYC purging, audit logging, and Firebase Auth deletion (`11/11` functions unit tests & `136/136` Flutter tests passing).
   - **Native App Registration, Signing & Qatar PDPL Compliance:** Registered native Firebase apps (`mashwar-qatar-android` `1:820084343406:android:a9e464e38a988eddd35c7f`, `mashwar-qatar-ios` `1:820084343406:ios:5073f983643cc020d35c7f`) in `lib/firebase_options.dart`, aligned iOS `qa.mashwar.app` bundle IDs & camera/photo `Info.plist` purpose strings, configured Android release signing (`key.properties` + R8/ProGuard `proguard-rules.pro`), added `scripts/fetch_firebase_configs.ps1` & `scripts/generate_upload_keystore.ps1` (provisioned locally and verified 100% gitignored), rewrote `LegalComplianceScreen` for Qatar PDPL Law No. 13 of 2016, and authored `docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md`.
+- **Wave 6 — Live Firebase Auth Provisioning, Error Mapping & Cross-Screen Error Clearing:**
+  - Configured `"auth": { "providers": { "emailPassword": true } }` in `firebase.json` and added idempotent `scripts/provision_firebase_auth.ps1` (`firebase deploy --only auth`, Identity Toolkit config verification/patch, and `127.0.0.1` / `localhost` `authorizedDomains` provisioning verified live with HTTP `200`).
+  - Hardened `FirebaseAuthRepository.mapFirebaseAuthException` for `configuration-not-found`, `CONFIGURATION_NOT_FOUND` inner messages, and `unauthorized-domain` (`suggestEmailFallback: false`) and cleared stale `AuthProvider` errors on screen transitions and input edits across `WelcomeScreen`, `PhoneInputScreen`, `OtpVerificationScreen`, and `EmailInputScreen`.
 
 ---
 
@@ -103,8 +106,8 @@ Defined and enforced in [`firestore.rules`](../firestore.rules) (`2,552` lines, 
 ## 6. Authentication Configuration
 
 1. **Customer & Provider Authentication (`FirebaseAuthRepository` + `AuthProvider`):**
-   - **Email + Password (`Active`):** `signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `sendPasswordResetEmail`, `signOut`, automatic session restoration (`restoreSession()`), and neutral Firestore `users/{uid}` initialization.
-   - **Real `+974` Firebase Phone Auth (`Wired & Guarded`):** Validates Qatar E.164 mobile numbers (`+974` + `[3567]xxxxxxx`) and invokes `FirebaseAuth.signInWithPhoneNumber` + `ConfirmationResult.confirm` on Web and `verifyPhoneNumber` + `PhoneAuthProvider.credential` + `signInWithCredential` on Android/iOS. Rejects arbitrary 6-digit codes outside dev-mock mode and maps `billing-not-enabled`, `operation-not-allowed`, `quota-exceeded`, `invalid-verification-code`, and `too-many-requests` into clear bilingual `AuthException` messages with 1-tap Email + Password fallback CTAs across `WelcomeScreen`, `PhoneInputScreen`, and `OtpVerificationScreen`.
+   - **Email + Password (`Active`):** Provisioned on `mashwar-qatar-2026-ec99d` via `firebase.json` (`"auth": { "providers": { "emailPassword": true } }`) and `scripts/provision_firebase_auth.ps1` (with `127.0.0.1` & `localhost` in `authorizedDomains`). Supports `signInWithEmailAndPassword`, `createUserWithEmailAndPassword`, `sendPasswordResetEmail`, `signOut`, automatic session restoration (`restoreSession()`), and neutral Firestore `users/{uid}` initialization.
+   - **Real `+974` Firebase Phone Auth (`Wired & Guarded`):** Validates Qatar E.164 mobile numbers (`+974` + `[3567]xxxxxxx`) and invokes `FirebaseAuth.signInWithPhoneNumber` + `ConfirmationResult.confirm` on Web and `verifyPhoneNumber` + `PhoneAuthProvider.credential` + `signInWithCredential` on Android/iOS. Rejects arbitrary 6-digit codes outside dev-mock mode, maps `billing-not-enabled`, `operation-not-allowed`, `quota-exceeded`, `invalid-verification-code`, `too-many-requests`, `configuration-not-found` (including `CONFIGURATION_NOT_FOUND`), and `unauthorized-domain` into clear bilingual `AuthException` messages, provides 1-tap Email + Password fallback CTAs, and clears stale `AuthProvider` errors on navigation/input changes across `WelcomeScreen`, `PhoneInputScreen`, `OtpVerificationScreen`, and `EmailInputScreen`.
    - **Provider KYC (`11-Digit QID` + Binary Uploads):** `submitNationalId` / `submitProviderVerification` validates 11-digit Qatar QID (`^[0-9]{11}$`), uploads QID front/back/selfie images via `MediaUploadService` to private `/provider_verifications/{uid}/{docType}_{ts}.{ext}`, and writes pending verification records without granting `isVerified` or `approved` client-side.
    - **Permanent Account Deletion (`deleteUserAccount`):** `AuthProvider.deleteAccount()` + `DeleteAccountScreen` call the `deleteUserAccount` Cloud Function, blocking deletion when active/disputed worksite orders exist, auto-cancelling open unassigned requests, purging `users/{uid}`, `provider_profiles/{uid}`, `provider_verifications/{uid}`, and `business_profiles/{uid}`, writing an `admin_audit_logs` record, and deleting the Firebase Auth user.
 2. **Admin Staff Authentication (`AdminProvider` + `AdminLoginScreen` + `AdminShell`):**
@@ -152,8 +155,8 @@ Defined and enforced in [`firestore.rules`](../firestore.rules) (`2,552` lines, 
 - `lib/screens/splash_screen.dart` — Real session restoration routing (`WelcomeScreen` when unauthenticated; `MainNavShell` only when authenticated) and Qatar Worksite Supply branding.
 - `lib/screens/main_nav_shell.dart` — Focused 4-tab MVP navigation (`Home`, `Requests`, `My Activity` backed by real `WorksiteProvider` data, `Account` with Provider Profile/Legal/Logout) when `enablePassengerRides == false`.
 - `lib/screens/home/home_screen.dart` — Task-first `"شنو تحتاج ينجز اليوم؟"` / `"What do you need done today?"` hub with primary Create/Browse CTAs, saved worksite selector, real active/recent requests, and 1-tap Quick Reorder (zero fake live counters, balances, or moving cars).
-- `lib/screens/auth/welcome_screen.dart`, `lib/screens/auth/phone_input_screen.dart` & `lib/screens/auth/otp_verification_screen.dart` — Real Email+Password entry + `+974` Firebase Phone Auth flow with bilingual SMS error handling, Email fallback CTAs, and `AppEnvironment.useDevMocks`-gated demo shortcut.
-- `lib/screens/auth/email_input_screen.dart` — Real `loginWithEmail`, `registerWithEmail`, and `sendPasswordReset` form with validation and error feedback.
+- `lib/screens/auth/welcome_screen.dart`, `lib/screens/auth/phone_input_screen.dart` & `lib/screens/auth/otp_verification_screen.dart` — Real Email+Password entry + `+974` Firebase Phone Auth flow with bilingual SMS error handling, Email fallback CTAs, stale `AuthProvider` error clearing across switches/edits, and `AppEnvironment.useDevMocks`-gated demo shortcut.
+- `lib/screens/auth/email_input_screen.dart` — Real `loginWithEmail`, `registerWithEmail`, and `sendPasswordReset` form with validation, bilingual error feedback, and stale-error clearing on input edits and screen transitions.
 - `lib/screens/auth/id_verification_screen.dart` — Binary QID front/back/selfie upload integration via `MediaUploadService` with `Image.memory` previews and size/MIME validation.
 - `lib/screens/account/account_extra_screens.dart` — Real `DeleteAccountScreen` (`AuthProvider.deleteAccount()` + `WorksiteProvider` active-order guard) and `url_launcher` support links in `HelpSupportScreen`.
 - `lib/screens/account/legal_and_backend_screens.dart` — Honest bilingual `LegalComplianceScreen` covering Worksite Supply pilot terms (`cash_on_delivery` / `bank_transfer_manual`), Qatar PDPL Law No. 13 of 2016 data rights & erasure, and MoT/QCB/MoCI trademark disclosures.
@@ -164,9 +167,9 @@ Defined and enforced in [`firestore.rules`](../firestore.rules) (`2,552` lines, 
 
 ## 9. Files Created
 
-Verified directly from `git diff --diff-filter=A --name-only c444e6d..HEAD` on `feat/mvp-worksite-supply` (`42` new files created across configuration, native release tooling, backend, domain, repositories, services, state, UI, tests, and compliance/report documentation):
+Verified directly from `git diff --diff-filter=A --name-only c444e6d..HEAD` on `feat/mvp-worksite-supply` (`43` new files created across configuration, native/auth release tooling, backend, domain, repositories, services, state, UI, tests, and compliance/report documentation):
 
-### Configuration, Native Provisioning Scripts, Security Rules & Cloud Functions (`18` files)
+### Configuration, Native & Auth Provisioning Scripts, Security Rules & Cloud Functions (`19` files)
 - `.env.example`
 - `android/app/google-services.json.example`
 - `android/app/proguard-rules.pro`
@@ -174,6 +177,7 @@ Verified directly from `git diff --diff-filter=A --name-only c444e6d..HEAD` on `
 - `ios/Runner/GoogleService-Info.plist.example`
 - `scripts/fetch_firebase_configs.ps1`
 - `scripts/generate_upload_keystore.ps1`
+- `scripts/provision_firebase_auth.ps1`
 - `scripts/run_emulators_tests.ps1`
 - `storage.rules`
 - `functions/package.json`
@@ -226,11 +230,12 @@ All metrics below were executed and verified on Windows PowerShell 5.1 (`Flutter
 
 | Check / Suite | Exact Command | Exit Code | Observed Result |
 | :--- | :--- | :---: | :--- |
+| **Firebase Auth Live Provisioning & Domain Verification** | `powershell -ExecutionPolicy Bypass -File scripts/provision_firebase_auth.ps1` | `0` | Provisioned `"auth": { "providers": { "emailPassword": true } }`, verified Identity Toolkit `signIn.email.enabled == true`, added `127.0.0.1` & `localhost` to `authorizedDomains`, and verified public endpoint HTTP `200`. |
 | **Live Firebase Firestore & Storage Emulator Rules Suite** | `powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1` | `0` | **`10 / 10` live suites passed (`100%`, `0` failed)** via `@firebase/rules-unit-testing@6.0.0` against live `firestore.rules` (`2,552` lines) & `storage.rules` (unauth denials, `users/{uid}` empty-phone Email / empty-name Phone OTP create + invalid-phone/verify blocks, `work_request_secrets` lockdown, `work_request_handover_view` requester ACL, `provider_profiles`, `provider_verifications`, `work_requests`, `work_offers`, `ratings`, and `storage.rules`). |
 | **Cloud Functions TypeScript Build** | `npm run build` (`tsc` in `functions/`) | `0` | Compiled cleanly (`0` tracked artifacts in `functions/lib/` or `node_modules/`). |
 | **Cloud Functions Security & Erasure Suite** | `npm test` (`node --test test/backend_security.test.mjs`) | `0` | **`11 / 11` passed (`0` failed)** covering crypto, auth, state machine, handover attempts/TTL/reuse, settlement immutability, ratings, admin RBAC/audits, and `deleteUserAccount` active-order guards & full purge. |
 | **Dart Static Analysis** | `flutter analyze` | `0` | **`No issues found!`** (`0` errors, `0` warnings). |
-| **Flutter Unit, Repo, Media, Phone Auth & Widget Suite** | `flutter test` | `0` | **`139 / 139` passed (`0` failed)** (`All tests passed!`), including default-Firebase `initializeMashwarStartup()`, bilingual Email+Password error mapping, Firestore `permission-denied` doc tolerance, and `EmailInputScreen` phone switch / Arabic error rendering. |
+| **Flutter Unit, Repo, Media, Phone Auth & Widget Suite** | `flutter test` | `0` | **`141 / 141` passed (`0` failed)** (`All tests passed!`), including default-Firebase `initializeMashwarStartup()`, `configuration-not-found`/`unauthorized-domain` mapping, `PhoneInputScreen` -> `EmailInputScreen` stale-error clearing, Firestore `permission-denied` doc tolerance, and `EmailInputScreen` phone switch / Arabic error rendering. |
 | **Production Web Release Builds (Consumer & Admin)** | `flutter build web --release; flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin` | `0` | Both `build/web` and `build/web/admin` compiled cleanly (`--dart-define=APP_ENV=production --dart-define=USE_FIREBASE=true` configured in `.github/workflows/mashwar_ci_cd.yml`). |
 
 *(Note: On Windows hosts where Windows Developer Mode symlink support is disabled, `flutter pub get` still downloads and resolves all Dart/Web packages cleanly (`Got dependencies!`), then emits exit `1` only for Windows desktop `.plugin_symlinks` creation; `flutter analyze --no-pub`, `flutter test --no-pub`, and `flutter build web --release` execute cleanly with exit `0`.)*
@@ -304,7 +309,8 @@ Push-Location functions; npm install; npm run build; npm test; Pop-Location
 # 2. Run Live Firestore & Storage Emulator Rules Suite (OpenJDK 21 + firebase-tools)
 powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1
 
-# 3. Provision Gitignored Native Firebase Configs & Upload Keystore (for local Android/iOS builds)
+# 3. Provision Firebase Auth (Email/Password + localhost/127.0.0.1) and Gitignored Native Configs
+powershell -ExecutionPolicy Bypass -File scripts/provision_firebase_auth.ps1
 powershell -ExecutionPolicy Bypass -File scripts/fetch_firebase_configs.ps1
 powershell -ExecutionPolicy Bypass -File scripts/generate_upload_keystore.ps1
 
@@ -354,6 +360,7 @@ flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBA
 - [x] Install OpenJDK 21 LTS + `firebase-tools` and verify `10/10` live `firestore.rules` + `storage.rules` emulator test suites (`scripts/run_emulators_tests.ps1`).
 - [x] Register native Firebase apps (`com.mashwar.app.mashwar` & `qa.mashwar.app`), add Android release keystore signing (`key.properties` + `proguard-rules.pro`), populate iOS `Info.plist` permission strings, and author Qatar PDPL compliance screens + release playbook (`docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md`).
 - [x] Add `firebase_storage` + `image_picker` (`MediaUploadService`) for direct KYC/invoice/proof uploads, `+974` Firebase Phone Auth, `url_launcher` (`tel:999`), and server-side `deleteUserAccount` callable + `DeleteAccountScreen`.
+- [x] Provision Firebase Authentication (`emailPassword: true` in `firebase.json` + `scripts/provision_firebase_auth.ps1`) and verify `127.0.0.1`/`localhost` in `authorizedDomains` via live Identity Toolkit API (`HTTP 200`).
 - [ ] Enable Firebase Blaze billing, `+974`-only SMS region allowlist, Android SHA-1/SHA-256 + iOS APNs `.p8` + reCAPTCHA Enterprise in Firebase Console, and verify OTP delivery on physical Qatar SIMs.
 - [ ] Build signed `.aab` / `.ipa` store artifacts on Android SDK / macOS Xcode release hosts and submit to Google Play Console & App Store Connect.
 - [ ] Complete Qatar MoCI Single Window (`investor.sw.gov.qa`) trademark search and registration (Nice Classes 35, 39, 42) for **MASHWAR / مشوار**.
@@ -364,7 +371,7 @@ flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBA
 | MVP Capability / Invariant | Implementation Files | Server / Security Enforcement | Automated Test Evidence |
 | :--- | :--- | :--- | :--- |
 | **Environment Flavors & Fail-Closed Startup** | `lib/core/config/app_environment.dart`, `lib/main.dart`, `.env.example` | `resolveUseDevMocks` blocks mocks in staging/prod/Firebase; `ServiceUnavailableScreen` | `test/mvp_models_and_auth_test.dart`, `test/mvp_worksite_provider_and_repo_test.dart` |
-| **Neutral User Defaults, Email Auth & `+974` Phone Auth** | `lib/data/models/user_model.dart`, `lib/state/auth_provider.dart`, `lib/data/repositories/implementations/firebase/firebase_auth_repository.dart`, `lib/screens/auth/{welcome,email_input,phone_input,otp_verification}_screen.dart` | `firestore.rules` (`users/{uid}` blocks self-verify & balance edits); `+974` E.164 validation & Firebase Phone Auth error mapping | `test/mvp_models_and_auth_test.dart`, `test/email_auth_test.dart`, `test/mvp_media_phone_and_account_test.dart` |
+| **Neutral User Defaults, Email Auth & `+974` Phone Auth** | `firebase.json`, `scripts/provision_firebase_auth.ps1`, `lib/data/models/user_model.dart`, `lib/state/auth_provider.dart`, `lib/data/repositories/implementations/firebase/firebase_auth_repository.dart`, `lib/screens/auth/{welcome,email_input,phone_input,otp_verification}_screen.dart` | Identity Toolkit `signIn.email` & `authorizedDomains` (`127.0.0.1`, `localhost`), `firestore.rules` (`users/{uid}` blocks self-verify & balance edits); `+974` E.164 validation & error mapping/clearing | `test/mvp_models_and_auth_test.dart`, `test/email_auth_test.dart`, `test/mvp_media_phone_and_account_test.dart` |
 | **Integer QAR `MoneyMinor` (`1 QAR = 100 dirhams`)** | `lib/data/models/worksite_models.dart` | `functions/src/handlers.ts` (`requirePositiveInt` / `requireNonNegativeInt`), `firestore.rules` (`is int`) | `test/mvp_models_and_auth_test.dart`, `functions/test/backend_security.test.mjs`, `functions/test/emulator_rules.test.mjs` |
 | **3-Step Worksite Request Creation, Media Upload & Quick Reorder** | `lib/screens/worksite/create_work_request_screen.dart`, `lib/data/services/media_upload_service.dart`, `lib/state/worksite_provider.dart` | `functions/src/handlers.ts` (`createWorkRequest`), `firestore.rules` (`work_requests` create rule), `storage.rules` (`<= 10 MB`, `image/*`) | `test/mvp_worksite_ui_test.dart`, `test/mvp_media_phone_and_account_test.dart`, `functions/test/emulator_rules.test.mjs` |
 | **Qatar Feed Filtering & Empty/Error/Retry States** | `lib/screens/worksite/work_requests_feed_screen.dart`, `lib/state/worksite_provider.dart`, `firestore.indexes.json` | `firestore.rules` (`work_requests` signed-in read; unauth denied) | `test/mvp_worksite_ui_test.dart`, `test/mvp_worksite_provider_and_repo_test.dart`, `functions/test/emulator_rules.test.mjs` |

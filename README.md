@@ -75,11 +75,11 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 ### Repository Layout
 ```text
 ├── .env.example                 # Environment & --dart-define template (zero secrets)
-├── firebase.json                # Firestore, Cloud Functions v2 (nodejs20), Storage & Emulator ports
+├── firebase.json                # Auth (Email/Password), Firestore, Cloud Functions v2 (nodejs20), Storage & Emulators
 ├── firestore.rules              # 2,552-line AST-optimized ruleset (Collections 1–19 + MVP Collections 20–29)
 ├── firestore.indexes.json       # 14 composite indexes (incl. Worksite Supply queries)
 ├── storage.rules                # Private KYC & participant-scoped invoice/proof image rules (<=10 MB)
-├── scripts/                     # Local automation (run_emulators_tests.ps1, fetch_firebase_configs.ps1, generate_upload_keystore.ps1)
+├── scripts/                     # Automation (provision_firebase_auth.ps1, run_emulators_tests.ps1, fetch_firebase_configs.ps1, generate_upload_keystore.ps1)
 ├── functions/                   # Firebase Cloud Functions v2 (TypeScript, europe-west1)
 │   ├── src/
 │   │   ├── types.ts             # Domain types, DTOs & error codes
@@ -122,6 +122,9 @@ Configured via compile-time `--dart-define` parameters (see [`.env.example`](.en
 flutter pub get
 Push-Location functions; npm install; Pop-Location
 
+# Idempotently provision Firebase Auth (Email/Password) and localhost/127.0.0.1 authorizedDomains
+powershell -ExecutionPolicy Bypass -File scripts/provision_firebase_auth.ps1
+
 # Optional (for native Android/iOS builds): fetch gitignored google-services.json & GoogleService-Info.plist
 # and generate gitignored android/upload-keystore.jks + android/key.properties
 powershell -ExecutionPolicy Bypass -File scripts/fetch_firebase_configs.ps1
@@ -149,7 +152,7 @@ flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=development -
 ### 4. Run Static Analysis, Unit/Widget Suites & Live Emulator Security Tests
 ```powershell
 flutter analyze --no-pub
-flutter test --no-pub                                           # 139/139 passing
+flutter test --no-pub                                           # 141/141 passing (incl. Auth error mapping & cross-screen clearing)
 Push-Location functions; npm run build; npm test; Pop-Location  # 11/11 passing
 powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1  # 10/10 live Firestore + Storage suites passing
 flutter build web --release                                     # Production consumer web bundle

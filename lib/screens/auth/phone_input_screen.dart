@@ -220,6 +220,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   child: TextButton.icon(
                     icon: const Icon(Icons.mail_outline_rounded, size: 18, color: AppColors.navy),
                     onPressed: () {
+                      context.read<AuthProvider>().clearError();
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(builder: (_) => const EmailInputScreen()),
                       );
@@ -363,6 +364,10 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                       selection: TextSelection.collapsed(offset: normalized.length),
                     );
                   }
+                  final authProvider = context.read<AuthProvider>();
+                  if (authProvider.lastError != null) {
+                    authProvider.clearError();
+                  }
                   setState(() => _errorText = null);
                 },
               ),
@@ -373,6 +378,10 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
               IconButton(
                 icon: const Icon(Icons.cancel_rounded, color: AppColors.textSecondary, size: 20),
                 onPressed: () {
+                  final authProvider = context.read<AuthProvider>();
+                  if (authProvider.lastError != null) {
+                    authProvider.clearError();
+                  }
                   setState(() {
                     _phoneController.clear();
                     _errorText = null;
@@ -430,6 +439,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
                 onPressed: () {
+                  context.read<AuthProvider>().clearError();
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
                         builder: (_) =>

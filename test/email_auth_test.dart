@@ -206,6 +206,80 @@ void main() {
     );
 
     testWidgets(
+      'Switching from PhoneInputScreen to EmailInputScreen after recording an AuthProvider error clears auth_error_banner, and typing clears stale error',
+      (WidgetTester tester) async {
+        final fakeFbAuth = _ErrorThrowingFirebaseAuth();
+        final repo = FirebaseAuthRepository.withUserStore(
+          firebaseAuth: fakeFbAuth,
+          userStore: _NoopUserStore(),
+          isWebOverride: true,
+        );
+        final auth = AuthProvider(
+          authRepository: repo,
+          useDevMockAuth: false,
+        );
+
+        await tester.pumpWidget(
+          buildAppWidget(child: const PhoneInputScreen(), auth: auth),
+        );
+        await tester.pumpAndSettle();
+
+        // Trigger a PhoneInputScreen auth error recorded in AuthProvider
+        final sendBtn = find.text('إرسال الرمز');
+        await tester.ensureVisible(sendBtn);
+        await tester.tap(sendBtn);
+        await tester.pumpAndSettle();
+
+        expect(auth.lastError, isNotNull);
+        expect(
+          find.byKey(const ValueKey('phone_auth_error_banner')),
+          findsOneWidget,
+        );
+
+        // Switch via bottom CTA -> EmailInputScreen must open with zero stale error banner
+        final toEmailBtn =
+            find.text('المتابعة بالبريد الإلكتروني بدلاً من ذلك');
+        await tester.ensureVisible(toEmailBtn);
+        await tester.tap(toEmailBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(EmailInputScreen), findsOneWidget);
+        expect(auth.lastError, isNull);
+        expect(
+          find.byKey(const ValueKey('auth_error_banner')),
+          findsNothing,
+        );
+
+        // Record an error on EmailInputScreen, then type in email field -> clears stale error
+        await tester.enterText(
+          find.byKey(const ValueKey('auth_email_input')),
+          'wrong@mashwar.qa',
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('auth_password_input')),
+          'badpass123',
+        );
+        final submitBtn = find.byKey(const ValueKey('auth_submit_btn'));
+        await tester.ensureVisible(submitBtn);
+        await tester.tap(submitBtn);
+        await tester.pumpAndSettle();
+
+        expect(auth.lastError, isNotNull);
+        expect(find.byKey(const ValueKey('auth_error_banner')), findsOneWidget);
+
+        await tester.enterText(
+          find.byKey(const ValueKey('auth_email_input')),
+          'retry@mashwar.qa',
+        );
+        await tester.pumpAndSettle();
+
+        expect(auth.lastError, isNull);
+        expect(find.byKey(const ValueKey('auth_error_banner')), findsNothing);
+        auth.dispose();
+      },
+    );
+
+    testWidgets(
       'EmailInputScreen renders clean Arabic localizedError without exception prefixes and shows phone switch CTA when isPhoneAuthAvailable is true',
       (WidgetTester tester) async {
         final fakeFbAuth = _ErrorThrowingFirebaseAuth();
@@ -289,6 +363,17 @@ class _ErrorThrowingFirebaseAuth implements fb_auth.FirebaseAuth {
     throw fb_auth.FirebaseAuthException(
       code: 'invalid-credential',
       message: 'The supplied auth credential is incorrect.',
+    );
+  }
+
+  @override
+  Future<fb_auth.ConfirmationResult> signInWithPhoneNumber(
+    String phoneNumber, [
+    fb_auth.RecaptchaVerifier? verifier,
+  ]) async {
+    throw fb_auth.FirebaseAuthException(
+      code: 'internal-error',
+      message: 'An internal error has occurred. [ CONFIGURATION_NOT_FOUND ]',
     );
   }
 

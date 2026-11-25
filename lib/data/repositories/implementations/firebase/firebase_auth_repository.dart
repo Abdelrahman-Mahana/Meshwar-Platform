@@ -176,6 +176,18 @@ class FirebaseAuthRepository implements IAuthRepository {
     bool isEmailFlow = false,
   }) {
     final code = e.code.trim().toLowerCase();
+    final rawMessageUpper = (e.message ?? '').toUpperCase();
+    if (code == 'configuration-not-found' ||
+        rawMessageUpper.contains('CONFIGURATION_NOT_FOUND')) {
+      return const AuthException(
+        code: 'configuration-not-found',
+        suggestEmailFallback: false,
+        messageAr:
+            'خدمة المصادقة (Firebase Authentication) غير مهيأة بعد في إعدادات المشروع السحابي. يرجى تفعيل Authentication ومزود البريد الإلكتروني في Firebase Console.',
+        messageEn:
+            'Firebase Authentication is not initialized for this project yet. Enable Authentication and Email/Password sign-in in Firebase Console.',
+      );
+    }
     switch (code) {
       case 'email-already-in-use':
         return const AuthException(
@@ -338,6 +350,15 @@ class FirebaseAuthRepository implements IAuthRepository {
               'تعذّر إتمام فحص الأمان (reCAPTCHA / App Check) لرسائل الجوال. يمكنك المتابعة بالبريد الإلكتروني وكلمة المرور.',
           messageEn:
               'Phone verification security check could not complete. Please sign in with Email & Password instead.',
+        );
+      case 'unauthorized-domain':
+        return const AuthException(
+          code: 'unauthorized-domain',
+          suggestEmailFallback: false,
+          messageAr:
+              'النطاق الحالي غير مضاف إلى النطاقات المصرح بها (Authorized Domains) في Firebase Authentication.',
+          messageEn:
+              'This domain is not listed in Firebase Authentication Authorized Domains.',
         );
       default:
         if (isEmailFlow) {

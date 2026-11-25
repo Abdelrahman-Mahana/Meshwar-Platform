@@ -271,6 +271,7 @@ class WelcomeScreen extends StatelessWidget {
             icon: const Icon(Icons.mail_outline_rounded,
                 size: 20, color: Colors.white),
             onPressed: () {
+              auth.clearError();
               Navigator.of(context).push(
                 MashwarPageRoute(
                   builder: (_) =>
@@ -289,6 +290,7 @@ class WelcomeScreen extends StatelessWidget {
             icon: const Icon(Icons.person_add_alt_1_rounded,
                 size: 19, color: AppColors.navy),
             onPressed: () {
+              auth.clearError();
               Navigator.of(context).push(
                 MashwarPageRoute(
                   builder: (_) =>
@@ -313,6 +315,7 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               onPressed: () {
+                auth.clearError();
                 Navigator.of(context).push(
                   MashwarPageRoute(builder: (_) => const PhoneInputScreen()),
                 );
@@ -375,6 +378,7 @@ class WelcomeScreen extends StatelessWidget {
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       onPressed: () {
+                        auth.clearError();
                         Navigator.of(context).push(
                           MashwarPageRoute(
                             builder: (_) =>

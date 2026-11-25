@@ -161,7 +161,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () {
+            context.read<AuthProvider>().clearError();
+            Navigator.of(context).maybePop();
+          },
         ),
       ),
       body: SafeArea(
@@ -282,6 +285,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                     icon: const Icon(Icons.mail_outline_rounded,
                         size: 17, color: AppColors.navy),
                     onPressed: () {
+                      auth.clearError();
                       Navigator.of(context).pushReplacement(
                         MaterialPageRoute(
                           builder: (_) =>
@@ -345,7 +349,10 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         ),
         const SizedBox(width: 8),
         InkWell(
-          onTap: () => Navigator.of(context).pop(),
+          onTap: () {
+            context.read<AuthProvider>().clearError();
+            Navigator.of(context).pop();
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Text(

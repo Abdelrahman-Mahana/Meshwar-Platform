@@ -387,8 +387,10 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                         prefixIcon: const Icon(Icons.person_outline_rounded,
                             color: AppColors.navy),
                       ),
-                      onChanged: (_) =>
-                          setState(() => _validationError = null),
+                      onChanged: (_) {
+                        if (auth.lastError != null) auth.clearError();
+                        setState(() => _validationError = null);
+                      },
                     ),
                     const SizedBox(height: 14),
 
@@ -411,8 +413,10 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                           prefixIcon: Icon(Icons.phone_iphone_rounded,
                               color: AppColors.navy),
                         ),
-                        onChanged: (_) =>
-                            setState(() => _validationError = null),
+                        onChanged: (_) {
+                          if (auth.lastError != null) auth.clearError();
+                          setState(() => _validationError = null);
+                        },
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -435,8 +439,10 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                         prefixIcon: Icon(Icons.mail_outline_rounded,
                             color: AppColors.navy),
                       ),
-                      onChanged: (_) =>
-                          setState(() => _validationError = null),
+                      onChanged: (_) {
+                        if (auth.lastError != null) auth.clearError();
+                        setState(() => _validationError = null);
+                      },
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -468,8 +474,10 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                               () => _obscurePassword = !_obscurePassword),
                         ),
                       ),
-                      onChanged: (_) =>
-                          setState(() => _validationError = null),
+                      onChanged: (_) {
+                        if (auth.lastError != null) auth.clearError();
+                        setState(() => _validationError = null);
+                      },
                     ),
                   ),
 
@@ -492,8 +500,10 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                           prefixIcon: Icon(Icons.lock_reset_rounded,
                               color: AppColors.navy),
                         ),
-                        onChanged: (_) =>
-                            setState(() => _validationError = null),
+                        onChanged: (_) {
+                          if (auth.lastError != null) auth.clearError();
+                          setState(() => _validationError = null);
+                        },
                       ),
                     ),
                   ] else ...[
@@ -553,6 +563,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                         icon: const Icon(Icons.phone_iphone_rounded,
                             size: 18, color: AppColors.navy),
                         onPressed: () {
+                          auth.clearError();
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                                 builder: (_) => const PhoneInputScreen()),
