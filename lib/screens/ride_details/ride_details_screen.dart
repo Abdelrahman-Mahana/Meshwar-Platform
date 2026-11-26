@@ -9,6 +9,7 @@ import '../../core/widgets/alert_banner.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/ride_model.dart';
 import '../../data/models/user_model.dart';
@@ -333,45 +334,14 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           children: [
             Row(
               children: [
-                Stack(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: AppColors.cobaltSurface,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.cobalt.withValues(alpha: 0.25),
-                          width: 1.5,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        widget.ride.driverName.isNotEmpty
-                            ? widget.ride.driverName[0]
-                            : 'M',
-                        style: AppTypography.title(color: AppColors.cobalt)
-                            .copyWith(fontSize: 21),
-                      ),
-                    ),
-                    PositionedDirectional(
-                      bottom: 0,
-                      end: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.verified_rounded,
-                          size: 14,
-                          color: AppColors.emerald,
-                        ),
-                      ),
-                    ),
-                  ],
+                MashwarUserAvatar(
+                  avatarUrl: null,
+                  fullName: widget.ride.driverName,
+                  size: 54,
+                  borderWidth: 2.0,
+                  borderColor: AppColors.gold,
+                  autoCommunityPortrait: true,
+                  showVerifiedBadge: widget.ride.isVerified,
                 ),
                 const SizedBox(width: AppDimens.space12),
                 Expanded(

@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_onboarding_shell.dart';
+import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/user_model.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
@@ -25,6 +26,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
   UserGender _selectedGender = UserGender.male;
   String _selectedGovernorate = 'بلدية الدوحة';
+  String? _selectedAvatarUrl;
 
   String? _firstNameError;
   String? _lastNameError;
@@ -57,6 +59,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   void initState() {
     super.initState();
     final auth = context.read<AuthProvider>();
+    _selectedAvatarUrl = auth.user.avatarUrl;
     if (auth.email != null && auth.email!.isNotEmpty) {
       _emailController.text = auth.email!;
     }
@@ -125,6 +128,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             gender: _selectedGender,
             governorate: _selectedGovernorate,
             email: email.isNotEmpty ? email : null,
+            avatarUrl: _selectedAvatarUrl,
           );
 
       Navigator.of(context).pushAndRemoveUntil(
@@ -140,9 +144,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     final isAr = settings.isArabic;
     final govList = isAr ? _governoratesAr : _governoratesEn;
 
-    final initialChar = _firstNameController.text.trim().isNotEmpty
-        ? _firstNameController.text.trim()[0]
-        : (isAr ? 'م' : 'M');
+    final previewFullName =
+        '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
+            .trim();
 
     return Scaffold(
       backgroundColor: const Color(0xFFFCFCFD),
@@ -211,45 +215,46 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
                                   const SizedBox(height: 28),
 
-                                  // Avatar placeholder (Uber style with Brand Gold accent)
+                                  // Interactive Profile Photo Picker
                                   Center(
-                                    child: Stack(
+                                    child: Column(
                                       children: [
-                                        Container(
-                                          width: 84,
-                                          height: 84,
-                                          decoration: BoxDecoration(
-                                            color: AppColors.goldSurface,
-                                            shape: BoxShape.circle,
-                                            border: Border.all(color: AppColors.gold, width: 2.0),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              initialChar,
-                                              style: const TextStyle(
-                                                fontSize: 32,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppColors.navy,
-                                                fontFamily: 'Cairo',
-                                              ),
-                                            ),
+                                        MashwarUserAvatar(
+                                          key: const ValueKey('profile_setup_avatar_btn'),
+                                          avatarUrl: _selectedAvatarUrl,
+                                          fullName: previewFullName.isNotEmpty
+                                              ? previewFullName
+                                              : (isAr ? 'عضو مشوار' : 'Member'),
+                                          size: 88,
+                                          borderWidth: 2.6,
+                                          borderColor: AppColors.gold,
+                                          showCameraBadge: true,
+                                          onTap: () {
+                                            showMashwarAvatarPickerSheet(
+                                              context,
+                                              currentAvatarUrl: _selectedAvatarUrl,
+                                              fullName: previewFullName,
+                                              onAvatarSelected: (picked) {
+                                                setState(() => _selectedAvatarUrl = picked);
+                                              },
+                                            );
+                                          },
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          isAr
+                                              ? 'اضغط لإضافة صورتك الشخصية (اختياري)'
+                                              : 'Tap to add your profile photo (optional)',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.teal,
+                                            fontFamily: 'Cairo',
                                           ),
                                         ),
-                                      PositionedDirectional(
-                                        bottom: 0,
-                                        end: 0,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.navy,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
 
                                 const SizedBox(height: 28),
 

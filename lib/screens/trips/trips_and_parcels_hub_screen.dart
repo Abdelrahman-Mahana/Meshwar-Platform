@@ -8,6 +8,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_chip.dart';
+import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../data/models/ride_model.dart';
@@ -279,7 +280,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
     final hasRoute = activeFrom.isNotEmpty || activeTo.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFBF8),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -344,7 +345,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
               child: FilledButton.icon(
                 key: const ValueKey('hub_open_composer_btn'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.navy,
+                  backgroundColor: AppColors.cobalt,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: EdgeInsets.symmetric(
@@ -803,6 +804,136 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
     );
   }
 
+  Widget _buildHubVisualBanner({
+    required BuildContext context,
+    required bool isTripsTab,
+    required int count,
+    required bool isAr,
+    required bool isWide,
+  }) {
+    final imageAsset = isTripsTab
+        ? 'assets/images/pillar_shared_trips.jpg'
+        : 'assets/images/pillar_route_parcels.jpg';
+    final badgeText = isTripsTab
+        ? (isAr ? '$count رحلات نشطة الآن' : '$count Active Trips')
+        : (isAr ? '$count طلبات مسار وطرود' : '$count Open Route Requests');
+    final headline = isTripsTab
+        ? (isAr
+            ? 'سافر بمقاعد تشاركية مريحة أو شارك مقاعد سيارتك الشاغرة'
+            : 'Book Verified Shared Seats or Share Your Empty Car Seats')
+        : (isAr
+            ? 'أرسل طردك مع مسافر على نفس الخط بتأكيد مزدوج OTP'
+            : 'Send Parcels Faster Along Active Routes with Dual OTP');
+    final ctaLabel = isTripsTab
+        ? (isAr ? 'انشر رحلتك' : 'Publish Trip')
+        : (isAr ? 'أرسل طرداً' : 'Send Parcel');
+
+    final uncroppedBannerImage = SizedBox(
+      width: isWide ? 148 : 108,
+      child: AspectRatio(
+        aspectRatio: 1376 / 768,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.asset(
+            imageAsset,
+            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            errorBuilder: (_, __, ___) => Container(
+              color: AppColors.navy,
+              child: const Center(
+                child:
+                    Icon(Icons.route_rounded, color: AppColors.gold, size: 24),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.navy,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          uncroppedBannerImage,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  badgeText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(color: AppColors.gold)
+                      .copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  headline,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.body(color: Colors.white).copyWith(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isWide) ...[
+            const SizedBox(width: 10),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.gold,
+                foregroundColor: AppColors.navy,
+                elevation: 0,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => isTripsTab
+                        ? const PublishRideScreen()
+                        : const SendParcelScreen(),
+                  ),
+                );
+              },
+              icon: Icon(
+                isTripsTab
+                    ? Icons.add_road_rounded
+                    : Icons.local_shipping_outlined,
+                size: 15,
+                color: AppColors.navy,
+              ),
+              label: Text(
+                ctaLabel,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11.5,
+                  fontFamily: 'Cairo',
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildTripsFeed({
     required Key key,
     required List<RideModel> trips,
@@ -853,11 +984,21 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
       return ListView.builder(
         key: key,
         padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 88),
-        itemCount: trips.length,
+        itemCount: trips.length + 1,
         itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildHubVisualBanner(
+              context: context,
+              isTripsTab: true,
+              count: trips.length,
+              isAr: isAr,
+              isWide: false,
+            );
+          }
+          final tripIdx = index - 1;
           return Padding(
             padding: const EdgeInsets.only(bottom: 14),
-            child: _buildTripCard(context, trips[index], isAr, index),
+            child: _buildTripCard(context, trips[tripIdx], isAr, tripIdx),
           );
         },
       );
@@ -867,8 +1008,18 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
     return ListView.builder(
       key: key,
       padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 88),
-      itemCount: rowCount,
-      itemBuilder: (context, rowIdx) {
+      itemCount: rowCount + 1,
+      itemBuilder: (context, itemIdx) {
+        if (itemIdx == 0) {
+          return _buildHubVisualBanner(
+            context: context,
+            isTripsTab: true,
+            count: trips.length,
+            isAr: isAr,
+            isWide: true,
+          );
+        }
+        final rowIdx = itemIdx - 1;
         final first = rowIdx * 2;
         final second = first + 1;
         return Padding(
@@ -1057,22 +1208,13 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
             // Traveler Info + Remaining Seats + Parcel Capability Badges
             Row(
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.cobaltSurface,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.cobalt.withValues(alpha: 0.25),
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    ride.driverName.isNotEmpty ? ride.driverName[0] : 'M',
-                    style: AppTypography.title(color: AppColors.cobalt)
-                        .copyWith(fontSize: 15),
-                  ),
+                MashwarUserAvatar(
+                  avatarUrl: null,
+                  fullName: ride.driverName,
+                  size: 42,
+                  borderWidth: 1.8,
+                  borderColor: AppColors.gold,
+                  autoCommunityPortrait: true,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1420,11 +1562,21 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
       return ListView.builder(
         key: key,
         padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 88),
-        itemCount: requests.length,
+        itemCount: requests.length + 1,
         itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildHubVisualBanner(
+              context: context,
+              isTripsTab: false,
+              count: requests.length,
+              isAr: isAr,
+              isWide: false,
+            );
+          }
+          final reqIdx = index - 1;
           return Padding(
             padding: const EdgeInsets.only(bottom: 14),
-            child: _buildRequestCard(context, requests[index], isAr, index),
+            child: _buildRequestCard(context, requests[reqIdx], isAr, reqIdx),
           );
         },
       );
@@ -1434,8 +1586,18 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
     return ListView.builder(
       key: key,
       padding: EdgeInsets.fromLTRB(hPad, 14, hPad, 88),
-      itemCount: rowCount,
-      itemBuilder: (context, rowIdx) {
+      itemCount: rowCount + 1,
+      itemBuilder: (context, itemIdx) {
+        if (itemIdx == 0) {
+          return _buildHubVisualBanner(
+            context: context,
+            isTripsTab: false,
+            count: requests.length,
+            isAr: isAr,
+            isWide: true,
+          );
+        }
+        final rowIdx = itemIdx - 1;
         final first = rowIdx * 2;
         final second = first + 1;
         return Padding(
@@ -1504,11 +1666,13 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
             // Header: Requester Info + Service Type Tag
             Row(
               children: [
-                MashwarServicePillarIcon(
-                  pillar: isParcelOrErrand
-                      ? MashwarServicePillar.routeParcels
-                      : MashwarServicePillar.sharedTrips,
-                  size: 38,
+                MashwarUserAvatar(
+                  avatarUrl: null,
+                  fullName: ad.authorName,
+                  size: 40,
+                  borderWidth: 1.8,
+                  borderColor: accent,
+                  autoCommunityPortrait: true,
                 ),
                 const SizedBox(width: 10),
                 Expanded(

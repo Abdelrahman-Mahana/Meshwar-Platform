@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -8,9 +8,9 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/alert_banner.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/parcel_model.dart';
-import '../../state/parcels_provider.dart';
 import '../chat/chat_screen.dart';
 import 'parcel_dispute_screen.dart';
 import 'pickup_code_dialog.dart';
@@ -66,7 +66,7 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
         : null;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFBF8),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -133,10 +133,21 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                     MashwarSectionCard(
                       child: Row(
                         children: [
-                          const MashwarServicePillarIcon(
-                            pillar: MashwarServicePillar.routeParcels,
-                            size: 48,
-                          ),
+                          if (hasTraveler)
+                            MashwarUserAvatar(
+                              avatarUrl: null,
+                              fullName: widget.parcel.driverName,
+                              size: 48,
+                              borderWidth: 2.0,
+                              borderColor: AppColors.gold,
+                              autoCommunityPortrait: true,
+                              showVerifiedBadge: true,
+                            )
+                          else
+                            const MashwarServicePillarIcon(
+                              pillar: MashwarServicePillar.routeParcels,
+                              size: 48,
+                            ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(
@@ -347,6 +358,8 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
     required List<String> digits,
     required Color accentColor,
   }) {
+    final fullCode = digits.join();
+    final isAr = context.isArabic;
     return Column(
       children: [
         Text(
@@ -360,24 +373,59 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
           textDirection: TextDirection.ltr,
           child: Wrap(
             alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 8,
             runSpacing: 6,
-            children: digits.map((digit) {
-              return Container(
-                width: 44,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: accentColor,
-                  borderRadius: BorderRadius.circular(11),
+            children: [
+              ...digits.map((digit) {
+                return Container(
+                  width: 44,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    digit,
+                    style: AppTypography.title(color: Colors.white)
+                        .copyWith(fontSize: 20),
+                  ),
+                );
+              }),
+              IconButton(
+                tooltip: isAr ? 'نسخ الكود' : 'Copy OTP',
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: fullCode));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr
+                            ? 'تم نسخ الكود: $fullCode'
+                            : 'OTP copied: $fullCode',
+                      ),
+                      backgroundColor: AppColors.teal,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.sand,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.gold.withValues(alpha: 0.45),
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.copy_rounded,
+                    size: 17,
+                    color: accentColor,
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: Text(
-                  digit,
-                  style: AppTypography.title(color: Colors.white)
-                      .copyWith(fontSize: 20),
-                ),
-              );
-            }).toList(),
+              ),
+            ],
           ),
         ),
       ],
@@ -428,149 +476,41 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
     }
   }
 
-  void _advanceStatus(BuildContext context, ParcelStatusStep nextStep, String message) {
-    setState(() => _status = nextStep);
-    context.read<ParcelsProvider?>()?.updateParcelStatus(widget.parcel.id, nextStep);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.teal,
-      ),
-    );
-  }
-
   Widget _buildActionButton(
     BuildContext context,
     bool isAr, {
     required bool hasTraveler,
   }) {
     if (_status == ParcelStatusStep.requested) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MashwarButton(
-            key: const ValueKey('parcel_advance_step_btn'),
-            text: isAr
-                ? 'مطابقة فورية مع مسافر متجه على المسار'
-                : 'Match Instantly with Traveler on Route',
-            icon: const Icon(Icons.check_circle_outline_rounded,
-                color: Colors.white, size: 19),
-            onPressed: () => _advanceStatus(
-              context,
-              ParcelStatusStep.accepted,
-              isAr
-                  ? 'تمت مطابقة الطرد مع المسافر وتفعيل كود الاستلام OTP'
-                  : 'Parcel matched with traveler and Pickup OTP activated',
-            ),
-          ),
-          const SizedBox(height: 10),
-          MashwarButton(
-            text: isAr ? 'إلغاء طلب الشحن' : 'Cancel Parcel Request',
-            variant: MashwarButtonVariant.secondary,
-            onPressed: () => setState(() => _isCancelled = true),
-          ),
-        ],
+      return MashwarButton(
+        text: isAr ? 'إلغاء طلب الشحن' : 'Cancel Parcel Request',
+        variant: MashwarButtonVariant.secondary,
+        onPressed: () => setState(() => _isCancelled = true),
       );
     }
 
-    if (_status == ParcelStatusStep.accepted) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MashwarButton(
-            key: const ValueKey('parcel_advance_step_btn'),
-            text: isAr
-                ? 'تأكيد تسليم الطرد للمسافر بكود الاستلام (${widget.parcel.pickupOtp})'
-                : 'Confirm Handover to Traveler (OTP ${widget.parcel.pickupOtp})',
-            icon: const Icon(Icons.verified_user_rounded,
-                color: Colors.white, size: 19),
-            onPressed: () => _advanceStatus(
-              context,
-              ParcelStatusStep.handedOver,
-              isAr
-                  ? 'تم توثيق استلام الطرد بكود الاستلام OTP بنجاح'
-                  : 'Pickup OTP verified and parcel handed over',
+    if (_status == ParcelStatusStep.accepted ||
+        _status == ParcelStatusStep.handedOver) {
+      return MashwarButton(
+        text: hasTraveler
+            ? (isAr ? 'تواصل مع المسافر' : 'Contact Traveler')
+            : (isAr ? 'مشاركة تفاصيل الطرد' : 'Share Parcel Details'),
+        icon: const Icon(Icons.phone_rounded, color: Colors.white, size: 19),
+        onPressed: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isAr ? 'جاري فتح قناة التواصل...' : 'Connecting with traveler...',
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          MashwarButton(
-            text: hasTraveler
-                ? (isAr ? 'تواصل مع المسافر' : 'Contact Traveler')
-                : (isAr ? 'مشاركة تفاصيل الطرد' : 'Share Parcel Details'),
-            variant: MashwarButtonVariant.secondary,
-            icon: const Icon(Icons.phone_rounded, color: AppColors.navy, size: 18),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isAr ? 'جاري فتح قناة التواصل...' : 'Connecting with traveler...',
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      );
-    }
-
-    if (_status == ParcelStatusStep.handedOver) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          MashwarButton(
-            key: const ValueKey('parcel_advance_step_btn'),
-            text: isAr
-                ? 'تحديث الحالة: الطرد في الطريق للوجهة'
-                : 'Mark Parcel In Transit Along Route',
-            icon: const Icon(Icons.local_shipping_outlined,
-                color: Colors.white, size: 19),
-            onPressed: () => _advanceStatus(
-              context,
-              ParcelStatusStep.inTransit,
-              isAr
-                  ? 'الطرد الآن في الطريق نحو المستلم'
-                  : 'Parcel is now in transit to recipient',
-            ),
-          ),
-          const SizedBox(height: 10),
-          MashwarButton(
-            text: isAr ? 'تواصل مع المسافر' : 'Contact Traveler',
-            variant: MashwarButtonVariant.secondary,
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isAr ? 'جاري فتح قناة التواصل...' : 'Connecting with traveler...',
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+          );
+        },
       );
     }
 
     if (_status == ParcelStatusStep.inTransit) {
-      final dOtp = widget.parcel.deliveryOtp ?? '7394';
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          MashwarButton(
-            key: const ValueKey('parcel_advance_step_btn'),
-            text: isAr
-                ? 'تأكيد التسليم للمستلم بكود التسليم ($dOtp)'
-                : 'Confirm Delivery to Recipient (OTP $dOtp)',
-            icon: const Icon(Icons.task_alt_rounded,
-                color: Colors.white, size: 19),
-            onPressed: () => _advanceStatus(
-              context,
-              ParcelStatusStep.delivered,
-              isAr
-                  ? 'تم تسليم الطرد للمستلم بنجاح وتوثيق كود التسليم'
-                  : 'Parcel delivered to recipient and OTP verified',
-            ),
-          ),
-          const SizedBox(height: 10),
           MashwarButton(
             text: isAr ? 'مشاركة رابط التتبع' : 'Share Tracking Link',
             variant: MashwarButtonVariant.secondary,

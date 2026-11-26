@@ -8,6 +8,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/worksite_models.dart';
 import '../../state/auth_provider.dart';
@@ -221,7 +222,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
         _searchController.text.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFBF8),
+      backgroundColor: const Color(0xFFFCFCFD),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -774,6 +775,83 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
     );
   }
 
+  Widget _buildSupplyShowcaseBanner({
+    required BuildContext context,
+    required int totalCount,
+    required bool isAr,
+    required bool isWide,
+  }) {
+    return Container(
+      key: const ValueKey('supply_feed_showcase_banner'),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.navy,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: isWide ? 148 : 108,
+            child: AspectRatio(
+              aspectRatio: 1376 / 768,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  'assets/images/mvp_hero_lusail_supply.jpg',
+                  fit: BoxFit.cover,
+                  alignment: Alignment.center,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppColors.navy,
+                    child: const Center(
+                      child: Icon(
+                        Icons.handyman_rounded,
+                        color: AppColors.gold,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isAr
+                      ? '$totalCount طلبات توريد ومهام نشطة'
+                      : '$totalCount Active Supply & Errand Requests',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.label(color: AppColors.gold)
+                      .copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isAr
+                      ? 'شراء وتوريد بفاتورة أصلية موثّقة ورمز تسليم من 6 خانات'
+                      : 'Verified Receipt Purchasing & 6-Char Handover Code',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.body(color: Colors.white).copyWith(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFeedBody(
     BuildContext context,
     WorksiteProvider provider,
@@ -920,10 +998,19 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
             return ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(AppDimens.space16),
-              itemCount: displayed.length,
+              itemCount: displayed.length + 1,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) =>
-                  _buildRequestCard(context, displayed[index], isAr),
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return _buildSupplyShowcaseBanner(
+                    context: context,
+                    totalCount: displayed.length,
+                    isAr: isAr,
+                    isWide: false,
+                  );
+                }
+                return _buildRequestCard(context, displayed[index - 1], isAr);
+              },
             );
           }
 
@@ -931,8 +1018,17 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
           return ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(AppDimens.space16),
-            itemCount: rowCount,
-            itemBuilder: (context, rowIdx) {
+            itemCount: rowCount + 1,
+            itemBuilder: (context, itemIdx) {
+              if (itemIdx == 0) {
+                return _buildSupplyShowcaseBanner(
+                  context: context,
+                  totalCount: displayed.length,
+                  isAr: isAr,
+                  isWide: true,
+                );
+              }
+              final rowIdx = itemIdx - 1;
               final i1 = rowIdx * 2;
               final i2 = i1 + 1;
               return Padding(
@@ -1128,6 +1224,33 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
             runSpacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MashwarUserAvatar(
+                    avatarUrl: null,
+                    fullName: req.requesterName.isNotEmpty
+                        ? req.requesterName
+                        : 'عضو مشوار',
+                    size: 22,
+                    borderWidth: 1.2,
+                    borderColor: AppColors.gold,
+                    autoCommunityPortrait: true,
+                  ),
+                  const SizedBox(width: 5),
+                  Flexible(
+                    child: Text(
+                      req.requesterName.isNotEmpty
+                          ? req.requesterName
+                          : (isAr ? 'طالب الخدمة' : 'Requester'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ],
+              ),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

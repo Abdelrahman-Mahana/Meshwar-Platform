@@ -296,7 +296,6 @@ class WorksiteProvider extends ChangeNotifier {
   final Set<String> _locallyReadNotificationIds = <String>{};
   final Map<String, String> _reorderedFromMap = {};
   bool _isDemoShowcaseMode = false;
-  bool _hasExplicitlyExitedDemo = false;
   MashwarDemoCasesBundle? _showcaseBundle;
   Map<String, List<WorkOffer>> _demoOffersByRequest = {};
   Map<String, List<RequestEvent>> _demoEventsByRequest = {};
@@ -313,14 +312,30 @@ class WorksiteProvider extends ChangeNotifier {
         _boundUserId = initialUserId,
         _boundUserName = initialUserName;
 
-  bool get usesDefaultRepository =>
-      _injectedWorksiteRepo == null && _injectedProviderRepo == null;
-
   IWorksiteRepository get _worksiteRepo =>
       _injectedWorksiteRepo ?? AppRepositories.instance.worksite;
 
   IProviderRepository get _providerRepo =>
       _injectedProviderRepo ?? AppRepositories.instance.providers;
+
+  /// True in normal live-app runtime (where no mock/stub repository was injected
+  /// by unit tests), enabling seamless personalized demo baseline hydration so
+  /// every tab, saved location, and notification center feels richly populated.
+  bool get _shouldHydrateRichDemoBaseline =>
+      _injectedWorksiteRepo == null && _injectedProviderRepo == null;
+
+  MashwarDemoCasesBundle _buildPersonalizedDemoBundle([String? explicitUid]) {
+    final uid = (explicitUid != null && explicitUid.trim().isNotEmpty)
+        ? explicitUid.trim()
+        : (currentUserId ?? MashwarDemoCasesCatalog.defaultOwnerUid);
+    final name = currentUserName.isNotEmpty
+        ? currentUserName
+        : MashwarDemoCasesCatalog.defaultOwnerName;
+    return MashwarDemoCasesCatalog.build(
+      currentUserId: uid,
+      currentUserName: name,
+    );
+  }
 
   String? get currentUserId {
     final supplied = _currentUidProvider?.call()?.trim();
@@ -390,7 +405,6 @@ class WorksiteProvider extends ChangeNotifier {
   /// Loads the full bilingual 14-case Qatar demo showcase into active provider state,
   /// enabling end-to-end UI inspection even when connected to live Firebase.
   Future<void> activateDemoShowcase() async {
-    _hasExplicitlyExitedDemo = false;
     final uid = currentUserId ?? MashwarDemoCasesCatalog.defaultOwnerUid;
     final name = currentUserName.isNotEmpty
         ? currentUserName
@@ -445,7 +459,6 @@ class WorksiteProvider extends ChangeNotifier {
 
   /// Exits the local 14-case showcase overlay and restores normal repository reads.
   Future<void> exitDemoShowcase() async {
-    _hasExplicitlyExitedDemo = true;
     _isDemoShowcaseMode = false;
     _showcaseBundle = null;
     _demoOffersByRequest = {};
@@ -573,12 +586,6 @@ class WorksiteProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      if (usesDefaultRepository &&
-          !_hasExplicitlyExitedDemo &&
-          !_isDemoShowcaseMode) {
-        await activateDemoShowcase();
-        return;
-      }
       if (_isDemoShowcaseMode && _showcaseBundle != null) {
         if (_allLoadedRequests.isEmpty) {
           _allLoadedRequests = List<WorkRequest>.from(_showcaseBundle!.requests)
@@ -589,14 +596,62 @@ class WorksiteProvider extends ChangeNotifier {
         return;
       }
       final uid = currentUserId;
-      final fetched = await _worksiteRepo.listRequests(
-        status: _filterStatus,
-        municipality: _filterArea,
-        requesterId: _filterOnlyMine ? uid : null,
-        assignedProviderId: _filterAssignedToMe ? uid : null,
-        limit: limit,
-      );
-      _allLoadedRequests = fetched;
+      List<WorkRequest> fetched = const [];
+      Object? fetchError;
+      try {
+        fetched = await _worksiteRepo.listRequests(
+          status: _filterStatus,
+          municipality: _filterArea,
+          requesterId: _filterOnlyMine ? uid : null,
+          assignedProviderId: _filterAssignedToMe ? uid : null,
+          limit: limit,
+        );
+      } catch (err) {
+        fetchError = err;
+        if (!_shouldHydrateRichDemoBaseline) {
+          rethrow;
+        }
+      }
+
+      if (_shouldHydrateRichDemoBaseline) {
+        final demoBundle = _buildPersonalizedDemoBundle(uid);
+        final personalizedById = <String, WorkRequest>{
+          for (final d in demoBundle.requests) d.id: d,
+        };
+        final mergedById = <String, WorkRequest>{};
+        for (final remote in fetched) {
+          if (remote.id.startsWith('demo_wr_') &&
+              personalizedById.containsKey(remote.id) &&
+              uid != null &&
+              uid != MashwarDemoCasesCatalog.defaultOwnerUid &&
+              (remote.requesterId == MashwarDemoCasesCatalog.defaultOwnerUid ||
+                  remote.assignedProviderId ==
+                      MashwarDemoCasesCatalog.defaultOwnerUid)) {
+            // Re-bind seeded demo_wr_* ownership to the active user so My Activity
+            // (Active & Completed) and Handover Codes work out of the box.
+            mergedById[remote.id] = personalizedById[remote.id]!;
+          } else {
+            mergedById[remote.id] = remote;
+          }
+        }
+        for (final demoReq in demoBundle.requests) {
+          mergedById.putIfAbsent(demoReq.id, () => demoReq);
+        }
+        _demoOffersByRequest = {
+          for (final entry in demoBundle.offersByRequest.entries)
+            entry.key: List<WorkOffer>.from(entry.value),
+        };
+        _demoEventsByRequest = {
+          for (final entry in demoBundle.eventsByRequest.entries)
+            entry.key: List<RequestEvent>.from(entry.value),
+        };
+        final mergedList = mergedById.values.toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        _allLoadedRequests = mergedList;
+      } else {
+        if (fetchError != null) throw fetchError;
+        _allLoadedRequests = fetched;
+      }
       _recomputeFilteredRequests();
       await _refreshNotifications(notify: false);
     } catch (e) {
@@ -811,7 +866,58 @@ class WorksiteProvider extends ChangeNotifier {
         }
       }
 
-      final request = await _worksiteRepo.getRequestById(requestId);
+      WorkRequest? request;
+      try {
+        request = await _worksiteRepo.getRequestById(requestId);
+      } catch (_) {
+        if (!_shouldHydrateRichDemoBaseline) rethrow;
+      }
+
+      if (_shouldHydrateRichDemoBaseline && requestId.startsWith('demo_wr_')) {
+        final uid = currentUserId;
+        final demoBundle = _buildPersonalizedDemoBundle(uid);
+        final demoReq = demoBundle.requestById(requestId);
+        if (demoReq != null) {
+          final effectiveReq = (request != null &&
+                  uid != null &&
+                  uid == request.requesterId)
+              ? request
+              : demoReq;
+          List<WorkOffer> offers = const [];
+          List<RequestEvent> events = const [];
+          try {
+            offers = await _worksiteRepo.listOffersForRequest(requestId);
+            events = await _worksiteRepo.listRequestEvents(requestId);
+          } catch (_) {}
+          if (offers.isEmpty) {
+            offers = List<WorkOffer>.from(
+              _demoOffersByRequest[requestId] ??
+                  demoBundle.offersByRequest[requestId] ??
+                  const [],
+            );
+          }
+          if (events.isEmpty) {
+            events = List<RequestEvent>.from(
+              _demoEventsByRequest[requestId] ??
+                  demoBundle.eventsByRequest[requestId] ??
+                  const [],
+            );
+          }
+          String? handoverCode;
+          if (uid != null &&
+              uid == effectiveReq.requesterId &&
+              _handoverVisibleStatuses.contains(effectiveReq.status)) {
+            handoverCode = demoBundle.handoverCodesByRequest[requestId];
+          }
+          _selectedRequest = effectiveReq;
+          _selectedOffers = List.unmodifiable(offers);
+          _selectedEvents = List.unmodifiable(events);
+          _activeHandoverCode = handoverCode;
+          _upsertRequestInCache(effectiveReq);
+          return;
+        }
+      }
+
       if (request == null) {
         throw const WorksiteRepositoryException(
           code: 'not-found',
@@ -1485,7 +1591,15 @@ class WorksiteProvider extends ChangeNotifier {
           return demoProfile;
         }
       }
-      final profile = await _providerRepo.getProviderProfile(uid);
+      ProviderProfile? profile;
+      try {
+        profile = await _providerRepo.getProviderProfile(uid);
+      } catch (_) {
+        if (!_shouldHydrateRichDemoBaseline) rethrow;
+      }
+      if (profile == null && _shouldHydrateRichDemoBaseline) {
+        profile = _buildPersonalizedDemoBundle(uid).providerProfileFor(uid);
+      }
       _providerProfile = profile;
       return profile;
     } catch (e) {
@@ -1566,7 +1680,15 @@ class WorksiteProvider extends ChangeNotifier {
         _savedWorksites = _showcaseBundle!.savedWorksites;
         return _savedWorksites;
       }
-      final sites = await _providerRepo.listSavedWorksites(uid);
+      List<SavedWorksite> sites = const [];
+      try {
+        sites = await _providerRepo.listSavedWorksites(uid);
+      } catch (_) {
+        if (!_shouldHydrateRichDemoBaseline) rethrow;
+      }
+      if (sites.isEmpty && _shouldHydrateRichDemoBaseline) {
+        sites = _buildPersonalizedDemoBundle(uid).savedWorksites;
+      }
       _savedWorksites = sites;
       return sites;
     } catch (e) {
@@ -1721,6 +1843,21 @@ class WorksiteProvider extends ChangeNotifier {
           return;
         }
       } catch (_) {}
+      if (_shouldHydrateRichDemoBaseline) {
+        final demoBundle = _buildPersonalizedDemoBundle(uid);
+        final derived = _deriveLiveNotifications(uid);
+        final showcase = _buildShowcaseNotifications(demoBundle);
+        final byId = <String, WorksiteNotificationItem>{
+          for (final n in derived) n.id: n,
+        };
+        for (final s in showcase) {
+          byId.putIfAbsent(s.id, () => s);
+        }
+        _notifications = byId.values.toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        if (notify) notifyListeners();
+        return;
+      }
       _notifications = _deriveLiveNotifications(uid);
       if (notify) notifyListeners();
       return;

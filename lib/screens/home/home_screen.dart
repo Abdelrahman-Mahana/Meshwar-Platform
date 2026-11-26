@@ -9,6 +9,7 @@ import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/models/ride_model.dart';
@@ -54,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedSavedWorksiteId;
   String? _previewHubCity;
   bool _didAttemptInitialLoad = false;
+  WorksiteProvider? _lastInitializedWorksite;
 
   WorksiteProvider? _fallbackWorksiteProvider;
   RidesProvider? _fallbackRidesProvider;
@@ -107,22 +109,34 @@ class _HomeScreenState extends State<HomeScreen> {
       parcels?.loadParcels();
 
       if (ws != null) {
-        if (ws.usesDefaultRepository && !ws.isDemoShowcaseMode) {
-          ws.activateDemoShowcase();
-        } else {
-          if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
-            ws.loadRequests();
-          }
-          if (ws.notifications.isEmpty) {
-            ws.loadNotifications();
-          }
-          final uid = ws.currentUserId ?? auth?.user.id ?? '';
-          if (uid.isNotEmpty && ws.savedWorksites.isEmpty) {
-            ws.loadSavedWorksites(uid);
-          }
+        _lastInitializedWorksite = ws;
+        if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
+          ws.loadRequests();
+        }
+        if (ws.notifications.isEmpty) {
+          ws.loadNotifications();
+        }
+        final uid = ws.currentUserId ?? auth?.user.id ?? '';
+        if (uid.isNotEmpty && ws.savedWorksites.isEmpty) {
+          ws.loadSavedWorksites(uid);
         }
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final ws = Provider.of<WorksiteProvider?>(context, listen: false);
+    if (ws != null && ws != _lastInitializedWorksite) {
+      _lastInitializedWorksite = ws;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
+          ws.loadRequests();
+        }
+      });
+    }
   }
 
   @override
@@ -628,14 +642,17 @@ class _HomeScreenState extends State<HomeScreen> {
                   );
                 },
                 child: MashwarUserAvatar(
+                  avatarUrl: auth.user.avatarUrl,
                   fullName: auth.user.fullName.isNotEmpty
                       ? auth.user.fullName
-                      : (isAr ? 'مشوار' : 'M'),
-                  avatarUrl: auth.user.avatarUrl,
-                  radius: isUltraCompact ? 19 : 21,
-                  borderColor: AppColors.gold,
+                      : 'م',
+                  size: isUltraCompact ? 38 : 44,
                   borderWidth: 2.0,
+                  borderColor: AppColors.gold,
                   backgroundColor: AppColors.navy,
+                  initialColor: Colors.white,
+                  showVerifiedBadge:
+                      auth.user.isVerified || worksite.isApprovedProvider,
                 ),
               ),
             ],
@@ -1520,10 +1537,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
 
-      // Pillar 2: Parcels & Items on the Way (`pillar_smart_supply.jpg` — unique!)
+      // Pillar 2: Parcels & Items on the Way (`pillar_route_parcels.jpg` — unique!)
       _buildServicePillarCard(
         pillar: MashwarServicePillar.routeParcels,
-        imageAsset: 'assets/images/pillar_smart_supply.jpg',
+        imageAsset: 'assets/images/pillar_route_parcels.jpg',
         accent: AppColors.goldDark,
         badgeLabel: isAr ? 'تأكيد بكود OTP' : 'Dual OTP Safe',
         badgeBg: AppColors.goldSurface,
@@ -1559,10 +1576,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
 
-      // Pillar 3: Smart Shopping, Supply & Tasks (`mvp_hero_lusail_supply.jpg` — unique!)
+      // Pillar 3: Smart Shopping, Supply & Tasks (`pillar_smart_supply.jpg` — unique!)
       _buildServicePillarCard(
         pillar: MashwarServicePillar.smartSupply,
-        imageAsset: 'assets/images/mvp_hero_lusail_supply.jpg',
+        imageAsset: 'assets/images/pillar_smart_supply.jpg',
         accent: AppColors.teal,
         badgeLabel: isAr ? 'فاتورة موثّقة' : 'Verified Receipt',
         badgeBg: AppColors.tealSurface,
@@ -2050,17 +2067,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CircleAvatar(
-                              radius: 16,
-                              backgroundColor: AppColors.navy,
-                              child: Text(
-                                ride.driverName.isNotEmpty
-                                    ? ride.driverName[0]
-                                    : 'M',
-                                style: AppTypography.label(
-                                        color: AppColors.gold)
-                                    .copyWith(fontWeight: FontWeight.w900),
-                              ),
+                            MashwarUserAvatar(
+                              avatarUrl: null,
+                              fullName: ride.driverName,
+                              size: 36,
+                              borderWidth: 1.6,
+                              borderColor: AppColors.gold,
+                              autoCommunityPortrait: true,
                             ),
                             const SizedBox(width: 8),
                             Flexible(

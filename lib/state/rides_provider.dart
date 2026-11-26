@@ -33,66 +33,13 @@ class RidesProvider extends ChangeNotifier {
   final List<RideModel> _allRides = List.from(MockData.initialRides);
   final List<RideModel> _myPublishedRides = [
     MockData.initialRides.first,
-    MockData.initialRides.length > 4
-        ? MockData.initialRides[4]
-        : MockData.initialRides.first,
-    const RideModel(
-      id: 'ride_done_pub_1',
-      driverId: 'user_01',
-      driverName: 'عبدالرحمن المهنا',
-      driverCar: 'تويوتا لاندكروزر · أبيض لؤلؤي',
-      driverPhone: '55123456',
-      fromCity: 'الدوحة',
-      toCity: 'لوسيل',
-      pickupPoint: 'مشيرب، محطة المترو الرئيسية',
-      dropoffPoint: 'مارينا لوسيل، برج الأعمال',
-      departureTime: '8:00 ص',
-      departureDate: 'الأربعاء 4 نوفمبر',
-      remainingSeats: 0,
-      pricePerSeat: 25,
-      acceptsParcels: true,
-      parcelPrice: 15,
-      maxParcelSize: 'medium',
-      notes: 'رحلة مكتملة بنجاح مع توصيل طرد موثّق بكود OTP',
-      isVerified: true,
-      isLadiesOnly: false,
-      isInstantBooking: true,
-      driverRating: 4.9,
-      status: 'completed',
-    ),
+    if (MockData.initialRides.length > 4) MockData.initialRides[4],
   ];
   final List<RideModel> _bookedRides = [
-    MockData.initialRides.length > 1
-        ? MockData.initialRides[1]
-        : MockData.initialRides.first,
-    MockData.initialRides.length > 5
-        ? MockData.initialRides[5]
-        : MockData.initialRides.first,
-    const RideModel(
-      id: 'ride_done_booked_1',
-      driverId: 'seed_driver_04',
-      driverName: 'طارق المنصوري',
-      driverCar: 'هوندا أكورد · كحلي',
-      driverPhone: '55891234',
-      fromCity: 'الخور',
-      toCity: 'الدوحة',
-      stopoverCity: 'لوسيل',
-      pickupPoint: 'مدخل الخور الجنوبي',
-      dropoffPoint: 'الخليج الغربي، الدوحة',
-      departureTime: '5:00 م',
-      departureDate: 'الثلاثاء 3 نوفمبر',
-      remainingSeats: 1,
-      pricePerSeat: 35,
-      acceptsParcels: true,
-      parcelPrice: 20,
-      maxParcelSize: 'small',
-      notes: 'حجز مقعد مكتمل ومقيّم 5 نجوم',
-      isVerified: true,
-      isLadiesOnly: false,
-      isInstantBooking: true,
-      driverRating: 4.9,
-      status: 'completed',
-    ),
+    MockData.initialRides.first,
+    if (MockData.initialRides.length > 1) MockData.initialRides[1],
+    if (MockData.initialRides.last.status == 'completed')
+      MockData.initialRides.last,
   ];
   RideModel? _activeBooking = MockData.initialRides.first;
 
@@ -280,7 +227,7 @@ class RidesProvider extends ChangeNotifier {
     final toQ = _toCity.trim();
 
     final list = _allRides.where((r) {
-      if (r.status == 'cancelled') return false;
+      if (r.status == 'cancelled' || r.status == 'completed') return false;
       if ((_filterAcceptsParcels || _rideMode == RideMode.parcels) &&
           !r.acceptsParcels) {
         return false;

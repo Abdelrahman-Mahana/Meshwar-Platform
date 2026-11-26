@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../core/config/app_environment.dart';
@@ -10,6 +11,7 @@ import '../core/widgets/brand_logo.dart';
 import '../core/widgets/mashwar_animations.dart';
 import '../core/widgets/mashwar_badge.dart';
 import '../core/widgets/mashwar_button.dart';
+import '../core/widgets/mashwar_user_avatar.dart';
 import '../core/widgets/mashwar_worksite_icons.dart';
 import '../data/models/board_ad_model.dart';
 import '../data/models/parcel_model.dart';
@@ -124,20 +126,16 @@ class _MainNavShellState extends State<MainNavShell> {
       board?.loadBoardAds();
 
       if (ws != null) {
-        if (ws.usesDefaultRepository && !ws.isDemoShowcaseMode) {
-          ws.activateDemoShowcase();
-        } else {
-          final uid = ws.currentUserId ?? auth?.user.id ?? '';
-          if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
-            ws.loadRequests();
-          }
-          if (ws.notifications.isEmpty) {
-            ws.loadNotifications();
-          }
-          if (uid.isNotEmpty && ws.providerProfile == null) {
-            ws.loadProviderProfile(uid);
-            ws.loadSavedWorksites(uid);
-          }
+        final uid = ws.currentUserId ?? auth?.user.id ?? '';
+        if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
+          ws.loadRequests();
+        }
+        if (ws.notifications.isEmpty) {
+          ws.loadNotifications();
+        }
+        if (uid.isNotEmpty && ws.providerProfile == null) {
+          ws.loadProviderProfile(uid);
+          ws.loadSavedWorksites(uid);
         }
       }
     });
@@ -213,6 +211,80 @@ class _MainNavShellState extends State<MainNavShell> {
         color: active ? AppColors.navy : const Color(0xFF64748B),
         badgeCount: badgeCount,
       ),
+    );
+  }
+
+  Widget _buildAccountNavIcon({
+    required UserModel user,
+    required bool active,
+    required int badgeCount,
+    bool pillStyle = false,
+  }) {
+    final hasCustomAvatar =
+        user.avatarUrl != null && user.avatarUrl!.trim().isNotEmpty;
+    Widget coreIcon;
+    if (hasCustomAvatar) {
+      coreIcon = MashwarUserAvatar(
+        avatarUrl: user.avatarUrl,
+        fullName: user.fullName.isNotEmpty ? user.fullName : 'م',
+        size: 25,
+        borderWidth: active ? 2.0 : 1.5,
+        borderColor: active ? AppColors.gold : AppColors.teal,
+      );
+      if (badgeCount > 0) {
+        coreIcon = Stack(
+          clipBehavior: Clip.none,
+          children: [
+            coreIcon,
+            PositionedDirectional(
+              top: -4,
+              end: -6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.qatarMaroon,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white, width: 1.2),
+                ),
+                constraints: const BoxConstraints(minWidth: 15),
+                child: Text(
+                  badgeCount > 9 ? '9+' : '$badgeCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      }
+    } else {
+      coreIcon = _buildIconWithBadge(
+        active ? Icons.person_rounded : Icons.person_outline_rounded,
+        color: active ? AppColors.navy : const Color(0xFF64748B),
+        badgeCount: badgeCount,
+      );
+    }
+
+    if (!pillStyle) return coreIcon;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.symmetric(
+        horizontal: active ? 12 : 6,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: active
+            ? AppColors.navy.withValues(alpha: 0.11)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: coreIcon,
     );
   }
 
@@ -302,14 +374,14 @@ class _MainNavShellState extends State<MainNavShell> {
         label: Text(isAr ? 'نشاطي' : 'My Activity'),
       ),
       NavigationRailDestination(
-        icon: _buildIconWithBadge(
-          Icons.person_outline_rounded,
-          color: AppColors.textSecondary,
+        icon: _buildAccountNavIcon(
+          user: auth.user,
+          active: false,
           badgeCount: unreadNotificationsCount,
         ),
-        selectedIcon: _buildIconWithBadge(
-          Icons.person_rounded,
-          color: AppColors.cobalt,
+        selectedIcon: _buildAccountNavIcon(
+          user: auth.user,
+          active: true,
           badgeCount: unreadNotificationsCount,
         ),
         label: Text(isAr ? 'حسابي' : 'Account'),
@@ -345,14 +417,17 @@ class _MainNavShellState extends State<MainNavShell> {
         label: isAr ? 'نشاطي' : 'My Activity',
       ),
       BottomNavigationBarItem(
-        icon: _buildNavIconPill(
-          Icons.person_outline_rounded,
+        icon: _buildAccountNavIcon(
+          user: auth.user,
+          active: false,
           badgeCount: unreadNotificationsCount,
+          pillStyle: true,
         ),
-        activeIcon: _buildNavIconPill(
-          Icons.person_rounded,
+        activeIcon: _buildAccountNavIcon(
+          user: auth.user,
           active: true,
           badgeCount: unreadNotificationsCount,
+          pillStyle: true,
         ),
         label: isAr ? 'حسابي' : 'Account',
       ),
@@ -684,17 +759,9 @@ class _MainNavShellState extends State<MainNavShell> {
 
     final shownCards = _isActiveOrders ? activeCards : completedCards;
     final unreadCount = worksite.unreadNotificationsCount;
-    final tripsKpiCount = _isActiveOrders
-        ? (activeTripRides.length + activeRideAds.length)
-        : (completedTripRides.length + completedRideAds.length);
-    final parcelsKpiCount = _isActiveOrders
-        ? (activeParcels.length + activeParcelAds.length)
-        : (completedParcels.length + completedParcelAds.length);
-    final supplyKpiCount =
-        _isActiveOrders ? activeSupply.length : completedSupply.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFBF8),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -764,14 +831,12 @@ class _MainNavShellState extends State<MainNavShell> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                       Container(
+                      Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: AppColors.sand,
+                          color: AppColors.slateBg,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: AppColors.gold.withValues(alpha: 0.35),
-                          ),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Row(
                           children: [
@@ -786,9 +851,19 @@ class _MainNavShellState extends State<MainNavShell> {
                                       const EdgeInsets.symmetric(vertical: 9),
                                   decoration: BoxDecoration(
                                     color: _isActiveOrders
-                                        ? AppColors.navy
+                                        ? Colors.white
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
+                                    boxShadow: _isActiveOrders
+                                        ? [
+                                            BoxShadow(
+                                              color: AppColors.navy
+                                                  .withValues(alpha: 0.06),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ]
+                                        : null,
                                   ),
                                   child: Center(
                                     child: Text(
@@ -799,8 +874,8 @@ class _MainNavShellState extends State<MainNavShell> {
                                       overflow: TextOverflow.ellipsis,
                                       style: AppTypography.bodySecondary(
                                         color: _isActiveOrders
-                                            ? Colors.white
-                                            : AppColors.navy,
+                                            ? AppColors.navy
+                                            : AppColors.textSecondary,
                                       ).copyWith(
                                         fontWeight: _isActiveOrders
                                             ? FontWeight.w800
@@ -824,9 +899,19 @@ class _MainNavShellState extends State<MainNavShell> {
                                       const EdgeInsets.symmetric(vertical: 9),
                                   decoration: BoxDecoration(
                                     color: !_isActiveOrders
-                                        ? AppColors.navy
+                                        ? Colors.white
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
+                                    boxShadow: !_isActiveOrders
+                                        ? [
+                                            BoxShadow(
+                                              color: AppColors.navy
+                                                  .withValues(alpha: 0.06),
+                                              blurRadius: 6,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ]
+                                        : null,
                                   ),
                                   child: Center(
                                     child: Text(
@@ -837,8 +922,8 @@ class _MainNavShellState extends State<MainNavShell> {
                                       overflow: TextOverflow.ellipsis,
                                       style: AppTypography.bodySecondary(
                                         color: !_isActiveOrders
-                                            ? Colors.white
-                                            : AppColors.navy,
+                                            ? AppColors.navy
+                                            : AppColors.textSecondary,
                                       ).copyWith(
                                         fontWeight: !_isActiveOrders
                                             ? FontWeight.w800
@@ -852,51 +937,6 @@ class _MainNavShellState extends State<MainNavShell> {
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      // 3-Service Visual KPI Summary Strip
-                      Row(
-                        key: const ValueKey('activity_kpi_summary_strip'),
-                        children: [
-                          Expanded(
-                            child: _buildActivityKpiMiniCard(
-                              title: isAr ? 'الرحلات' : 'Trips',
-                              count: tripsKpiCount,
-                              selected: _activityServiceFilter == 1,
-                              accent: AppColors.navy,
-                              surface: AppColors.sand,
-                              onTap: () => setState(() =>
-                                  _activityServiceFilter =
-                                      _activityServiceFilter == 1 ? 0 : 1),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildActivityKpiMiniCard(
-                              title: isAr ? 'الطرود' : 'Parcels',
-                              count: parcelsKpiCount,
-                              selected: _activityServiceFilter == 2,
-                              accent: AppColors.goldDark,
-                              surface: AppColors.goldSurface,
-                              onTap: () => setState(() =>
-                                  _activityServiceFilter =
-                                      _activityServiceFilter == 2 ? 0 : 2),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _buildActivityKpiMiniCard(
-                              title: isAr ? 'التوريد' : 'Supply',
-                              count: supplyKpiCount,
-                              selected: _activityServiceFilter == 3,
-                              accent: AppColors.teal,
-                              surface: AppColors.tealSurface,
-                              onTap: () => setState(() =>
-                                  _activityServiceFilter =
-                                      _activityServiceFilter == 3 ? 0 : 3),
-                            ),
-                          ),
-                        ],
                       ),
                       const SizedBox(height: 10),
                       SingleChildScrollView(
@@ -978,62 +1018,6 @@ class _MainNavShellState extends State<MainNavShell> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityKpiMiniCard({
-    required String title,
-    required int count,
-    required bool selected,
-    required Color accent,
-    required Color surface,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? accent : surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected ? accent : accent.withValues(alpha: 0.25),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Flexible(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.label(
-                  color: selected ? Colors.white : AppColors.navy,
-                ).copyWith(fontWeight: FontWeight.w800, fontSize: 11.5),
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-              decoration: BoxDecoration(
-                color: selected
-                    ? Colors.white.withValues(alpha: 0.22)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                '$count',
-                style: AppTypography.label(
-                  color: selected ? Colors.white : accent,
-                ).copyWith(fontWeight: FontWeight.w900, fontSize: 11),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -1268,10 +1252,28 @@ class _MainNavShellState extends State<MainNavShell> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              Text(
-                '${ride.driverName} · ${ride.pricePerSeat} ${isAr ? "ر.ق" : "QAR"}',
-                style: AppTypography.body(color: AppColors.navy)
-                    .copyWith(fontWeight: FontWeight.w800, fontSize: 13.5),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  MashwarUserAvatar(
+                    avatarUrl: null,
+                    fullName: ride.driverName,
+                    size: 28,
+                    borderWidth: 1.4,
+                    borderColor: AppColors.gold,
+                    autoCommunityPortrait: true,
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      '${ride.driverName} · ${ride.pricePerSeat} ${isAr ? "ر.ق" : "QAR"}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.body(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w800, fontSize: 13.5),
+                    ),
+                  ),
+                ],
               ),
               Wrap(
                 spacing: 8,
@@ -1399,36 +1401,94 @@ class _MainNavShellState extends State<MainNavShell> {
             spacing: 8,
             runSpacing: 6,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.slateBg,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.slateBorder),
-                ),
-                child: Text(
-                  isAr
-                      ? 'كود الاستلام: ${parcel.pickupOtp}'
-                      : 'Pickup OTP: ${parcel.pickupOtp}',
-                  style: AppTypography.label(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              if (deliveryOtp.isNotEmpty)
-                Container(
+              InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: parcel.pickupOtp));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr
+                            ? 'تم نسخ كود الاستلام: ${parcel.pickupOtp}'
+                            : 'Pickup OTP copied: ${parcel.pickupOtp}',
+                      ),
+                      backgroundColor: AppColors.teal,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                },
+                child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.emeraldSurface,
+                    color: AppColors.sand,
                     borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.gold.withValues(alpha: 0.40),
+                    ),
                   ),
-                  child: Text(
-                    isAr
-                        ? 'كود التسليم: $deliveryOtp'
-                        : 'Delivery OTP: $deliveryOtp',
-                    style: AppTypography.label(color: AppColors.emerald)
-                        .copyWith(fontWeight: FontWeight.w800),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.copy_rounded,
+                        size: 13,
+                        color: AppColors.goldDark,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        isAr
+                            ? 'كود الاستلام: ${parcel.pickupOtp}'
+                            : 'Pickup OTP: ${parcel.pickupOtp}',
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (deliveryOtp.isNotEmpty)
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    Clipboard.setData(ClipboardData(text: deliveryOtp));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isAr
+                              ? 'تم نسخ كود التسليم: $deliveryOtp'
+                              : 'Delivery OTP copied: $deliveryOtp',
+                        ),
+                        backgroundColor: AppColors.teal,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.emeraldSurface,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.copy_rounded,
+                          size: 13,
+                          color: AppColors.emerald,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          isAr
+                              ? 'كود التسليم: $deliveryOtp'
+                              : 'Delivery OTP: $deliveryOtp',
+                          style: AppTypography.label(color: AppColors.emerald)
+                              .copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
             ],
@@ -1780,7 +1840,7 @@ class _MainNavShellState extends State<MainNavShell> {
     final parcelsCount = parcels.parcels.length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFBF8),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -1837,23 +1897,14 @@ class _MainNavShellState extends State<MainNavShell> {
                             children: [
                               MashwarUserAvatar(
                                 key: const ValueKey('account_tab_avatar_btn'),
-                                fullName: displayName,
                                 avatarUrl: user.avatarUrl,
-                                radius: 31,
+                                fullName: displayName,
+                                size: 64,
+                                borderWidth: 2.4,
                                 borderColor: AppColors.gold,
-                                borderWidth: 2.2,
-                                showEditBadge: true,
-                                onTap: () {
-                                  MashwarAvatarPickerSheet.show(
-                                    context,
-                                    currentAvatarUrl: user.avatarUrl,
-                                    fullName: displayName,
-                                    isAr: isAr,
-                                    onAvatarSelected: (newUrl) {
-                                      auth.updateAvatar(newUrl);
-                                    },
-                                  );
-                                },
+                                showCameraBadge: true,
+                                onTap: () =>
+                                    pickAndSaveCurrentUserAvatar(context),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -1875,7 +1926,7 @@ class _MainNavShellState extends State<MainNavShell> {
                                             user.isVerified) ...[
                                           const SizedBox(width: 6),
                                           const Icon(Icons.verified_rounded,
-                                              color: AppColors.teal,
+                                              color: AppColors.emerald,
                                               size: 18),
                                         ],
                                       ],
@@ -1896,11 +1947,10 @@ class _MainNavShellState extends State<MainNavShell> {
                               ),
                               OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.navy,
-                                  backgroundColor: AppColors.sand,
+                                  foregroundColor: AppColors.cobalt,
                                   side: BorderSide(
-                                    color:
-                                        AppColors.gold.withValues(alpha: 0.45),
+                                    color: AppColors.cobalt
+                                        .withValues(alpha: 0.35),
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 6),
@@ -1915,9 +1965,9 @@ class _MainNavShellState extends State<MainNavShell> {
                                 },
                                 child: Text(
                                   isAr ? 'الملف' : 'Profile',
-                                  style:
-                                      AppTypography.label(color: AppColors.navy)
-                                          .copyWith(fontWeight: FontWeight.w800),
+                                  style: AppTypography.label(
+                                          color: AppColors.cobalt)
+                                      .copyWith(fontWeight: FontWeight.w800),
                                 ),
                               ),
                             ],

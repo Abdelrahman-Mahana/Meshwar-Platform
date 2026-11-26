@@ -727,9 +727,6 @@ class FirebaseAuthRepository implements IAuthRepository {
     return newUser;
   }
 
-  static final Map<String, String?> _sessionAvatarCacheByUid =
-      <String, String?>{};
-
   @override
   Future<UserModel> updateProfile(UserModel user) async {
     final uid = _firebaseAuth.currentUser?.uid;
@@ -737,20 +734,19 @@ class FirebaseAuthRepository implements IAuthRepository {
       throw StateError('Authentication required to update profile');
     }
 
-    _sessionAvatarCacheByUid[uid] = user.avatarUrl;
-    final persistableAvatar =
-        (user.avatarUrl != null && user.avatarUrl!.length <= 1800)
-            ? user.avatarUrl
-            : null;
-
     // Restrict client updates strictly to editable profile attributes so
     // verification flags and financial fields remain server-authoritative.
+    // Firestore security rules limit `avatarUrl` to <= 500 chars; inline base64
+    // data URIs are persisted locally via SharedPreferences while short URLs /
+    // preset identifiers sync directly to Firestore.
+    final rawAvatar = user.avatarUrl;
+    final canSyncAvatarToFirestore = rawAvatar == null || rawAvatar.length <= 500;
     final safeProfileUpdate = <String, dynamic>{
       'id': uid,
       'fullName': user.fullName,
       'phone': user.phone,
       'gender': user.gender.name,
-      if (persistableAvatar != null) 'avatarUrl': persistableAvatar,
+      if (canSyncAvatarToFirestore) 'avatarUrl': rawAvatar,
       'governorate': user.governorate,
       'city': user.city,
       'birthDate': user.birthDate,
@@ -764,29 +760,18 @@ class FirebaseAuthRepository implements IAuthRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    try {
-      await _userStore.setUserDoc(uid, safeProfileUpdate, merge: true);
-      final refreshed = await _userStore.getUserDoc(uid);
-      if (refreshed != null) {
-        final data = Map<String, dynamic>.from(refreshed);
-        data['id'] = uid;
-        if (_sessionAvatarCacheByUid.containsKey(uid)) {
-          data['avatarUrl'] = _sessionAvatarCacheByUid[uid];
-        }
-        return UserModel.fromJson(data);
+    await _userStore.setUserDoc(uid, safeProfileUpdate, merge: true);
+    final refreshed = await _userStore.getUserDoc(uid);
+    if (refreshed != null) {
+      final data = Map<String, dynamic>.from(refreshed);
+      data['id'] = uid;
+      final parsed = UserModel.fromJson(data);
+      if (!canSyncAvatarToFirestore) {
+        return parsed.copyWith(avatarUrl: rawAvatar);
       }
-    } on FirebaseException catch (e) {
-      debugPrint(
-        'Firestore users/$uid updateProfile fallback (${e.code}): ${e.message}',
-      );
+      return parsed;
     }
-    return user.copyWith(
-      id: uid,
-      avatarUrl: _sessionAvatarCacheByUid[uid],
-      clearAvatar:
-          _sessionAvatarCacheByUid.containsKey(uid) &&
-          _sessionAvatarCacheByUid[uid] == null,
-    );
+    return user.copyWith(id: uid);
   }
 
   @override

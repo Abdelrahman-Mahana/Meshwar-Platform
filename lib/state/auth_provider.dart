@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core/config/app_environment.dart';
 import '../data/models/user_model.dart';
 import '../data/repositories/app_repositories.dart';
@@ -186,6 +187,7 @@ class AuthProvider extends ChangeNotifier {
         _user = currentUser;
         _phoneNumber = currentUser.phone;
         _email = currentUser.email;
+        await _hydrateSavedAvatarForCurrentUser();
         _status = AuthStatus.authenticated;
         _isLoading = false;
         notifyListeners();
@@ -238,6 +240,7 @@ class AuthProvider extends ChangeNotifier {
       _email = authenticatedUser.email ?? trimmedEmail;
       _phoneNumber = authenticatedUser.phone;
       _authMethod = 'email';
+      await _hydrateSavedAvatarForCurrentUser();
       _status = AuthStatus.authenticated;
       _isLoading = false;
       notifyListeners();
@@ -288,6 +291,7 @@ class AuthProvider extends ChangeNotifier {
       _email = registeredUser.email ?? trimmedEmail;
       _phoneNumber = registeredUser.phone;
       _authMethod = 'email';
+      await _hydrateSavedAvatarForCurrentUser();
       _status = AuthStatus.authenticated;
       _isLoading = false;
       notifyListeners();
@@ -612,7 +616,7 @@ class AuthProvider extends ChangeNotifier {
       smokingPreference: smokingPreference,
       tripVibe: tripVibe,
       ladiesOnlyPreference: ladiesOnlyPreference,
-      avatarUrl: avatarUrl,
+      avatarUrl: avatarUrl ?? _user.avatarUrl,
       isVerified: _user.isVerified,
       idVerificationStatus: _user.idVerificationStatus,
       nationalId: _user.nationalId,
@@ -624,6 +628,9 @@ class AuthProvider extends ChangeNotifier {
       hasUpcomingBooking: false,
     );
     _status = AuthStatus.authenticated;
+    if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
+      unawaited(_saveAvatarPreference(avatarUrl.trim()));
+    }
     notifyListeners();
     _persistProfileIfSignedIn();
   }
@@ -685,8 +692,6 @@ class AuthProvider extends ChangeNotifier {
   void updateProfile({
     String? fullName,
     UserGender? gender,
-    String? avatarUrl,
-    bool clearAvatar = false,
     String? email,
     String? governorate,
     String? city,
@@ -696,12 +701,12 @@ class AuthProvider extends ChangeNotifier {
     bool? ladiesOnlyPreference,
     String? emergencyContactName,
     String? emergencyContactPhone,
+    String? avatarUrl,
+    bool clearAvatar = false,
   }) {
     _user = _user.copyWith(
       fullName: fullName ?? _user.fullName,
       gender: gender ?? _user.gender,
-      avatarUrl: avatarUrl,
-      clearAvatar: clearAvatar,
       email: email ?? _user.email,
       governorate: governorate ?? _user.governorate,
       city: city ?? _user.city,
@@ -712,18 +717,71 @@ class AuthProvider extends ChangeNotifier {
       emergencyContactName: emergencyContactName ?? _user.emergencyContactName,
       emergencyContactPhone:
           emergencyContactPhone ?? _user.emergencyContactPhone,
+      avatarUrl: avatarUrl,
+      clearAvatar: clearAvatar,
     );
+    if (clearAvatar || avatarUrl != null) {
+      unawaited(_saveAvatarPreference(clearAvatar ? null : avatarUrl));
+    }
     notifyListeners();
     _persistProfileIfSignedIn();
   }
 
-  /// Updates or clears the user's profile photo (`data:image/...`, `preset:...`, or asset/network URL).
-  void updateAvatar(String? avatarUrl) {
-    final cleaned = avatarUrl?.trim();
-    if (cleaned == null || cleaned.isEmpty) {
-      updateProfile(clearAvatar: true);
+  /// Updates (or clears when [avatarUrl] is null/empty) the user's profile photo,
+  /// persisting locally in [SharedPreferences] and syncing short URIs to Firestore.
+  Future<void> updateAvatar(String? avatarUrl) async {
+    final clean = avatarUrl?.trim() ?? '';
+    if (clean.isEmpty) {
+      _user = _user.copyWith(clearAvatar: true);
+      await _saveAvatarPreference(null);
     } else {
-      updateProfile(avatarUrl: cleaned);
+      _user = _user.copyWith(avatarUrl: clean);
+      await _saveAvatarPreference(clean);
+    }
+    notifyListeners();
+    _persistProfileIfSignedIn();
+  }
+
+  Future<void> _hydrateSavedAvatarForCurrentUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance()
+          .timeout(const Duration(milliseconds: 120));
+      final uid = _user.id.trim();
+      String? saved;
+      if (uid.isNotEmpty) {
+        saved = prefs.getString('mashwar_avatar_uid_$uid');
+      }
+      saved ??= prefs.getString('mashwar_avatar_active');
+      if (saved != null && saved.trim().isNotEmpty) {
+        final existing = _user.avatarUrl?.trim() ?? '';
+        if (existing.isEmpty || saved.startsWith('data:image/')) {
+          _user = _user.copyWith(avatarUrl: saved.trim());
+        }
+      }
+    } catch (_) {
+      // SharedPreferences unavailable or unmocked in test isolate; keep in-memory user intact.
+    }
+  }
+
+  Future<void> _saveAvatarPreference(String? avatarUrl) async {
+    try {
+      final prefs = await SharedPreferences.getInstance()
+          .timeout(const Duration(milliseconds: 120));
+      final uid = _user.id.trim();
+      final clean = avatarUrl?.trim() ?? '';
+      if (clean.isEmpty) {
+        await prefs.remove('mashwar_avatar_active');
+        if (uid.isNotEmpty) {
+          await prefs.remove('mashwar_avatar_uid_$uid');
+        }
+      } else {
+        await prefs.setString('mashwar_avatar_active', clean);
+        if (uid.isNotEmpty) {
+          await prefs.setString('mashwar_avatar_uid_$uid', clean);
+        }
+      }
+    } catch (_) {
+      // Ignore persistence errors in headless environments.
     }
   }
 
