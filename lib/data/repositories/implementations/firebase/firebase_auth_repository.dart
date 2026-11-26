@@ -727,12 +727,21 @@ class FirebaseAuthRepository implements IAuthRepository {
     return newUser;
   }
 
+  static final Map<String, String?> _sessionAvatarCacheByUid =
+      <String, String?>{};
+
   @override
   Future<UserModel> updateProfile(UserModel user) async {
     final uid = _firebaseAuth.currentUser?.uid;
     if (uid == null) {
       throw StateError('Authentication required to update profile');
     }
+
+    _sessionAvatarCacheByUid[uid] = user.avatarUrl;
+    final persistableAvatar =
+        (user.avatarUrl != null && user.avatarUrl!.length <= 1800)
+            ? user.avatarUrl
+            : null;
 
     // Restrict client updates strictly to editable profile attributes so
     // verification flags and financial fields remain server-authoritative.
@@ -741,7 +750,7 @@ class FirebaseAuthRepository implements IAuthRepository {
       'fullName': user.fullName,
       'phone': user.phone,
       'gender': user.gender.name,
-      'avatarUrl': user.avatarUrl,
+      if (persistableAvatar != null) 'avatarUrl': persistableAvatar,
       'governorate': user.governorate,
       'city': user.city,
       'birthDate': user.birthDate,
@@ -755,14 +764,29 @@ class FirebaseAuthRepository implements IAuthRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    await _userStore.setUserDoc(uid, safeProfileUpdate, merge: true);
-    final refreshed = await _userStore.getUserDoc(uid);
-    if (refreshed != null) {
-      final data = Map<String, dynamic>.from(refreshed);
-      data['id'] = uid;
-      return UserModel.fromJson(data);
+    try {
+      await _userStore.setUserDoc(uid, safeProfileUpdate, merge: true);
+      final refreshed = await _userStore.getUserDoc(uid);
+      if (refreshed != null) {
+        final data = Map<String, dynamic>.from(refreshed);
+        data['id'] = uid;
+        if (_sessionAvatarCacheByUid.containsKey(uid)) {
+          data['avatarUrl'] = _sessionAvatarCacheByUid[uid];
+        }
+        return UserModel.fromJson(data);
+      }
+    } on FirebaseException catch (e) {
+      debugPrint(
+        'Firestore users/$uid updateProfile fallback (${e.code}): ${e.message}',
+      );
     }
-    return user.copyWith(id: uid);
+    return user.copyWith(
+      id: uid,
+      avatarUrl: _sessionAvatarCacheByUid[uid],
+      clearAvatar:
+          _sessionAvatarCacheByUid.containsKey(uid) &&
+          _sessionAvatarCacheByUid[uid] == null,
+    );
   }
 
   @override

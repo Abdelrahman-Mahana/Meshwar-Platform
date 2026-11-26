@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -108,15 +107,19 @@ class _HomeScreenState extends State<HomeScreen> {
       parcels?.loadParcels();
 
       if (ws != null) {
-        if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
-          ws.loadRequests();
-        }
-        if (ws.notifications.isEmpty) {
-          ws.loadNotifications();
-        }
-        final uid = ws.currentUserId ?? auth?.user.id ?? '';
-        if (uid.isNotEmpty && ws.savedWorksites.isEmpty) {
-          ws.loadSavedWorksites(uid);
+        if (ws.usesDefaultRepository && !ws.isDemoShowcaseMode) {
+          ws.activateDemoShowcase();
+        } else {
+          if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
+            ws.loadRequests();
+          }
+          if (ws.notifications.isEmpty) {
+            ws.loadNotifications();
+          }
+          final uid = ws.currentUserId ?? auth?.user.id ?? '';
+          if (uid.isNotEmpty && ws.savedWorksites.isEmpty) {
+            ws.loadSavedWorksites(uid);
+          }
         }
       }
     });
@@ -309,13 +312,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           isUltraCompact: isUltraCompact,
                         ),
                         const SizedBox(height: 14),
-
-                        // Dev-Only All-Cases Showcase Toggle
-                        if (AppEnvironment.current.isDevelopment ||
-                            AppEnvironment.useDevMocks) ...[
-                          _buildDemoShowcaseBanner(context, worksite, isAr),
-                          const SizedBox(height: 14),
-                        ],
 
                         // 2. FIRST FOCAL SECTION: "إلى أين مشوارك أو طلبك اليوم؟"
                         //    3 Full-Frame 3D Studio Service Icons + Smart Route Search
@@ -631,26 +627,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   );
                 },
-                child: Container(
-                  width: isUltraCompact ? 38 : 42,
-                  height: isUltraCompact ? 38 : 42,
-                  decoration: BoxDecoration(
-                    color: AppColors.navy,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.gold,
-                      width: 2.0,
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      auth.user.fullName.isNotEmpty
-                          ? auth.user.fullName[0]
-                          : 'م',
-                      style: AppTypography.title(color: Colors.white)
-                          .copyWith(fontSize: 15),
-                    ),
-                  ),
+                child: MashwarUserAvatar(
+                  fullName: auth.user.fullName.isNotEmpty
+                      ? auth.user.fullName
+                      : (isAr ? 'مشوار' : 'M'),
+                  avatarUrl: auth.user.avatarUrl,
+                  radius: isUltraCompact ? 19 : 21,
+                  borderColor: AppColors.gold,
+                  borderWidth: 2.0,
+                  backgroundColor: AppColors.navy,
                 ),
               ),
             ],
@@ -2857,111 +2842,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDemoShowcaseBanner(
-    BuildContext context,
-    WorksiteProvider worksite,
-    bool isAr,
-  ) {
-    final isActive = worksite.isDemoShowcaseMode;
-    final button = OutlinedButton.icon(
-      key: const ValueKey('home_demo_all_cases_btn'),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: isActive ? AppColors.tealDark : AppColors.navy,
-        backgroundColor: Colors.white,
-        side: BorderSide(
-          color: isActive ? AppColors.teal : AppColors.gold,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      onPressed: () {
-        if (isActive) {
-          worksite.exitDemoShowcase();
-        } else {
-          worksite.activateDemoShowcase();
-        }
-      },
-      icon: Icon(
-        isActive ? Icons.close_rounded : Icons.layers_outlined,
-        size: 15,
-      ),
-      label: Text(
-        isActive
-            ? (isAr ? 'إيقاف العرض التجريبي' : 'Exit Demo Showcase')
-            : (isAr
-                ? 'عرض جميع الحالات التجريبية (14)'
-                : 'Load All Demo Cases (14)'),
-        style: AppTypography.label(
-          color: isActive ? AppColors.tealDark : AppColors.navy,
-        ).copyWith(fontWeight: FontWeight.w800),
-      ),
-    );
-
-    return Container(
-      key: const ValueKey('home_demo_showcase_banner'),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: isActive ? AppColors.tealSurface : AppColors.sand,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isActive
-              ? AppColors.teal.withValues(alpha: 0.35)
-              : AppColors.gold.withValues(alpha: 0.38),
-        ),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWideRow = constraints.maxWidth >= 560;
-          final headline = Row(
-            children: [
-              Icon(
-                isActive ? Icons.auto_awesome_rounded : Icons.science_outlined,
-                size: 18,
-                color: isActive ? AppColors.teal : AppColors.goldDark,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  isActive
-                      ? (isAr
-                          ? 'وضع استعراض جميع الحالات نشط (14 حالة · 11 مرحلة · 5 رموز تسليم)'
-                          : 'All-Cases Showcase Active (14 cases · 11 statuses · 5 handover codes)')
-                      : (isAr
-                          ? 'وضع التطوير: استعرض جميع حالات مشوار الـ 14 والرموز التجريبية'
-                          : 'Dev Mode: Preview all 14 MASHWAR cases, offers & handover codes'),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTypography.label(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-            ],
-          );
-
-          if (isWideRow) {
-            return Row(
-              children: [
-                Expanded(child: headline),
-                const SizedBox(width: 10),
-                button,
-              ],
-            );
-          }
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              headline,
-              const SizedBox(height: 8),
-              button,
-            ],
-          );
-        },
-      ),
     );
   }
 

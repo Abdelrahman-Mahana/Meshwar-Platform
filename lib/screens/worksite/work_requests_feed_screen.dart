@@ -221,7 +221,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
         _searchController.text.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: const Color(0xFFFCFBF8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,

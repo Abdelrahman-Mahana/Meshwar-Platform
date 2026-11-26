@@ -286,13 +286,13 @@ void main() {
       expect(find.text('انشر إعلان'), findsOneWidget);
       expect(find.text('+ انشر إعلان'), findsNothing);
 
-      // 3. HomeScreen has no + انشر رحلة button, and tapping ع opens UserProfileScreen
+      // 3. HomeScreen has no + انشر رحلة button, renders visual profile avatar instead of raw letter, and tapping avatar opens UserProfileScreen
       await tester.pumpWidget(wrapWithProviders(const HomeScreen()));
       await tester.pumpAndSettle();
       expect(find.text('+ انشر رحلة'), findsNothing);
       expect(find.text('انشر رحلة'), findsNothing);
 
-      await tester.tap(find.text('ع'));
+      await tester.tap(find.byKey(const ValueKey('home_profile_avatar_btn')));
       await tester.pumpAndSettle();
       expect(find.text('الملف الشخصي'), findsOneWidget);
     });

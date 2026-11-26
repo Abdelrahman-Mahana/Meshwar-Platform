@@ -486,7 +486,7 @@ void main() {
     });
 
     testWidgets(
-        'HomeScreen renders home_demo_all_cases_btn and toggles showcase mode cleanly across mobile and wide viewports',
+        'HomeScreen removes dev showcase banner and renders rich 14-case demo state cleanly across mobile and wide viewports',
         (tester) async {
       addTearDown(() {
         tester.view.resetPhysicalSize();
@@ -521,6 +521,7 @@ void main() {
             fullName: 'عبدالرحمن مهنا',
             phone: '55123456',
             gender: UserGender.male,
+            avatarUrl: 'preset:engineer',
             isVerified: true,
           ),
         );
@@ -555,20 +556,26 @@ void main() {
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
 
-        final toggleBtn =
-            find.byKey(const ValueKey('home_demo_all_cases_btn'));
-        expect(toggleBtn, findsOneWidget);
-        expect(worksiteProvider.isDemoShowcaseMode, isFalse);
+        expect(
+          find.byKey(const ValueKey('home_demo_showcase_banner')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey('home_demo_all_cases_btn')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey('home_profile_avatar_btn')),
+          findsOneWidget,
+        );
 
-        await tester.ensureVisible(toggleBtn);
-        await tester.tap(toggleBtn);
+        await worksiteProvider.activateDemoShowcase();
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(worksiteProvider.isDemoShowcaseMode, isTrue);
         expect(worksiteProvider.allLoadedRequests.length, 14);
 
-        await tester.ensureVisible(toggleBtn);
-        await tester.tap(toggleBtn);
+        await worksiteProvider.exitDemoShowcase();
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(worksiteProvider.isDemoShowcaseMode, isFalse);

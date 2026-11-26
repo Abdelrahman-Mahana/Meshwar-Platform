@@ -279,7 +279,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
     final hasRoute = activeFrom.isNotEmpty || activeTo.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: AppColors.slateBg,
+      backgroundColor: const Color(0xFFFCFBF8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -344,7 +344,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
               child: FilledButton.icon(
                 key: const ValueKey('hub_open_composer_btn'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.cobalt,
+                  backgroundColor: AppColors.navy,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: EdgeInsets.symmetric(

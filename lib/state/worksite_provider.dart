@@ -296,6 +296,7 @@ class WorksiteProvider extends ChangeNotifier {
   final Set<String> _locallyReadNotificationIds = <String>{};
   final Map<String, String> _reorderedFromMap = {};
   bool _isDemoShowcaseMode = false;
+  bool _hasExplicitlyExitedDemo = false;
   MashwarDemoCasesBundle? _showcaseBundle;
   Map<String, List<WorkOffer>> _demoOffersByRequest = {};
   Map<String, List<RequestEvent>> _demoEventsByRequest = {};
@@ -311,6 +312,9 @@ class WorksiteProvider extends ChangeNotifier {
         _currentUidProvider = currentUidProvider,
         _boundUserId = initialUserId,
         _boundUserName = initialUserName;
+
+  bool get usesDefaultRepository =>
+      _injectedWorksiteRepo == null && _injectedProviderRepo == null;
 
   IWorksiteRepository get _worksiteRepo =>
       _injectedWorksiteRepo ?? AppRepositories.instance.worksite;
@@ -386,6 +390,7 @@ class WorksiteProvider extends ChangeNotifier {
   /// Loads the full bilingual 14-case Qatar demo showcase into active provider state,
   /// enabling end-to-end UI inspection even when connected to live Firebase.
   Future<void> activateDemoShowcase() async {
+    _hasExplicitlyExitedDemo = false;
     final uid = currentUserId ?? MashwarDemoCasesCatalog.defaultOwnerUid;
     final name = currentUserName.isNotEmpty
         ? currentUserName
@@ -440,6 +445,7 @@ class WorksiteProvider extends ChangeNotifier {
 
   /// Exits the local 14-case showcase overlay and restores normal repository reads.
   Future<void> exitDemoShowcase() async {
+    _hasExplicitlyExitedDemo = true;
     _isDemoShowcaseMode = false;
     _showcaseBundle = null;
     _demoOffersByRequest = {};
@@ -567,6 +573,12 @@ class WorksiteProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (usesDefaultRepository &&
+          !_hasExplicitlyExitedDemo &&
+          !_isDemoShowcaseMode) {
+        await activateDemoShowcase();
+        return;
+      }
       if (_isDemoShowcaseMode && _showcaseBundle != null) {
         if (_allLoadedRequests.isEmpty) {
           _allLoadedRequests = List<WorkRequest>.from(_showcaseBundle!.requests)

@@ -28,10 +28,44 @@ import '../worksite/work_request_details_screen.dart';
 class UserProfileScreen extends StatelessWidget {
   const UserProfileScreen({super.key});
 
+  void _openAvatarPicker(
+    BuildContext context,
+    AuthProvider auth,
+    UserModel user,
+    bool isAr,
+  ) {
+    MashwarAvatarPickerSheet.show(
+      context,
+      currentAvatarUrl: user.avatarUrl,
+      fullName: user.fullName.isNotEmpty
+          ? user.fullName
+          : (isAr ? 'عضو مشوار' : 'MASHWAR Member'),
+      isAr: isAr,
+      onAvatarSelected: (newAvatarUrl) {
+        auth.updateAvatar(newAvatarUrl);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newAvatarUrl == null
+                  ? (isAr
+                      ? 'تمت إزالة الصورة الشخصية والعودة للحرف الأول'
+                      : 'Profile photo removed')
+                  : (isAr
+                      ? 'تم تحديث صورتك الشخصية بنجاح'
+                      : 'Profile photo updated successfully'),
+            ),
+            backgroundColor: AppColors.teal,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
-    final user = context.watch<AuthProvider>().user;
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
     final worksite = context.watch<WorksiteProvider?>();
     final rides = context.watch<RidesProvider?>();
     final parcels = context.watch<ParcelsProvider?>();
@@ -64,7 +98,7 @@ class UserProfileScreen extends StatelessWidget {
     final savedSites = worksite?.savedWorksites ?? const <SavedWorksite>[];
 
     return Scaffold(
-      backgroundColor: AppColors.slateBg,
+      backgroundColor: const Color(0xFFFCFBF8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -86,11 +120,11 @@ class UserProfileScreen extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.edit_outlined,
-                size: 18, color: AppColors.cobalt),
+                size: 18, color: AppColors.teal),
             label: Text(
               isAr ? 'تعديل' : 'Edit',
-              style: AppTypography.label(color: AppColors.cobalt)
-                  .copyWith(fontWeight: FontWeight.w700),
+              style: AppTypography.label(color: AppColors.teal)
+                  .copyWith(fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -105,22 +139,53 @@ class UserProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(AppDimens.space20),
                 child: Column(
                   children: [
-                    Container(
-                      width: 78,
-                      height: 78,
-                      decoration: BoxDecoration(
-                        color: AppColors.cobaltSurface,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.cobalt.withValues(alpha: 0.25),
-                          width: 2,
+                    MashwarUserAvatar(
+                      key: const ValueKey('profile_hero_avatar'),
+                      fullName: user.fullName.isNotEmpty
+                          ? user.fullName
+                          : (isAr ? 'عضو مشوار' : 'M'),
+                      avatarUrl: user.avatarUrl,
+                      radius: 42,
+                      borderColor: AppColors.gold,
+                      borderWidth: 2.5,
+                      showEditBadge: true,
+                      onTap: () => _openAvatarPicker(context, auth, user, isAr),
+                    ),
+                    const SizedBox(height: 10),
+                    InkWell(
+                      key: const ValueKey('profile_change_avatar_btn'),
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => _openAvatarPicker(context, auth, user, isAr),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.sand,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.gold.withValues(alpha: 0.45),
+                          ),
                         ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
-                          style: AppTypography.largeTitle(color: AppColors.navy)
-                              .copyWith(fontSize: 32),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.add_a_photo_outlined,
+                              size: 14,
+                              color: AppColors.navy,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isAr
+                                  ? 'تغيير الصورة الشخصية'
+                                  : 'Change Profile Photo',
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -749,13 +814,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  void _openAvatarPicker(
+    BuildContext context,
+    AuthProvider auth,
+    UserModel user,
+    bool isAr,
+  ) {
+    MashwarAvatarPickerSheet.show(
+      context,
+      currentAvatarUrl: user.avatarUrl,
+      fullName: user.fullName.isNotEmpty
+          ? user.fullName
+          : (isAr ? 'عضو مشوار' : 'MASHWAR Member'),
+      isAr: isAr,
+      onAvatarSelected: (newAvatarUrl) {
+        auth.updateAvatar(newAvatarUrl);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              newAvatarUrl == null
+                  ? (isAr
+                      ? 'تمت إزالة الصورة الشخصية والعودة للحرف الأول'
+                      : 'Profile photo removed')
+                  : (isAr
+                      ? 'تم تحديث صورتك الشخصية بنجاح'
+                      : 'Profile photo updated successfully'),
+            ),
+            backgroundColor: AppColors.teal,
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
-    final user = context.watch<AuthProvider>().user;
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user;
 
     return Scaffold(
-      backgroundColor: AppColors.slateBg,
+      backgroundColor: const Color(0xFFFCFBF8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -777,24 +876,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
-                child: Container(
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.cobalt, width: 2),
-                  ),
-                  child: CircleAvatar(
-                    radius: 36,
-                    backgroundColor: AppColors.cobaltSurface,
-                    child: Text(
-                      user.fullName.isNotEmpty ? user.fullName[0] : 'ع',
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.navy,
+                child: Column(
+                  children: [
+                    MashwarUserAvatar(
+                      key: const ValueKey('edit_profile_avatar_btn'),
+                      fullName: user.fullName.isNotEmpty
+                          ? user.fullName
+                          : (isAr ? 'عضو مشوار' : 'M'),
+                      avatarUrl: user.avatarUrl,
+                      radius: 42,
+                      borderColor: AppColors.gold,
+                      borderWidth: 2.5,
+                      showEditBadge: true,
+                      onTap: () => _openAvatarPicker(context, auth, user, isAr),
+                    ),
+                    const SizedBox(height: 10),
+                    TextButton.icon(
+                      key: const ValueKey('edit_profile_change_photo_btn'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: AppColors.sand,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 7),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(
+                            color: AppColors.gold.withValues(alpha: 0.45),
+                          ),
+                        ),
+                      ),
+                      onPressed: () =>
+                          _openAvatarPicker(context, auth, user, isAr),
+                      icon: const Icon(Icons.camera_alt_outlined,
+                          size: 16, color: AppColors.teal),
+                      label: Text(
+                        isAr
+                            ? 'رفع أو تغيير الصورة الشخصية'
+                            : 'Upload or Change Photo',
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w800),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               const SizedBox(height: AppDimens.space24),

@@ -124,16 +124,20 @@ class _MainNavShellState extends State<MainNavShell> {
       board?.loadBoardAds();
 
       if (ws != null) {
-        final uid = ws.currentUserId ?? auth?.user.id ?? '';
-        if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
-          ws.loadRequests();
-        }
-        if (ws.notifications.isEmpty) {
-          ws.loadNotifications();
-        }
-        if (uid.isNotEmpty && ws.providerProfile == null) {
-          ws.loadProviderProfile(uid);
-          ws.loadSavedWorksites(uid);
+        if (ws.usesDefaultRepository && !ws.isDemoShowcaseMode) {
+          ws.activateDemoShowcase();
+        } else {
+          final uid = ws.currentUserId ?? auth?.user.id ?? '';
+          if (ws.allLoadedRequests.isEmpty && !ws.isLoading && !ws.hasError) {
+            ws.loadRequests();
+          }
+          if (ws.notifications.isEmpty) {
+            ws.loadNotifications();
+          }
+          if (uid.isNotEmpty && ws.providerProfile == null) {
+            ws.loadProviderProfile(uid);
+            ws.loadSavedWorksites(uid);
+          }
         }
       }
     });
@@ -680,9 +684,17 @@ class _MainNavShellState extends State<MainNavShell> {
 
     final shownCards = _isActiveOrders ? activeCards : completedCards;
     final unreadCount = worksite.unreadNotificationsCount;
+    final tripsKpiCount = _isActiveOrders
+        ? (activeTripRides.length + activeRideAds.length)
+        : (completedTripRides.length + completedRideAds.length);
+    final parcelsKpiCount = _isActiveOrders
+        ? (activeParcels.length + activeParcelAds.length)
+        : (completedParcels.length + completedParcelAds.length);
+    final supplyKpiCount =
+        _isActiveOrders ? activeSupply.length : completedSupply.length;
 
     return Scaffold(
-      backgroundColor: AppColors.slateBg,
+      backgroundColor: const Color(0xFFFCFBF8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -752,12 +764,14 @@ class _MainNavShellState extends State<MainNavShell> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
+                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: AppColors.slateBg,
+                          color: AppColors.sand,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.slateBorder),
+                          border: Border.all(
+                            color: AppColors.gold.withValues(alpha: 0.35),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -772,19 +786,9 @@ class _MainNavShellState extends State<MainNavShell> {
                                       const EdgeInsets.symmetric(vertical: 9),
                                   decoration: BoxDecoration(
                                     color: _isActiveOrders
-                                        ? Colors.white
+                                        ? AppColors.navy
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
-                                    boxShadow: _isActiveOrders
-                                        ? [
-                                            BoxShadow(
-                                              color: AppColors.navy
-                                                  .withValues(alpha: 0.06),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 1),
-                                            ),
-                                          ]
-                                        : null,
                                   ),
                                   child: Center(
                                     child: Text(
@@ -795,8 +799,8 @@ class _MainNavShellState extends State<MainNavShell> {
                                       overflow: TextOverflow.ellipsis,
                                       style: AppTypography.bodySecondary(
                                         color: _isActiveOrders
-                                            ? AppColors.navy
-                                            : AppColors.textSecondary,
+                                            ? Colors.white
+                                            : AppColors.navy,
                                       ).copyWith(
                                         fontWeight: _isActiveOrders
                                             ? FontWeight.w800
@@ -820,19 +824,9 @@ class _MainNavShellState extends State<MainNavShell> {
                                       const EdgeInsets.symmetric(vertical: 9),
                                   decoration: BoxDecoration(
                                     color: !_isActiveOrders
-                                        ? Colors.white
+                                        ? AppColors.navy
                                         : Colors.transparent,
                                     borderRadius: BorderRadius.circular(10),
-                                    boxShadow: !_isActiveOrders
-                                        ? [
-                                            BoxShadow(
-                                              color: AppColors.navy
-                                                  .withValues(alpha: 0.06),
-                                              blurRadius: 6,
-                                              offset: const Offset(0, 1),
-                                            ),
-                                          ]
-                                        : null,
                                   ),
                                   child: Center(
                                     child: Text(
@@ -843,8 +837,8 @@ class _MainNavShellState extends State<MainNavShell> {
                                       overflow: TextOverflow.ellipsis,
                                       style: AppTypography.bodySecondary(
                                         color: !_isActiveOrders
-                                            ? AppColors.navy
-                                            : AppColors.textSecondary,
+                                            ? Colors.white
+                                            : AppColors.navy,
                                       ).copyWith(
                                         fontWeight: !_isActiveOrders
                                             ? FontWeight.w800
@@ -858,6 +852,51 @@ class _MainNavShellState extends State<MainNavShell> {
                             ),
                           ],
                         ),
+                      ),
+                      const SizedBox(height: 10),
+                      // 3-Service Visual KPI Summary Strip
+                      Row(
+                        key: const ValueKey('activity_kpi_summary_strip'),
+                        children: [
+                          Expanded(
+                            child: _buildActivityKpiMiniCard(
+                              title: isAr ? 'الرحلات' : 'Trips',
+                              count: tripsKpiCount,
+                              selected: _activityServiceFilter == 1,
+                              accent: AppColors.navy,
+                              surface: AppColors.sand,
+                              onTap: () => setState(() =>
+                                  _activityServiceFilter =
+                                      _activityServiceFilter == 1 ? 0 : 1),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildActivityKpiMiniCard(
+                              title: isAr ? 'الطرود' : 'Parcels',
+                              count: parcelsKpiCount,
+                              selected: _activityServiceFilter == 2,
+                              accent: AppColors.goldDark,
+                              surface: AppColors.goldSurface,
+                              onTap: () => setState(() =>
+                                  _activityServiceFilter =
+                                      _activityServiceFilter == 2 ? 0 : 2),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildActivityKpiMiniCard(
+                              title: isAr ? 'التوريد' : 'Supply',
+                              count: supplyKpiCount,
+                              selected: _activityServiceFilter == 3,
+                              accent: AppColors.teal,
+                              surface: AppColors.tealSurface,
+                              onTap: () => setState(() =>
+                                  _activityServiceFilter =
+                                      _activityServiceFilter == 3 ? 0 : 3),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 10),
                       SingleChildScrollView(
@@ -939,6 +978,62 @@ class _MainNavShellState extends State<MainNavShell> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityKpiMiniCard({
+    required String title,
+    required int count,
+    required bool selected,
+    required Color accent,
+    required Color surface,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? accent : surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected ? accent : accent.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.label(
+                  color: selected ? Colors.white : AppColors.navy,
+                ).copyWith(fontWeight: FontWeight.w800, fontSize: 11.5),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: selected
+                    ? Colors.white.withValues(alpha: 0.22)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$count',
+                style: AppTypography.label(
+                  color: selected ? Colors.white : accent,
+                ).copyWith(fontWeight: FontWeight.w900, fontSize: 11),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1685,7 +1780,7 @@ class _MainNavShellState extends State<MainNavShell> {
     final parcelsCount = parcels.parcels.length;
 
     return Scaffold(
-      backgroundColor: AppColors.slateBg,
+      backgroundColor: const Color(0xFFFCFBF8),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -1740,26 +1835,25 @@ class _MainNavShellState extends State<MainNavShell> {
                         children: [
                           Row(
                             children: [
-                              Container(
-                                width: 58,
-                                height: 58,
-                                decoration: BoxDecoration(
-                                  color: AppColors.cobaltSurface,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.cobalt
-                                        .withValues(alpha: 0.3),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    displayName[0].toUpperCase(),
-                                    style: AppTypography.title(
-                                            color: AppColors.navy)
-                                        .copyWith(fontSize: 22),
-                                  ),
-                                ),
+                              MashwarUserAvatar(
+                                key: const ValueKey('account_tab_avatar_btn'),
+                                fullName: displayName,
+                                avatarUrl: user.avatarUrl,
+                                radius: 31,
+                                borderColor: AppColors.gold,
+                                borderWidth: 2.2,
+                                showEditBadge: true,
+                                onTap: () {
+                                  MashwarAvatarPickerSheet.show(
+                                    context,
+                                    currentAvatarUrl: user.avatarUrl,
+                                    fullName: displayName,
+                                    isAr: isAr,
+                                    onAvatarSelected: (newUrl) {
+                                      auth.updateAvatar(newUrl);
+                                    },
+                                  );
+                                },
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -1781,7 +1875,7 @@ class _MainNavShellState extends State<MainNavShell> {
                                             user.isVerified) ...[
                                           const SizedBox(width: 6),
                                           const Icon(Icons.verified_rounded,
-                                              color: AppColors.emerald,
+                                              color: AppColors.teal,
                                               size: 18),
                                         ],
                                       ],
@@ -1802,10 +1896,11 @@ class _MainNavShellState extends State<MainNavShell> {
                               ),
                               OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.cobalt,
+                                  foregroundColor: AppColors.navy,
+                                  backgroundColor: AppColors.sand,
                                   side: BorderSide(
-                                    color: AppColors.cobalt
-                                        .withValues(alpha: 0.35),
+                                    color:
+                                        AppColors.gold.withValues(alpha: 0.45),
                                   ),
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 6),
@@ -1820,9 +1915,9 @@ class _MainNavShellState extends State<MainNavShell> {
                                 },
                                 child: Text(
                                   isAr ? 'الملف' : 'Profile',
-                                  style: AppTypography.label(
-                                          color: AppColors.cobalt)
-                                      .copyWith(fontWeight: FontWeight.w800),
+                                  style:
+                                      AppTypography.label(color: AppColors.navy)
+                                          .copyWith(fontWeight: FontWeight.w800),
                                 ),
                               ),
                             ],

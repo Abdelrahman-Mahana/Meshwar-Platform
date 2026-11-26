@@ -685,6 +685,8 @@ class AuthProvider extends ChangeNotifier {
   void updateProfile({
     String? fullName,
     UserGender? gender,
+    String? avatarUrl,
+    bool clearAvatar = false,
     String? email,
     String? governorate,
     String? city,
@@ -698,6 +700,8 @@ class AuthProvider extends ChangeNotifier {
     _user = _user.copyWith(
       fullName: fullName ?? _user.fullName,
       gender: gender ?? _user.gender,
+      avatarUrl: avatarUrl,
+      clearAvatar: clearAvatar,
       email: email ?? _user.email,
       governorate: governorate ?? _user.governorate,
       city: city ?? _user.city,
@@ -711,6 +715,16 @@ class AuthProvider extends ChangeNotifier {
     );
     notifyListeners();
     _persistProfileIfSignedIn();
+  }
+
+  /// Updates or clears the user's profile photo (`data:image/...`, `preset:...`, or asset/network URL).
+  void updateAvatar(String? avatarUrl) {
+    final cleaned = avatarUrl?.trim();
+    if (cleaned == null || cleaned.isEmpty) {
+      updateProfile(clearAvatar: true);
+    } else {
+      updateProfile(avatarUrl: cleaned);
+    }
   }
 
   void _persistProfileIfSignedIn() {

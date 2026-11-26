@@ -9,6 +9,7 @@ import 'package:mashwar/core/theme/app_theme.dart';
 import 'package:mashwar/core/widgets/mashwar_animations.dart';
 import 'package:mashwar/core/widgets/mashwar_worksite_icons.dart';
 import 'package:mashwar/data/models/board_ad_model.dart';
+import 'package:mashwar/data/models/parcel_model.dart';
 import 'package:mashwar/data/models/user_model.dart';
 import 'package:mashwar/data/repositories/implementations/provider_repository_impl.dart';
 import 'package:mashwar/data/repositories/implementations/worksite_repository_impl.dart';
@@ -731,6 +732,143 @@ void main() {
         }
 
         worksite.dispose();
+        settings.dispose();
+      },
+    );
+
+    testWidgets(
+      'Profile photo upload & preset avatar selection updates HomeScreen, Account tab, and UserProfileScreen + app-wide demo data & interactive parcel OTP tracking',
+      (tester) async {
+        tester.view.physicalSize = const Size(412, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        final settings = SettingsProvider()..setLocale(const Locale('ar', 'QA'));
+        final rides = RidesProvider();
+        final parcels = ParcelsProvider();
+        final board = BoardProvider();
+        final worksite = WorksiteProvider(
+          initialUserId: 'user_01',
+          initialUserName: 'عبدالرحمن المهنا',
+        );
+        final auth = AuthProvider.forTesting(
+          user: const UserModel(
+            id: 'user_01',
+            fullName: 'عبدالرحمن المهنا',
+            phone: '55123456',
+            gender: UserGender.male,
+            avatarUrl: 'preset:engineer',
+            isVerified: true,
+          ),
+        );
+
+        // 1. Rich App-Wide Demo Data Verification
+        expect(rides.allRides.length, greaterThanOrEqualTo(8));
+        expect(rides.myPublishedRides.length, greaterThanOrEqualTo(3));
+        expect(rides.bookedRides.length, greaterThanOrEqualTo(3));
+        expect(parcels.parcels.length, greaterThanOrEqualTo(6));
+        expect(
+          parcels.parcels.where((p) => p.status == ParcelStatusStep.delivered),
+          isNotEmpty,
+        );
+        expect(board.myAds.length, greaterThanOrEqualTo(3));
+
+        // 2. Render MainNavShell — verify HomeScreen has NO dev showcase banner
+        //    and auto-loads all 14 supply cases + renders visual MashwarUserAvatar
+        await tester.pumpWidget(
+          buildIntlHarness(
+            home: const MainNavShell(),
+            settings: settings,
+            rides: rides,
+            parcels: parcels,
+            board: board,
+            worksite: worksite,
+            auth: auth,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(
+          find.byKey(const ValueKey('home_demo_showcase_banner')),
+          findsNothing,
+        );
+        expect(worksite.allLoadedRequests.length, 14);
+        expect(
+          find.byKey(const ValueKey('mashwar_avatar_preset:engineer')),
+          findsWidgets,
+        );
+
+        // 3. Switch to Account tab (`حسابي`), tap avatar to open MashwarAvatarPickerSheet,
+        //    and select a new studio preset (`preset:executive`)
+        await tester.tap(find.text('حسابي').first);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+
+        final accountAvatarBtn =
+            find.byKey(const ValueKey('account_tab_avatar_btn'));
+        expect(accountAvatarBtn, findsOneWidget);
+        await tester.tap(accountAvatarBtn);
+        await tester.pumpAndSettle();
+        expect(find.byType(MashwarAvatarPickerSheet), findsOneWidget);
+
+        await tester.tap(
+          find.byKey(const ValueKey('avatar_preset_executive')),
+        );
+        await tester.pumpAndSettle();
+        expect(auth.user.avatarUrl, 'preset:executive');
+
+        // 4. Test custom uploaded base64 photo (`data:image/png;base64,...`)
+        //    and verify Image.memory renders inside MashwarUserAvatar on HomeScreen
+        const onePixelPngBase64 =
+            'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        auth.updateAvatar(onePixelPngBase64);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(auth.user.avatarUrl, onePixelPngBase64);
+        expect(
+          find.byKey(const ValueKey('mashwar_avatar_memory_image')),
+          findsWidgets,
+        );
+
+        // 5. Verify interactive ParcelTrackingScreen OTP step progression
+        final trackedParcel = parcels.parcels.firstWhere(
+          (p) => p.status == ParcelStatusStep.accepted,
+        );
+        await tester.pumpWidget(
+          buildIntlHarness(
+            home: ParcelTrackingScreen(parcel: trackedParcel),
+            settings: settings,
+            rides: rides,
+            parcels: parcels,
+            board: board,
+            worksite: worksite,
+            auth: auth,
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+
+        final advanceBtn =
+            find.byKey(const ValueKey('parcel_advance_step_btn'));
+        expect(advanceBtn, findsOneWidget);
+        await tester.ensureVisible(advanceBtn);
+        await tester.tap(advanceBtn);
+        await tester.pumpAndSettle();
+        expect(
+          parcels.parcels
+              .firstWhere((p) => p.id == trackedParcel.id)
+              .status,
+          ParcelStatusStep.handedOver,
+        );
+
+        rides.dispose();
+        parcels.dispose();
+        board.dispose();
+        worksite.dispose();
+        auth.dispose();
         settings.dispose();
       },
     );
