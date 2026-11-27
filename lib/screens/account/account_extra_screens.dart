@@ -704,8 +704,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _occupationController;
   String? _avatarUrl;
   bool _avatarChanged = false;
+  late bool _isPhoneEditable;
   String? _nameError;
+  String? _phoneError;
   bool _isSaving = false;
+
+  static String _normalizeQatarDigits(String raw) {
+    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    const easternDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    var result = raw.trim();
+    for (int i = 0; i < 10; i++) {
+      result = result.replaceAll(arabicDigits[i], '$i');
+      result = result.replaceAll(easternDigits[i], '$i');
+    }
+    result = result.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+    if (result.startsWith('+974')) {
+      result = result.substring(4);
+    } else if (result.startsWith('00974')) {
+      result = result.substring(5);
+    } else if (result.length == 11 && result.startsWith('974')) {
+      result = result.substring(3);
+    }
+    return result.replaceAll(RegExp(r'[^0-9]'), '');
+  }
 
   @override
   void initState() {
@@ -713,11 +734,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = context.read<AuthProvider>().user;
     _nameController = TextEditingController(text: user.fullName);
     _phoneController = TextEditingController(text: user.phone);
-    _govController =
-        TextEditingController(text: user.governorate ?? 'بلدية الدوحة');
-    _cityController = TextEditingController(text: user.city ?? 'الدوحة');
-    _occupationController =
-        TextEditingController(text: user.occupation ?? 'مهندس مشاريع');
+    _isPhoneEditable = user.phone.trim().isEmpty;
+    _govController = TextEditingController(text: user.governorate ?? '');
+    _cityController = TextEditingController(text: user.city ?? '');
+    _occupationController = TextEditingController(text: user.occupation ?? '');
     _avatarUrl = user.avatarUrl;
   }
 
@@ -742,8 +762,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
+    final rawPhone = _phoneController.text.trim();
+    final normalizedPhone =
+        rawPhone.isNotEmpty ? _normalizeQatarDigits(rawPhone) : '';
+    if (_isPhoneEditable &&
+        rawPhone.isNotEmpty &&
+        AuthProvider.validateQatarPhone(normalizedPhone) != null) {
+      setState(() {
+        _phoneError = isAr
+            ? 'الرقم يجب أن يتكون من 8 أرقام ويبدأ بـ 3 أو 5 أو 6 أو 7'
+            : 'Mobile number must be 8 digits starting with 3, 5, 6, or 7';
+      });
+      return;
+    }
+
     setState(() {
       _nameError = null;
+      _phoneError = null;
       _isSaving = true;
     });
 
@@ -751,15 +786,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     if (mounted) {
       final auth = context.read<AuthProvider>();
-      auth.updateProfile(
-        fullName: name,
-        governorate: _govController.text.trim(),
-        city: _cityController.text.trim(),
-        occupation: _occupationController.text.trim(),
-        avatarUrl: _avatarChanged ? _avatarUrl : null,
-        clearAvatar: _avatarChanged &&
-            (_avatarUrl == null || _avatarUrl!.trim().isEmpty),
-      );
+      final govText = _govController.text.trim();
+      final cityText = _cityController.text.trim();
+      final occText = _occupationController.text.trim();
+
+      if (_isPhoneEditable && normalizedPhone.isNotEmpty) {
+        auth.setPhoneNumber(normalizedPhone);
+        auth.saveProfile(
+          fullName: name,
+          gender: auth.user.gender,
+          governorate: govText.isNotEmpty ? govText : auth.user.governorate,
+          city: cityText.isNotEmpty ? cityText : auth.user.city,
+          birthDate: auth.user.birthDate,
+          email: auth.user.email,
+          emergencyContactName: auth.user.emergencyContactName,
+          emergencyContactPhone: auth.user.emergencyContactPhone,
+          occupation: occText.isNotEmpty ? occText : auth.user.occupation,
+          smokingPreference: auth.user.smokingPreference,
+          tripVibe: auth.user.tripVibe,
+          ladiesOnlyPreference: auth.user.ladiesOnlyPreference,
+          avatarUrl: _avatarChanged ? _avatarUrl : auth.user.avatarUrl,
+        );
+        if (_avatarChanged &&
+            (_avatarUrl == null || _avatarUrl!.trim().isEmpty)) {
+          await auth.updateAvatar(null);
+        }
+      } else {
+        auth.updateProfile(
+          fullName: name,
+          governorate: govText.isNotEmpty ? govText : null,
+          city: cityText.isNotEmpty ? cityText : null,
+          occupation: occText.isNotEmpty ? occText : null,
+          avatarUrl: _avatarChanged ? _avatarUrl : null,
+          clearAvatar: _avatarChanged &&
+              (_avatarUrl == null || _avatarUrl!.trim().isEmpty),
+        );
+      }
+
+      if (!mounted) return;
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -775,11 +839,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   InputDecoration _fieldDecoration({
     String? errorText,
+    String? hintText,
     bool readOnly = false,
   }) {
     return InputDecoration(
       filled: true,
       fillColor: readOnly ? AppColors.slateBg : Colors.white,
+      hintText: hintText,
       errorText: errorText,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       border: OutlineInputBorder(
@@ -935,21 +1001,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     const SizedBox(height: AppDimens.space16),
                     Text(
-                      isAr ? 'رقم الجوال' : 'Mobile Number',
+                      isAr ? 'رقم الجوال (+974)' : 'Mobile Number (+974)',
                       style: AppTypography.label(color: AppColors.navy)
                           .copyWith(fontWeight: FontWeight.w700, fontSize: 12.5),
                     ),
                     const SizedBox(height: 6),
-                    TextField(
-                      controller: _phoneController,
-                      readOnly: true,
-                      decoration: _fieldDecoration(readOnly: true),
+                    Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: TextField(
+                        key: const ValueKey('edit_profile_phone_input'),
+                        controller: _phoneController,
+                        readOnly: !_isPhoneEditable,
+                        keyboardType: TextInputType.phone,
+                        onChanged: (_) {
+                          if (_phoneError != null) {
+                            setState(() => _phoneError = null);
+                          }
+                        },
+                        decoration: _fieldDecoration(
+                          readOnly: !_isPhoneEditable,
+                          hintText: '55123456',
+                          errorText: _phoneError,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      isAr
-                          ? 'يتطلب تغيير رقم الجوال رمز تأكيد جديد.'
-                          : 'Changing mobile number requires SMS OTP verification.',
+                      _isPhoneEditable
+                          ? (isAr
+                              ? 'أدخل رقم جوالك القطري (8 أرقام) لتنسيق الرحلات والطرود وأكواد OTP.'
+                              : 'Add your 8-digit Qatar mobile number for trip coordination & OTP handovers.')
+                          : (isAr
+                              ? 'يتطلب تغيير رقم الجوال رمز تأكيد جديد.'
+                              : 'Changing mobile number requires SMS OTP verification.'),
                       style: AppTypography.label(color: AppColors.textSecondary)
                           .copyWith(fontSize: 11.5, fontWeight: FontWeight.w500),
                     ),
@@ -974,7 +1058,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               const SizedBox(height: 6),
                               TextField(
                                 controller: _govController,
-                                decoration: _fieldDecoration(),
+                                decoration: _fieldDecoration(
+                                  hintText: isAr
+                                      ? 'مثال: بلدية الدوحة'
+                                      : 'e.g. Doha Municipality',
+                                ),
                               ),
                             ],
                           ),
@@ -996,7 +1084,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               const SizedBox(height: 6),
                               TextField(
                                 controller: _cityController,
-                                decoration: _fieldDecoration(),
+                                decoration: _fieldDecoration(
+                                  hintText: isAr ? 'مثال: الدوحة' : 'e.g. Doha',
+                                ),
                               ),
                             ],
                           ),
@@ -1012,7 +1102,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     const SizedBox(height: 6),
                     TextField(
                       controller: _occupationController,
-                      decoration: _fieldDecoration(),
+                      decoration: _fieldDecoration(
+                        hintText: isAr
+                            ? 'اختياري (مثال: مهندس، موظف، طالب)'
+                            : 'Optional (e.g. Engineer, Consultant)',
+                      ),
                     ),
                     const SizedBox(height: AppDimens.space24),
                     MashwarButton(
@@ -1983,70 +2077,169 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                         .clamp(0.0, double.infinity),
                                   ),
                                   child: Center(
-                                    child: MashwarSectionCard(
-                                      padding: const EdgeInsets.all(
-                                          AppDimens.space24),
-                                      borderRadius: 16,
-                                      borderColor: AppColors.slateBorder,
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const MashwarTrustEmblem(
-                                            type: MashwarTrustType.liveCorridor,
-                                            size: 46,
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            _unreadOnly
-                                                ? (isAr
-                                                    ? 'لا توجد تنبيهات غير مقروءة'
-                                                    : 'No Unread Alerts')
-                                                : (isAr
-                                                    ? 'لا توجد إشعارات حالياً'
-                                                    : 'No Notifications Yet'),
-                                            textAlign: TextAlign.center,
-                                            style: AppTypography.title()
-                                                .copyWith(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w700,
+                                    child: allItems.isEmpty
+                                        ? MashwarSectionCard(
+                                            key: const ValueKey(
+                                              'notifications_empty_welcome_card',
+                                            ),
+                                            padding: const EdgeInsets.all(
+                                              AppDimens.space24,
+                                            ),
+                                            borderRadius: 18,
+                                            borderColor: AppColors.teal
+                                                .withValues(alpha: 0.3),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  width: 54,
+                                                  height: 54,
+                                                  decoration: BoxDecoration(
+                                                    color:
+                                                        AppColors.tealSurface,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                      14,
+                                                    ),
+                                                    border: Border.all(
+                                                      color: AppColors.teal
+                                                          .withValues(
+                                                        alpha: 0.25,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons
+                                                        .notifications_none_rounded,
+                                                    color: AppColors.teal,
+                                                    size: 28,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 14),
+                                                Text(
+                                                  isAr
+                                                      ? 'أهلاً بك في مشوار — لا توجد إشعارات بعد'
+                                                      : "Welcome to MASHWAR — You're All Caught Up",
+                                                  textAlign: TextAlign.center,
+                                                  style: AppTypography.title()
+                                                      .copyWith(
+                                                    fontSize: 16.5,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  isAr
+                                                      ? 'صندوق إشعاراتك نظيف تماماً. ستصلك التنبيهات الحقيقية فقط بمجرد حجز أو نشر رحلة، إرسال طرد على الطريق، أو إنشاء طلب توريد — بدون أي رسائل مزعجة أو إشعارات وهمية.'
+                                                      : 'Your inbox is completely clean. Real notifications only appear once you book or publish a trip, send a parcel, or submit a supply request — zero spam and zero fake items.',
+                                                  textAlign: TextAlign.center,
+                                                  style: AppTypography
+                                                      .bodySecondary()
+                                                      .copyWith(
+                                                    fontSize: 13,
+                                                    height: 1.45,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 16),
+                                                Wrap(
+                                                  spacing: 8,
+                                                  runSpacing: 8,
+                                                  alignment:
+                                                      WrapAlignment.center,
+                                                  children: [
+                                                    _buildCleanInboxPill(
+                                                      icon: Icons
+                                                          .verified_user_outlined,
+                                                      label: isAr
+                                                          ? 'تحديثات حقيقية فقط'
+                                                          : 'Real Alerts Only',
+                                                    ),
+                                                    _buildCleanInboxPill(
+                                                      icon: Icons
+                                                          .qr_code_2_rounded,
+                                                      label: isAr
+                                                          ? 'أكواد QR و OTP فورية'
+                                                          : 'Instant QR & OTP',
+                                                    ),
+                                                    _buildCleanInboxPill(
+                                                      icon: Icons
+                                                          .notifications_off_outlined,
+                                                      label: isAr
+                                                          ? 'بدون رسائل ترويجية'
+                                                          : 'Zero Spam',
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        : MashwarSectionCard(
+                                            padding: const EdgeInsets.all(
+                                              AppDimens.space24,
+                                            ),
+                                            borderRadius: 16,
+                                            borderColor: AppColors.slateBorder,
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const MashwarTrustEmblem(
+                                                  type: MashwarTrustType
+                                                      .liveCorridor,
+                                                  size: 46,
+                                                ),
+                                                const SizedBox(height: 12),
+                                                Text(
+                                                  isAr
+                                                      ? 'لا توجد تنبيهات غير مقروءة'
+                                                      : 'No Unread Alerts',
+                                                  textAlign: TextAlign.center,
+                                                  style: AppTypography.title()
+                                                      .copyWith(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  isAr
+                                                      ? 'تمت قراءة جميع الإشعارات الحالية.'
+                                                      : 'You have read all current notifications.',
+                                                  textAlign: TextAlign.center,
+                                                  style: AppTypography
+                                                      .bodySecondary(),
+                                                ),
+                                                const SizedBox(height: 14),
+                                                OutlinedButton(
+                                                  style:
+                                                      OutlinedButton.styleFrom(
+                                                    foregroundColor:
+                                                        AppColors.navy,
+                                                    backgroundColor:
+                                                        Colors.white,
+                                                    side: const BorderSide(
+                                                      color:
+                                                          AppColors.slateBorder,
+                                                    ),
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                        10,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  onPressed: () => setState(
+                                                    () => _unreadOnly = false,
+                                                  ),
+                                                  child: Text(
+                                                    isAr
+                                                        ? 'عرض كل الإشعارات'
+                                                        : 'Show All Notifications',
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
-                                          const SizedBox(height: 6),
-                                          Text(
-                                            isAr
-                                                ? 'ستظهر هنا تحديثات الرحلات والطرود وعروض التوريد ورموز الاستلام.'
-                                                : 'Trip matches, parcel updates, supply offers, and handover alerts will appear here.',
-                                            textAlign: TextAlign.center,
-                                            style:
-                                                AppTypography.bodySecondary(),
-                                          ),
-                                          if (_unreadOnly &&
-                                              allItems.isNotEmpty) ...[
-                                            const SizedBox(height: 14),
-                                            OutlinedButton(
-                                              style: OutlinedButton.styleFrom(
-                                                foregroundColor: AppColors.navy,
-                                                backgroundColor: Colors.white,
-                                                side: const BorderSide(
-                                                  color: AppColors.slateBorder,
-                                                ),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                              ),
-                                              onPressed: () => setState(
-                                                  () => _unreadOnly = false),
-                                              child: Text(
-                                                isAr
-                                                    ? 'عرض كل الإشعارات'
-                                                    : 'Show All Notifications',
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
                                   ),
                                 ),
                               );
@@ -2412,6 +2605,34 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCleanInboxPill({
+    required IconData icon,
+    required String label,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: AppColors.slateBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.slateBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: AppColors.teal),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: AppTypography.label(color: AppColors.navy).copyWith(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

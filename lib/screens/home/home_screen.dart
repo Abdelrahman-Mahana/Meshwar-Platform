@@ -14,6 +14,7 @@ import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/models/ride_model.dart';
+import '../../data/models/user_model.dart';
 import '../../data/models/worksite_models.dart';
 import '../../data/repositories/app_repositories.dart';
 import '../../data/repositories/contracts/i_maps_repository.dart';
@@ -25,10 +26,12 @@ import '../../state/parcels_provider.dart';
 import '../../state/rides_provider.dart';
 import '../../state/worksite_provider.dart';
 import '../account/account_extra_screens.dart';
+import '../auth/id_verification_screen.dart';
 import '../driver/publish_ride_screen.dart';
 import '../escrow/service_escrow_screen.dart';
 import '../parcel/send_parcel_screen.dart';
 import '../ride_details/ride_details_screen.dart';
+import '../safety/safety_screens.dart';
 import '../trips/trips_and_parcels_hub_screen.dart';
 import '../worksite/create_work_request_screen.dart';
 import '../worksite/provider_profile_screen.dart';
@@ -55,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedHeroMode = 0; // 0 = Trips, 1 = Parcels, 2 = Supply & Tasks
   double _swapTurns = 0.0;
   bool _isMapExpanded = false;
+  bool _dismissedOnboardingChecklist = false;
 
   String? _selectedSavedWorksiteId;
   String? _previewHubCity;
@@ -272,6 +276,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ? auth.user.fullName.trim().split(' ').first
         : (isAr ? 'بك' : 'Member');
 
+    final user = auth.user;
+    final hasPhone = user.phone.trim().isNotEmpty;
+    final hasGovernorate =
+        user.governorate != null && user.governorate!.trim().isNotEmpty;
+    final hasEmergencyContact = user.emergencyContactPhone != null &&
+        user.emergencyContactPhone!.trim().isNotEmpty;
+    final hasIdSubmitted = user.isVerified ||
+        user.idVerificationStatus != IdVerificationStatus.unverified;
+    final completedSetupSteps = (hasPhone ? 1 : 0) +
+        (hasGovernorate ? 1 : 0) +
+        (hasEmergencyContact ? 1 : 0) +
+        (hasIdSubmitted ? 1 : 0);
+    final isSignedInUser = auth.isAuthenticated || user.id.trim().isNotEmpty;
+    final showOnboardingChecklist = isSignedInUser &&
+        !_dismissedOnboardingChecklist &&
+        completedSetupSteps < 4;
+
     final corridorFrom = rides.fromCity.trim().isNotEmpty
         ? rides.fromCity.trim()
         : (activeSite?.municipality ?? 'الدوحة');
@@ -353,6 +374,20 @@ class _HomeScreenState extends State<HomeScreen> {
                             isUltraCompact: isUltraCompact,
                           ),
                         ),
+                        if (showOnboardingChecklist) ...[
+                          const SizedBox(height: 14),
+                          _buildOnboardingChecklistCard(
+                            context: context,
+                            firstName: firstName,
+                            hasPhone: hasPhone,
+                            hasGovernorate: hasGovernorate,
+                            hasEmergencyContact: hasEmergencyContact,
+                            hasIdSubmitted: hasIdSubmitted,
+                            completedSteps: completedSetupSteps,
+                            isAr: isAr,
+                            isMedium: isMedium,
+                          ),
+                        ],
                         const SizedBox(height: 22),
 
                         // 3. Full-Size 16:9 Traveler & Corridor Panorama Banner
@@ -429,6 +464,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         _buildRecentSupplyRequestsSection(
                           context: context,
                           worksite: worksite,
+                          activeSite: activeSite,
                           recentToShow: recentToShow,
                           isAr: isAr,
                         ),
@@ -663,6 +699,290 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Calm, dismissible Account Setup & Safety Checklist for signed-in users
+  /// who still have incomplete profile/trust fields. Uses ZERO Image.asset
+  /// widgets to preserve HomeScreen's unique-asset invariant.
+  Widget _buildOnboardingChecklistCard({
+    required BuildContext context,
+    required String firstName,
+    required bool hasPhone,
+    required bool hasGovernorate,
+    required bool hasEmergencyContact,
+    required bool hasIdSubmitted,
+    required int completedSteps,
+    required bool isAr,
+    required bool isMedium,
+  }) {
+    final steps = <({
+      Key key,
+      bool done,
+      IconData icon,
+      String title,
+      String actionLabel,
+      VoidCallback onTap,
+    })>[
+      (
+        key: const ValueKey('home_checklist_phone'),
+        done: hasPhone,
+        icon: Icons.phone_iphone_rounded,
+        title: isAr ? 'رقم الجوال القطري (+974)' : 'Qatar Mobile Number (+974)',
+        actionLabel: isAr ? 'إضافة' : 'Add',
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+          );
+        },
+      ),
+      (
+        key: const ValueKey('home_checklist_governorate'),
+        done: hasGovernorate,
+        icon: Icons.location_city_rounded,
+        title: isAr ? 'البلدية / المنطقة السكنية' : 'Municipality / Area',
+        actionLabel: isAr ? 'تحديد' : 'Set',
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+          );
+        },
+      ),
+      (
+        key: const ValueKey('home_checklist_emergency'),
+        done: hasEmergencyContact,
+        icon: Icons.health_and_safety_outlined,
+        title: isAr ? 'جهة اتصال الطوارئ (SOS)' : 'Emergency Contact (SOS)',
+        actionLabel: isAr ? 'حفظ' : 'Save',
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const EmergencyContactsScreen()),
+          );
+        },
+      ),
+      (
+        key: const ValueKey('home_checklist_qid'),
+        done: hasIdSubmitted,
+        icon: Icons.badge_outlined,
+        title: isAr ? 'توثيق البطاقة القطرية (QID)' : 'Verify Qatar ID (QID)',
+        actionLabel: isAr ? 'توثيق' : 'Verify',
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const IdVerificationScreen(isOnboarding: false),
+            ),
+          );
+        },
+      ),
+    ];
+
+    Widget buildStepTile(
+      ({
+        Key key,
+        bool done,
+        IconData icon,
+        String title,
+        String actionLabel,
+        VoidCallback onTap,
+      }) step,
+    ) {
+      return Material(
+        color: step.done ? AppColors.slateBg : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          key: step.key,
+          borderRadius: BorderRadius.circular(12),
+          onTap: step.onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: step.done
+                    ? AppColors.teal.withValues(alpha: 0.28)
+                    : AppColors.slateBorder,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  step.done ? Icons.check_circle_rounded : step.icon,
+                  size: 17,
+                  color: step.done ? AppColors.teal : AppColors.navy,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    step.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTypography.label(
+                      color: step.done
+                          ? AppColors.textSecondary
+                          : AppColors.navy,
+                    ).copyWith(
+                      fontSize: 12.5,
+                      fontWeight:
+                          step.done ? FontWeight.w500 : FontWeight.w700,
+                      decoration:
+                          step.done ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                if (step.done)
+                  Text(
+                    isAr ? 'مكتمل' : 'Done',
+                    style: AppTypography.label(color: AppColors.tealDark)
+                        .copyWith(fontSize: 11, fontWeight: FontWeight.w700),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.tealSurface,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      step.actionLabel,
+                      style: AppTypography.label(color: AppColors.tealDark)
+                          .copyWith(fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      key: const ValueKey('home_onboarding_checklist_card'),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.teal.withValues(alpha: 0.35),
+          width: AppDimens.borderWidth,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.tealSurface,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.verified_user_outlined,
+                  size: 19,
+                  color: AppColors.teal,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isAr
+                          ? 'أهلاً بك، $firstName — أكمل حماية حسابك'
+                          : 'Welcome, $firstName — Secure Your Account',
+                      style: AppTypography.body(color: AppColors.navy).copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isAr
+                          ? 'أضف بياناتك الأساسية لحماية رحلاتك وتسهيل التواصل وأكواد التسليم.'
+                          : 'Complete your essentials for safer rides, smoother coordination & OTP handovers.',
+                      style: AppTypography.bodySmall(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.tealSurface,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$completedSteps / 4',
+                  style: AppTypography.label(color: AppColors.tealDark)
+                      .copyWith(fontSize: 11.5, fontWeight: FontWeight.w800),
+                ),
+              ),
+              IconButton(
+                key: const ValueKey('home_onboarding_dismiss_btn'),
+                tooltip: isAr ? 'إخفاء' : 'Dismiss',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 30, minHeight: 30),
+                icon: const Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
+                onPressed: () =>
+                    setState(() => _dismissedOnboardingChecklist = true),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: completedSteps / 4.0,
+              minHeight: 5,
+              backgroundColor: AppColors.slateBg,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.teal),
+            ),
+          ),
+          const SizedBox(height: 10),
+          if (isMedium)
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: buildStepTile(steps[0])),
+                    const SizedBox(width: 8),
+                    Expanded(child: buildStepTile(steps[1])),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(child: buildStepTile(steps[2])),
+                    const SizedBox(width: 8),
+                    Expanded(child: buildStepTile(steps[3])),
+                  ],
+                ),
+              ],
+            )
+          else
+            Column(
+              children: [
+                for (var i = 0; i < steps.length; i++) ...[
+                  buildStepTile(steps[i]),
+                  if (i < steps.length - 1) const SizedBox(height: 6),
+                ],
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
   /// Section 2 — First Focal Section:
   /// "إلى أين مشوارك أو طلبك اليوم؟" featuring 3 large, uncropped studio icons
   /// (`service_ride.jpg`, `service_parcel.jpg`, `service_errand.jpg` via `BoxFit.contain`)
@@ -770,9 +1090,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        isAr
-                            ? '$activeTripsCount رحلة متاحة · $activeSupplyCount طلب نشط'
-                            : '$activeTripsCount Trips · $activeSupplyCount Open Requests',
+                        (activeTripsCount == 0 && activeSupplyCount == 0)
+                            ? (isAr
+                                ? 'ابدأ أول رحلة أو طرد أو طلب توريد في قطر'
+                                : 'Start your first trip, parcel, or supply request')
+                            : (isAr
+                                ? '$activeTripsCount رحلة متاحة · $activeSupplyCount طلب نشط'
+                                : '$activeTripsCount Trips · $activeSupplyCount Open Requests'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.label(color: AppColors.tealDark)
@@ -2002,15 +2326,40 @@ class _HomeScreenState extends State<HomeScreen> {
           const MashwarShimmerBox(height: 110, borderRadius: 16)
         else if (topTrips.isEmpty)
           MashwarSectionCard(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             backgroundColor: Colors.white,
             borderColor: AppColors.slateBorder,
             child: Column(
               children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.directions_car_outlined,
+                    size: 22,
+                    color: AppColors.teal,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Text(
                   isAr
-                      ? 'لا توجد رحلات مطابقة لهذا المسار حالياً — يمكنك نشر رحلتك أو طلب مقعد/طرد على الطريق.'
-                      : 'No matching trips for this corridor right now — publish your trip or post a route request.',
+                      ? 'لا توجد رحلات متاحة على هذا المسار حالياً'
+                      : 'No available trips on this corridor yet',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.title(color: AppColors.navy).copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isAr
+                      ? 'كن أول من يشارك مقاعد رحلته القادمة أو استعرض طلبات المسافرين والطرود على الطريق.'
+                      : 'Be the first to share empty seats on your route or browse open trip & parcel requests.',
                   textAlign: TextAlign.center,
                   style: AppTypography.bodySecondary(
                     color: AppColors.textSecondary,
@@ -2019,25 +2368,65 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.navy,
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: AppColors.slateBorder),
-                  ),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            const TripsAndParcelsHubScreen(initialTabIndex: 1),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.navy,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.campaign_outlined, size: 17),
-                  label: Text(
-                    isAr ? 'استعرض طلبات المسار' : 'Browse Route Requests',
-                  ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const PublishRideScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add_road_rounded, size: 17),
+                      label: Text(
+                        isAr ? 'انشر رحلتك الآن' : 'Publish Your Trip',
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: AppColors.slateBorder),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const TripsAndParcelsHubScreen(
+                              initialTabIndex: 1,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.campaign_outlined, size: 17),
+                      label: Text(
+                        isAr ? 'استعرض طلبات المسار' : 'Browse Route Requests',
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -2474,8 +2863,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               ? 'لديك $openOffersCount عروض جديدة بانتظار المراجعة على طلباتك.'
                               : 'You have $openOffersCount new offer(s) awaiting review.')
                           : (isAr
-                              ? 'ملخص التنبيهات: كل التحديثات مقروءة حالياً.'
-                              : 'Notifications summary: You are all caught up.')),
+                              ? 'صندوق التنبيهات نظيف — ستظهر تحديثاتك الحقيقية هنا فور بدء نشاطك.'
+                              : 'Clean inbox — real alerts will appear here once you start using MASHWAR.')),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTypography.body(color: AppColors.navy).copyWith(
@@ -2510,6 +2899,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildRecentSupplyRequestsSection({
     required BuildContext context,
     required WorksiteProvider worksite,
+    required SavedWorksite? activeSite,
     required List<WorkRequest> recentToShow,
     required bool isAr,
   }) {
@@ -2580,17 +2970,107 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.all(20),
             backgroundColor: Colors.white,
             borderColor: AppColors.slateBorder,
-            child: Text(
-              isAr
-                  ? 'لا توجد طلبات توريد مسجلة بعد. ابدأ بإنشاء طلبك الأول أعلاه.'
-                  : 'No supply requests yet. Create your first request above.',
-              textAlign: TextAlign.center,
-              style: AppTypography.bodySecondary(
-                color: AppColors.textSecondary,
-              ).copyWith(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Column(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.slateBorder),
+                  ),
+                  child: const Icon(
+                    Icons.add_task_rounded,
+                    size: 22,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  isAr
+                      ? 'لا توجد طلبات توريد نشطة بعد'
+                      : 'No active supply requests yet',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.title(color: AppColors.navy).copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isAr
+                      ? 'أنشئ أول طلب شراء أو توريد لموقعك أو مهمتك الخاصة مع فاتورة موثّقة ورمز تسليم آمن.'
+                      : 'Create your first hardware, site supply, or custom errand request with verified receipts and handover protection.',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodySecondary(
+                    color: AppColors.textSecondary,
+                  ).copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.navy,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => CreateWorkRequestScreen(
+                              initialSavedWorksite: activeSite,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add_task_rounded, size: 17),
+                      label: Text(
+                        isAr ? 'أنشئ طلب توريد الآن' : 'Start a Supply Request',
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: AppColors.slateBorder),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const WorkRequestsFeedScreen(),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.fact_check_outlined, size: 17),
+                      label: Text(
+                        isAr ? 'تصفح ساحة التوريد' : 'Explore Supply Feed',
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           )
         else

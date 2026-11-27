@@ -302,7 +302,8 @@ class _MainNavShellState extends State<MainNavShell> {
 
     final currentUid = worksite.currentUserId ??
         (auth.user.id.isNotEmpty ? auth.user.id : null);
-    final unreadNotificationsCount = worksite.unreadNotificationsCount;
+    final unreadNotificationsCount =
+        currentUid == null ? 0 : worksite.unreadNotificationsCount;
     final supplyAttentionCount = currentUid == null
         ? 0
         : worksite.allLoadedRequests.where((r) {
@@ -315,9 +316,11 @@ class _MainNavShellState extends State<MainNavShell> {
             }
             return false;
           }).length;
-    final activeParcelsAttention = parcels.parcels
-        .where((p) => p.status != ParcelStatusStep.delivered)
-        .length;
+    final activeParcelsAttention = currentUid == null
+        ? 0
+        : parcels.parcels
+            .where((p) => p.status != ParcelStatusStep.delivered)
+            .length;
     final activityBadgeCount = supplyAttentionCount + activeParcelsAttention;
 
     final pages = <Widget>[
@@ -1005,7 +1008,7 @@ class _MainNavShellState extends State<MainNavShell> {
                           ]);
                         },
                         child: shownCards.isEmpty
-                            ? _buildEmptyActivityState(context, isAr)
+                            ? _buildEmptyActivityState(context, auth, isAr)
                             : ListView.separated(
                                 physics: const AlwaysScrollableScrollPhysics(),
                                 padding:
@@ -1072,7 +1075,14 @@ class _MainNavShellState extends State<MainNavShell> {
     );
   }
 
-  Widget _buildEmptyActivityState(BuildContext context, bool isAr) {
+  Widget _buildEmptyActivityState(
+    BuildContext context,
+    AuthProvider auth,
+    bool isAr,
+  ) {
+    final firstName = auth.user.fullName.trim().isNotEmpty
+        ? auth.user.fullName.trim().split(RegExp(r'\s+')).first
+        : '';
     return LayoutBuilder(
       builder: (context, emptyConstraints) {
         return SingleChildScrollView(
@@ -1085,8 +1095,9 @@ class _MainNavShellState extends State<MainNavShell> {
             ),
             child: Center(
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
+                constraints: const BoxConstraints(maxWidth: 440),
                 child: MashwarSectionCard(
+                  key: const ValueKey('activity_empty_state_card'),
                   padding: const EdgeInsets.all(AppDimens.space24),
                   borderRadius: 16,
                   borderColor: AppColors.slateBorder,
@@ -1095,14 +1106,18 @@ class _MainNavShellState extends State<MainNavShell> {
                     children: [
                       const MashwarTrustEmblem(
                         type: MashwarTrustType.liveCorridor,
-                        size: 44,
+                        size: 46,
                       ),
                       const SizedBox(height: 12),
                       Text(
                         _isActiveOrders
-                            ? (isAr
-                                ? 'لا توجد أنشطة جارية في هذا القسم'
-                                : 'No Active Items in This Category')
+                            ? (firstName.isNotEmpty
+                                ? (isAr
+                                    ? 'أهلاً بك، $firstName — لا توجد أنشطة جارية بعد'
+                                    : 'Welcome, $firstName — No Active Items Yet')
+                                : (isAr
+                                    ? 'لا توجد أنشطة جارية في هذا القسم'
+                                    : 'No Active Items in This Category'))
                             : (isAr
                                 ? 'لا يوجد سجل مكتمل بعد'
                                 : 'No Completed History Yet'),
@@ -1114,12 +1129,16 @@ class _MainNavShellState extends State<MainNavShell> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        isAr
-                            ? 'انشر رحلة بمقاعد شاغرة، أرسل طرداً مع مسافر، أو أنشئ طلب توريد جديد.'
-                            : 'Publish a shared trip, send a parcel on route, or create a smart supply request.',
+                        _isActiveOrders
+                            ? (isAr
+                                ? 'ابدأ أول نشاط لك في مشوار: انشر رحلة بمقاعد شاغرة، أرسل طرداً مع مسافر، أو أنشئ طلب شراء وتوريد موثّق.'
+                                : 'Start your first MASHWAR journey: publish a trip, send a parcel along a route, or create a verified supply request.')
+                            : (isAr
+                                ? 'ستظهر هنا جميع رحلاتك وطرودك وطلبات التوريد المكتملة مع فواتيرها وسجلها فور إتمامها.'
+                                : 'Your completed trips, delivered parcels, and fulfilled supply requests will appear here automatically.'),
                         textAlign: TextAlign.center,
                         style: AppTypography.bodySecondary()
-                            .copyWith(fontSize: 13),
+                            .copyWith(fontSize: 13, height: 1.45),
                       ),
                       const SizedBox(height: 16),
                       Wrap(
@@ -1128,6 +1147,9 @@ class _MainNavShellState extends State<MainNavShell> {
                         alignment: WrapAlignment.center,
                         children: [
                           ElevatedButton.icon(
+                            key: const ValueKey(
+                              'activity_empty_publish_trip_btn',
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.navy,
                               foregroundColor: Colors.white,
@@ -1151,6 +1173,9 @@ class _MainNavShellState extends State<MainNavShell> {
                             ),
                           ),
                           OutlinedButton.icon(
+                            key: const ValueKey(
+                              'activity_empty_send_parcel_btn',
+                            ),
                             style: OutlinedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: AppColors.navy,
@@ -1176,6 +1201,7 @@ class _MainNavShellState extends State<MainNavShell> {
                             ),
                           ),
                           OutlinedButton.icon(
+                            key: const ValueKey('activity_empty_supply_btn'),
                             style: OutlinedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: AppColors.navy,
@@ -2313,9 +2339,17 @@ class _MainNavShellState extends State<MainNavShell> {
                         onPressed: auth.isLoading
                             ? null
                             : () async {
+                                final navigator = Navigator.of(context);
+                                if (mounted) {
+                                  setState(() {
+                                    _currentIndex = 0;
+                                    _isActiveOrders = true;
+                                    _activityServiceFilter = 0;
+                                  });
+                                }
                                 await auth.logout();
-                                if (!context.mounted) return;
-                                Navigator.of(context).pushAndRemoveUntil(
+                                if (!mounted) return;
+                                navigator.pushAndRemoveUntil(
                                   MaterialPageRoute(
                                       builder: (_) => const WelcomeScreen()),
                                   (route) => false,

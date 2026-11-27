@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -7,12 +8,25 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_onboarding_shell.dart';
+import '../../state/settings_provider.dart';
 import '../main_nav_shell.dart';
 
 class NotificationPermissionScreen extends StatelessWidget {
   const NotificationPermissionScreen({super.key});
 
-  void _finishOnboarding(BuildContext context) {
+  void _finishOnboarding(
+    BuildContext context, {
+    required bool enableNotifications,
+  }) {
+    final settings = context.read<SettingsProvider?>();
+    if (settings != null) {
+      settings.setRidesNotifications(enableNotifications);
+      settings.setParcelsNotifications(enableNotifications);
+      settings.setBoardNotifications(enableNotifications);
+      if (!enableNotifications) {
+        settings.setMarketingNotifications(false);
+      }
+    }
     Navigator.of(context).pushAndRemoveUntil(
       MashwarPageRoute(builder: (_) => const MainNavShell()),
       (route) => false,
@@ -67,7 +81,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                           duration: const Duration(milliseconds: 280),
                           child: Column(
                             children: [
-                              // Executive Notification Preview Container (zero heavy shadow, zero maroon)
+                              // Executive Notification Example Preview Container
                               Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
@@ -79,7 +93,50 @@ class NotificationPermissionScreen extends StatelessWidget {
                                   ),
                                 ),
                                 child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
+                                    Container(
+                                      key: const ValueKey(
+                                        'notif_permission_example_label',
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.tealSurface,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: AppColors.teal
+                                              .withValues(alpha: 0.25),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.visibility_outlined,
+                                            size: 15,
+                                            color: AppColors.tealDark,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              isAr
+                                                  ? 'معاينة توضيحية · مثال لما سيصلك فور بدء استخدامك للتطبيق'
+                                                  : 'Example Preview · Sample alerts once you start using MASHWAR',
+                                              style: AppTypography.label(
+                                                color: AppColors.tealDark,
+                                              ).copyWith(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
                                     _buildPreviewNotificationTile(
                                       icon: Icons.directions_car_outlined,
                                       iconBg: AppColors.cobaltSurface,
@@ -90,7 +147,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                                       subtitle: isAr
                                           ? 'بطاقة الصعود ورمز QR جاهزان للعرض'
                                           : 'Boarding pass & QR code ready',
-                                      time: isAr ? 'الآن' : 'Now',
+                                      time: isAr ? 'مثال' : 'Sample',
                                     ),
                                     const SizedBox(height: 10),
                                     _buildPreviewNotificationTile(
@@ -103,7 +160,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                                       subtitle: isAr
                                           ? 'راجع الفاتورة قبل التحرك للتسليم'
                                           : 'Review receipt before dispatch',
-                                      time: isAr ? 'منذ 1 د' : '1m ago',
+                                      time: isAr ? 'مثال' : 'Sample',
                                     ),
                                     const SizedBox(height: 10),
                                     _buildPreviewNotificationTile(
@@ -116,7 +173,7 @@ class NotificationPermissionScreen extends StatelessWidget {
                                       subtitle: isAr
                                           ? 'توثيق فوري عند الالتقاء والاستلام'
                                           : 'Instant verification upon meetup',
-                                      time: isAr ? 'منذ 2 د' : '2m ago',
+                                      time: isAr ? 'مثال' : 'Sample',
                                     ),
                                   ],
                                 ),
@@ -149,16 +206,24 @@ class NotificationPermissionScreen extends StatelessWidget {
                       children: [
                         const SizedBox(height: AppDimens.space24),
                         MashwarButton(
+                          key: const ValueKey('notif_permission_enable_btn'),
                           text: isAr
                               ? 'تفعيل التنبيهات'
                               : 'Enable Notifications',
-                          onPressed: () => _finishOnboarding(context),
+                          onPressed: () => _finishOnboarding(
+                            context,
+                            enableNotifications: true,
+                          ),
                         ),
                         const SizedBox(height: 10),
                         MashwarButton(
+                          key: const ValueKey('notif_permission_skip_btn'),
                           variant: MashwarButtonVariant.secondary,
                           text: isAr ? 'تخطي الآن' : 'Not now',
-                          onPressed: () => _finishOnboarding(context),
+                          onPressed: () => _finishOnboarding(
+                            context,
+                            enableNotifications: false,
+                          ),
                         ),
                       ],
                     ),
