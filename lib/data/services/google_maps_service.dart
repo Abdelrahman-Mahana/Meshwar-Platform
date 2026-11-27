@@ -156,6 +156,153 @@ class GoogleMapsService {
     }
   }
 
+  static String get _activeApiKey => _runtimeApiKey.trim().isNotEmpty
+      ? _runtimeApiKey.trim()
+      : _compileTimeApiKey.trim();
+
+  static String _resolveEmbeddedLocationParam(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return '';
+    final hub = resolveHubEntry(trimmed);
+    if (hub != null) {
+      return '${hub.lat.toStringAsFixed(5)},${hub.lng.toStringAsFixed(5)}';
+    }
+    final isLatLng = RegExp(
+      r'^\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*$',
+    ).hasMatch(trimmed);
+    if (isLatLng) {
+      return trimmed.replaceAll(' ', '');
+    }
+    return _qualifyPlaceQuery(trimmed);
+  }
+
+  /// Builds a real interactive in-app Google Maps embed URL for a driving route
+  /// between [origin] and [destination] (with optional [stopover]).
+  ///
+  /// - When an active Google Maps API key is configured, uses the official
+  ///   Google Maps Embed API v1 (`/maps/embed/v1/directions`).
+  /// - Otherwise uses Google Maps classic embed (`output=embed`), which renders
+  ///   immediately inside an in-app iframe with zero API key required.
+  /// - If either endpoint is empty or both resolve to the same hub, falls back
+  ///   to [buildEmbeddedPlaceUrl] centered on the available hub.
+  static String buildEmbeddedRouteUrl({
+    required String origin,
+    required String destination,
+    String? stopover,
+    bool isArabic = true,
+    bool satellite = false,
+    int zoom = 11,
+  }) {
+    final cleanOrigin = origin.trim();
+    final cleanDest = destination.trim();
+
+    if (cleanOrigin.isEmpty && cleanDest.isEmpty) {
+      return buildEmbeddedPlaceUrl(
+        query: 'Doha',
+        isArabic: isArabic,
+        satellite: satellite,
+        zoom: zoom,
+      );
+    }
+    if (cleanOrigin.isEmpty) {
+      return buildEmbeddedPlaceUrl(
+        query: cleanDest,
+        isArabic: isArabic,
+        satellite: satellite,
+        zoom: zoom,
+      );
+    }
+    if (cleanDest.isEmpty) {
+      return buildEmbeddedPlaceUrl(
+        query: cleanOrigin,
+        isArabic: isArabic,
+        satellite: satellite,
+        zoom: zoom,
+      );
+    }
+
+    final resolvedOrigin = _resolveEmbeddedLocationParam(cleanOrigin);
+    final resolvedDest = _resolveEmbeddedLocationParam(cleanDest);
+    if (resolvedOrigin == resolvedDest ||
+        cleanOrigin.toLowerCase() == cleanDest.toLowerCase()) {
+      return buildEmbeddedPlaceUrl(
+        query: cleanOrigin,
+        isArabic: isArabic,
+        satellite: satellite,
+        zoom: zoom,
+      );
+    }
+
+    final cleanStopover = stopover?.trim() ?? '';
+    final resolvedStopover = cleanStopover.isNotEmpty
+        ? _resolveEmbeddedLocationParam(cleanStopover)
+        : '';
+
+    if (hasActiveApiKey) {
+      final params = <String, String>{
+        'key': _activeApiKey,
+        'origin': resolvedOrigin,
+        'destination': resolvedDest,
+        'mode': 'driving',
+        'maptype': satellite ? 'satellite' : 'roadmap',
+        'language': isArabic ? 'ar' : 'en',
+        if (resolvedStopover.isNotEmpty) 'waypoints': resolvedStopover,
+      };
+      return Uri.https('www.google.com', '/maps/embed/v1/directions', params)
+          .toString();
+    }
+
+    final effectiveDaddr = resolvedStopover.isNotEmpty
+        ? '$resolvedStopover to:$resolvedDest'
+        : resolvedDest;
+    return Uri.https('maps.google.com', '/maps', <String, String>{
+      'saddr': resolvedOrigin,
+      'daddr': effectiveDaddr,
+      'hl': isArabic ? 'ar' : 'en',
+      't': satellite ? 'k' : 'm',
+      'z': '$zoom',
+      'output': 'embed',
+    }).toString();
+  }
+
+  /// Builds a real interactive in-app Google Maps embed URL centered on a place
+  /// or coordinate pair.
+  static String buildEmbeddedPlaceUrl({
+    required String query,
+    double? lat,
+    double? lng,
+    bool isArabic = true,
+    bool satellite = false,
+    int zoom = 14,
+  }) {
+    final String resolvedTarget;
+    if (lat != null && lng != null) {
+      resolvedTarget = '${lat.toStringAsFixed(5)},${lng.toStringAsFixed(5)}';
+    } else {
+      final trimmed = query.trim();
+      final resolved = _resolveEmbeddedLocationParam(trimmed);
+      resolvedTarget = resolved.isNotEmpty ? resolved : '25.28540,51.53100';
+    }
+
+    if (hasActiveApiKey) {
+      return Uri.https('www.google.com', '/maps/embed/v1/place', <String, String>{
+        'key': _activeApiKey,
+        'q': resolvedTarget,
+        'maptype': satellite ? 'satellite' : 'roadmap',
+        'language': isArabic ? 'ar' : 'en',
+        'zoom': '$zoom',
+      }).toString();
+    }
+
+    return Uri.https('maps.google.com', '/maps', <String, String>{
+      'q': resolvedTarget,
+      'hl': isArabic ? 'ar' : 'en',
+      't': satellite ? 'k' : 'm',
+      'z': '$zoom',
+      'output': 'embed',
+    }).toString();
+  }
+
   /// Official Cross-Platform Google Maps Directions URL builder.
   static String buildDirectionsUrl(
     String origin,
