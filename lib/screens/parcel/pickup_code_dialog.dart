@@ -4,6 +4,7 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/localization/app_strings.dart';
 import '../../data/models/parcel_model.dart';
 import 'parcel_tracking_screen.dart';
@@ -40,96 +41,162 @@ class _PickupCodeDialogState extends State<PickupCodeDialog> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
-              MashwarFadeSlideIn(
-                duration: const Duration(milliseconds: 260),
-                child: Column(
-                  children: [
-                    MashwarAssetArt(
-                      assetPath: 'assets/images/service_parcel.jpg',
-                      width: 76,
-                      height: 76,
-                      fit: BoxFit.contain,
-                      borderRadius: BorderRadius.circular(16),
-                      fallbackIcon: Icons.inventory_2_rounded,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      isAr ? 'اعطي الكود ده للسائق عند تسليمه الطرد' : 'Give this 4-digit code to driver upon handing over the parcel',
-                      textAlign: TextAlign.center,
-                      style: AppTypography.bodySecondary(),
-                    ),
-                    const SizedBox(height: 22),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimens.space24,
+            vertical: 16,
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  MashwarFadeSlideIn(
+                    duration: const Duration(milliseconds: 260),
+                    child: Column(
+                      children: [
+                        MashwarAssetArt(
+                          assetPath: 'assets/images/service_parcel.jpg',
+                          width: 68,
+                          height: 68,
+                          fit: BoxFit.contain,
+                          borderRadius: BorderRadius.circular(16),
+                          fallbackIcon: Icons.inventory_2_rounded,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          isAr
+                              ? 'اعرض رمز QR أو أعطِ الكود للمسافر عند تسليمه الطرد'
+                              : 'Show this QR code or share the 4-digit OTP with the traveler at pickup',
+                          textAlign: TextAlign.center,
+                          style: AppTypography.bodySecondary(),
+                        ),
+                        const SizedBox(height: 16),
 
-                    // 4-Digit Boxes (Page 34) with Gold accent border
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: widget.parcel.pickupOtp.split(' ').map((digit) {
-                          return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 6),
-                            width: 58,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: AppColors.navy,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: AppColors.gold.withValues(alpha: 0.65), width: 1.5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.navy.withValues(alpha: 0.14),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                        // Scannable QR Code alongside the 4-Digit OTP
+                        MashwarQrMatrixWidget(
+                          key: const ValueKey('pickup_dialog_qr_code'),
+                          data:
+                              'MASHWAR|PARCEL_PICKUP|${widget.parcel.id}|${widget.parcel.pickupOtp.replaceAll(" ", "")}',
+                          size: 152,
+                          moduleColor: AppColors.navy,
+                        ),
+                        const SizedBox(height: 16),
+
+                        // 4-Digit Boxes with Gold accent border
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 10,
+                            runSpacing: 8,
+                            children:
+                                widget.parcel.pickupOtp.split(' ').map((digit) {
+                              return Container(
+                                width: 56,
+                                height: 62,
+                                decoration: BoxDecoration(
+                                  color: AppColors.navy,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color:
+                                        AppColors.gold.withValues(alpha: 0.65),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.navy
+                                          .withValues(alpha: 0.14),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                digit,
-                                style: AppTypography.largeTitle(color: AppColors.gold).copyWith(fontSize: 28),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                                child: Center(
+                                  child: Text(
+                                    digit,
+                                    style: AppTypography.largeTitle(
+                                      color: AppColors.gold,
+                                    ).copyWith(fontSize: 26),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F3F4),
+                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                      border: Border.all(
+                          color: const Color(0xFFE5E5EA), width: 0.8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.security_rounded,
+                            color: AppColors.teal, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isAr
+                                ? 'يعمل رمز QR والكود بدون إنترنت ويؤكدان استلام المسافر للطرد فعلياً'
+                                : 'QR & OTP work 100% offline and verify physical handover to the traveler',
+                            style: AppTypography.label(color: AppColors.navy),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    key: const ValueKey('pickup_dialog_contingency_btn'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.navy,
+                      side: BorderSide(
+                        color: AppColors.warning.withValues(alpha: 0.6),
+                      ),
+                      backgroundColor: AppColors.goldSurface,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 11),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F3F4),
-                  borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                  border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.security_rounded, color: AppColors.teal, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        isAr ? 'الكود بيأكد إنك سلّمت الطرد للسائق فعلياً' : 'Code proves that the parcel has been physically received by driver',
-                        style: AppTypography.label(color: AppColors.navy),
-                      ),
+                    onPressed: () => showMashwarHandoverContingencySheet(
+                      context,
+                      isAr: isAr,
+                      referenceId: widget.parcel.id,
+                      handoverCode:
+                          widget.parcel.pickupOtp.replaceAll(' ', ''),
                     ),
-                  ],
-                ),
+                    icon: const Icon(
+                      Icons.battery_alert_rounded,
+                      color: AppColors.warning,
+                      size: 18,
+                    ),
+                    label: Text(
+                      isAr
+                          ? 'مشكلة في الكاميرا أو بطارية الموبايل؟ الحلول البديلة'
+                          : 'Camera broken or dead battery? Fallback options',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                  MashwarButton(
+                    text: isAr ? 'تم تسليم الطرد' : 'Parcel Handed Over',
+                    onPressed: () => setState(() => _isHandedOver = true),
+                  ),
+                  const SizedBox(height: 12),
+                ],
               ),
-
-              const Spacer(flex: 3),
-              MashwarButton(
-                text: isAr ? 'تم تسليم الطرد' : 'Parcel Handed Over',
-                onPressed: () => setState(() => _isHandedOver = true),
-              ),
-              const SizedBox(height: 24),
-            ],
+            ),
           ),
         ),
       ),

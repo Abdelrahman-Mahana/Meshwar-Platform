@@ -8,6 +8,7 @@ import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/board_ad_model.dart';
@@ -1147,6 +1148,130 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      // QR Code alongside 4-digit OTP for rapid contactless settlement
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          children: [
+                            MashwarQrMatrixWidget(
+                              key: const ValueKey('escrow_handover_qr'),
+                              data: 'MASHWAR|ESCROW|${ad.id}|4829',
+                              size: 76,
+                              showFrame: false,
+                              moduleColor: AppColors.navy,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isAr
+                                        ? 'امسح QR أو أدخل الكود 4829'
+                                        : 'Scan QR or Enter OTP 4829',
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.navy,
+                                      fontFamily: 'Cairo',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 6,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        key: const ValueKey(
+                                            'escrow_scan_qr_btn'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.teal,
+                                          side: const BorderSide(
+                                              color: AppColors.teal),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 5),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        onPressed: () async {
+                                          final scanned =
+                                              await showMashwarQrScanSheet(
+                                            context,
+                                            isAr: isAr,
+                                            referenceId: ad.id,
+                                            expectedLength: 4,
+                                            demoScannedCode: '4829',
+                                          );
+                                          if (scanned != null && mounted) {
+                                            setState(() {
+                                              _otpController.text = scanned;
+                                              _otpError = null;
+                                            });
+                                          }
+                                        },
+                                        icon: const Icon(
+                                          Icons.qr_code_scanner_rounded,
+                                          size: 14,
+                                        ),
+                                        label: Text(
+                                          isAr ? 'مسح QR' : 'Scan QR',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            fontFamily: 'Cairo',
+                                          ),
+                                        ),
+                                      ),
+                                      OutlinedButton.icon(
+                                        key: const ValueKey(
+                                            'escrow_contingency_btn'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: AppColors.warning,
+                                          side: BorderSide(
+                                            color: AppColors.warning
+                                                .withValues(alpha: 0.55),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 5),
+                                          minimumSize: Size.zero,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                        ),
+                                        onPressed: () =>
+                                            showMashwarHandoverContingencySheet(
+                                          context,
+                                          isAr: isAr,
+                                          referenceId: ad.id,
+                                          handoverCode: '4829',
+                                        ),
+                                        icon: const Icon(
+                                          Icons.battery_alert_rounded,
+                                          size: 14,
+                                        ),
+                                        label: Text(
+                                          isAr ? 'حلول بديلة' : 'Fallbacks',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                            fontFamily: 'Cairo',
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(

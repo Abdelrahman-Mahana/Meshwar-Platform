@@ -48,12 +48,15 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
 
   // Step 2: Parcel Details
   ParcelSize _selectedSize = ParcelSize.small;
+  bool _isCustomSize = false;
+  final TextEditingController _customSizeController = TextEditingController();
   final TextEditingController _descController =
       TextEditingController(text: 'أوراق ومستندات مغلفة');
   final TextEditingController _weightController =
       TextEditingController(text: '2.0');
   final TextEditingController _valController =
       TextEditingController(text: '250');
+  String? _customSizeError;
   String? _descError;
   String? _weightError;
   String? _valueError;
@@ -87,6 +90,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
   @override
   void dispose() {
     _proposedFeeController.dispose();
+    _customSizeController.dispose();
     _descController.dispose();
     _weightController.dispose();
     _valController.dispose();
@@ -175,10 +179,16 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
 
   bool _validateStep2(bool isAr) {
     final desc = _descController.text.trim();
+    final customSize = _customSizeController.text.trim();
     final weight = double.tryParse(_weightController.text.trim()) ?? 0.0;
     final value = int.tryParse(_valController.text.trim()) ?? 0;
 
     setState(() {
+      _customSizeError = _isCustomSize && customSize.length < 2
+          ? (isAr
+              ? 'يرجى توضيح الحجم أو الأبعاد المخصصة للطرد'
+              : 'Please specify the custom package dimensions or type')
+          : null;
       _descError = desc.isEmpty
           ? (isAr
               ? 'يرجى كتابة وصف الطرد أو الغرض'
@@ -196,7 +206,10 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
           : null;
     });
 
-    return _descError == null && _weightError == null && _valueError == null;
+    return _customSizeError == null &&
+        _descError == null &&
+        _weightError == null &&
+        _valueError == null;
   }
 
   void _handleNextOrSubmit(bool isAr) {
@@ -254,7 +267,13 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
 
     final effFrom = (_selectedRide?.fromCity ?? _fromCity).trim();
     final effTo = (_selectedRide?.toCity ?? _toCity).trim();
-    final desc = _descController.text.trim();
+    final rawDesc = _descController.text.trim();
+    final customSizeText = _customSizeController.text.trim();
+    final desc = _isCustomSize && customSizeText.isNotEmpty
+        ? (isAr
+            ? '[$customSizeText] $rawDesc'
+            : '[Custom: $customSizeText] $rawDesc')
+        : rawDesc;
     final weight = double.tryParse(_weightController.text.trim()) ?? 1.0;
     final value = int.tryParse(_valController.text.trim()) ?? 100;
     final resolvedFee = _selectedRide != null
@@ -891,77 +910,170 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                   return Wrap(
                     spacing: 10,
                     runSpacing: 10,
-                    children: sizeOptions.map((opt) {
-                      final isSel = _selectedSize == opt.size;
-                      return SizedBox(
-                        width: halfW,
+                    children: [
+                      ...sizeOptions.map((opt) {
+                        final isSel = !_isCustomSize && _selectedSize == opt.size;
+                        return SizedBox(
+                          width: halfW,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () => setState(() {
+                              _isCustomSize = false;
+                              _selectedSize = opt.size;
+                              _customSizeError = null;
+                            }),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 180),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: isSel
+                                    ? AppColors.indigoSurface
+                                    : AppColors.slateBg,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSel
+                                      ? AppColors.indigo
+                                      : AppColors.slateBorder,
+                                  width: isSel ? 1.6 : 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Icon(
+                                        opt.icon,
+                                        size: 20,
+                                        color: isSel
+                                            ? AppColors.indigo
+                                            : AppColors.navy,
+                                      ),
+                                      if (isSel)
+                                        const Icon(
+                                          Icons.check_circle_rounded,
+                                          size: 16,
+                                          color: AppColors.indigo,
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    opt.title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.body().copyWith(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  Text(
+                                    opt.hint,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.label(
+                                      color: AppColors.textSecondary,
+                                    ).copyWith(fontSize: 10.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                      SizedBox(
+                        width: constraints.maxWidth,
                         child: InkWell(
+                          key: const ValueKey('parcel_size_other'),
                           borderRadius: BorderRadius.circular(14),
-                          onTap: () => setState(() => _selectedSize = opt.size),
+                          onTap: () => setState(() {
+                            _isCustomSize = true;
+                            _selectedSize = ParcelSize.large;
+                          }),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
-                              color: isSel
+                              color: _isCustomSize
                                   ? AppColors.indigoSurface
                                   : AppColors.slateBg,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: isSel
+                                color: _isCustomSize
                                     ? AppColors.indigo
                                     : AppColors.slateBorder,
-                                width: isSel ? 1.6 : 1.0,
+                                width: _isCustomSize ? 1.6 : 1.0,
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            child: Row(
                               children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Icon(
-                                      opt.icon,
-                                      size: 20,
-                                      color: isSel
-                                          ? AppColors.indigo
-                                          : AppColors.navy,
-                                    ),
-                                    if (isSel)
-                                      const Icon(
-                                        Icons.check_circle_rounded,
-                                        size: 16,
-                                        color: AppColors.indigo,
-                                      ),
-                                  ],
+                                Icon(
+                                  Icons.tune_rounded,
+                                  size: 20,
+                                  color: _isCustomSize
+                                      ? AppColors.indigo
+                                      : AppColors.navy,
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  opt.title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.body().copyWith(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 13,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isAr
+                                            ? 'أخرى (مقاس أو شكل مخصص)'
+                                            : 'Other (Custom Size / Shape)',
+                                        style: AppTypography.body().copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      Text(
+                                        isAr
+                                            ? 'مثل: أنبوب طويل، لوحة فنية، طرد بتغليف خاص...'
+                                            : 'e.g. Long tube, framed item, special packaging...',
+                                        style: AppTypography.label(
+                                          color: AppColors.textSecondary,
+                                        ).copyWith(fontSize: 10.5),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Text(
-                                  opt.hint,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.label(
-                                    color: AppColors.textSecondary,
-                                  ).copyWith(fontSize: 10.5),
-                                ),
+                                if (_isCustomSize)
+                                  const Icon(
+                                    Icons.check_circle_rounded,
+                                    size: 18,
+                                    color: AppColors.indigo,
+                                  ),
                               ],
                             ),
                           ),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                    ],
                   );
                 },
               ),
+              if (_isCustomSize) ...[
+                const SizedBox(height: 12),
+                MashwarTextField(
+                  key: const ValueKey('parcel_custom_size_input'),
+                  controller: _customSizeController,
+                  label: isAr
+                      ? 'حدد الأبعاد أو طبيعة التغليف *'
+                      : 'Specify Custom Dimensions / Type *',
+                  hint: isAr
+                      ? 'مثال: صندوق 60×40 سم أو أنبوب طول 1 متر'
+                      : 'e.g. 60x40cm box or 1m rolled tube',
+                  errorText: _customSizeError,
+                ),
+              ],
             ],
           ),
         ),
@@ -978,26 +1090,51 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
-                children: quickContents.map((preset) {
-                  final sel = _descController.text.trim() == preset;
-                  return ActionChip(
-                    label: Text(preset),
-                    labelStyle: TextStyle(
+                children: [
+                  ...quickContents.map((preset) {
+                    final sel = _descController.text.trim() == preset;
+                    return ActionChip(
+                      label: Text(preset),
+                      labelStyle: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: sel ? Colors.white : AppColors.navy,
+                        fontFamily: 'Cairo',
+                      ),
+                      backgroundColor: sel ? AppColors.indigo : AppColors.slateBg,
+                      side: BorderSide(
+                        color: sel ? AppColors.indigo : AppColors.slateBorder,
+                      ),
+                      onPressed: () => setState(() {
+                        _descController.text = preset;
+                        _descError = null;
+                      }),
+                    );
+                  }),
+                  ActionChip(
+                    key: const ValueKey('parcel_content_other'),
+                    avatar: const Icon(
+                      Icons.edit_outlined,
+                      size: 14,
+                      color: AppColors.indigo,
+                    ),
+                    label: Text(isAr ? 'أخرى (وصف مخصص)' : 'Other (Custom)'),
+                    labelStyle: const TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: sel ? Colors.white : AppColors.navy,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.indigo,
                       fontFamily: 'Cairo',
                     ),
-                    backgroundColor: sel ? AppColors.indigo : AppColors.slateBg,
+                    backgroundColor: AppColors.indigoSurface,
                     side: BorderSide(
-                      color: sel ? AppColors.indigo : AppColors.slateBorder,
+                      color: AppColors.indigo.withValues(alpha: 0.35),
                     ),
                     onPressed: () => setState(() {
-                      _descController.text = preset;
+                      _descController.clear();
                       _descError = null;
                     }),
-                  );
-                }).toList(),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
               MashwarTextField(

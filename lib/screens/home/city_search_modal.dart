@@ -343,6 +343,26 @@ class _CitySearchModalState extends State<CitySearchModal> {
                       isAr ? 'شارع 10 · الصناعية' : 'Industrial Area St 10',
                       Icons.precision_manufacturing_outlined,
                     ),
+                    const SizedBox(width: 8),
+                    ActionChip(
+                      key: const ValueKey('city_other_custom_chip'),
+                      avatar: const Icon(
+                        Icons.add_location_alt_outlined,
+                        size: 16,
+                        color: AppColors.teal,
+                      ),
+                      label: Text(
+                        isAr ? 'أخرى (مكان مخصص)' : 'Other (Custom)',
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      backgroundColor: AppColors.tealSurface,
+                      side: BorderSide(
+                        color: AppColors.teal.withValues(alpha: 0.4),
+                      ),
+                      onPressed: () =>
+                          setState(() => _showCustomMeetingPoint = true),
+                    ),
                   ],
                 ),
               ),

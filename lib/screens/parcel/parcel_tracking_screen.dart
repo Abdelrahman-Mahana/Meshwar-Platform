@@ -8,6 +8,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/alert_banner.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/parcel_model.dart';
@@ -271,6 +272,9 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                   : 'Pickup OTP (Share with traveler at pickup)',
                               digits: pickupDigits,
                               accentColor: AppColors.navy,
+                              qrPayload:
+                                  'MASHWAR|PARCEL_PICKUP|${widget.parcel.id}|${pickupDigits.join()}',
+                              qrKey: const ValueKey('parcel_pickup_qr_code'),
                             ),
                             if (deliveryDigits != null) ...[
                               const Padding(
@@ -286,8 +290,137 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                     : 'Recipient Delivery OTP (${widget.parcel.receiverName})',
                                 digits: deliveryDigits,
                                 accentColor: AppColors.emerald,
+                                qrPayload:
+                                    'MASHWAR|PARCEL_DELIVERY|${widget.parcel.id}|${deliveryDigits.join()}',
+                                qrKey:
+                                    const ValueKey('parcel_delivery_qr_code'),
                               ),
                             ],
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.center,
+                              children: [
+                                OutlinedButton.icon(
+                                  key: const ValueKey('parcel_scan_qr_btn'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.teal,
+                                    backgroundColor: AppColors.tealSurface,
+                                    side: BorderSide(
+                                      color:
+                                          AppColors.teal.withValues(alpha: 0.4),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 7,
+                                    ),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () async {
+                                    final expectedCode =
+                                        (deliveryDigits ?? pickupDigits).join();
+                                    final scanned =
+                                        await showMashwarQrScanSheet(
+                                      context,
+                                      isAr: isAr,
+                                      referenceId: widget.parcel.id,
+                                      expectedLength: expectedCode.length,
+                                      demoScannedCode: expectedCode,
+                                    );
+                                    if (scanned != null && mounted) {
+                                      final matched =
+                                          scanned.trim() == expectedCode;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            matched
+                                                ? (isAr
+                                                    ? 'تمت مطابقة رمز QR بنجاح ($scanned)!'
+                                                    : 'QR code matched successfully ($scanned)!')
+                                                : (isAr
+                                                    ? 'الرمز الممسوح غير مطابق للكود الفعّال'
+                                                    : 'Scanned code does not match active OTP'),
+                                          ),
+                                          backgroundColor: matched
+                                              ? AppColors.teal
+                                              : AppColors.danger,
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  icon: const Icon(
+                                    Icons.qr_code_scanner_rounded,
+                                    size: 15,
+                                  ),
+                                  label: Text(
+                                    isAr ? 'مسح QR للتحقق' : 'Scan QR',
+                                    style: AppTypography.label(
+                                      color: AppColors.teal,
+                                    ).copyWith(fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                                OutlinedButton.icon(
+                                  key: const ValueKey(
+                                      'parcel_handover_contingency_btn'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.navy,
+                                    backgroundColor: AppColors.goldSurface,
+                                    side: BorderSide(
+                                      color: AppColors.warning
+                                          .withValues(alpha: 0.55),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 7,
+                                    ),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () =>
+                                      showMashwarHandoverContingencySheet(
+                                    context,
+                                    isAr: isAr,
+                                    referenceId: widget.parcel.id,
+                                    handoverCode:
+                                        (deliveryDigits ?? pickupDigits).join(),
+                                    onEmergencyFallbackLogged: (record) {
+                                      if (!mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            isAr
+                                                ? 'تم توثيق تسليم الطوارئ (${record.fallbackRef}) باسم ${record.backupContactName}'
+                                                : 'Emergency handover logged (${record.fallbackRef}) for ${record.backupContactName}',
+                                          ),
+                                          backgroundColor: AppColors.teal,
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  icon: const Icon(
+                                    Icons.battery_alert_rounded,
+                                    size: 15,
+                                    color: AppColors.warning,
+                                  ),
+                                  label: Text(
+                                    isAr
+                                        ? 'البطارية فصلت أو الكاميرا معطّلة؟ حلول بديلة'
+                                        : 'Dead battery / broken camera? Fallbacks',
+                                    style: AppTypography.label(
+                                      color: AppColors.navy,
+                                    ).copyWith(fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -357,6 +490,8 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
     required String label,
     required List<String> digits,
     required Color accentColor,
+    required String qrPayload,
+    required Key qrKey,
   }) {
     final fullCode = digits.join();
     final isAr = context.isArabic;
@@ -368,62 +503,76 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
           style: AppTypography.label(color: AppColors.textSecondary)
               .copyWith(fontSize: 11.5),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Directionality(
           textDirection: TextDirection.ltr,
           child: Wrap(
             alignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 8,
-            runSpacing: 6,
+            spacing: 12,
+            runSpacing: 10,
             children: [
-              ...digits.map((digit) {
-                return Container(
-                  width: 44,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    digit,
-                    style: AppTypography.title(color: Colors.white)
-                        .copyWith(fontSize: 20),
-                  ),
-                );
-              }),
-              IconButton(
-                tooltip: isAr ? 'نسخ الكود' : 'Copy OTP',
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: fullCode));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        isAr
-                            ? 'تم نسخ الكود: $fullCode'
-                            : 'OTP copied: $fullCode',
+              MashwarQrMatrixWidget(
+                key: qrKey,
+                data: qrPayload,
+                size: 74,
+                moduleColor: accentColor,
+              ),
+              Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  ...digits.map((digit) {
+                    return Container(
+                      width: 42,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        borderRadius: BorderRadius.circular(11),
                       ),
-                      backgroundColor: AppColors.teal,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                },
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.sand,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.45),
+                      alignment: Alignment.center,
+                      child: Text(
+                        digit,
+                        style: AppTypography.title(color: Colors.white)
+                            .copyWith(fontSize: 19),
+                      ),
+                    );
+                  }),
+                  IconButton(
+                    tooltip: isAr ? 'نسخ الكود' : 'Copy OTP',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: fullCode));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            isAr
+                                ? 'تم نسخ الكود: $fullCode'
+                                : 'OTP copied: $fullCode',
+                          ),
+                          backgroundColor: AppColors.teal,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.sand,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.gold.withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.copy_rounded,
+                        size: 17,
+                        color: accentColor,
+                      ),
                     ),
                   ),
-                  child: Icon(
-                    Icons.copy_rounded,
-                    size: 17,
-                    color: accentColor,
-                  ),
-                ),
+                ],
               ),
             ],
           ),

@@ -60,6 +60,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
   late final TextEditingController _qidFrontUrlController;
   late final TextEditingController _qidBackUrlController;
   late final TextEditingController _qidSelfieUrlController;
+  final TextEditingController _customAreaController = TextEditingController();
+  final TextEditingController _customSpecialtyController =
+      TextEditingController();
+  bool _showCustomAreaInput = false;
+  bool _showCustomSpecialtyInput = false;
 
   String? _uploadingDocSlot;
   MediaUploadResult? _uploadedQidFront;
@@ -178,6 +183,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     _qidFrontUrlController.dispose();
     _qidBackUrlController.dispose();
     _qidSelfieUrlController.dispose();
+    _customAreaController.dispose();
+    _customSpecialtyController.dispose();
     _fallbackWorksiteProvider?.dispose();
     super.dispose();
   }
@@ -594,25 +601,99 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: _municipalitiesAr.map((area) {
-              final sel = _selectedMunicipalities.contains(area);
-              return FilterChip(
-                label: Text(AppStrings.translateCity(area, isArabic: isAr)),
-                selected: sel,
-                selectedColor: AppColors.tealSurface,
-                checkmarkColor: AppColors.teal,
-                onSelected: (v) {
-                  setState(() {
-                    if (v) {
-                      _selectedMunicipalities.add(area);
-                    } else if (_selectedMunicipalities.length > 1) {
-                      _selectedMunicipalities.remove(area);
-                    }
-                  });
-                },
-              );
-            }).toList(),
+            children: [
+              ..._municipalitiesAr.map((area) {
+                final sel = _selectedMunicipalities.contains(area);
+                return FilterChip(
+                  label: Text(AppStrings.translateCity(area, isArabic: isAr)),
+                  selected: sel,
+                  selectedColor: AppColors.tealSurface,
+                  checkmarkColor: AppColors.teal,
+                  onSelected: (v) {
+                    setState(() {
+                      if (v) {
+                        _selectedMunicipalities.add(area);
+                      } else if (_selectedMunicipalities.length > 1) {
+                        _selectedMunicipalities.remove(area);
+                      }
+                    });
+                  },
+                );
+              }),
+              ..._selectedMunicipalities
+                  .where((a) => !_municipalitiesAr.contains(a))
+                  .map(
+                    (customArea) => InputChip(
+                      label: Text(customArea),
+                      selected: true,
+                      selectedColor: AppColors.tealSurface,
+                      onDeleted: _selectedMunicipalities.length > 1
+                          ? () => setState(
+                                () => _selectedMunicipalities.remove(customArea),
+                              )
+                          : null,
+                    ),
+                  ),
+              ActionChip(
+                key: const ValueKey('provider_area_other_btn'),
+                avatar: const Icon(
+                  Icons.add_rounded,
+                  size: 16,
+                  color: AppColors.cobalt,
+                ),
+                label: Text(
+                  isAr ? 'أخرى (إضافة منطقة)' : 'Other (Add Area)',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.cobalt,
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+                backgroundColor: AppColors.cobaltSurface,
+                onPressed: () => setState(
+                  () => _showCustomAreaInput = !_showCustomAreaInput,
+                ),
+              ),
+            ],
           ),
+          if (_showCustomAreaInput) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: const ValueKey('provider_custom_area_input'),
+                    controller: _customAreaController,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: isAr
+                          ? 'اكتب اسم منطقة إضافية (مثل: سيلين، ميناء حمد)'
+                          : 'Enter custom area (e.g. Sealine, Hamad Port)',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  key: const ValueKey('provider_add_custom_area_btn'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.teal,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    final val = _customAreaController.text.trim();
+                    if (val.length >= 2) {
+                      setState(() {
+                        _selectedMunicipalities.add(val);
+                        _customAreaController.clear();
+                        _showCustomAreaInput = false;
+                      });
+                    }
+                  },
+                  child: Text(isAr ? 'إضافة' : 'Add'),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           Text(
             isAr ? 'تخصصات التوريد' : 'Supply Specialties',
@@ -623,25 +704,99 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: _specialties.map((sp) {
-              final sel = _selectedSpecialties.contains(sp.$1);
-              return FilterChip(
-                label: Text(isAr ? sp.$2 : sp.$3),
-                selected: sel,
-                selectedColor: AppColors.sand,
-                checkmarkColor: AppColors.navy,
-                onSelected: (v) {
-                  setState(() {
-                    if (v) {
-                      _selectedSpecialties.add(sp.$1);
-                    } else if (_selectedSpecialties.length > 1) {
-                      _selectedSpecialties.remove(sp.$1);
-                    }
-                  });
-                },
-              );
-            }).toList(),
+            children: [
+              ..._specialties.map((sp) {
+                final sel = _selectedSpecialties.contains(sp.$1);
+                return FilterChip(
+                  label: Text(isAr ? sp.$2 : sp.$3),
+                  selected: sel,
+                  selectedColor: AppColors.sand,
+                  checkmarkColor: AppColors.navy,
+                  onSelected: (v) {
+                    setState(() {
+                      if (v) {
+                        _selectedSpecialties.add(sp.$1);
+                      } else if (_selectedSpecialties.length > 1) {
+                        _selectedSpecialties.remove(sp.$1);
+                      }
+                    });
+                  },
+                );
+              }),
+              ..._selectedSpecialties
+                  .where((s) => !_specialties.any((sp) => sp.$1 == s))
+                  .map(
+                    (customSp) => InputChip(
+                      label: Text(customSp),
+                      selected: true,
+                      selectedColor: AppColors.sand,
+                      onDeleted: _selectedSpecialties.length > 1
+                          ? () => setState(
+                                () => _selectedSpecialties.remove(customSp),
+                              )
+                          : null,
+                    ),
+                  ),
+              ActionChip(
+                key: const ValueKey('provider_specialty_other_btn'),
+                avatar: const Icon(
+                  Icons.add_rounded,
+                  size: 16,
+                  color: AppColors.cobalt,
+                ),
+                label: Text(
+                  isAr ? 'أخرى (تخصص مخصص)' : 'Other (Add Specialty)',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.cobalt,
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+                backgroundColor: AppColors.cobaltSurface,
+                onPressed: () => setState(
+                  () => _showCustomSpecialtyInput = !_showCustomSpecialtyInput,
+                ),
+              ),
+            ],
           ),
+          if (_showCustomSpecialtyInput) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    key: const ValueKey('provider_custom_specialty_input'),
+                    controller: _customSpecialtyController,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText: isAr
+                          ? 'اكتب تخصصاً إضافياً (مثل: تكييف HVAC، زجاج، رخام)'
+                          : 'Enter custom specialty (e.g. HVAC, Glass, Marble)',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  key: const ValueKey('provider_add_custom_specialty_btn'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.navy,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    final val = _customSpecialtyController.text.trim();
+                    if (val.length >= 2) {
+                      setState(() {
+                        _selectedSpecialties.add(val);
+                        _customSpecialtyController.clear();
+                        _showCustomSpecialtyInput = false;
+                      });
+                    }
+                  },
+                  child: Text(isAr ? 'إضافة' : 'Add'),
+                ),
+              ],
+            ),
+          ],
           SwitchListTile.adaptive(
             contentPadding: EdgeInsets.zero,
             activeTrackColor: AppColors.teal,

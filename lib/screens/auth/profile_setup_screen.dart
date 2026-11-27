@@ -24,8 +24,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   final TextEditingController _lastNameController = TextEditingController(text: 'المهنا');
   final TextEditingController _emailController = TextEditingController(text: 'abdelrahman@mashwar.qa');
 
+  static const String _otherGovValue = '__other_gov__';
+
   UserGender _selectedGender = UserGender.male;
   String _selectedGovernorate = 'بلدية الدوحة';
+  final TextEditingController _customGovController = TextEditingController();
+  String? _customGovError;
   String? _selectedAvatarUrl;
 
   String? _firstNameError;
@@ -79,6 +83,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
+    _customGovController.dispose();
     super.dispose();
   }
 
@@ -116,6 +121,18 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       setState(() => _emailError = null);
     }
 
+    if (_selectedGovernorate == _otherGovValue &&
+        _customGovController.text.trim().length < 2) {
+      setState(() {
+        _customGovError = isAr
+            ? 'أدخل اسم المنطقة أو البلدية المخصصة'
+            : 'Please enter your custom municipality or area';
+      });
+      hasError = true;
+    } else {
+      setState(() => _customGovError = null);
+    }
+
     if (hasError) return;
 
     setState(() => _isSaving = true);
@@ -123,10 +140,14 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
 
     if (mounted) {
       final fullName = '$firstName $lastName'.trim();
+      final resolvedGov = _selectedGovernorate == _otherGovValue &&
+              _customGovController.text.trim().isNotEmpty
+          ? _customGovController.text.trim()
+          : _selectedGovernorate;
       context.read<AuthProvider>().saveProfile(
             fullName: fullName,
             gender: _selectedGender,
-            governorate: _selectedGovernorate,
+            governorate: resolvedGov,
             email: email.isNotEmpty ? email : null,
             avatarUrl: _selectedAvatarUrl,
           );
@@ -330,9 +351,12 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                   ),
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
-                                      value: govList.contains(_selectedGovernorate)
-                                          ? _selectedGovernorate
-                                          : govList.first,
+                                      key: const ValueKey('profile_setup_gov_dropdown'),
+                                      value: _selectedGovernorate == _otherGovValue
+                                          ? _otherGovValue
+                                          : (govList.contains(_selectedGovernorate)
+                                              ? _selectedGovernorate
+                                              : govList.first),
                                       isExpanded: true,
                                       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.navy),
                                       style: const TextStyle(
@@ -342,15 +366,52 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                         fontFamily: 'Cairo',
                                       ),
                                       dropdownColor: Colors.white,
-                                      items: govList.map((gov) {
-                                        return DropdownMenuItem(value: gov, child: Text(gov));
-                                      }).toList(),
+                                      items: [
+                                        ...govList.map((gov) {
+                                          return DropdownMenuItem(value: gov, child: Text(gov));
+                                        }),
+                                        DropdownMenuItem(
+                                          value: _otherGovValue,
+                                          child: Text(
+                                            isAr
+                                                ? 'أخرى (حدد منطقتك بنفسك)'
+                                                : 'Other (Specify Area)',
+                                            style: const TextStyle(
+                                              color: AppColors.cobalt,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                       onChanged: (val) {
-                                        if (val != null) setState(() => _selectedGovernorate = val);
+                                        if (val != null) {
+                                          setState(() {
+                                            _selectedGovernorate = val;
+                                            _customGovError = null;
+                                          });
+                                        }
                                       },
                                     ),
                                   ),
                                 ),
+                                if (_selectedGovernorate == _otherGovValue) ...[
+                                  const SizedBox(height: 12),
+                                  _buildUberInputField(
+                                    label: isAr
+                                        ? 'اكتب اسم المنطقة أو المدينة *'
+                                        : 'Specify Custom Area / City *',
+                                    controller: _customGovController,
+                                    hint: isAr
+                                        ? 'مثال: اللؤلؤة، مشيرب، سيلين...'
+                                        : 'e.g. The Pearl, Msheireb, Sealine...',
+                                    errorText: _customGovError,
+                                    onChanged: (_) {
+                                      if (_customGovError != null) {
+                                        setState(() => _customGovError = null);
+                                      }
+                                    },
+                                  ),
+                                ],
 
                                 const SizedBox(height: 20),
 

@@ -171,6 +171,8 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     ),
   ];
 
+  static const String _otherAreaValue = '__other_area__';
+
   static const List<(String, String, String)> _units = [
     ('pcs', 'قطعة', 'pcs'),
     ('carton', 'كرتون', 'carton'),
@@ -178,6 +180,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     ('set', 'طقم', 'set'),
     ('bag', 'كيس', 'bag'),
     ('meter', 'متر', 'meter'),
+    ('other', 'أخرى (حدد الوحدة)', 'Other (Specify)'),
   ];
 
   int _currentStep = 0; // 0, 1, 2
@@ -188,6 +191,8 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
   late final TextEditingController _descriptionController;
   late final TextEditingController _quantityController;
   late final TextEditingController _referencePhotoController;
+  late final TextEditingController _customCategoryController;
+  late final TextEditingController _customUnitController;
   String _selectedCategory = 'general_site_supply';
   String _selectedUnit = 'pcs';
 
@@ -196,6 +201,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
   late final TextEditingController _dropoffController;
   late final TextEditingController _siteContactNameController;
   late final TextEditingController _siteContactPhoneController;
+  late final TextEditingController _customAreaController;
   String _selectedArea = 'لوسيل';
   String? _selectedSavedWorksiteId;
 
@@ -242,6 +248,9 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
         TextEditingController(text: draft?.description ?? '');
     _quantityController = TextEditingController(text: '1');
     _referencePhotoController = TextEditingController();
+    _customCategoryController = TextEditingController();
+    _customUnitController = TextEditingController();
+    _customAreaController = TextEditingController();
 
     _pickupController =
         TextEditingController(text: draft?.pickupLocation ?? '');
@@ -311,6 +320,9 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     _descriptionController.dispose();
     _quantityController.dispose();
     _referencePhotoController.dispose();
+    _customCategoryController.dispose();
+    _customUnitController.dispose();
+    _customAreaController.dispose();
     _pickupController.dispose();
     _dropoffController.dispose();
     _siteContactNameController.dispose();
@@ -441,6 +453,12 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
       final qtyRaw = _quantityController.text.trim();
       final photoUrl = _referencePhotoController.text.trim();
 
+      if (_selectedCategory == 'other' &&
+          _customCategoryController.text.trim().length < 2) {
+        return isAr
+            ? 'يرجى كتابة نوع الخدمة أو الفئة المخصصة.'
+            : 'Please specify your custom service or supply category.';
+      }
       if (title.length < 3 || title.length > 160) {
         return isAr
             ? 'يرجى إدخال عنوان واضح للطلب (3 إلى 160 حرفاً).'
@@ -456,6 +474,12 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
         return isAr
             ? 'يرجى إدخال كمية صحيحة أكبر من صفر.'
             : 'Please enter a valid positive quantity.';
+      }
+      if (_selectedUnit == 'other' &&
+          _customUnitController.text.trim().isEmpty) {
+        return isAr
+            ? 'يرجى تحديد الوحدة المخصصة (مثل: صندوق، طن، لتر).'
+            : 'Please specify the custom unit (e.g., box, ton, liter).';
       }
       if (photoUrl.isNotEmpty && !_isSafeUrl(photoUrl)) {
         return isAr
@@ -479,6 +503,12 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
         return isAr
             ? 'يرجى اختيار المنطقة / البلدية في قطر.'
             : 'Please select the Qatar area / municipality.';
+      }
+      if (_selectedArea == _otherAreaValue &&
+          _customAreaController.text.trim().length < 2) {
+        return isAr
+            ? 'يرجى كتابة اسم المنطقة أو الموقع المخصص.'
+            : 'Please specify the custom area / municipality.';
       }
       if (dropoff.length < 3) {
         return isAr
@@ -593,11 +623,22 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
       (u) => u.$1 == _selectedUnit,
       orElse: () => _units.first,
     );
+    final resolvedUnit = _selectedUnit == 'other' &&
+            _customUnitController.text.trim().isNotEmpty
+        ? _customUnitController.text.trim()
+        : unitTuple.$3;
+    final customCat = _customCategoryController.text.trim();
+    final resolvedMunicipality = _selectedArea == _otherAreaValue &&
+            _customAreaController.text.trim().isNotEmpty
+        ? _customAreaController.text.trim()
+        : _selectedArea;
     final photoUrl = _referencePhotoController.text.trim();
     final extraNotes = _instructionsController.text.trim();
 
     final combinedNotesParts = <String>[
-      'Qty: $qty ${unitTuple.$3}',
+      if (_selectedCategory == 'other' && customCat.isNotEmpty)
+        'CustomCategory: $customCat',
+      'Qty: $qty $resolvedUnit',
       if (photoUrl.isNotEmpty) 'RefPhoto: $photoUrl',
       if (extraNotes.isNotEmpty) extraNotes,
     ];
@@ -619,7 +660,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
       supplyCategory: _selectedCategory,
       pickupLocation: _pickupController.text.trim(),
       dropoffWorksite: _dropoffController.text.trim(),
-      municipality: _selectedArea,
+      municipality: resolvedMunicipality,
       estimatedItemsCostMinor: estMinor,
       maxItemsCapMinor: capMinor,
       deliveryFeeBudgetMinor: feeMinor,
@@ -1098,6 +1139,31 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
             );
           },
         ),
+        if (_selectedCategory == 'other') ...[
+          const SizedBox(height: 12),
+          _buildFieldLabel(isAr
+              ? 'حدد نوع الخدمة أو التوريد المخصص *'
+              : 'Specify Custom Service / Category *'),
+          const SizedBox(height: 6),
+          TextField(
+            key: const ValueKey('create_custom_category_input'),
+            controller: _customCategoryController,
+            decoration: InputDecoration(
+              hintText: isAr
+                  ? 'مثال: صيانة تكييف، مستلزمات زراعية، قطع غيار مولدات...'
+                  : 'e.g. HVAC spares, landscape materials, generator parts...',
+              prefixIcon: const Icon(
+                Icons.edit_note_rounded,
+                color: AppColors.cobalt,
+              ),
+            ),
+            onChanged: (_) {
+              if (_stepValidationError != null) {
+                setState(() => _stepValidationError = null);
+              }
+            },
+          ),
+        ],
         const SizedBox(height: 18),
 
         _buildFieldLabel(isAr
@@ -1175,6 +1241,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                   _buildFieldLabel(isAr ? 'الوحدة' : 'Unit'),
                   const SizedBox(height: 6),
                   DropdownButtonFormField<String>(
+                    key: const ValueKey('create_step1_unit_dropdown'),
                     initialValue: _selectedUnit,
                     isExpanded: true,
                     items: _units
@@ -1194,6 +1261,24 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
             ),
           ],
         ),
+        if (_selectedUnit == 'other') ...[
+          const SizedBox(height: 12),
+          TextField(
+            key: const ValueKey('create_custom_unit_input'),
+            controller: _customUnitController,
+            decoration: InputDecoration(
+              labelText: isAr ? 'اكتب الوحدة المخصصة *' : 'Custom Unit *',
+              hintText: isAr
+                  ? 'مثال: لتر، طن، صندوق خشبي، عبوة...'
+                  : 'e.g. liter, ton, crate, pack...',
+            ),
+            onChanged: (_) {
+              if (_stepValidationError != null) {
+                setState(() => _stepValidationError = null);
+              }
+            },
+          ),
+        ],
         const SizedBox(height: 16),
 
         _buildFieldLabel(isAr
@@ -1557,20 +1642,54 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
           key: const ValueKey('create_step2_area'),
           initialValue: _selectedArea,
           isExpanded: true,
-          items: _qatarAreasAr
-              .map(
-                (area) => DropdownMenuItem<String>(
-                  value: area,
-                  child: Text(
-                    AppStrings.translateCity(area, isArabic: isAr),
-                  ),
+          items: [
+            ..._qatarAreasAr.map(
+              (area) => DropdownMenuItem<String>(
+                value: area,
+                child: Text(
+                  AppStrings.translateCity(area, isArabic: isAr),
                 ),
-              )
-              .toList(),
+              ),
+            ),
+            DropdownMenuItem<String>(
+              value: _otherAreaValue,
+              child: Text(
+                isAr ? 'أخرى (حدد المنطقة بنفسك)' : 'Other (Specify Area)',
+                style: const TextStyle(
+                  color: AppColors.cobalt,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
           onChanged: (v) {
             if (v != null) setState(() => _selectedArea = v);
           },
         ),
+        if (_selectedArea == _otherAreaValue) ...[
+          const SizedBox(height: 10),
+          TextField(
+            key: const ValueKey('create_custom_area_input'),
+            controller: _customAreaController,
+            decoration: InputDecoration(
+              labelText: isAr
+                  ? 'اكتب اسم المنطقة أو المشروع *'
+                  : 'Specify Custom Area / Project *',
+              hintText: isAr
+                  ? 'مثال: ميناء حمد، سيلين، طريق الشمال...'
+                  : 'e.g. Hamad Port, Sealine, Al Shamal Road...',
+              prefixIcon: const Icon(
+                Icons.add_location_alt_outlined,
+                color: AppColors.cobalt,
+              ),
+            ),
+            onChanged: (_) {
+              if (_stepValidationError != null) {
+                setState(() => _stepValidationError = null);
+              }
+            },
+          ),
+        ],
         const SizedBox(height: 16),
 
         _buildFieldLabel(isAr

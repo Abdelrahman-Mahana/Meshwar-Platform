@@ -1974,6 +1974,43 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                               final n = displayed[index];
                               final visual = _iconForType(n.type);
                               final isUnread = !n.isRead;
+                              final reqId = n.requestId?.trim();
+                              final hasRequestTarget =
+                                  reqId != null && reqId.isNotEmpty;
+
+                              void markSingleReadOnly() {
+                                if (!isUnread) return;
+                                worksite?.markNotificationRead(n.id);
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        isAr
+                                            ? 'تم تعيين الإشعار كمقروء بدون فتحه'
+                                            : 'Notification marked as read',
+                                      ),
+                                      backgroundColor: AppColors.teal,
+                                      behavior: SnackBarBehavior.floating,
+                                      duration:
+                                          const Duration(milliseconds: 1800),
+                                    ),
+                                  );
+                              }
+
+                              void openNotificationTarget() {
+                                worksite?.markNotificationRead(n.id);
+                                if (hasRequestTarget) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => WorkRequestDetailsScreen(
+                                        requestId: reqId,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+
                               return MashwarFadeSlideIn(
                                 offsetY: 8,
                                 child: MashwarHoverCard(
@@ -1986,20 +2023,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                   padding:
                                       const EdgeInsets.all(AppDimens.space16),
                                   borderRadius: BorderRadius.circular(14),
-                                  onTap: () {
-                                    worksite?.markNotificationRead(n.id);
-                                    final reqId = n.requestId?.trim();
-                                    if (reqId != null && reqId.isNotEmpty) {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              WorkRequestDetailsScreen(
-                                            requestId: reqId,
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
+                                  onTap: openNotificationTarget,
                                   child: Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -2041,7 +2065,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                     ),
                                                   ),
                                                 ),
-                                                const SizedBox(width: 8),
+                                                const SizedBox(width: 6),
                                                 Text(
                                                   _formatTimestamp(
                                                       n.createdAt, isAr),
@@ -2064,6 +2088,104 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                     ),
                                                   ),
                                                 ],
+                                                if (isUnread ||
+                                                    hasRequestTarget) ...[
+                                                  const SizedBox(width: 2),
+                                                  PopupMenuButton<String>(
+                                                    key: ValueKey(
+                                                        'notif_menu_${n.id}'),
+                                                    padding: EdgeInsets.zero,
+                                                    constraints:
+                                                        const BoxConstraints(
+                                                      minWidth: 28,
+                                                      minHeight: 28,
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.more_vert_rounded,
+                                                      size: 18,
+                                                      color: AppColors
+                                                          .textSecondary,
+                                                    ),
+                                                    tooltip: isAr
+                                                        ? 'خيارات الإشعار'
+                                                        : 'Notification options',
+                                                    onSelected: (action) {
+                                                      if (action ==
+                                                          'mark_read') {
+                                                        markSingleReadOnly();
+                                                      } else if (action ==
+                                                          'open') {
+                                                        openNotificationTarget();
+                                                      }
+                                                    },
+                                                    itemBuilder: (_) => [
+                                                      if (isUnread)
+                                                        PopupMenuItem<String>(
+                                                          value: 'mark_read',
+                                                          child: Row(
+                                                            children: [
+                                                              const Icon(
+                                                                Icons
+                                                                    .done_all_rounded,
+                                                                size: 17,
+                                                                color: AppColors
+                                                                    .teal,
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 8),
+                                                              Text(
+                                                                isAr
+                                                                    ? 'تعيين كمقروء بدون فتح'
+                                                                    : 'Mark as read (no open)',
+                                                                style: AppTypography
+                                                                    .label(
+                                                                  color:
+                                                                      AppColors
+                                                                          .navy,
+                                                                ).copyWith(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      if (hasRequestTarget)
+                                                        PopupMenuItem<String>(
+                                                          value: 'open',
+                                                          child: Row(
+                                                            children: [
+                                                              const Icon(
+                                                                Icons
+                                                                    .open_in_new_rounded,
+                                                                size: 17,
+                                                                color: AppColors
+                                                                    .navy,
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 8),
+                                                              Text(
+                                                                isAr
+                                                                    ? 'فتح التفاصيل'
+                                                                    : 'Open details',
+                                                                style: AppTypography
+                                                                    .label(
+                                                                  color:
+                                                                      AppColors
+                                                                          .navy,
+                                                                ).copyWith(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ],
                                               ],
                                             ),
                                             const SizedBox(height: 4),
@@ -2072,6 +2194,117 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                               style:
                                                   AppTypography.bodySecondary()
                                                       .copyWith(fontSize: 12.5),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Wrap(
+                                              spacing: 8,
+                                              runSpacing: 6,
+                                              crossAxisAlignment:
+                                                  WrapCrossAlignment.center,
+                                              children: [
+                                                if (isUnread)
+                                                  OutlinedButton.icon(
+                                                    key: ValueKey(
+                                                      'notif_mark_read_${n.id}',
+                                                    ),
+                                                    style: OutlinedButton
+                                                        .styleFrom(
+                                                      foregroundColor:
+                                                          AppColors.teal,
+                                                      backgroundColor:
+                                                          AppColors.tealSurface,
+                                                      side: BorderSide(
+                                                        color: AppColors.teal
+                                                            .withValues(
+                                                                alpha: 0.4),
+                                                      ),
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 5,
+                                                      ),
+                                                      minimumSize: Size.zero,
+                                                      tapTargetSize:
+                                                          MaterialTapTargetSize
+                                                              .shrinkWrap,
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(20),
+                                                      ),
+                                                    ),
+                                                    onPressed:
+                                                        markSingleReadOnly,
+                                                    icon: const Icon(
+                                                      Icons.done_all_rounded,
+                                                      size: 14,
+                                                    ),
+                                                    label: Text(
+                                                      isAr
+                                                          ? 'تعيين كمقروء'
+                                                          : 'Mark as read',
+                                                      style:
+                                                          AppTypography.label(
+                                                        color: AppColors.teal,
+                                                      ).copyWith(
+                                                        fontSize: 11.5,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
+                                                    ),
+                                                  )
+                                                else
+                                                  Container(
+                                                    key: ValueKey(
+                                                      'notif_read_badge_${n.id}',
+                                                    ),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3,
+                                                    ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              16),
+                                                      border: Border.all(
+                                                        color: AppColors
+                                                            .slateBorder,
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(
+                                                          Icons
+                                                              .check_circle_outline_rounded,
+                                                          size: 13,
+                                                          color: AppColors
+                                                              .textSecondary,
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 4),
+                                                        Text(
+                                                          isAr
+                                                              ? 'مقروء'
+                                                              : 'Read',
+                                                          style: AppTypography
+                                                              .label(
+                                                            color: AppColors
+                                                                .textSecondary,
+                                                          ).copyWith(
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                              ],
                                             ),
                                           ],
                                         ),

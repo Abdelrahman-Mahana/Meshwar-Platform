@@ -133,7 +133,19 @@ const MashwarCategoryMeta _generalSiteSupplyMeta = MashwarCategoryMeta(
   imageAssetPath: 'assets/images/mvp_hero_lusail_supply.jpg',
 );
 
-/// Canonical ordered catalog of all 7 Qatar Worksite Supply categories.
+const MashwarCategoryMeta _otherCategoryMeta = MashwarCategoryMeta(
+  id: 'other',
+  titleAr: 'أخرى (خدمة مخصصة)',
+  titleEn: 'Other (Custom)',
+  subtitleAr: 'أضف نوع التوريد أو الخدمة المخصصة التي تحتاجها بحرية',
+  subtitleEn: 'Specify any custom supply item, errand, or service category',
+  accentColor: AppColors.cobalt,
+  secondaryColor: AppColors.gold,
+  surfaceColor: AppColors.cobaltSurface,
+  visualType: MashwarCategoryVisualType.vectorDiorama,
+);
+
+/// Canonical ordered catalog of all Qatar Worksite Supply categories (incl. Other).
 const List<MashwarCategoryMeta> mashwarWorksiteCategories = [
   _generalSiteSupplyMeta,
   _electricalMeta,
@@ -142,10 +154,11 @@ const List<MashwarCategoryMeta> mashwarWorksiteCategories = [
   _safetyPpeMeta,
   _toolsMeta,
   _civilMaterialsMeta,
+  _otherCategoryMeta,
 ];
 
-/// Resolves [MashwarCategoryMeta] for any of the 7 canonical categories with
-/// graceful fallback to `general_site_supply`.
+/// Resolves [MashwarCategoryMeta] for any canonical category (including `other`)
+/// with graceful fallback to `general_site_supply`.
 MashwarCategoryMeta mashwarCategoryMetaFor(String category) {
   switch (category.trim().toLowerCase()) {
     case 'electrical':
@@ -162,6 +175,9 @@ MashwarCategoryMeta mashwarCategoryMetaFor(String category) {
     case 'civil_materials':
     case 'civil':
       return _civilMaterialsMeta;
+    case 'other':
+    case 'custom':
+      return _otherCategoryMeta;
     case 'general_site_supply':
     case 'general':
     case 'worksite_supply':
@@ -258,6 +274,9 @@ class _MashwarCategoryIconPainter extends CustomPainter {
         break;
       case 'civil_materials':
         _paintCivilMaterials(canvas, s);
+        break;
+      case 'other':
+        _paintOther(canvas, s);
         break;
       case 'general_site_supply':
       default:
@@ -631,6 +650,46 @@ class _MashwarCategoryIconPainter extends CustomPainter {
       Offset(s * 0.74, s * 0.28),
       s * 0.05,
       Paint()..color = Colors.white,
+    );
+  }
+
+  void _paintOther(Canvas canvas, double s) {
+    final stroke = Paint()
+      ..color = AppColors.navy
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = (s * 0.075).clamp(1.2, 2.5)
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final tileFill = Paint()..color = accent.withValues(alpha: 0.16);
+    final tiles = [
+      Rect.fromLTWH(s * 0.14, s * 0.14, s * 0.30, s * 0.30),
+      Rect.fromLTWH(s * 0.56, s * 0.14, s * 0.30, s * 0.30),
+      Rect.fromLTWH(s * 0.14, s * 0.56, s * 0.30, s * 0.30),
+    ];
+    for (final rect in tiles) {
+      final rr = RRect.fromRectAndRadius(rect, Radius.circular(s * 0.07));
+      canvas.drawRRect(rr, tileFill);
+      canvas.drawRRect(rr, stroke);
+    }
+
+    // Bottom-right gold '+' custom add badge
+    final plusCenter = Offset(s * 0.71, s * 0.71);
+    canvas.drawCircle(plusCenter, s * 0.17, Paint()..color = secondary);
+    canvas.drawCircle(plusCenter, s * 0.17, stroke);
+    final plusPaint = Paint()
+      ..color = AppColors.navy
+      ..strokeWidth = (s * 0.08).clamp(1.3, 2.6)
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(plusCenter.dx - s * 0.08, plusCenter.dy),
+      Offset(plusCenter.dx + s * 0.08, plusCenter.dy),
+      plusPaint,
+    );
+    canvas.drawLine(
+      Offset(plusCenter.dx, plusCenter.dy - s * 0.08),
+      Offset(plusCenter.dx, plusCenter.dy + s * 0.08),
+      plusPaint,
     );
   }
 

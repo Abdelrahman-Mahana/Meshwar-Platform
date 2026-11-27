@@ -13,6 +13,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/worksite_models.dart';
 import '../../data/services/media_upload_service.dart';
@@ -720,75 +721,38 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
     String handoverCode,
     bool isAr,
   ) {
-    return Container(
-      key: const ValueKey('requester_handover_code_card'),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.sand,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gold, width: 1.4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.key_rounded, color: AppColors.qatarMaroon),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  isAr
-                      ? 'رمز تأكيد التسليم السري (6 خانات)'
-                      : 'Secret Handover Verification Code (6-Char)',
-                  style: AppTypography.body(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-              IconButton(
-                tooltip: isAr ? 'نسخ الرمز' : 'Copy Code',
-                icon: const Icon(Icons.copy_rounded,
-                    size: 18, color: AppColors.navy),
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: handoverCode));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          isAr ? 'تم نسخ رمز التسليم' : 'Handover code copied'),
-                      backgroundColor: AppColors.teal,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.navy.withValues(alpha: 0.2)),
-              ),
-              child: Text(
-                handoverCode,
-                key: const ValueKey('requester_handover_code_value'),
-                style: AppTypography.largeTitle(color: AppColors.navy).copyWith(
-                  letterSpacing: 6,
-                  fontSize: 24,
-                ),
-              ),
+    return MashwarHandoverQrCard(
+      cardKey: const ValueKey('requester_handover_code_card'),
+      codeValueKey: const ValueKey('requester_handover_code_value'),
+      qrKey: const ValueKey('requester_handover_qr_code'),
+      contingencyButtonKey: const ValueKey('requester_handover_contingency_btn'),
+      referenceId: widget.requestId,
+      title: isAr
+          ? 'رمز QR وكود تأكيد التسليم السري (6 خانات)'
+          : 'Secret Handover QR & Verification Code (6-Char)',
+      subtitle: isAr
+          ? 'اعرض رمز QR للمنفّذ للمسح أو سلّمه الكود يدوياً فقط بعد فحص واستلام المواد والفاتورة في موقع العمل (صالح 24 ساعة ويُستخدم مرة واحدة).'
+          : 'Let the provider scan this QR or share the 6-char code ONLY after inspecting the items and receipt on-site (24h expiry, single-use).',
+      code: handoverCode,
+      qrPayload: 'MASHWAR|SUPPLY|${widget.requestId}|$handoverCode',
+      isAr: isAr,
+      accentColor: AppColors.navy,
+      surfaceColor: AppColors.sand,
+      borderColor: AppColors.gold,
+      onEmergencyFallbackLogged: (record) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isAr
+                  ? 'تم توثيق تسليم الطوارئ (${record.fallbackRef}) باسم ${record.backupContactName}'
+                  : 'Emergency fallback logged (${record.fallbackRef}) for ${record.backupContactName}',
             ),
+            backgroundColor: AppColors.teal,
+            behavior: SnackBarBehavior.floating,
           ),
-          const SizedBox(height: 8),
-          Text(
-            isAr
-                ? 'سلّم هذا الرمز للمنفّذ فقط بعد فحص واستلام المواد والفاتورة في موقع العمل (صالح لمدة 24 ساعة ويُستخدم مرة واحدة).'
-                : 'Share this 6-character code with the assigned provider ONLY after inspecting the items and receipt on-site (24h expiry, single-use).',
-            style: AppTypography.bodySmall(color: AppColors.navy),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -2061,18 +2025,66 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   children: [
                     Text(
                       isAr
-                          ? 'التحقق من رمز التسليم (6 خانات)'
-                          : 'Verify 6-Character Handover Code',
+                          ? 'التحقق من التسليم (QR أو الكود)'
+                          : 'Verify Handover (QR or 6-Char Code)',
                       style: AppTypography.title().copyWith(fontSize: 18),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       isAr
-                          ? 'أدخل الرمز المكون من 6 أحرف/أرقام المستلم من مسؤول الموقع لإتمام التسليم.'
-                          : 'Enter the 6-character alphanumeric code from the site requester to complete delivery.',
+                          ? 'امسح رمز QR الظاهر على شاشة مسؤول الموقع أو أدخل الكود المكون من 6 أحرف/أرقام يدوياً.'
+                          : 'Scan the requester\'s QR code or enter the 6-character code manually to complete delivery.',
                       style: AppTypography.bodySmall(),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      key: const ValueKey('handover_scan_qr_btn'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.teal,
+                        backgroundColor: AppColors.tealSurface,
+                        side: const BorderSide(color: AppColors.teal),
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: isSubmittingLocal
+                          ? null
+                          : () async {
+                              final scanned = await showMashwarQrScanSheet(
+                                sheetCtx,
+                                isAr: isAr,
+                                referenceId: req.id,
+                                expectedLength: 6,
+                                onEmergencyFallbackLogged: (record) {
+                                  if (!sheetCtx.mounted) return;
+                                  setModalState(() {
+                                    feedbackError = null;
+                                    feedbackSuccess = isAr
+                                        ? 'تم تسجيل تسليم طوارئ (${record.fallbackRef}) باسم ${record.backupContactName}'
+                                        : 'Emergency fallback logged (${record.fallbackRef}) for ${record.backupContactName}';
+                                  });
+                                },
+                              );
+                              if (scanned != null &&
+                                  scanned.trim().isNotEmpty &&
+                                  sheetCtx.mounted) {
+                                setModalState(() {
+                                  codeCtrl.text = scanned.trim().toUpperCase();
+                                  feedbackError = null;
+                                });
+                              }
+                            },
+                      icon: const Icon(Icons.qr_code_scanner_rounded, size: 19),
+                      label: Text(
+                        isAr
+                            ? 'مسح رمز QR بالكاميرا'
+                            : 'Scan Handover QR with Camera',
+                        style: AppTypography.label(color: AppColors.teal)
+                            .copyWith(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     Directionality(
                       textDirection: TextDirection.ltr,
                       child: TextField(
@@ -2083,10 +2095,46 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                         textAlign: TextAlign.center,
                         style: AppTypography.title(color: AppColors.navy)
                             .copyWith(letterSpacing: 6, fontSize: 22),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           hintText: 'A2B3C4',
+                          labelText: isAr
+                              ? 'أو أدخل الكود يدوياً (6 خانات)'
+                              : 'Or enter 6-char code manually',
                           counterText: '',
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton.icon(
+                      key: const ValueKey('handover_modal_contingency_btn'),
+                      onPressed: () {
+                        showMashwarHandoverContingencySheet(
+                          sheetCtx,
+                          isAr: isAr,
+                          referenceId: req.id,
+                          onEmergencyFallbackLogged: (record) {
+                            if (!sheetCtx.mounted) return;
+                            setModalState(() {
+                              feedbackError = null;
+                              feedbackSuccess = isAr
+                                  ? 'تم توثيق تسليم الطوارئ (${record.fallbackRef}) باسم ${record.backupContactName}'
+                                  : 'Emergency handover logged (${record.fallbackRef}) for ${record.backupContactName}';
+                            });
+                          },
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.battery_alert_rounded,
+                        size: 16,
+                        color: AppColors.warning,
+                      ),
+                      label: Text(
+                        isAr
+                            ? 'الكاميرا معطّلة أو بطارية الموبايل فصلت؟ عرض الحلول البديلة'
+                            : 'Camera broken or dead battery? Emergency fallbacks',
+                        textAlign: TextAlign.center,
+                        style: AppTypography.label(color: AppColors.warning)
+                            .copyWith(fontWeight: FontWeight.w800),
                       ),
                     ),
                     if (feedbackError != null) ...[

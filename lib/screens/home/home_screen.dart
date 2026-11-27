@@ -2262,6 +2262,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ('safety_ppe', isAr ? 'سلامة مهنية PPE' : 'Safety PPE'),
       ('civil_materials', isAr ? 'مواد بناء' : 'Civil Materials'),
       ('tools', isAr ? 'معدات وأدوات' : 'Power Tools'),
+      ('other', isAr ? 'أخرى (طلب مخصص)' : 'Other (Custom)'),
     ];
 
     final categoryContent = Padding(
@@ -2304,6 +2305,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: quickCategories.map((cat) {
               final meta = mashwarCategoryMetaFor(cat.$1);
               return MashwarPressable(
+                key: ValueKey('home_quick_category_${cat.$1}'),
                 borderRadius: BorderRadius.circular(14),
                 onTap: () {
                   Navigator.of(context).push(

@@ -35,6 +35,8 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
   String? _stopover;
   String _date = 'غداً · صباحاً 7:30 ص';
   String _flexibility = '± 15 د';
+  bool _isCustomFlex = false;
+  final TextEditingController _customFlexController = TextEditingController();
   String? _step1Error;
 
   // Step 2: Empty Seats & Parcels Along Route
@@ -44,7 +46,9 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
   String? _priceError;
 
   bool _acceptParcels = true;
-  String _maxParcelSize = 'small'; // 'envelope', 'small', 'medium'
+  String _maxParcelSize = 'small'; // 'envelope', 'small', 'medium', 'other'
+  final TextEditingController _customParcelSizeController =
+      TextEditingController();
   final TextEditingController _parcelFeeController =
       TextEditingController(text: '25');
   String? _parcelFeeError;
@@ -56,6 +60,8 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
 
   @override
   void dispose() {
+    _customFlexController.dispose();
+    _customParcelSizeController.dispose();
     _priceController.dispose();
     _parcelFeeController.dispose();
     _notesController.dispose();
@@ -206,7 +212,22 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
     final parts = _date.split('·');
     final datePart = parts.isNotEmpty ? parts.first.trim() : _date;
     final timePart = parts.length > 1 ? parts.last.trim() : '7:30 ص';
-    final cleanNotes = _notesController.text.trim();
+    final extraNoteParts = <String>[
+      if (_isCustomFlex && _customFlexController.text.trim().isNotEmpty)
+        isAr
+            ? 'مرونة الانطلاق: ${_customFlexController.text.trim()}'
+            : 'Flexibility: ${_customFlexController.text.trim()}',
+      if (_acceptParcels &&
+          _maxParcelSize == 'other' &&
+          _customParcelSizeController.text.trim().isNotEmpty)
+        isAr
+            ? 'حجم الطرد المسموح: ${_customParcelSizeController.text.trim()}'
+            : 'Custom Parcel Size: ${_customParcelSizeController.text.trim()}',
+      if (_notesController.text.trim().isNotEmpty) _notesController.text.trim(),
+    ];
+    final cleanNotes = extraNoteParts.join(' · ');
+    final safeParcelSizeCode =
+        _maxParcelSize == 'other' ? 'medium' : _maxParcelSize;
 
     rides.publishRide(
       driverId: auth.user.id.isNotEmpty ? auth.user.id : null,
@@ -224,7 +245,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
       pricePerSeat: seatPrice,
       acceptsParcels: _acceptParcels,
       parcelPrice: parcelFee,
-      maxParcelSize: _acceptParcels ? _maxParcelSize : null,
+      maxParcelSize: _acceptParcels ? safeParcelSizeCode : null,
       notes: cleanNotes.isNotEmpty ? cleanNotes : null,
       isLadiesOnly: _ladiesOnly,
       isInstantBooking: _instantBooking,
@@ -250,7 +271,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
           ? auth.user.fullName
           : null,
       authorId: auth.user.id.isNotEmpty ? auth.user.id : null,
-      maxParcelSize: _acceptParcels ? _maxParcelSize : null,
+      maxParcelSize: _acceptParcels ? safeParcelSizeCode : null,
       seatsNeeded: _seatsCount,
       notes: cleanNotes.isNotEmpty ? cleanNotes : null,
       isLadiesOnly: _ladiesOnly,
@@ -270,6 +291,10 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
         return isAr ? 'ظرف مستندات' : 'Document Envelope';
       case 'medium':
         return isAr ? 'صندوق متوسط' : 'Medium Box';
+      case 'other':
+        final custom = _customParcelSizeController.text.trim();
+        if (custom.isNotEmpty) return custom;
+        return isAr ? 'حجم مخصص' : 'Custom Size';
       case 'small':
       default:
         return isAr ? 'حقيبة صغيرة' : 'Small Bag';
@@ -675,26 +700,47 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                     .copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
-              Row(
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
                 children: [
                   for (final flex in [
                     isAr ? 'في الموعد' : 'Exact',
                     '± 15 د',
                     '± 30 د',
-                  ]) ...[
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 3),
-                        child: MashwarChip(
-                          label: flex,
-                          isSelected: _flexibility == flex,
-                          onTap: () => setState(() => _flexibility = flex),
-                        ),
-                      ),
+                  ])
+                    MashwarChip(
+                      label: flex,
+                      isSelected: !_isCustomFlex && _flexibility == flex,
+                      onTap: () => setState(() {
+                        _isCustomFlex = false;
+                        _flexibility = flex;
+                      }),
                     ),
-                  ],
+                  MashwarChip(
+                    key: const ValueKey('publish_flex_other'),
+                    label: isAr ? 'أخرى (تحديد)' : 'Other',
+                    isSelected: _isCustomFlex,
+                    onTap: () => setState(() {
+                      _isCustomFlex = true;
+                      _flexibility = isAr ? 'مرونة مخصصة' : 'Custom';
+                    }),
+                  ),
                 ],
               ),
+              if (_isCustomFlex) ...[
+                const SizedBox(height: 10),
+                MashwarTextField(
+                  key: const ValueKey('publish_custom_flex_input'),
+                  controller: _customFlexController,
+                  label: isAr
+                      ? 'حدد مرونة وقت الانطلاق'
+                      : 'Specify Departure Flexibility',
+                  hint: isAr
+                      ? 'مثال: مرن خلال ساعة أو بعد صلاة العصر'
+                      : 'e.g. Flexible within 1 hour',
+                ),
+              ],
             ],
           ),
         ),
@@ -718,6 +764,11 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
         code: 'medium',
         label: isAr ? 'صندوق متوسط' : 'Medium Box',
         icon: Icons.inventory_2_outlined,
+      ),
+      (
+        code: 'other',
+        label: isAr ? 'أخرى (حجم مخصص)' : 'Other (Custom)',
+        icon: Icons.tune_rounded,
       ),
     ];
 
@@ -911,6 +962,7 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                   children: parcelSizePills.map((item) {
                     final sel = _maxParcelSize == item.code;
                     return InkWell(
+                      key: ValueKey('publish_parcel_size_${item.code}'),
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => setState(() => _maxParcelSize = item.code),
                       child: AnimatedContainer(
@@ -953,6 +1005,19 @@ class _PublishRideScreenState extends State<PublishRideScreen> {
                     );
                   }).toList(),
                 ),
+                if (_maxParcelSize == 'other') ...[
+                  const SizedBox(height: 10),
+                  MashwarTextField(
+                    key: const ValueKey('publish_custom_parcel_size_input'),
+                    controller: _customParcelSizeController,
+                    label: isAr
+                        ? 'حدد نوع أو حجم الطرود المسموحة في سيارتك'
+                        : 'Specify Custom Package Size Accepted',
+                    hint: isAr
+                        ? 'مثال: شنطة سفر كبيرة أو معدات طولها 1.5م'
+                        : 'e.g. Large suitcase or 1.5m gear in trunk',
+                  ),
+                ],
                 const SizedBox(height: 14),
                 MashwarTextField(
                   controller: _parcelFeeController,

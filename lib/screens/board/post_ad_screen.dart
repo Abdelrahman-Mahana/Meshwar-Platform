@@ -63,6 +63,9 @@ class _PostAdScreenState extends State<PostAdScreen> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _itemBudgetController =
       TextEditingController(text: '150');
+  final TextEditingController _customServiceController =
+      TextEditingController();
+  bool _isOtherCategory = false;
   bool _ladiesOnly = false;
   bool _acceptsParcels = true;
   bool _hasEscrowProtection = true;
@@ -108,6 +111,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
   void _applyQuickPreset(int index, bool isAr) {
     setState(() {
       _activePresetIndex = index;
+      _isOtherCategory = false;
       _visualStep = 3;
       _formError = null;
       if (index == 0) {
@@ -216,6 +220,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
     _goodsDescController.dispose();
     _notesController.dispose();
     _itemBudgetController.dispose();
+    _customServiceController.dispose();
     super.dispose();
   }
 
@@ -271,6 +276,15 @@ class _PostAdScreenState extends State<PostAdScreen> {
     final timeText = _timeController.text.trim();
     final price = int.tryParse(_priceController.text.trim());
 
+    if (_isOtherCategory && _customServiceController.text.trim().length < 2) {
+      setState(() {
+        _formError = isAr
+            ? 'يرجى كتابة نوع الخدمة أو الطلب المخصص في حقل "أخرى"'
+            : 'Please specify your custom service in the "Other" field';
+      });
+      return;
+    }
+
     if (fromCity.isEmpty ||
         toCity.isEmpty ||
         timeText.isEmpty ||
@@ -322,17 +336,22 @@ class _PostAdScreenState extends State<PostAdScreen> {
               ? 'طلب توصيل ومشوار محلي موثق · الأجرة المقترحة: $price ر.ق'
               : 'Verified local/school commute · Proposed fare: $price QAR');
     } else if (type == BoardAdType.errandService) {
-      computedTimeText = isAr
-          ? '$timeText · إنجاز معاملة أو جلب أوراق'
-          : '$timeText · Doc & Errand';
+      final customSrv = _customServiceController.text.trim();
+      computedTimeText = _isOtherCategory && customSrv.isNotEmpty
+          ? '$timeText · $customSrv'
+          : (isAr
+              ? '$timeText · إنجاز معاملة أو جلب أوراق'
+              : '$timeText · Doc & Errand');
       final errandText = _errandDescController.text.trim().isNotEmpty
           ? _errandDescController.text.trim()
-          : (isAr
-              ? 'جلب أوراق ومستندات رسمية بالطريق'
-              : 'Official documents & items along route');
+          : (_isOtherCategory && customSrv.isNotEmpty
+              ? customSrv
+              : (isAr
+                  ? 'جلب أوراق ومستندات رسمية بالطريق'
+                  : 'Official documents & items along route'));
       computedDesc = isAr
-          ? '$errandText · أتعاب الخدمة: $price ر.ق'
-          : '$errandText · Service fee: $price QAR';
+          ? '${_isOtherCategory && customSrv.isNotEmpty ? "[$customSrv] " : ""}$errandText · أتعاب الخدمة: $price ر.ق'
+          : '${_isOtherCategory && customSrv.isNotEmpty ? "[$customSrv] " : ""}$errandText · Service fee: $price QAR';
     } else if (type == BoardAdType.goodsDelivery) {
       computedTimeText = isAr
           ? '$timeText · توريد مواقع وبضائع'
@@ -369,8 +388,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
           ? _notesController.text.trim()
           : null,
       isLadiesOnly: _ladiesOnly,
-      serviceSubTagAr: _subTagAr,
-      serviceSubTagEn: _subTagEn,
+      serviceSubTagAr: _isOtherCategory &&
+              _customServiceController.text.trim().isNotEmpty
+          ? _customServiceController.text.trim()
+          : _subTagAr,
+      serviceSubTagEn: _isOtherCategory &&
+              _customServiceController.text.trim().isNotEmpty
+          ? _customServiceController.text.trim()
+          : _subTagEn,
       hasEscrowProtection: _hasEscrowProtection,
       requiresReceiptProof: _requiresReceiptProof,
       estimatedItemCost: itemCost,
@@ -648,6 +673,27 @@ class _PostAdScreenState extends State<PostAdScreen> {
                               const SizedBox(width: 8),
                               _buildScheduleChip(
                                 isAr ? 'خلال الأسبوع' : 'This week',
+                              ),
+                              const SizedBox(width: 8),
+                              ActionChip(
+                                key: const ValueKey('post_ad_schedule_other'),
+                                label: Text(
+                                  isAr ? 'أخرى (موعد مخصص)' : 'Other (Custom)',
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.cobalt,
+                                    fontFamily: 'Cairo',
+                                  ),
+                                ),
+                                backgroundColor: AppColors.cobaltSurface,
+                                side: BorderSide(
+                                  color: AppColors.cobalt.withValues(alpha: 0.35),
+                                ),
+                                onPressed: () => setState(() {
+                                  _timeController.clear();
+                                  _visualStep = 2;
+                                }),
                               ),
                             ],
                           ),
@@ -953,6 +999,17 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'pillar': MashwarServicePillar.sharedTrips,
           'color': AppColors.teal,
         },
+        {
+          'type': BoardAdType.errandService,
+          'isOther': true,
+          'title': isAr ? 'أخرى (طلب خدمة مخصصة)' : 'Other (Custom Service)',
+          'subtitle': isAr
+              ? 'اكتب أي خدمة أو مشوار مختلف غير مدرج أعلاه'
+              : 'Specify any custom errand or service freely',
+          'icon': Icons.add_circle_outline_rounded,
+          'pillar': MashwarServicePillar.smartSupply,
+          'color': AppColors.navy,
+        },
       ];
     } else {
       items = [
@@ -1006,32 +1063,54 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'pillar': MashwarServicePillar.sharedTrips,
           'color': AppColors.teal,
         },
+        {
+          'type': BoardAdType.errandService,
+          'isOther': true,
+          'title': isAr ? 'أخرى (تقديم خدمة مخصصة)' : 'Other (Custom Offer)',
+          'subtitle': isAr
+              ? 'اعرض أي خدمة مساندة أو توصيل خاص غير مدرج'
+              : 'Offer any custom assistance or delivery',
+          'icon': Icons.add_circle_outline_rounded,
+          'pillar': MashwarServicePillar.smartSupply,
+          'color': AppColors.navy,
+        },
       ];
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cardWidth = (constraints.maxWidth - 12) / 2;
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: items.map((item) {
-            final type = item['type'] as BoardAdType;
-            final isSelected = _selectedCategory == type;
-            final accentColor = item['color'] as Color;
-            return SizedBox(
-              width: cardWidth,
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedCategory = type;
-                    _visualStep = 2;
-                    if (type == BoardAdType.goodsDelivery ||
-                        type == BoardAdType.parcelRequest) {
-                      _requiresReceiptProof = true;
-                    }
-                  });
-                },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth = (constraints.maxWidth - 12) / 2;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: items.map((item) {
+                final type = item['type'] as BoardAdType;
+                final isOtherCard = item['isOther'] == true;
+                final isSelected = isOtherCard
+                    ? _isOtherCategory
+                    : (!_isOtherCategory && _selectedCategory == type);
+                final accentColor = item['color'] as Color;
+                return SizedBox(
+                  width: cardWidth,
+                  child: InkWell(
+                    key: isOtherCard
+                        ? const ValueKey('post_ad_category_other')
+                        : null,
+                    onTap: () {
+                      setState(() {
+                        _selectedCategory = type;
+                        _isOtherCategory = isOtherCard;
+                        _visualStep = 2;
+                        _formError = null;
+                        if (type == BoardAdType.goodsDelivery ||
+                            type == BoardAdType.parcelRequest) {
+                          _requiresReceiptProof = true;
+                        }
+                      });
+                    },
                 borderRadius: BorderRadius.circular(16),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
@@ -1109,6 +1188,24 @@ class _PostAdScreenState extends State<PostAdScreen> {
           }).toList(),
         );
       },
+    ),
+        if (_isOtherCategory) ...[
+          const SizedBox(height: 12),
+          MashwarTextField(
+            key: const ValueKey('post_ad_custom_service_input'),
+            controller: _customServiceController,
+            label: isAr
+                ? 'اكتب نوع الخدمة أو الطلب المخصص *'
+                : 'Specify Your Custom Service / Request *',
+            hint: isAr
+                ? 'مثال: صيانة فورية، نقل أثاث خفيف، تصوير عقار، توصيل هدية...'
+                : 'e.g. Quick maintenance, gift delivery, custom pickup...',
+            onChanged: (_) {
+              if (_formError != null) setState(() => _formError = null);
+            },
+          ),
+        ],
+      ],
     );
   }
 
