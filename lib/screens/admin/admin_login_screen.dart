@@ -128,17 +128,23 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                   color: AppColors.gold,
                                   borderRadius: BorderRadius.circular(11),
                                 ),
-                                child: const Center(
+                                child: Center(
                                   child: Text(
                                     'م',
-                                    style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w900, fontSize: 22),
+                                    style: AppTypography.brandLogo(
+                                      size: 22,
+                                      color: AppColors.navy,
+                                    ).copyWith(fontWeight: FontWeight.w900),
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Text(
-                                isAr ? 'مركز قيادة مشوار قطر' : 'MASHWAR Qatar Command Center',
-                                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
+                              Flexible(
+                                child: Text(
+                                  isAr ? 'مركز قيادة مشوار قطر' : 'MASHWAR Qatar Command Center',
+                                  style: AppTypography.title(color: Colors.white)
+                                      .copyWith(fontSize: 18, fontWeight: FontWeight.w800),
+                                ),
                               ),
                             ],
                           ),
@@ -147,7 +153,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                             isAr
                                 ? 'إدارة شاملة للخدمات الـ 6، الضمان المالي المزدوج، بلديات قطر الـ 8، ومركز DevOps.'
                                 : 'Unified control for all 6 Qatar services, Bilateral Escrow, 8 municipalities & SRE DevOps.',
-                            style: const TextStyle(color: Color(0xFFCBD5E1), fontSize: 14, height: 1.5),
+                            style: AppTypography.body(color: const Color(0xFFCBD5E1))
+                                .copyWith(fontSize: 14, height: 1.5),
                           ),
                           const SizedBox(height: 24),
                           const Expanded(
@@ -203,7 +210,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         children: [
           Icon(icon, size: 14, color: AppColors.gold),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: AppTypography.label(color: Colors.white)
+                .copyWith(fontSize: 11, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -240,8 +251,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(10)),
-                      child: const Center(
-                        child: Text('م', style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w900, fontSize: 20)),
+                      child: Center(
+                        child: Text(
+                          'م',
+                          style: AppTypography.brandLogo(
+                            size: 20,
+                            color: AppColors.navy,
+                          ).copyWith(fontWeight: FontWeight.w900),
+                        ),
                       ),
                     ),
                     ActionChip(
@@ -250,7 +267,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       avatar: const Icon(Icons.language_rounded, size: 16, color: AppColors.navy),
                       label: Text(
                         isAr ? 'English' : 'العربية',
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: AppColors.navy),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
                       ),
                       onPressed: settings.toggleLanguage,
                     ),
@@ -377,8 +395,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textDirection: TextDirection.ltr,
+                  style: AppTypography.body(color: AppColors.navy),
                   decoration: InputDecoration(
                     hintText: 'staff@mashwar.qa',
+                    hintStyle: AppTypography.bodySecondary(
+                      color: AppColors.textSecondary.withValues(alpha: 0.72),
+                    ),
                     prefixIcon: const Icon(Icons.email_outlined, color: AppColors.navy),
                     filled: true,
                     fillColor: const Color(0xFFF8FAFC),
@@ -392,8 +414,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   textDirection: TextDirection.ltr,
+                  style: AppTypography.body(color: AppColors.navy),
                   decoration: InputDecoration(
                     hintText: '••••••••',
+                    hintStyle: AppTypography.bodySecondary(
+                      color: AppColors.textSecondary.withValues(alpha: 0.72),
+                    ),
                     prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.navy),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20),
@@ -417,7 +443,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   Center(
                     child: TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: Text(isAr ? 'الرجوع لتطبيق مشوار' : 'Back to MASHWAR App'),
+                      child: Text(
+                        isAr ? 'الرجوع لتطبيق مشوار' : 'Back to MASHWAR App',
+                        style: AppTypography.bodySecondary(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
                 ],
@@ -436,7 +466,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       backgroundColor: isSel ? color.withValues(alpha: 0.14) : const Color(0xFFF8FAFC),
       side: BorderSide(color: isSel ? color : const Color(0xFFCBD5E1), width: isSel ? 1.4 : 0.8),
       avatar: Icon(icon, size: 14, color: color),
-      label: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+      label: Text(
+        label,
+        style: AppTypography.label(color: color)
+            .copyWith(fontSize: 11, fontWeight: FontWeight.w700),
+      ),
       onPressed: () => _fillDemoRole(role),
     );
   }

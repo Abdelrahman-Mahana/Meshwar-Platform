@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -633,8 +634,12 @@ class SettingsScreen extends StatelessWidget {
                   _buildSettingsTile(
                     icon: Icons.verified_outlined,
                     iconColor: AppColors.teal,
-                    title: isAr ? 'الترخيص والامتثال لوزارة المواصلات (قطر)' : 'MOT Qatar Compliance & License',
-                    subtitle: isAr ? 'سجل تجاري رقم 849201 · ترخيص نقل تشاركي ذكي' : 'Commercial Reg. #849201 · MOT Licensed',
+                    title: isAr
+                        ? 'الامتثال التنظيمي وحماية البيانات (قطر)'
+                        : 'Regulatory Compliance & Data Protection (Qatar)',
+                    subtitle: isAr
+                        ? 'الإفصاحات القانونية ونطاق المنصة وقانون الخصوصية رقم 13 لسنة 2016'
+                        : 'Platform scope, legal disclosures & Qatar Law No. 13 of 2016',
                     trailing: const Icon(Icons.check_circle_rounded, color: AppColors.teal, size: 18),
                     onTap: () {
                       Navigator.of(context).push(
@@ -644,50 +649,52 @@ class SettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  _buildIndentedDivider(),
-                  _buildSettingsTile(
-                    icon: Icons.admin_panel_settings_outlined,
-                    iconColor: AppColors.navy,
-                    title: isAr ? 'لوحة التحكم المركزية والـ DevOps' : 'Central Admin & DevOps Portal',
-                    subtitle: isAr ? 'إدارة الخدمات الست، الضمان المالي، المحاور وFeature Flags' : 'Services, Bilateral Escrow, Corridors & SRE Console',
-                    trailing: const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Color(0xFF94A3B8),
-                      size: 20,
+                  if (!AppEnvironment.current.isProduction || AppEnvironment.useDevMocks) ...[
+                    _buildIndentedDivider(),
+                    _buildSettingsTile(
+                      icon: Icons.admin_panel_settings_outlined,
+                      iconColor: AppColors.navy,
+                      title: isAr ? 'لوحة التحكم المركزية والـ DevOps' : 'Central Admin & DevOps Portal',
+                      subtitle: isAr ? 'إدارة الخدمات الست، الضمان المالي، المحاور وFeature Flags' : 'Services, Bilateral Escrow, Corridors & SRE Console',
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFF94A3B8),
+                        size: 20,
+                      ),
+                      onTap: () {
+                        final existingAdmin = context.read<AdminProvider?>();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => existingAdmin != null
+                                ? const AdminShell()
+                                : ChangeNotifierProvider(
+                                    create: (_) => AdminProvider(),
+                                    child: const AdminShell(),
+                                  ),
+                          ),
+                        );
+                      },
                     ),
-                    onTap: () {
-                      final existingAdmin = context.read<AdminProvider?>();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => existingAdmin != null
-                              ? const AdminShell()
-                              : ChangeNotifierProvider(
-                                  create: (_) => AdminProvider(),
-                                  child: const AdminShell(),
-                                ),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildIndentedDivider(),
-                  _buildSettingsTile(
-                    icon: Icons.developer_mode_rounded,
-                    iconColor: AppColors.navy,
-                    title: isAr ? 'جاهزية الخادم وحالة النظام' : 'Backend & System Diagnostics',
-                    subtitle: isAr ? 'فحص العقود والواجهات البرمجية وحالات النظام' : 'API contracts & system state health check',
-                    trailing: const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Color(0xFF94A3B8),
-                      size: 20,
+                    _buildIndentedDivider(),
+                    _buildSettingsTile(
+                      icon: Icons.developer_mode_rounded,
+                      iconColor: AppColors.navy,
+                      title: isAr ? 'جاهزية الخادم وحالة النظام' : 'Backend & System Diagnostics',
+                      subtitle: isAr ? 'فحص العقود والواجهات البرمجية وحالات النظام' : 'API contracts & system state health check',
+                      trailing: const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Color(0xFF94A3B8),
+                        size: 20,
+                      ),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const BackendReadinessScreen(),
+                          ),
+                        );
+                      },
                     ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const BackendReadinessScreen(),
-                        ),
-                      );
-                    },
-                  ),
+                  ],
                   _buildIndentedDivider(),
                   _buildSettingsTile(
                     icon: Icons.delete_outline_rounded,
@@ -774,7 +781,7 @@ class SettingsScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             Text(
-                              'مشوار MASHWAR v1.2.0 (Build 42)',
+                              'مشوار MASHWAR v2.5.0',
                               style: AppTypography.label(color: AppColors.textSecondary).copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 2),
@@ -811,6 +818,16 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildUserProfileCard(BuildContext context, UserModel user, bool isAr) {
+    final trimmedPhone = user.phone.trim();
+    final trimmedEmail = user.email?.trim() ?? '';
+    final contactSubtitle = trimmedPhone.isNotEmpty
+        ? trimmedPhone
+        : (trimmedEmail.isNotEmpty
+            ? trimmedEmail
+            : (isAr ? 'أضف رقم جوالك' : 'Add your mobile number'));
+    final trimmedGovernorate = user.governorate?.trim() ?? '';
+    final trimmedCity = user.city?.trim() ?? '';
+
     return Container(
       padding: const EdgeInsets.all(AppDimens.space16),
       decoration: BoxDecoration(
@@ -859,14 +876,21 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  user.phone,
+                  contactSubtitle,
                   style: AppTypography.bodySecondary().copyWith(fontSize: 12.5),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                if (user.governorate != null) ...[
+                if (trimmedGovernorate.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    user.city != null ? '${user.governorate} · ${user.city}' : user.governorate!,
-                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                    trimmedCity.isNotEmpty
+                        ? '$trimmedGovernorate · $trimmedCity'
+                        : trimmedGovernorate,
+                    style: AppTypography.label(color: const Color(0xFF64748B))
+                        .copyWith(fontSize: 11.5, fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ],
