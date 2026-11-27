@@ -78,12 +78,16 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
         surfaceTintColor: Colors.transparent,
         title: Text(
           isAr ? 'تفاصيل الرحلة والطرود' : 'Trip & Parcel Details',
-          style: AppTypography.title().copyWith(fontSize: 17.5),
+          style: AppTypography.title().copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
+            size: 19,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -167,16 +171,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                         padding: const EdgeInsets.all(AppDimens.space20),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius:
-                              BorderRadius.circular(AppDimens.radiusCard),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: AppColors.slateBorder),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.navy.withValues(alpha: 0.04),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -186,15 +182,17 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                               children: [
                                 Text(
                                   isAr ? 'مساهمة المقعد' : 'Seat Contribution',
-                                  style: AppTypography.title()
-                                      .copyWith(fontSize: 16),
+                                  style: AppTypography.title().copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 Text(
                                   '${widget.ride.pricePerSeat} ${isAr ? "ر.ق" : "QAR"}',
                                   style: AppTypography.title(
-                                    color: AppColors.cobalt,
+                                    color: AppColors.navy,
                                   ).copyWith(
-                                    fontWeight: FontWeight.w900,
+                                    fontWeight: FontWeight.w800,
                                     fontSize: 22,
                                   ),
                                 ),
@@ -205,7 +203,12 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                               isAr
                                   ? 'المتبقي ${widget.ride.remainingSeats} مقاعد متاحة${widget.ride.acceptsParcels ? " · توصيل الطرود: ${widget.ride.parcelPrice} ر.ق" : ""}'
                                   : '${widget.ride.remainingSeats} seats left${widget.ride.acceptsParcels ? " · Parcels: ${widget.ride.parcelPrice} QAR" : ""}',
-                              style: AppTypography.bodySecondary(),
+                              style: AppTypography.bodySmall(
+                                color: AppColors.textSecondary,
+                              ).copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             const SizedBox(height: 16),
                             _buildDualActionButtons(context, rides, isAr),
@@ -214,9 +217,12 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                               isAr
                                   ? 'الدفع نقداً أو بتحويل مباشر مع المسافر · إلغاء مجاني قبل الموعد'
                                   : 'Cash or direct transfer on handover · Free cancellation prior to departure',
-                              style: AppTypography.label(
+                              style: AppTypography.bodySmall(
                                 color: AppColors.textSecondary,
-                              ).copyWith(fontSize: 11),
+                              ).copyWith(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -330,6 +336,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
       duration: const Duration(milliseconds: 280),
       offsetY: 10,
       child: MashwarSectionCard(
+        borderRadius: 16,
+        borderColor: AppColors.slateBorder,
         child: Column(
           children: [
             Row(
@@ -337,9 +345,9 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                 MashwarUserAvatar(
                   avatarUrl: null,
                   fullName: widget.ride.driverName,
-                  size: 54,
-                  borderWidth: 2.0,
-                  borderColor: AppColors.gold,
+                  size: 52,
+                  borderWidth: 1.5,
+                  borderColor: AppColors.slateBorder,
                   autoCommunityPortrait: true,
                   showVerifiedBadge: widget.ride.isVerified,
                 ),
@@ -355,8 +363,10 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                               widget.ride.driverName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.title()
-                                  .copyWith(fontSize: 16.5),
+                              style: AppTypography.title().copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 6),
@@ -366,8 +376,9 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.goldSurface,
+                              color: AppColors.slateBg,
                               borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.slateBorder),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -382,7 +393,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                                   '${widget.ride.driverRating}',
                                   style: const TextStyle(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.navy,
                                     fontFamily: 'Cairo',
                                   ),
@@ -397,8 +408,9 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                         widget.ride.driverCar,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodySecondary()
-                            .copyWith(fontSize: 12.5),
+                        style: AppTypography.bodySmall(
+                          color: AppColors.textSecondary,
+                        ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
@@ -435,7 +447,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                           ? 'جاري الاتصال بـ ${widget.ride.driverName}...'
                           : 'Calling ${widget.ride.driverName}...',
                     ),
-                    backgroundColor: AppColors.emerald,
+                    backgroundColor: AppColors.teal,
                   ),
                 );
               },
@@ -451,13 +463,15 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
       duration: const Duration(milliseconds: 320),
       offsetY: 12,
       child: MashwarSectionCard(
+        borderRadius: 16,
+        borderColor: AppColors.slateBorder,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.slateBg,
+                color: AppColors.sand,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.slateBorder),
               ),
@@ -494,18 +508,15 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.indigoSurface,
+                  color: AppColors.slateBg,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: AppColors.indigo.withValues(alpha: 0.25),
-                  ),
+                  border: Border.all(color: AppColors.slateBorder),
                 ),
                 child: Row(
                   children: [
                     const MashwarServicePillarIcon(
                       pillar: MashwarServicePillar.routeParcels,
-                      size: 40,
-                      showSurface: false,
+                      size: 36,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -517,7 +528,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                                 ? 'يقبل توصيل طرود أو أغراض على طريقه'
                                 : 'Accepts Parcels & Items Along Route',
                             style: AppTypography.body().copyWith(
-                              fontWeight: FontWeight.w800,
+                              fontWeight: FontWeight.w700,
                               color: AppColors.navy,
                               fontSize: 13.5,
                             ),
@@ -527,7 +538,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                                 ? 'رسوم التوصيل: ${widget.ride.parcelPrice} ر.ق · محمي بكود استلام وتسليم OTP'
                                 : 'Delivery fee: ${widget.ride.parcelPrice} QAR · OTP-protected handover',
                             style: AppTypography.label(
-                              color: AppColors.indigo,
+                              color: AppColors.teal,
                             ).copyWith(fontWeight: FontWeight.w700),
                           ),
                         ],
@@ -559,11 +570,11 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
         ? OutlinedButton.icon(
             key: const ValueKey('ride_details_send_parcel_btn'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.indigo,
-              backgroundColor: AppColors.indigoSurface,
-              side: BorderSide(
-                color: AppColors.indigo.withValues(alpha: 0.4),
-                width: 1.2,
+              foregroundColor: AppColors.navy,
+              backgroundColor: Colors.white,
+              side: const BorderSide(
+                color: AppColors.slateBorder,
+                width: 1.0,
               ),
               minimumSize: const Size(double.infinity, 48),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -578,7 +589,11 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.inventory_2_outlined, size: 18),
+            icon: const Icon(
+              Icons.inventory_2_outlined,
+              size: 18,
+              color: AppColors.navy,
+            ),
             label: Text(
               isAr
                   ? 'أرسل طرداً / طلباً مع هذا المسافر (${widget.ride.parcelPrice} ر.ق)'
@@ -587,7 +602,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
                 fontFamily: 'Cairo',
               ),
             ),
@@ -714,12 +730,16 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
       children: [
         Text(
           label,
-          style: AppTypography.label(color: AppColors.textSecondary),
+          style: AppTypography.label(color: AppColors.navy).copyWith(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+          style: AppTypography.bodySecondary(color: AppColors.textPrimary)
+              .copyWith(fontWeight: FontWeight.w600, fontSize: 14),
         ),
       ],
     );
@@ -730,6 +750,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     final bookedSeats = (4 - openSeats).clamp(0, 4);
     final isLadies = widget.ride.isLadiesOnly;
     return MashwarSectionCard(
+      borderRadius: 16,
+      borderColor: AppColors.slateBorder,
       padding: const EdgeInsets.all(AppDimens.space16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -739,7 +761,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               const Icon(
                 Icons.group_outlined,
                 size: 18,
-                color: AppColors.cobalt,
+                color: AppColors.navy,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -747,21 +769,24 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                   isAr
                       ? 'من يسافر معك في نفس الرحلة؟'
                       : 'Who is traveling with you?',
-                  style: AppTypography.title().copyWith(fontSize: 15),
+                  style: AppTypography.title().copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.emeraldSurface,
+                  color: AppColors.tealSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
                   isAr
                       ? '$bookedSeats محجوز · $openSeats متاح'
                       : '$bookedSeats Booked · $openSeats Open',
-                  style: AppTypography.label(color: AppColors.emerald)
-                      .copyWith(fontSize: 11, fontWeight: FontWeight.bold),
+                  style: AppTypography.label(color: AppColors.teal)
+                      .copyWith(fontSize: 11, fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -853,22 +878,18 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: isOccupied ? AppColors.slateBg : Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isOccupied
-              ? AppColors.slateBorder
-              : AppColors.emerald.withValues(alpha: 0.45),
-        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 14,
-            backgroundColor: isOccupied ? AppColors.navy : AppColors.emeraldSurface,
+            backgroundColor: isOccupied ? AppColors.navy : AppColors.tealSurface,
             child: Icon(
               icon,
               size: 14,
-              color: isOccupied ? Colors.white : AppColors.emerald,
+              color: isOccupied ? Colors.white : AppColors.teal,
             ),
           ),
           const SizedBox(width: 8),
@@ -880,9 +901,10 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
                     color: AppColors.navy,
+                    fontFamily: 'Cairo',
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -890,11 +912,12 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color:
-                        isOccupied ? AppColors.textSecondary : AppColors.emerald,
+                        isOccupied ? AppColors.textSecondary : AppColors.teal,
                     fontWeight:
-                        isOccupied ? FontWeight.normal : FontWeight.bold,
+                        isOccupied ? FontWeight.w500 : FontWeight.w700,
+                    fontFamily: 'Cairo',
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -909,6 +932,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
 
   Widget _buildSafetyAndShareCard(BuildContext context, bool isAr) {
     return MashwarSectionCard(
+      borderRadius: 16,
       backgroundColor: Colors.white,
       borderColor: AppColors.slateBorder,
       padding: const EdgeInsets.all(AppDimens.space16),
@@ -920,13 +944,16 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               const Icon(
                 Icons.shield_outlined,
                 size: 18,
-                color: AppColors.emerald,
+                color: AppColors.teal,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   isAr ? 'الأمان وضمان السفر' : 'Safety & Ride Guarantee',
-                  style: AppTypography.title().copyWith(fontSize: 14),
+                  style: AppTypography.title().copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -936,9 +963,10 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
             isAr
                 ? 'هوية المسافر وبيانات المركبة موثقة، وجميع الطرود المرسلة على الطريق محمية بكود الاستلام والتسليم OTP.'
                 : 'Traveler identity and vehicle details are verified, and all route parcels use OTP handover codes.',
-            style: const TextStyle(
-              fontSize: 11.5,
-              color: Color(0xFF64748B),
+            style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                .copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
               height: 1.4,
             ),
           ),
@@ -946,8 +974,9 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.navy,
-              side: const BorderSide(color: AppColors.slateBorder),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -961,7 +990,12 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               isAr
                   ? 'مشاركة تفاصيل الرحلة مع عائلتك'
                   : 'Share Trip Details with Family',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+                fontFamily: 'Cairo',
+              ),
             ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(

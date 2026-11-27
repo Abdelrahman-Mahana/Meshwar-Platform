@@ -370,6 +370,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
+            size: 19,
           ),
           onPressed: () {
             if (_currentStep > 1) {
@@ -383,7 +384,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
           children: [
             const MashwarServicePillarIcon(
               pillar: MashwarServicePillar.routeParcels,
-              size: 32,
+              size: 28,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -391,7 +392,10 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                 isAr ? 'أرسل طرداً على الطريق' : 'Send Parcel on Route',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.title().copyWith(fontSize: 17),
+                style: AppTypography.title().copyWith(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -406,7 +410,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
               children: [
                 Container(
                   color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
                   child: MashwarWizardStepHeader(
                     currentStep: _currentStep,
                     stepTitles: stepTitles,
@@ -435,7 +439,11 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                         OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.navy,
-                            side: const BorderSide(color: AppColors.slateBorder),
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(
+                              color: AppColors.slateBorder,
+                              width: 1.0,
+                            ),
                             minimumSize: const Size(88, 50),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -531,7 +539,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
         // Pre-selected Traveler Card (when navigated from a specific trip)
         if (_selectedRide != null) ...[
           MashwarSectionCard(
-            borderColor: AppColors.indigo.withValues(alpha: 0.35),
+            borderRadius: 16,
+            borderColor: AppColors.slateBorder,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -539,7 +548,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                   children: [
                     const MashwarServicePillarIcon(
                       pillar: MashwarServicePillar.routeParcels,
-                      size: 44,
+                      size: 40,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -550,12 +559,16 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                             isAr
                                 ? 'شحن مباشر مع المسافر ${_selectedRide!.driverName}'
                                 : 'Direct Delivery with ${_selectedRide!.driverName}',
-                            style: AppTypography.title().copyWith(fontSize: 15.5),
+                            style: AppTypography.title().copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           Text(
                             '${_selectedRide!.driverCar} · ★ ${_selectedRide!.driverRating}',
-                            style: AppTypography.bodySecondary()
-                                .copyWith(fontSize: 12.5),
+                            style: AppTypography.bodySmall(
+                              color: AppColors.textSecondary,
+                            ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
@@ -566,13 +579,14 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.indigoSurface,
+                        color: AppColors.cobaltSurface,
                         borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.slateBorder),
                       ),
                       child: Text(
                         '${_selectedRide!.parcelPrice} ${isAr ? "ر.ق" : "QAR"}',
-                        style: AppTypography.title(color: AppColors.indigo)
-                            .copyWith(fontSize: 16),
+                        style: AppTypography.title(color: AppColors.navy)
+                            .copyWith(fontSize: 15.5, fontWeight: FontWeight.w800),
                       ),
                     ),
                   ],
@@ -581,7 +595,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.slateBg,
+                    color: AppColors.sand,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.slateBorder),
                   ),
@@ -594,19 +608,25 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                   ),
                 ),
                 if (widget.ride == null) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Align(
                     alignment: AlignmentDirectional.centerEnd,
                     child: TextButton.icon(
                       onPressed: () => setState(() => _selectedRide = null),
-                      icon: const Icon(Icons.swap_calls_rounded, size: 16),
+                      icon: const Icon(
+                        Icons.swap_calls_rounded,
+                        size: 16,
+                        color: AppColors.navy,
+                      ),
                       label: Text(
                         isAr
                             ? 'تغيير المسافر أو إرسال كطلب مفتوح'
                             : 'Change Traveler or Send Open Request',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.indigo,
+                          color: AppColors.navy,
+                          fontSize: 12.5,
+                          fontFamily: 'Cairo',
                         ),
                       ),
                     ),
@@ -618,12 +638,17 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
         ] else ...[
           // Route Picker Card when no ride was pre-passed
           MashwarSectionCard(
+            borderRadius: 16,
+            borderColor: AppColors.slateBorder,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   isAr ? 'حدّد مسار الطرد' : 'Select Parcel Route',
-                  style: AppTypography.title().copyWith(fontSize: 15.5),
+                  style: AppTypography.title().copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -639,7 +664,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                         child: Column(
                           children: [
                             _RouteSelectorRow(
-                              dotColor: AppColors.emerald,
+                              dotColor: AppColors.teal,
                               label: isAr ? 'من (نقطة الاستلام)' : 'Pickup City',
                               value: context.trCity(_fromCity),
                               onTap: () =>
@@ -653,7 +678,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                               ),
                             ),
                             _RouteSelectorRow(
-                              dotColor: AppColors.indigo,
+                              dotColor: AppColors.navy,
                               isSquare: true,
                               label: isAr ? 'إلى (نقطة التسليم)' : 'Dropoff City',
                               value: context.trCity(_toCity),
@@ -680,7 +705,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                             duration: const Duration(milliseconds: 240),
                             child: const Icon(
                               Icons.swap_vert_rounded,
-                              color: AppColors.indigo,
+                              color: AppColors.navy,
                               size: 20,
                             ),
                           ),
@@ -708,20 +733,25 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
             isAr
                 ? 'المسافرون المتاحون على هذا الطريق (${matchingRides.length})'
                 : 'Parcel-Friendly Travelers on Route (${matchingRides.length})',
-            style: AppTypography.title().copyWith(fontSize: 15),
+            style: AppTypography.title().copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           MashwarHoverCard(
-            backgroundColor: AppColors.indigoSurface,
-            borderColor: AppColors.indigo,
+            borderRadius: BorderRadius.circular(16),
+            backgroundColor: AppColors.cobaltSurface,
+            borderColor: AppColors.navy.withValues(alpha: 0.3),
+            hoverBorderColor: AppColors.navy,
             padding: const EdgeInsets.all(14),
             onTap: () => setState(() => _selectedRide = null),
             child: Row(
               children: [
                 const Icon(
                   Icons.radar_rounded,
-                  color: AppColors.indigo,
-                  size: 22,
+                  color: AppColors.navy,
+                  size: 21,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -733,7 +763,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                             ? 'نشر كطلب مفتوح للمسافرين في هذا الاتجاه'
                             : 'Post as Open Route Request',
                         style: AppTypography.body().copyWith(
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
                           color: AppColors.navy,
                         ),
                       ),
@@ -743,14 +774,14 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                             : 'Visible to any verified traveler heading to ${context.trCity(_toCity)}',
                         style: AppTypography.bodySmall(
                           color: AppColors.textSecondary,
-                        ).copyWith(fontSize: 11.5),
+                        ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                       ),
                     ],
                   ),
                 ),
                 const Icon(
                   Icons.check_circle_rounded,
-                  color: AppColors.indigo,
+                  color: AppColors.navy,
                   size: 20,
                 ),
               ],
@@ -762,8 +793,9 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: MashwarHoverCard(
+                  borderRadius: BorderRadius.circular(16),
                   borderColor: AppColors.slateBorder,
-                  hoverBorderColor: AppColors.indigo,
+                  hoverBorderColor: AppColors.navy,
                   padding: const EdgeInsets.all(14),
                   onTap: () {
                     setState(() {
@@ -787,7 +819,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                           traveler.driverName.isNotEmpty
                               ? traveler.driverName[0]
                               : 'T',
-                          style: AppTypography.title(color: AppColors.cobalt)
+                          style: AppTypography.title(color: AppColors.navy)
                               .copyWith(fontSize: 15),
                         ),
                       ),
@@ -798,15 +830,20 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                           children: [
                             Text(
                               traveler.driverName,
-                              style: AppTypography.body()
-                                  .copyWith(fontWeight: FontWeight.w800),
+                              style: AppTypography.body().copyWith(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14.5,
+                              ),
                             ),
                             Text(
                               '${context.trRoute("${traveler.fromCity} ← ${traveler.toCity}")} · ${traveler.departureTime}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.label(
+                              style: AppTypography.bodySmall(
                                 color: AppColors.textSecondary,
+                              ).copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -819,8 +856,9 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.emeraldSurface,
+                          color: AppColors.cobaltSurface,
                           borderRadius: BorderRadius.circular(9),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Text(
                           isAr
@@ -828,8 +866,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                               : 'Select (${traveler.parcelPrice} QAR)',
                           style: const TextStyle(
                             fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.emerald,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
                             fontFamily: 'Cairo',
                           ),
                         ),
@@ -896,14 +934,19 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MashwarSectionCard(
+          borderRadius: 16,
+          borderColor: AppColors.slateBorder,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 isAr ? 'اختر حجم الطرد أو الغرض' : 'Select Package Size',
-                style: AppTypography.title().copyWith(fontSize: 15.5),
+                style: AppTypography.title().copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final halfW = (constraints.maxWidth - 10) / 2;
@@ -924,17 +967,20 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                             }),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 180),
-                              padding: const EdgeInsets.all(12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
                               decoration: BoxDecoration(
                                 color: isSel
-                                    ? AppColors.indigoSurface
-                                    : AppColors.slateBg,
+                                    ? AppColors.cobaltSurface
+                                    : Colors.white,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: isSel
-                                      ? AppColors.indigo
+                                      ? AppColors.navy
                                       : AppColors.slateBorder,
-                                  width: isSel ? 1.6 : 1.0,
+                                  width: isSel ? 1.4 : 1.0,
                                 ),
                               ),
                               child: Column(
@@ -946,36 +992,38 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                                     children: [
                                       Icon(
                                         opt.icon,
-                                        size: 20,
-                                        color: isSel
-                                            ? AppColors.indigo
-                                            : AppColors.navy,
+                                        size: 19,
+                                        color: AppColors.navy,
                                       ),
                                       if (isSel)
                                         const Icon(
                                           Icons.check_circle_rounded,
                                           size: 16,
-                                          color: AppColors.indigo,
+                                          color: AppColors.navy,
                                         ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 6),
                                   Text(
                                     opt.title,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: AppTypography.body().copyWith(
-                                      fontWeight: FontWeight.w800,
+                                      fontWeight: FontWeight.w700,
                                       fontSize: 13,
+                                      color: AppColors.navy,
                                     ),
                                   ),
                                   Text(
                                     opt.hint,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.label(
+                                    style: AppTypography.bodySmall(
                                       color: AppColors.textSecondary,
-                                    ).copyWith(fontSize: 10.5),
+                                    ).copyWith(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -996,28 +1044,26 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                             duration: const Duration(milliseconds: 180),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
-                              vertical: 12,
+                              vertical: 10,
                             ),
                             decoration: BoxDecoration(
                               color: _isCustomSize
-                                  ? AppColors.indigoSurface
-                                  : AppColors.slateBg,
+                                  ? AppColors.cobaltSurface
+                                  : Colors.white,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: _isCustomSize
-                                    ? AppColors.indigo
+                                    ? AppColors.navy
                                     : AppColors.slateBorder,
-                                width: _isCustomSize ? 1.6 : 1.0,
+                                width: _isCustomSize ? 1.4 : 1.0,
                               ),
                             ),
                             child: Row(
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.tune_rounded,
-                                  size: 20,
-                                  color: _isCustomSize
-                                      ? AppColors.indigo
-                                      : AppColors.navy,
+                                  size: 19,
+                                  color: AppColors.navy,
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
@@ -1030,17 +1076,21 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                                             ? 'أخرى (مقاس أو شكل مخصص)'
                                             : 'Other (Custom Size / Shape)',
                                         style: AppTypography.body().copyWith(
-                                          fontWeight: FontWeight.w800,
+                                          fontWeight: FontWeight.w700,
                                           fontSize: 13,
+                                          color: AppColors.navy,
                                         ),
                                       ),
                                       Text(
                                         isAr
                                             ? 'مثل: أنبوب طويل، لوحة فنية، طرد بتغليف خاص...'
                                             : 'e.g. Long tube, framed item, special packaging...',
-                                        style: AppTypography.label(
+                                        style: AppTypography.bodySmall(
                                           color: AppColors.textSecondary,
-                                        ).copyWith(fontSize: 10.5),
+                                        ).copyWith(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1049,7 +1099,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                                   const Icon(
                                     Icons.check_circle_rounded,
                                     size: 18,
-                                    color: AppColors.indigo,
+                                    color: AppColors.navy,
                                   ),
                               ],
                             ),
@@ -1077,14 +1127,19 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         MashwarSectionCard(
+          borderRadius: 16,
+          borderColor: AppColors.slateBorder,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 isAr ? 'وصف المحتوى والوزن' : 'Contents & Weight',
-                style: AppTypography.title().copyWith(fontSize: 15.5),
+                style: AppTypography.title().copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 10),
               Wrap(
@@ -1096,14 +1151,14 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                     return ActionChip(
                       label: Text(preset),
                       labelStyle: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 11.5,
+                        fontWeight: sel ? FontWeight.w700 : FontWeight.w600,
                         color: sel ? Colors.white : AppColors.navy,
                         fontFamily: 'Cairo',
                       ),
-                      backgroundColor: sel ? AppColors.indigo : AppColors.slateBg,
+                      backgroundColor: sel ? AppColors.navy : Colors.white,
                       side: BorderSide(
-                        color: sel ? AppColors.indigo : AppColors.slateBorder,
+                        color: sel ? AppColors.navy : AppColors.slateBorder,
                       ),
                       onPressed: () => setState(() {
                         _descController.text = preset;
@@ -1116,19 +1171,17 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                     avatar: const Icon(
                       Icons.edit_outlined,
                       size: 14,
-                      color: AppColors.indigo,
+                      color: AppColors.navy,
                     ),
                     label: Text(isAr ? 'أخرى (وصف مخصص)' : 'Other (Custom)'),
                     labelStyle: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.indigo,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.navy,
                       fontFamily: 'Cairo',
                     ),
-                    backgroundColor: AppColors.indigoSurface,
-                    side: BorderSide(
-                      color: AppColors.indigo.withValues(alpha: 0.35),
-                    ),
+                    backgroundColor: AppColors.cobaltSurface,
+                    side: const BorderSide(color: AppColors.slateBorder),
                     onPressed: () => setState(() {
                       _descController.clear();
                       _descError = null;
@@ -1191,12 +1244,17 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         MashwarSectionCard(
+          borderRadius: 16,
+          borderColor: AppColors.slateBorder,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 isAr ? 'بيانات مستلم الطرد' : 'Recipient Information',
-                style: AppTypography.title().copyWith(fontSize: 15.5),
+                style: AppTypography.title().copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 12),
               MashwarTextField(
@@ -1218,16 +1276,16 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
         // Dual OTP Security Card
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.emeraldSurface,
+            color: AppColors.tealSurface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: AppColors.emerald.withValues(alpha: 0.35),
+              color: AppColors.teal.withValues(alpha: 0.32),
             ),
           ),
           child: Row(
@@ -1235,8 +1293,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
             children: [
               const Icon(
                 Icons.verified_user_outlined,
-                color: AppColors.emerald,
-                size: 22,
+                color: AppColors.teal,
+                size: 21,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1248,7 +1306,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                           ? 'تأمين مزدوج بكود الاستلام والتسليم (OTP)'
                           : 'Dual-OTP Handover Protection',
                       style: AppTypography.body().copyWith(
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14.5,
                         color: AppColors.navy,
                       ),
                     ),
@@ -1259,7 +1318,11 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                           : 'Generates a 4-digit Pickup OTP for traveler handover and a Delivery OTP for final recipient confirmation.',
                       style: AppTypography.bodySmall(
                         color: AppColors.textSecondary,
-                      ).copyWith(fontSize: 12, height: 1.4),
+                      ).copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        height: 1.4,
+                      ),
                     ),
                   ],
                 ),
@@ -1298,8 +1361,11 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                                 : 'Parcel Safety Declaration',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypography.body()
-                                .copyWith(fontWeight: FontWeight.w700),
+                            style: AppTypography.body().copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: AppColors.navy,
+                            ),
                           ),
                         ),
                       ],
@@ -1319,8 +1385,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                     },
                     child: Text(
                       isAr ? 'قائمة الممنوعات' : 'Prohibited Items',
-                      style: AppTypography.label(color: AppColors.indigo)
-                          .copyWith(fontWeight: FontWeight.w800),
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -1329,7 +1395,7 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                 children: [
                   Checkbox(
                     value: _agreedProhibited,
-                    activeColor: AppColors.emerald,
+                    activeColor: AppColors.teal,
                     onChanged: (val) =>
                         setState(() => _agreedProhibited = val ?? false),
                   ),
@@ -1338,7 +1404,9 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                       isAr
                           ? 'أقر بأن الطرد مكشوف للمسافر عند الاستلام ولا يحتوي على مواد ممنوعة أو خطرة'
                           : 'I confirm the parcel contains no prohibited or hazardous items',
-                      style: AppTypography.label(),
+                      style: AppTypography.bodySmall(
+                        color: AppColors.textSecondary,
+                      ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
@@ -1352,8 +1420,8 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            color: AppColors.sand,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.slateBorder),
           ),
           child: Row(
@@ -1365,8 +1433,11 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                   children: [
                     Text(
                       context.trRoute('$effFrom ← $effTo'),
-                      style: AppTypography.body()
-                          .copyWith(fontWeight: FontWeight.w800),
+                      style: AppTypography.body().copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: AppColors.navy,
+                      ),
                     ),
                     Text(
                       _selectedRide != null
@@ -1376,17 +1447,17 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
                           : (isAr
                               ? 'طلب طرد مفتوح على المسار'
                               : 'Open Route Parcel Request'),
-                      style: AppTypography.label(
+                      style: AppTypography.bodySmall(
                         color: AppColors.textSecondary,
-                      ),
+                      ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
               ),
               Text(
                 '$resolvedFee ${isAr ? "ر.ق" : "QAR"}',
-                style: AppTypography.title(color: AppColors.indigo)
-                    .copyWith(fontSize: 18, fontWeight: FontWeight.w900),
+                style: AppTypography.title(color: AppColors.navy)
+                    .copyWith(fontSize: 18, fontWeight: FontWeight.w800),
               ),
             ],
           ),

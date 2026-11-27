@@ -329,21 +329,24 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.navy, size: 20),
+              color: AppColors.navy, size: 19),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           isAr
               ? 'ملف المزود ومواقع العمل'
               : 'Provider Verification & Worksites',
-          style: AppTypography.title().copyWith(fontSize: 18),
+          style: AppTypography.title().copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       body: SafeArea(
@@ -351,13 +354,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 840),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimens.space20),
+              padding: const EdgeInsets.all(AppDimens.space16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // Real Status & Performance Summary Card
                   _buildStatusAndStatsCard(profile, isAr),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   if (_localMessage != null) ...[
                     Container(
@@ -380,25 +383,25 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                             .copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                   ],
 
                   if (widget.focusSavedWorksites) ...[
                     _buildSavedWorksitesSection(context, provider, uid, isAr),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                   ],
 
                   // Provider / Business Profile Form
                   _buildProfileSetupSection(provider, auth, isAr),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
                   // 11-Digit QID Verification Form
                   _buildQidVerificationSection(provider, auth, isAr),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
                   if (!widget.focusSavedWorksites) ...[
                     _buildSavedWorksitesSection(context, provider, uid, isAr),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
                   ],
 
                   // Completed Jobs History
@@ -422,11 +425,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
 
     return Container(
       key: const ValueKey('provider_status_summary_card'),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderDisabled),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,14 +447,19 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     isAr
                         ? 'حالة اعتماد المزود (QID)'
                         : 'Provider QID Approval Status',
-                    style: AppTypography.label(color: AppColors.textSecondary),
+                    style: AppTypography.bodySmall(
+                      color: AppColors.textSecondary,
+                    ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     profile?.fullName.isNotEmpty == true
                         ? profile!.fullName
                         : (isAr ? 'ملف مزود التوريد' : 'Supply Provider Profile'),
-                    style: AppTypography.title().copyWith(fontSize: 18),
+                    style: AppTypography.title().copyWith(
+                      fontSize: 16.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -480,8 +488,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 14),
-          const Divider(height: 1, color: AppColors.borderDisabled),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: AppColors.slateBorder),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -491,17 +499,18 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     Text(
                       '$completedCount',
                       style: AppTypography.title(color: AppColors.navy)
-                          .copyWith(fontSize: 18),
+                          .copyWith(fontSize: 17, fontWeight: FontWeight.w700),
                     ),
                     Text(
                       isAr ? 'مهام مكتملة' : 'Completed Jobs',
-                      style: AppTypography.label(),
+                      style: AppTypography.bodySmall(
+                        color: AppColors.textSecondary,
+                      ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
               ),
-              Container(
-                  width: 1, height: 28, color: AppColors.borderDisabled),
+              Container(width: 1, height: 28, color: AppColors.slateBorder),
               Expanded(
                 child: Column(
                   children: [
@@ -510,11 +519,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                           ? '${profile.rating.toStringAsFixed(1)} ★'
                           : '—',
                       style: AppTypography.title(color: AppColors.teal)
-                          .copyWith(fontSize: 18),
+                          .copyWith(fontSize: 17, fontWeight: FontWeight.w700),
                     ),
                     Text(
                       isAr ? 'التقييم الفعلي' : 'Verified Rating',
-                      style: AppTypography.label(),
+                      style: AppTypography.bodySmall(
+                        color: AppColors.textSecondary,
+                      ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -534,292 +545,347 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     return Material(
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: AppColors.borderDisabled),
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.slateBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-          Text(
-            isAr
-                ? '1. بيانات المنشأة / مزود التوريد والمركبة'
-                : '1. Provider / Business & Vehicle Details',
-            style: AppTypography.title().copyWith(fontSize: 16),
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            key: const ValueKey('provider_name_input'),
-            controller: _nameController,
-            decoration: InputDecoration(
-              labelText: isAr
-                  ? 'الاسم الكامل أو اسم المؤسسة *'
-                  : 'Full Name or Business Name *',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            key: const ValueKey('provider_phone_input'),
-            controller: _phoneController,
-            keyboardType: TextInputType.phone,
-            decoration: InputDecoration(
-              labelText: isAr ? 'رقم الجوال القطري *' : 'Qatar Mobile Number *',
-              hintText: '55234567',
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _vehicleTypeController,
-                  decoration: InputDecoration(
-                    labelText: isAr ? 'نوع المركبة' : 'Vehicle Type',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _vehiclePlateController,
-                  decoration: InputDecoration(
-                    labelText: isAr ? 'رقم اللوحة' : 'Plate Number',
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            isAr ? 'مناطق الخدمة في قطر' : 'Service Areas in Qatar',
-            style: AppTypography.label(color: AppColors.navy)
-                .copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              ..._municipalitiesAr.map((area) {
-                final sel = _selectedMunicipalities.contains(area);
-                return FilterChip(
-                  label: Text(AppStrings.translateCity(area, isArabic: isAr)),
-                  selected: sel,
-                  selectedColor: AppColors.tealSurface,
-                  checkmarkColor: AppColors.teal,
-                  onSelected: (v) {
-                    setState(() {
-                      if (v) {
-                        _selectedMunicipalities.add(area);
-                      } else if (_selectedMunicipalities.length > 1) {
-                        _selectedMunicipalities.remove(area);
-                      }
-                    });
-                  },
-                );
-              }),
-              ..._selectedMunicipalities
-                  .where((a) => !_municipalitiesAr.contains(a))
-                  .map(
-                    (customArea) => InputChip(
-                      label: Text(customArea),
-                      selected: true,
-                      selectedColor: AppColors.tealSurface,
-                      onDeleted: _selectedMunicipalities.length > 1
-                          ? () => setState(
-                                () => _selectedMunicipalities.remove(customArea),
-                              )
-                          : null,
-                    ),
-                  ),
-              ActionChip(
-                key: const ValueKey('provider_area_other_btn'),
-                avatar: const Icon(
-                  Icons.add_rounded,
-                  size: 16,
-                  color: AppColors.cobalt,
-                ),
-                label: Text(
-                  isAr ? 'أخرى (إضافة منطقة)' : 'Other (Add Area)',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.cobalt,
-                    fontFamily: 'Cairo',
-                  ),
-                ),
-                backgroundColor: AppColors.cobaltSurface,
-                onPressed: () => setState(
-                  () => _showCustomAreaInput = !_showCustomAreaInput,
-                ),
-              ),
-            ],
-          ),
-          if (_showCustomAreaInput) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('provider_custom_area_input'),
-                    controller: _customAreaController,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: isAr
-                          ? 'اكتب اسم منطقة إضافية (مثل: سيلين، ميناء حمد)'
-                          : 'Enter custom area (e.g. Sealine, Hamad Port)',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  key: const ValueKey('provider_add_custom_area_btn'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.teal,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    final val = _customAreaController.text.trim();
-                    if (val.length >= 2) {
-                      setState(() {
-                        _selectedMunicipalities.add(val);
-                        _customAreaController.clear();
-                        _showCustomAreaInput = false;
-                      });
-                    }
-                  },
-                  child: Text(isAr ? 'إضافة' : 'Add'),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 12),
-          Text(
-            isAr ? 'تخصصات التوريد' : 'Supply Specialties',
-            style: AppTypography.label(color: AppColors.navy)
-                .copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              ..._specialties.map((sp) {
-                final sel = _selectedSpecialties.contains(sp.$1);
-                return FilterChip(
-                  label: Text(isAr ? sp.$2 : sp.$3),
-                  selected: sel,
-                  selectedColor: AppColors.sand,
-                  checkmarkColor: AppColors.navy,
-                  onSelected: (v) {
-                    setState(() {
-                      if (v) {
-                        _selectedSpecialties.add(sp.$1);
-                      } else if (_selectedSpecialties.length > 1) {
-                        _selectedSpecialties.remove(sp.$1);
-                      }
-                    });
-                  },
-                );
-              }),
-              ..._selectedSpecialties
-                  .where((s) => !_specialties.any((sp) => sp.$1 == s))
-                  .map(
-                    (customSp) => InputChip(
-                      label: Text(customSp),
-                      selected: true,
-                      selectedColor: AppColors.sand,
-                      onDeleted: _selectedSpecialties.length > 1
-                          ? () => setState(
-                                () => _selectedSpecialties.remove(customSp),
-                              )
-                          : null,
-                    ),
-                  ),
-              ActionChip(
-                key: const ValueKey('provider_specialty_other_btn'),
-                avatar: const Icon(
-                  Icons.add_rounded,
-                  size: 16,
-                  color: AppColors.cobalt,
-                ),
-                label: Text(
-                  isAr ? 'أخرى (تخصص مخصص)' : 'Other (Add Specialty)',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.cobalt,
-                    fontFamily: 'Cairo',
-                  ),
-                ),
-                backgroundColor: AppColors.cobaltSurface,
-                onPressed: () => setState(
-                  () => _showCustomSpecialtyInput = !_showCustomSpecialtyInput,
-                ),
-              ),
-            ],
-          ),
-          if (_showCustomSpecialtyInput) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: const ValueKey('provider_custom_specialty_input'),
-                    controller: _customSpecialtyController,
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: isAr
-                          ? 'اكتب تخصصاً إضافياً (مثل: تكييف HVAC، زجاج، رخام)'
-                          : 'Enter custom specialty (e.g. HVAC, Glass, Marble)',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  key: const ValueKey('provider_add_custom_specialty_btn'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () {
-                    final val = _customSpecialtyController.text.trim();
-                    if (val.length >= 2) {
-                      setState(() {
-                        _selectedSpecialties.add(val);
-                        _customSpecialtyController.clear();
-                        _showCustomSpecialtyInput = false;
-                      });
-                    }
-                  },
-                  child: Text(isAr ? 'إضافة' : 'Add'),
-                ),
-              ],
-            ),
-          ],
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            activeTrackColor: AppColors.teal,
-            title: Text(
+            Text(
               isAr
-                  ? 'متاح لاستقبال طلبات التوريد'
-                  : 'Available for Worksite Supply Jobs',
-              style: AppTypography.bodySecondary(color: AppColors.navy)
-                  .copyWith(fontWeight: FontWeight.w700),
+                  ? '1. بيانات المنشأة / مزود التوريد والمركبة'
+                  : '1. Provider / Business & Vehicle Details',
+              style: AppTypography.title().copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            value: _isAvailable,
-            onChanged: (v) => setState(() => _isAvailable = v),
-          ),
-          const SizedBox(height: 8),
-          MashwarButton(
-            key: const ValueKey('save_provider_profile_btn'),
-            text: isAr ? 'حفظ ملف المزود' : 'Save Provider Profile',
-            variant: MashwarButtonVariant.secondary,
-            isLoading: provider.isSubmitting,
-            onPressed: () => _handleSaveProfile(provider, auth, isAr),
-          ),
-        ],
-      ),
+            const SizedBox(height: 14),
+            TextField(
+              key: const ValueKey('provider_name_input'),
+              controller: _nameController,
+              decoration: _cleanInputDecoration(
+                labelText: isAr
+                    ? 'الاسم الكامل أو اسم المؤسسة *'
+                    : 'Full Name or Business Name *',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const ValueKey('provider_phone_input'),
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: _cleanInputDecoration(
+                labelText:
+                    isAr ? 'رقم الجوال القطري *' : 'Qatar Mobile Number *',
+                hintText: '55234567',
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _vehicleTypeController,
+                    decoration: _cleanInputDecoration(
+                      labelText: isAr ? 'نوع المركبة' : 'Vehicle Type',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _vehiclePlateController,
+                    decoration: _cleanInputDecoration(
+                      labelText: isAr ? 'رقم اللوحة' : 'Plate Number',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              isAr ? 'مناطق الخدمة في قطر' : 'Service Areas in Qatar',
+              style: AppTypography.label(color: AppColors.navy)
+                  .copyWith(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                ..._municipalitiesAr.map((area) {
+                  final sel = _selectedMunicipalities.contains(area);
+                  return FilterChip(
+                    label: Text(AppStrings.translateCity(area, isArabic: isAr)),
+                    selected: sel,
+                    selectedColor: AppColors.cobaltSurface,
+                    backgroundColor: Colors.white,
+                    checkmarkColor: AppColors.navy,
+                    side: BorderSide(
+                      color: sel ? AppColors.navy : AppColors.slateBorder,
+                    ),
+                    labelStyle: TextStyle(
+                      color: AppColors.navy,
+                      fontWeight: sel ? FontWeight.w700 : FontWeight.w600,
+                      fontSize: 12,
+                      fontFamily: 'Cairo',
+                    ),
+                    onSelected: (v) {
+                      setState(() {
+                        if (v) {
+                          _selectedMunicipalities.add(area);
+                        } else if (_selectedMunicipalities.length > 1) {
+                          _selectedMunicipalities.remove(area);
+                        }
+                      });
+                    },
+                  );
+                }),
+                ..._selectedMunicipalities
+                    .where((a) => !_municipalitiesAr.contains(a))
+                    .map(
+                      (customArea) => InputChip(
+                        label: Text(customArea),
+                        selected: true,
+                        selectedColor: AppColors.cobaltSurface,
+                        side: const BorderSide(color: AppColors.navy),
+                        labelStyle: const TextStyle(
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          fontFamily: 'Cairo',
+                        ),
+                        onDeleted: _selectedMunicipalities.length > 1
+                            ? () => setState(
+                                  () => _selectedMunicipalities
+                                      .remove(customArea),
+                                )
+                            : null,
+                      ),
+                    ),
+                ActionChip(
+                  key: const ValueKey('provider_area_other_btn'),
+                  avatar: const Icon(
+                    Icons.add_rounded,
+                    size: 16,
+                    color: AppColors.navy,
+                  ),
+                  label: Text(
+                    isAr ? 'أخرى (إضافة منطقة)' : 'Other (Add Area)',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: AppColors.navy,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                  backgroundColor: AppColors.slateBg,
+                  side: const BorderSide(color: AppColors.slateBorder),
+                  onPressed: () => setState(
+                    () => _showCustomAreaInput = !_showCustomAreaInput,
+                  ),
+                ),
+              ],
+            ),
+            if (_showCustomAreaInput) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('provider_custom_area_input'),
+                      controller: _customAreaController,
+                      decoration: _cleanInputDecoration(
+                        hintText: isAr
+                            ? 'اكتب اسم منطقة إضافية (مثل: سيلين، ميناء حمد)'
+                            : 'Enter custom area (e.g. Sealine, Hamad Port)',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    key: const ValueKey('provider_add_custom_area_btn'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.navy,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () {
+                      final val = _customAreaController.text.trim();
+                      if (val.length >= 2) {
+                        setState(() {
+                          _selectedMunicipalities.add(val);
+                          _customAreaController.clear();
+                          _showCustomAreaInput = false;
+                        });
+                      }
+                    },
+                    child: Text(isAr ? 'إضافة' : 'Add'),
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 12),
+            Text(
+              isAr ? 'تخصصات التوريد' : 'Supply Specialties',
+              style: AppTypography.label(color: AppColors.navy)
+                  .copyWith(fontSize: 13, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                ..._specialties.map((sp) {
+                  final sel = _selectedSpecialties.contains(sp.$1);
+                  return FilterChip(
+                    label: Text(isAr ? sp.$2 : sp.$3),
+                    selected: sel,
+                    selectedColor: AppColors.cobaltSurface,
+                    backgroundColor: Colors.white,
+                    checkmarkColor: AppColors.navy,
+                    side: BorderSide(
+                      color: sel ? AppColors.navy : AppColors.slateBorder,
+                    ),
+                    labelStyle: TextStyle(
+                      color: AppColors.navy,
+                      fontWeight: sel ? FontWeight.w700 : FontWeight.w600,
+                      fontSize: 12,
+                      fontFamily: 'Cairo',
+                    ),
+                    onSelected: (v) {
+                      setState(() {
+                        if (v) {
+                          _selectedSpecialties.add(sp.$1);
+                        } else if (_selectedSpecialties.length > 1) {
+                          _selectedSpecialties.remove(sp.$1);
+                        }
+                      });
+                    },
+                  );
+                }),
+                ..._selectedSpecialties
+                    .where((s) => !_specialties.any((sp) => sp.$1 == s))
+                    .map(
+                      (customSp) => InputChip(
+                        label: Text(customSp),
+                        selected: true,
+                        selectedColor: AppColors.cobaltSurface,
+                        side: const BorderSide(color: AppColors.navy),
+                        labelStyle: const TextStyle(
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          fontFamily: 'Cairo',
+                        ),
+                        onDeleted: _selectedSpecialties.length > 1
+                            ? () => setState(
+                                  () => _selectedSpecialties.remove(customSp),
+                                )
+                            : null,
+                      ),
+                    ),
+                ActionChip(
+                  key: const ValueKey('provider_specialty_other_btn'),
+                  avatar: const Icon(
+                    Icons.add_rounded,
+                    size: 16,
+                    color: AppColors.navy,
+                  ),
+                  label: Text(
+                    isAr ? 'أخرى (تخصص مخصص)' : 'Other (Add Specialty)',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      color: AppColors.navy,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                  backgroundColor: AppColors.slateBg,
+                  side: const BorderSide(color: AppColors.slateBorder),
+                  onPressed: () => setState(
+                    () =>
+                        _showCustomSpecialtyInput = !_showCustomSpecialtyInput,
+                  ),
+                ),
+              ],
+            ),
+            if (_showCustomSpecialtyInput) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      key: const ValueKey('provider_custom_specialty_input'),
+                      controller: _customSpecialtyController,
+                      decoration: _cleanInputDecoration(
+                        hintText: isAr
+                            ? 'اكتب تخصصاً إضافياً (مثل: تكييف HVAC، زجاج، رخام)'
+                            : 'Enter custom specialty (e.g. HVAC, Glass, Marble)',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    key: const ValueKey('provider_add_custom_specialty_btn'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.navy,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: () {
+                      final val = _customSpecialtyController.text.trim();
+                      if (val.length >= 2) {
+                        setState(() {
+                          _selectedSpecialties.add(val);
+                          _customSpecialtyController.clear();
+                          _showCustomSpecialtyInput = false;
+                        });
+                      }
+                    },
+                    child: Text(isAr ? 'إضافة' : 'Add'),
+                  ),
+                ],
+              ),
+            ],
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              activeTrackColor: AppColors.teal,
+              title: Text(
+                isAr
+                    ? 'متاح لاستقبال طلبات التوريد'
+                    : 'Available for Worksite Supply Jobs',
+                style: AppTypography.bodySecondary(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700, fontSize: 13.5),
+              ),
+              value: _isAvailable,
+              onChanged: (v) => setState(() => _isAvailable = v),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
+              key: const ValueKey('save_provider_profile_btn'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.navy,
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onPressed: provider.isSubmitting
+                  ? null
+                  : () => _handleSaveProfile(provider, auth, isAr),
+              child: Text(
+                isAr ? 'حفظ ملف المزود' : 'Save Provider Profile',
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -830,11 +896,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     bool isAr,
   ) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderDisabled),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -843,16 +909,20 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             isAr
                 ? '2. توثيق البطاقة الشخصية القطرية (QID - 11 رقماً)'
                 : '2. Qatar ID (11-Digit QID) Verification',
-            style: AppTypography.title().copyWith(fontSize: 16),
+            style: AppTypography.title().copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             isAr
                 ? 'يُراجع فريق العمليات بيانات QID لاعتماد حسابك كمزود توريد مؤهل لتقديم العروض.'
                 : 'Operations staff review your 11-digit QID before enabling offer submissions.',
-            style: AppTypography.bodySmall(),
+            style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           Directionality(
             textDirection: TextDirection.ltr,
             child: TextField(
@@ -861,11 +931,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               keyboardType: TextInputType.number,
               maxLength: 11,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: InputDecoration(
+              decoration: _cleanInputDecoration(
                 labelText: isAr
                     ? 'الرقم الشخصي القطري (11 رقماً) *'
                     : '11-Digit Qatar ID Number *',
                 hintText: '29163401122',
+                counterText: '',
               ),
             ),
           ),
@@ -886,13 +957,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           TextField(
             key: const ValueKey('provider_qid_front_input'),
             controller: _qidFrontUrlController,
-            decoration: InputDecoration(
+            decoration: _cleanInputDecoration(
               labelText: isAr
                   ? 'رابط صورة وجه البطاقة القطرية *'
                   : 'QID Front Photo URL *',
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _buildProviderDocUploadRow(
             docType: 'qid_back',
             uploadBtnKey: 'upload_provider_qid_back_btn',
@@ -909,13 +980,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           TextField(
             key: const ValueKey('provider_qid_back_input'),
             controller: _qidBackUrlController,
-            decoration: InputDecoration(
+            decoration: _cleanInputDecoration(
               labelText: isAr
                   ? 'رابط صورة ظهر البطاقة القطرية *'
                   : 'QID Back Photo URL *',
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _buildProviderDocUploadRow(
             docType: 'selfie',
             uploadBtnKey: 'upload_provider_selfie_btn',
@@ -932,13 +1003,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           TextField(
             key: const ValueKey('provider_qid_selfie_input'),
             controller: _qidSelfieUrlController,
-            decoration: InputDecoration(
+            decoration: _cleanInputDecoration(
               labelText: isAr
                   ? 'رابط الصورة الشخصية للمطابقة (اختياري)'
                   : 'Verification Selfie URL (Optional)',
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           MashwarButton(
             key: const ValueKey('submit_qid_verification_btn'),
             text: isAr
@@ -970,8 +1041,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           key: ValueKey(uploadBtnKey),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.navy,
-            side: const BorderSide(color: AppColors.teal),
+            backgroundColor: Colors.white,
+            side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
           onPressed: _uploadingDocSlot != null
               ? null
@@ -982,7 +1057,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppColors.teal,
+                    color: AppColors.navy,
                   ),
                 )
               : const Icon(Icons.cloud_upload_outlined,
@@ -992,7 +1067,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 ? (isAr ? 'جاري الرفع...' : 'Uploading...')
                 : buttonLabel,
             style: AppTypography.label(color: AppColors.navy)
-                .copyWith(fontWeight: FontWeight.w800),
+                .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
           ),
         ),
         if (uploaded != null) ...[
@@ -1118,11 +1193,11 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
 
     return Container(
       key: const ValueKey('saved_worksites_section'),
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderDisabled),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1135,14 +1210,37 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
             children: [
               Text(
                 isAr ? 'مواقع العمل المحفوظة' : 'Saved Worksites',
-                style: AppTypography.title().copyWith(fontSize: 16),
+                style: AppTypography.title().copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               OutlinedButton.icon(
                 key: const ValueKey('add_saved_worksite_btn'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.navy,
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(
+                    color: AppColors.slateBorder,
+                    width: 1.0,
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
                 onPressed: () =>
                     _showAddWorksiteModal(context, provider, uid, isAr),
-                icon: const Icon(Icons.add_location_alt_outlined, size: 17),
-                label: Text(isAr ? 'إضافة موقع' : 'Add Worksite'),
+                icon: const Icon(Icons.add_location_alt_outlined,
+                    size: 16, color: AppColors.navy),
+                label: Text(
+                  isAr ? 'إضافة موقع' : 'Add Worksite',
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -1152,7 +1250,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               isAr
                   ? 'لم تقم بحفظ أي مواقع عمل بعد. أضف مشاريعك المتكررة للطلب بضغطة واحدة.'
                   : 'No saved worksites yet. Save active project sites for 1-tap request creation.',
-              style: AppTypography.bodySecondary(),
+              style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                  .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
             )
           else
             ...sites.map(
@@ -1174,7 +1273,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                         Text(
                           site.label,
                           style: AppTypography.body(color: AppColors.navy)
-                              .copyWith(fontWeight: FontWeight.w800),
+                              .copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14.5,
+                          ),
                         ),
                         if (site.isDefault)
                           MashwarBadge(
@@ -1190,7 +1292,9 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     ),
                     Text(
                       '${site.siteContactName} · ${site.siteContactPhone}',
-                      style: AppTypography.label(),
+                      style: AppTypography.bodySmall(
+                        color: AppColors.textSecondary,
+                      ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                     ),
                   ],
                 ),
@@ -1208,12 +1312,12 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
     return Material(
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: AppColors.borderDisabled),
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.slateBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1221,7 +1325,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
               isAr
                   ? 'سجل مهام التوريد المكتملة (${completedJobs.length})'
                   : 'Completed Supply Jobs (${completedJobs.length})',
-              style: AppTypography.title().copyWith(fontSize: 16),
+              style: AppTypography.title().copyWith(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 10),
             if (completedJobs.isEmpty)
@@ -1229,7 +1336,8 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                 isAr
                     ? 'لا توجد مهام مكتملة مسجلة في هذه الجلسة بعد.'
                     : 'No completed supply jobs recorded yet.',
-                style: AppTypography.bodySecondary(),
+                style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                    .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
               )
             else
               ...completedJobs.map(
@@ -1240,19 +1348,51 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   title: Text(
                     job.title,
                     style: AppTypography.body(color: AppColors.navy)
-                        .copyWith(fontWeight: FontWeight.w700),
+                        .copyWith(fontWeight: FontWeight.w700, fontSize: 14.5),
                   ),
                   subtitle:
                       Text('${job.pickupLocation} → ${job.dropoffWorksite}'),
                   trailing: Text(
                     job.effectiveTotalMinor.format(isArabic: isAr),
                     style: AppTypography.label(color: AppColors.teal)
-                        .copyWith(fontWeight: FontWeight.w800),
+                        .copyWith(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  InputDecoration _cleanInputDecoration({
+    String? labelText,
+    String? hintText,
+    String? counterText,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      counterText: counterText,
+      filled: true,
+      fillColor: AppColors.slateBg,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      labelStyle: AppTypography.label(color: AppColors.navy).copyWith(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+        borderSide: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+        borderSide: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+        borderSide: const BorderSide(color: AppColors.navy, width: 1.5),
       ),
     );
   }
@@ -1291,7 +1431,10 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                   children: [
                     Text(
                       isAr ? 'إضافة موقع عمل محفوظ' : 'Add Saved Worksite',
-                      style: AppTypography.title().copyWith(fontSize: 18),
+                      style: AppTypography.title().copyWith(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     if (modalErr != null) ...[
@@ -1302,7 +1445,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     TextField(
                       key: const ValueKey('worksite_label_input'),
                       controller: labelCtrl,
-                      decoration: InputDecoration(
+                      decoration: _cleanInputDecoration(
                         labelText: isAr
                             ? 'اسم المشروع / الموقع *'
                             : 'Project / Site Label *',
@@ -1311,6 +1454,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       initialValue: selectedArea,
+                      decoration: _cleanInputDecoration(),
                       items: _municipalitiesAr
                           .map(
                             (m) => DropdownMenuItem(
@@ -1330,7 +1474,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     TextField(
                       key: const ValueKey('worksite_street_input'),
                       controller: streetCtrl,
-                      decoration: InputDecoration(
+                      decoration: _cleanInputDecoration(
                         labelText:
                             isAr ? 'المنطقة والشارع *' : 'Zone & Street *',
                       ),
@@ -1339,7 +1483,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                     TextField(
                       key: const ValueKey('worksite_contact_name_input'),
                       controller: contactNameCtrl,
-                      decoration: InputDecoration(
+                      decoration: _cleanInputDecoration(
                         labelText:
                             isAr ? 'اسم مسؤول الموقع *' : 'Site Contact Name *',
                       ),
@@ -1349,7 +1493,7 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
                       key: const ValueKey('worksite_contact_phone_input'),
                       controller: contactPhoneCtrl,
                       keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
+                      decoration: _cleanInputDecoration(
                         labelText: isAr
                             ? 'جوال مسؤول الموقع *'
                             : 'Site Contact Phone *',

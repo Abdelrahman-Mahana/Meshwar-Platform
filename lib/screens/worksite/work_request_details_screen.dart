@@ -156,19 +156,22 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
         ((auth != null && auth.user.id.isNotEmpty) ? auth.user.id : null);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.navy, size: 20),
+              color: AppColors.navy, size: 19),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
         title: Text(
           isAr ? 'تفاصيل طلب التوريد' : 'Request Details',
-          style: AppTypography.title().copyWith(fontSize: 18),
+          style: AppTypography.title().copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         actions: [
           IconButton(
@@ -375,8 +378,8 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderDisabled),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,13 +407,11 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                     customLabel: req.status.label(isArabic: isAr),
                   ),
                   Container(
-                    padding: const EdgeInsetsDirectional.fromSTEB(4, 3, 9, 3),
+                    padding: const EdgeInsetsDirectional.fromSTEB(5, 3, 10, 3),
                     decoration: BoxDecoration(
-                      color: catMeta.surfaceColor,
+                      color: AppColors.slateBg,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: catMeta.accentColor.withValues(alpha: 0.28),
-                      ),
+                      border: Border.all(color: AppColors.slateBorder),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -423,10 +424,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                         const SizedBox(width: 5),
                         Text(
                           catMeta.title(isArabic: isAr),
-                          style: AppTypography.label(color: catMeta.accentColor)
+                          style: AppTypography.label(color: AppColors.navy)
                               .copyWith(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
@@ -473,7 +474,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           const SizedBox(height: 10),
           Text(
             req.title,
-            style: AppTypography.title().copyWith(fontSize: 19),
+            style: AppTypography.title().copyWith(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -486,8 +490,9 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.sand,
+                color: AppColors.slateBg,
                 borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.slateBorder),
               ),
               child: Text(
                 req.itemNotes!,
@@ -524,7 +529,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.slateBg,
+              color: AppColors.sand,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.slateBorder),
             ),
@@ -534,7 +539,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(height: 1, color: AppColors.borderDisabled),
+          const Divider(height: 1, color: AppColors.slateBorder),
           const SizedBox(height: 12),
 
           // Financial Breakdown in QAR minor units
@@ -662,12 +667,12 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: highlight ? AppColors.tealSurface : AppColors.surfaceLight,
+        color: highlight ? AppColors.tealSurface : AppColors.slateBg,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: highlight
               ? AppColors.teal.withValues(alpha: 0.35)
-              : AppColors.borderDisabled,
+              : AppColors.slateBorder,
         ),
       ),
       child: Column(
@@ -676,13 +681,13 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
         children: [
           Text(label,
               style: AppTypography.label(color: AppColors.textSecondary)
-                  .copyWith(fontSize: 10.5)),
+                  .copyWith(fontSize: 11, fontWeight: FontWeight.w500)),
           const SizedBox(height: 2),
           Text(
             value,
             style: AppTypography.body(
               color: highlight ? AppColors.teal : AppColors.navy,
-            ).copyWith(fontWeight: FontWeight.w800, fontSize: 13.5),
+            ).copyWith(fontWeight: FontWeight.w700, fontSize: 13.5),
           ),
         ],
       ),
@@ -694,8 +699,13 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color == AppColors.navy
+            ? AppColors.slateBg
+            : color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
+        border: color == AppColors.navy
+            ? Border.all(color: AppColors.slateBorder)
+            : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -738,7 +748,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       isAr: isAr,
       accentColor: AppColors.navy,
       surfaceColor: AppColors.sand,
-      borderColor: AppColors.gold,
+      borderColor: AppColors.slateBorder,
       onEmergencyFallbackLogged: (record) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -771,7 +781,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderDisabled),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -786,8 +796,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   isAr
                       ? 'توثيق إيصال التحويل البنكي اليدوي'
                       : 'Manual Bank Transfer Proof',
-                  style: AppTypography.body(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.title().copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               MashwarBadge(
@@ -814,16 +826,31 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
               isAr
                   ? 'ارفع رابط إيصال التحويل البنكي / فوراً ورقم المرجع لتوثيق السداد.'
                   : 'Upload your manual bank / Fawran transfer receipt URL and reference number.',
-              style: AppTypography.bodySmall(),
+              style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                  .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
             ),
           if (isUnpaid) ...[
             const SizedBox(height: 12),
-            MashwarButton(
+            OutlinedButton.icon(
               key: const ValueKey('upload_transfer_proof_btn'),
-              text: isAr ? 'رفع إيصال التحويل' : 'Submit Transfer Proof',
-              variant: MashwarButtonVariant.secondary,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.navy,
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+                minimumSize: const Size(double.infinity, 46),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               onPressed: () =>
                   _showTransferProofModal(context, provider, req, isAr),
+              icon: const Icon(Icons.upload_file_rounded,
+                  size: 18, color: AppColors.navy),
+              label: Text(
+                isAr ? 'رفع إيصال التحويل' : 'Submit Transfer Proof',
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
             ),
           ],
         ],
@@ -847,12 +874,28 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
             ? req.requesterName
             : (isAr ? 'صاحب الطلب' : 'Requester'));
 
+    final calmSecondaryStyle = OutlinedButton.styleFrom(
+      foregroundColor: AppColors.navy,
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+
+    final calmDangerStyle = OutlinedButton.styleFrom(
+      foregroundColor: AppColors.danger,
+      backgroundColor: Colors.white,
+      side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderDisabled),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Wrap(
         spacing: 8,
@@ -861,11 +904,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           // Contextual ChatScreen button
           OutlinedButton.icon(
             key: const ValueKey('details_open_chat_btn'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.navy,
-              side: const BorderSide(color: AppColors.borderDisabled),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
+            style: calmSecondaryStyle,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -878,11 +917,12 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 17),
+            icon: const Icon(Icons.chat_bubble_outline_rounded,
+                size: 16, color: AppColors.navy),
             label: Text(
               isAr ? 'محادثة الطلب' : 'Order Chat',
               style: AppTypography.label(color: AppColors.navy)
-                  .copyWith(fontWeight: FontWeight.w800),
+                  .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
             ),
           ),
 
@@ -891,39 +931,32 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
               req.siteContactPhone!.trim().isNotEmpty)
             OutlinedButton.icon(
               key: const ValueKey('details_call_contact_btn'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.teal,
-                side: BorderSide(color: AppColors.teal.withValues(alpha: 0.5)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
+              style: calmSecondaryStyle,
               onPressed: () => _launchSitePhoneCall(
                 context,
                 req.siteContactPhone!.trim(),
                 isAr,
               ),
-              icon: const Icon(Icons.phone_in_talk_rounded, size: 17),
+              icon: const Icon(Icons.phone_in_talk_rounded,
+                  size: 16, color: AppColors.teal),
               label: Text(
                 isAr ? 'اتصال بمسؤول الموقع' : 'Call Site Contact',
-                style: AppTypography.label(color: AppColors.teal)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
               ),
             ),
 
           // Real OS Email Support Escalation (mailto:)
           OutlinedButton.icon(
             key: const ValueKey('details_email_support_btn'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.navy,
-              side: const BorderSide(color: AppColors.borderDisabled),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
+            style: calmSecondaryStyle,
             onPressed: () => _launchSupportEmail(context, req, isAr),
-            icon: const Icon(Icons.mail_outline_rounded, size: 17),
+            icon: const Icon(Icons.mail_outline_rounded,
+                size: 16, color: AppColors.navy),
             label: Text(
               isAr ? 'مراسلة الدعم' : 'Email Support',
               style: AppTypography.label(color: AppColors.navy)
-                  .copyWith(fontWeight: FontWeight.w800),
+                  .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
             ),
           ),
 
@@ -931,12 +964,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           if (isRequester)
             OutlinedButton.icon(
               key: const ValueKey('details_quick_reorder_btn'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.teal,
-                side: const BorderSide(color: AppColors.teal),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
+              style: calmSecondaryStyle,
               onPressed: () {
                 final draft = provider.buildReorderDraft(req);
                 Navigator.of(context).push(
@@ -946,11 +974,12 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   ),
                 );
               },
-              icon: const Icon(Icons.replay_rounded, size: 17),
+              icon: const Icon(Icons.replay_rounded,
+                  size: 16, color: AppColors.navy),
               label: Text(
                 isAr ? 'إعادة طلب سريعة' : 'Quick Reorder',
-                style: AppTypography.label(color: AppColors.teal)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
               ),
             ),
 
@@ -960,21 +989,16 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   req.status == WorkRequestStatus.offerReceived))
             OutlinedButton.icon(
               key: const ValueKey('details_cancel_request_btn'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.danger,
-                side: BorderSide(
-                    color: AppColors.danger.withValues(alpha: 0.45)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
+              style: calmDangerStyle,
               onPressed: provider.isSubmitting
                   ? null
                   : () => _showCancelRequestSheet(context, provider, req, isAr),
-              icon: const Icon(Icons.cancel_outlined, size: 17),
+              icon: const Icon(Icons.cancel_outlined,
+                  size: 16, color: AppColors.danger),
               label: Text(
                 isAr ? 'إلغاء الطلب' : 'Cancel Request',
                 style: AppTypography.label(color: AppColors.danger)
-                    .copyWith(fontWeight: FontWeight.w800),
+                    .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
               ),
             ),
 
@@ -985,10 +1009,13 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
             ElevatedButton.icon(
               key: const ValueKey('details_rate_btn'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.gold,
-                foregroundColor: AppColors.navy,
+                backgroundColor: AppColors.navy,
+                foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               onPressed: () => _showRatingModal(
                 context,
@@ -997,11 +1024,12 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                 isRequester: isRequester,
                 isAr: isAr,
               ),
-              icon: const Icon(Icons.star_rounded, size: 18),
+              icon: const Icon(Icons.star_rounded,
+                  size: 17, color: AppColors.gold),
               label: Text(
                 isAr ? 'تقييم التجربة' : 'Rate Experience',
-                style: AppTypography.label(color: AppColors.navy)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.label(color: Colors.white)
+                    .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
               ),
             ),
 
@@ -1009,13 +1037,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           if (disputable && (isRequester || isAssignedProvider))
             OutlinedButton.icon(
               key: const ValueKey('details_dispute_btn'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.danger,
-                side: BorderSide(
-                    color: AppColors.danger.withValues(alpha: 0.45)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
+              style: calmDangerStyle,
               onPressed: () => _showDisputeModal(
                 context,
                 provider,
@@ -1023,11 +1045,12 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                 reporterRole: isRequester ? 'requester' : 'provider',
                 isAr: isAr,
               ),
-              icon: const Icon(Icons.report_problem_outlined, size: 17),
+              icon: const Icon(Icons.report_problem_outlined,
+                  size: 16, color: AppColors.danger),
               label: Text(
                 isAr ? 'الإبلاغ عن نزاع' : 'Report Dispute',
                 style: AppTypography.label(color: AppColors.danger)
-                    .copyWith(fontWeight: FontWeight.w800),
+                    .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
               ),
             ),
         ],
@@ -1053,7 +1076,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.teal.withValues(alpha: 0.45)),
+        border: Border.all(color: AppColors.teal.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1068,8 +1091,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   isAr
                       ? 'إدارة تنفيذ وتوصيل الطلب (للمزود المكلّف)'
                       : 'Provider Fulfillment & Handover Controls',
-                  style: AppTypography.body(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.title().copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -1102,7 +1127,8 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
               isAr
                   ? 'اطلب رمز التسليم المكون من 6 خانات من المستلم في موقع العمل لإتمام الطلب رسمياً.'
                   : 'Ask the site contact for their 6-character handover code to verify delivery and complete the request.',
-              style: AppTypography.bodySmall(),
+              style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                  .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 10),
             MashwarButton(
@@ -1131,12 +1157,12 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       key: const ValueKey('provider_offer_gate_card'),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: approved ? AppColors.tealSurface : AppColors.sand,
+        color: approved ? AppColors.tealSurface : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: approved
-              ? AppColors.teal.withValues(alpha: 0.4)
-              : AppColors.gold.withValues(alpha: 0.5),
+              ? AppColors.teal.withValues(alpha: 0.35)
+              : AppColors.slateBorder,
         ),
       ),
       child: Column(
@@ -1148,7 +1174,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                 approved
                     ? Icons.verified_user_rounded
                     : Icons.lock_person_outlined,
-                color: approved ? AppColors.teal : AppColors.qatarMaroon,
+                color: approved ? AppColors.teal : AppColors.navy,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -1160,13 +1186,15 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                       : (isAr
                           ? 'تقديم العروض متاح فقط للمزودين المعتمدين بالبطاقة القطرية (QID)'
                           : 'Only Approved QID-Verified Providers Can Submit Offers'),
-                  style: AppTypography.body(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800, fontSize: 14),
+                  style: AppTypography.title().copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15.5,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             approved
                 ? (isAr
@@ -1175,7 +1203,8 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                 : (isAr
                     ? 'أكمل ملف المزود وارفع البطاقة القطرية للمراجعة والاعتماد قبل تقديم عروض التوريد.'
                     : 'Complete your provider profile and 11-digit QID verification to unlock bidding on worksite requests.'),
-            style: AppTypography.bodySmall(),
+            style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 12),
           if (approved)
@@ -1186,12 +1215,17 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   _showSubmitOfferSheet(context, provider, req, isAr),
             )
           else
-            MashwarButton(
+            OutlinedButton(
               key: const ValueKey('details_verify_provider_btn'),
-              text: isAr
-                  ? 'إعداد وتوثيق حساب المزود (QID)'
-                  : 'Complete Provider QID Verification',
-              variant: MashwarButtonVariant.secondary,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.navy,
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+                minimumSize: const Size(double.infinity, 48),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -1199,6 +1233,13 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   ),
                 );
               },
+              child: Text(
+                isAr
+                    ? 'إعداد وتوثيق حساب المزود (QID)'
+                    : 'Complete Provider QID Verification',
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontSize: 13.5, fontWeight: FontWeight.w700),
+              ),
             ),
         ],
       ),
@@ -1252,7 +1293,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderDisabled),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1261,7 +1302,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
             isAr
                 ? 'العروض المقدمة (${offers.length})'
                 : 'Submitted Offers (${offers.length})',
-            style: AppTypography.title().copyWith(fontSize: 16),
+            style: AppTypography.title().copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 10),
           if (offers.isEmpty)
@@ -1269,7 +1313,8 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
               isAr
                   ? 'لم يتم استلام عروض على هذا الطلب حتى الآن.'
                   : 'No offers submitted for this request yet.',
-              style: AppTypography.bodySecondary(),
+              style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                  .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
             )
           else
             ...offers.map((offer) {
@@ -1326,7 +1371,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                               child: Text(
                                 offer.providerName,
                                 style: AppTypography.body(color: AppColors.navy)
-                                    .copyWith(fontWeight: FontWeight.w800),
+                                    .copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14.5,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -1366,8 +1414,8 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                                   'offer_badge_lowest_price_${offer.id}'),
                               icon: Icons.savings_outlined,
                               label: isAr ? 'الأقل سعراً' : 'Lowest Price',
-                              color: AppColors.escrowGreen,
-                              bgColor: AppColors.escrowSurface,
+                              color: AppColors.teal,
+                              bgColor: AppColors.tealSurface,
                             ),
                           if (showFastestEta)
                             _buildOfferComparisonBadge(
@@ -1375,8 +1423,8 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                                   'offer_badge_fastest_eta_${offer.id}'),
                               icon: Icons.bolt_rounded,
                               label: isAr ? 'الأسرع وصولاً' : 'Fastest ETA',
-                              color: AppColors.info,
-                              bgColor: AppColors.infoBg,
+                              color: AppColors.navy,
+                              bgColor: AppColors.cobaltSurface,
                             ),
                           if (showTopRated)
                             _buildOfferComparisonBadge(
@@ -1384,8 +1432,8 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                                   'offer_badge_top_rated_${offer.id}'),
                               icon: Icons.star_rounded,
                               label: isAr ? 'الأعلى تقييماً' : 'Top Rated',
-                              color: AppColors.warning,
-                              bgColor: AppColors.goldSurface,
+                              color: AppColors.navy,
+                              bgColor: AppColors.sand,
                             ),
                         ],
                       ),
@@ -1400,21 +1448,21 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                               ? 'أتعاب التوريد: ${offer.proposedFeeMinor.format(isArabic: true)}'
                               : 'Service Fee: ${offer.proposedFeeMinor.format(isArabic: false)}',
                           style: AppTypography.label(color: AppColors.navy)
-                              .copyWith(fontWeight: FontWeight.w800),
+                              .copyWith(fontWeight: FontWeight.w700),
                         ),
                         Text(
                           isAr
                               ? 'الإجمالي التقديري: ${totalOfferMinor.format(isArabic: true)}'
                               : 'Est. Total: ${totalOfferMinor.format(isArabic: false)}',
                           style: AppTypography.label(color: AppColors.teal)
-                              .copyWith(fontWeight: FontWeight.w800),
+                              .copyWith(fontWeight: FontWeight.w700),
                         ),
                         Text(
                           isAr
                               ? 'الوصول خلال ${offer.estimatedEtaMinutes} دقيقة'
                               : 'ETA: ${offer.estimatedEtaMinutes} min',
                           style: AppTypography.label(
-                              color: AppColors.qatarMaroon),
+                              color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -1447,10 +1495,14 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                         key: ValueKey('withdraw_offer_btn_${offer.id}'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.danger,
-                          side: BorderSide(
-                              color: AppColors.danger.withValues(alpha: 0.45)),
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(
+                              color: AppColors.slateBorder, width: 1.0),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                         onPressed: provider.isSubmitting
                             ? null
@@ -1464,7 +1516,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                         label: Text(
                           isAr ? 'سحب العرض' : 'Withdraw Offer',
                           style: AppTypography.label(color: AppColors.danger)
-                              .copyWith(fontWeight: FontWeight.w800),
+                              .copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
@@ -1490,7 +1542,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1501,7 +1553,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
             label,
             style: AppTypography.label(color: color).copyWith(
               fontSize: 10.5,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -1516,20 +1568,24 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderDisabled),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             isAr ? 'سجل تتبع الطلب الزمني' : 'Request Audit Timeline',
-            style: AppTypography.title().copyWith(fontSize: 16),
+            style: AppTypography.title().copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 12),
           if (events.isEmpty)
             Text(
               isAr ? 'لا توجد أحداث مسجلة بعد.' : 'No timeline events yet.',
-              style: AppTypography.bodySecondary(),
+              style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                  .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
             )
           else
             ...events.map((evt) {
@@ -1840,9 +1896,14 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                       key: const ValueKey('upload_stage_invoice_btn'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
-                        side: const BorderSide(color: AppColors.teal),
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                            color: AppColors.slateBorder, width: 1.0),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: isUploadingInvoice
                           ? null
@@ -1853,7 +1914,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppColors.teal,
+                                color: AppColors.navy,
                               ),
                             )
                           : const Icon(Icons.cloud_upload_outlined,
@@ -1867,7 +1928,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                                 ? 'رفع صورة فاتورة المتجر (حتى 10MB)'
                                 : 'Upload Store Invoice Photo (<= 10 MB)'),
                         style: AppTypography.label(color: AppColors.navy)
-                            .copyWith(fontWeight: FontWeight.w800),
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                     if (uploadedInvoice != null) ...[
@@ -2040,9 +2101,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                     OutlinedButton.icon(
                       key: const ValueKey('handover_scan_qr_btn'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.teal,
-                        backgroundColor: AppColors.tealSurface,
-                        side: const BorderSide(color: AppColors.teal),
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                            color: AppColors.slateBorder, width: 1.0),
                         padding: const EdgeInsets.symmetric(vertical: 11),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -2075,13 +2137,14 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                                 });
                               }
                             },
-                      icon: const Icon(Icons.qr_code_scanner_rounded, size: 19),
+                      icon: const Icon(Icons.qr_code_scanner_rounded,
+                          size: 19, color: AppColors.teal),
                       label: Text(
                         isAr
                             ? 'مسح رمز QR بالكاميرا'
                             : 'Scan Handover QR with Camera',
-                        style: AppTypography.label(color: AppColors.teal)
-                            .copyWith(fontWeight: FontWeight.w800),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -2388,9 +2451,14 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                       key: const ValueKey('pick_transfer_proof_image_btn'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
-                        side: const BorderSide(color: AppColors.teal),
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                            color: AppColors.slateBorder, width: 1.0),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       onPressed: isUploadingProof ? null : pickProofImage,
                       icon: isUploadingProof

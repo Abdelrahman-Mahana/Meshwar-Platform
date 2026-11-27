@@ -74,12 +74,16 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
         surfaceTintColor: Colors.transparent,
         title: Text(
           isAr ? 'تتبع الطرد وكود الأمان' : 'Parcel Tracking & OTP',
-          style: AppTypography.title().copyWith(fontSize: 17),
+          style: AppTypography.title().copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
+            size: 19,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -132,6 +136,8 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                   children: [
                     // Hero Parcel & Traveler Card
                     MashwarSectionCard(
+                      borderRadius: 16,
+                      borderColor: AppColors.slateBorder,
                       child: Row(
                         children: [
                           if (hasTraveler)
@@ -139,15 +145,15 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                               avatarUrl: null,
                               fullName: widget.parcel.driverName,
                               size: 48,
-                              borderWidth: 2.0,
-                              borderColor: AppColors.gold,
+                              borderWidth: 1.5,
+                              borderColor: AppColors.slateBorder,
                               autoCommunityPortrait: true,
                               showVerifiedBadge: true,
                             )
                           else
                             const MashwarServicePillarIcon(
                               pillar: MashwarServicePillar.routeParcels,
-                              size: 48,
+                              size: 44,
                             ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -156,8 +162,10 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                               children: [
                                 Text(
                                   context.trRoute(widget.parcel.route),
-                                  style: AppTypography.title()
-                                      .copyWith(fontSize: 16),
+                                  style: AppTypography.title().copyWith(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
@@ -166,15 +174,22 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                       : (isAr
                                           ? 'طلب مفتوح على المسار · بانتظار مسافر متجه'
                                           : 'Open Route Request · Matching Traveler'),
-                                  style: AppTypography.bodySecondary()
-                                      .copyWith(fontSize: 12.5),
+                                  style: AppTypography.bodySmall(
+                                    color: AppColors.textSecondary,
+                                  ).copyWith(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '${widget.parcel.sizeLabel(isAr)} · ${widget.parcel.weightKg} ${isAr ? "كجم" : "kg"} · ${widget.parcel.fee} ${isAr ? "ر.ق" : "QAR"}',
                                   style: AppTypography.label(
-                                    color: AppColors.indigo,
-                                  ).copyWith(fontWeight: FontWeight.w800),
+                                    color: AppColors.navy,
+                                  ).copyWith(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ],
                             ),
@@ -215,14 +230,15 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                     const SizedBox(height: 12),
 
                     _buildStatusBanner(isAr, hasTraveler: hasTraveler),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // Pickup & Delivery OTP Security Cards
                     if (_status == ParcelStatusStep.requested ||
                         _status == ParcelStatusStep.accepted ||
                         deliveryDigits != null) ...[
                       MashwarSectionCard(
-                        borderColor: AppColors.indigo.withValues(alpha: 0.35),
+                        borderRadius: 16,
+                        borderColor: AppColors.teal.withValues(alpha: 0.35),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -230,7 +246,7 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                               children: [
                                 const Icon(
                                   Icons.verified_user_outlined,
-                                  color: AppColors.indigo,
+                                  color: AppColors.teal,
                                   size: 19,
                                 ),
                                 const SizedBox(width: 8),
@@ -241,8 +257,10 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                         : 'Handover & Delivery OTP Codes',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.title()
-                                        .copyWith(fontSize: 14.5),
+                                    style: AppTypography.title().copyWith(
+                                      fontSize: 15.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
                                 if (_status == ParcelStatusStep.accepted)
@@ -259,8 +277,8 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                     child: Text(
                                       isAr ? 'تكبير الكود' : 'Expand',
                                       style: AppTypography.label(
-                                        color: AppColors.indigo,
-                                      ).copyWith(fontWeight: FontWeight.w800),
+                                        color: AppColors.navy,
+                                      ).copyWith(fontWeight: FontWeight.w700),
                                     ),
                                   ),
                               ],
@@ -289,14 +307,14 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                     ? 'كود التسليم النهائي للمستلم (${widget.parcel.receiverName})'
                                     : 'Recipient Delivery OTP (${widget.parcel.receiverName})',
                                 digits: deliveryDigits,
-                                accentColor: AppColors.emerald,
+                                accentColor: AppColors.teal,
                                 qrPayload:
                                     'MASHWAR|PARCEL_DELIVERY|${widget.parcel.id}|${deliveryDigits.join()}',
                                 qrKey:
                                     const ValueKey('parcel_delivery_qr_code'),
                               ),
                             ],
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
@@ -305,19 +323,22 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                 OutlinedButton.icon(
                                   key: const ValueKey('parcel_scan_qr_btn'),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.teal,
-                                    backgroundColor: AppColors.tealSurface,
-                                    side: BorderSide(
-                                      color:
-                                          AppColors.teal.withValues(alpha: 0.4),
+                                    foregroundColor: AppColors.navy,
+                                    backgroundColor: Colors.white,
+                                    side: const BorderSide(
+                                      color: AppColors.slateBorder,
+                                      width: 1.0,
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 7,
+                                      horizontal: 12,
+                                      vertical: 8,
                                     ),
                                     minimumSize: Size.zero,
                                     tapTargetSize:
                                         MaterialTapTargetSize.shrinkWrap,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                   onPressed: () async {
                                     final expectedCode =
@@ -355,13 +376,14 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                   },
                                   icon: const Icon(
                                     Icons.qr_code_scanner_rounded,
-                                    size: 15,
+                                    size: 16,
+                                    color: AppColors.teal,
                                   ),
                                   label: Text(
                                     isAr ? 'مسح QR للتحقق' : 'Scan QR',
                                     style: AppTypography.label(
-                                      color: AppColors.teal,
-                                    ).copyWith(fontWeight: FontWeight.w800),
+                                      color: AppColors.navy,
+                                    ).copyWith(fontWeight: FontWeight.w700),
                                   ),
                                 ),
                                 OutlinedButton.icon(
@@ -369,18 +391,21 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                       'parcel_handover_contingency_btn'),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: AppColors.navy,
-                                    backgroundColor: AppColors.goldSurface,
-                                    side: BorderSide(
-                                      color: AppColors.warning
-                                          .withValues(alpha: 0.55),
+                                    backgroundColor: Colors.white,
+                                    side: const BorderSide(
+                                      color: AppColors.slateBorder,
+                                      width: 1.0,
                                     ),
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 7,
+                                      horizontal: 12,
+                                      vertical: 8,
                                     ),
                                     minimumSize: Size.zero,
                                     tapTargetSize:
                                         MaterialTapTargetSize.shrinkWrap,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
                                   ),
                                   onPressed: () =>
                                       showMashwarHandoverContingencySheet(
@@ -408,7 +433,7 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                   icon: const Icon(
                                     Icons.battery_alert_rounded,
                                     size: 15,
-                                    color: AppColors.warning,
+                                    color: AppColors.navy,
                                   ),
                                   label: Text(
                                     isAr
@@ -416,7 +441,7 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                                         : 'Dead battery / broken camera? Fallbacks',
                                     style: AppTypography.label(
                                       color: AppColors.navy,
-                                    ).copyWith(fontWeight: FontWeight.w800),
+                                    ).copyWith(fontWeight: FontWeight.w700),
                                   ),
                                 ),
                               ],
@@ -424,13 +449,24 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
                     ],
 
                     // 5-Step Progress Timeline
                     MashwarSectionCard(
+                      borderRadius: 16,
+                      borderColor: AppColors.slateBorder,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(
+                            isAr ? 'مراحل تتبع الشحنة' : 'Shipment Progress',
+                            style: AppTypography.title().copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
                           _buildTimelineStep(
                             isAr ? 'تم إرسال الطلب' : 'Request Created',
                             isDone: _status.index >=
@@ -468,7 +504,7 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
 
                     // Live Recipient Share Card (Preserved for tests)
                     _buildRecipientLiveShareCard(context, isAr),
@@ -559,11 +595,9 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.sand,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.45),
-                        ),
+                        border: Border.all(color: AppColors.slateBorder),
                       ),
                       child: Icon(
                         Icons.copy_rounded,
@@ -872,7 +906,7 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
       padding: const EdgeInsets.all(AppDimens.space16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
@@ -883,7 +917,7 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
               const Icon(
                 Icons.share_location_rounded,
                 size: 18,
-                color: AppColors.cobalt,
+                color: AppColors.navy,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -891,7 +925,10 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                   isAr
                       ? 'مشاركة التتبع المباشر مع المستلم'
                       : 'Live Tracking for Recipient',
-                  style: AppTypography.title().copyWith(fontSize: 14),
+                  style: AppTypography.title().copyWith(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               Container(
@@ -903,9 +940,10 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                 child: Text(
                   isAr ? 'رابط مباشر' : 'Web Link',
                   style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.cobalt,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                    fontFamily: 'Cairo',
                   ),
                 ),
               ),
@@ -916,9 +954,10 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
             isAr
                 ? 'شارك رابط التتبع مع المستلم لمتابعة حالة الطرد وموعد الوصول لحظياً.'
                 : 'Share a live tracking link with the recipient to follow real-time ETA.',
-            style: const TextStyle(
-              fontSize: 11.5,
-              color: Color(0xFF64748B),
+            style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                .copyWith(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
               height: 1.4,
             ),
           ),
@@ -926,7 +965,8 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.navy,
-              side: const BorderSide(color: AppColors.slateBorder),
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -941,7 +981,12 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
               isAr
                   ? 'إرسال رابط التتبع عبر واتساب'
                   : 'Send Tracking Link via WhatsApp',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+                fontFamily: 'Cairo',
+              ),
             ),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(

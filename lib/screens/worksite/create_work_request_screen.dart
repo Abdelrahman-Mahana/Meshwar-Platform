@@ -719,14 +719,14 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: AppColors.navy, size: 20),
+              color: AppColors.navy, size: 19),
           onPressed: () {
             if (_currentStep > 0) {
               setState(() {
@@ -740,7 +740,10 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
         ),
         title: Text(
           isAr ? 'إنشاء طلب توريد موقع' : 'Create Supply Request',
-          style: AppTypography.title().copyWith(fontSize: 18),
+          style: AppTypography.title().copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       body: SafeArea(
@@ -749,85 +752,28 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
             constraints: const BoxConstraints(maxWidth: 760),
             child: Column(
               children: [
-                // Step progress header
+                // Unified compact step progress header
                 Container(
                   color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(
-                      AppDimens.space20, 10, AppDimens.space20, 14),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: List.generate(3, (idx) {
-                          final active = idx <= _currentStep;
-                          final current = idx == _currentStep;
-                          return Expanded(
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
-                              height: 5,
-                              margin: EdgeInsetsDirectional.only(
-                                  end: idx < 2 ? 6 : 0),
-                              decoration: BoxDecoration(
-                                color: current
-                                    ? AppColors.navy
-                                    : (active
-                                        ? AppColors.teal
-                                        : AppColors.borderDisabled),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          );
-                        }),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: [
-                          Text(
-                            stepTitles[_currentStep],
-                            style: AppTypography.body(color: AppColors.navy)
-                                .copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.sand,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                  color: AppColors.gold.withValues(alpha: 0.4)),
-                            ),
-                            child: Text(
-                              isAr
-                                  ? 'الخطوة ${_currentStep + 1} من 3'
-                                  : 'Step ${_currentStep + 1} of 3',
-                              style: AppTypography.label(color: AppColors.navy)
-                                  .copyWith(fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+                  child: MashwarWizardStepHeader(
+                    currentStep: _currentStep + 1,
+                    stepTitles: stepTitles,
+                    isAr: isAr,
                   ),
                 ),
-                const Divider(height: 1, color: AppColors.borderDisabled),
+                const Divider(height: 1, color: AppColors.slateBorder),
 
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(AppDimens.space20),
+                    padding: const EdgeInsets.all(AppDimens.space16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (widget.initialDraft != null) ...[
                           Container(
                             key: const ValueKey('reorder_prefill_banner'),
-                            margin: const EdgeInsets.only(bottom: 14),
+                            margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: AppColors.tealSurface,
@@ -856,13 +802,13 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                         ],
                         if (_stepValidationError != null) ...[
                           _buildErrorBanner(_stepValidationError!),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 12),
                         ] else if (provider.hasError && providerErr != null) ...[
                           _buildErrorBanner(providerErr),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 12),
                         ],
                         AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 240),
+                          duration: const Duration(milliseconds: 220),
                           switchInCurve: Curves.easeOutCubic,
                           switchOutCurve: Curves.easeInCubic,
                           transitionBuilder: (child, anim) => FadeTransition(
@@ -891,36 +837,46 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
 
                 // Bottom navigation bar
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimens.space20,
-                    vertical: 12,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                   decoration: const BoxDecoration(
                     color: Colors.white,
-                    border: Border(
-                        top: BorderSide(color: AppColors.borderDisabled)),
+                    border:
+                        Border(top: BorderSide(color: AppColors.slateBorder)),
                   ),
                   child: Row(
                     children: [
                       if (_currentStep > 0) ...[
-                        Expanded(
-                          flex: 2,
-                          child: MashwarButton(
-                            key: const ValueKey('create_back_btn'),
-                            text: isAr ? 'السابق' : 'Back',
-                            variant: MashwarButtonVariant.secondary,
-                            onPressed: () {
-                              setState(() {
-                                _stepValidationError = null;
-                                _currentStep--;
-                              });
-                            },
+                        OutlinedButton(
+                          key: const ValueKey('create_back_btn'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.navy,
+                            backgroundColor: Colors.white,
+                            side: const BorderSide(
+                              color: AppColors.slateBorder,
+                              width: 1.0,
+                            ),
+                            minimumSize: const Size(92, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _stepValidationError = null;
+                              _currentStep--;
+                            });
+                          },
+                          child: Text(
+                            isAr ? 'السابق' : 'Back',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontFamily: 'Cairo',
+                            ),
                           ),
                         ),
                         const SizedBox(width: 10),
                       ],
                       Expanded(
-                        flex: 3,
                         child: _currentStep < 2
                             ? MashwarButton(
                                 key: const ValueKey('create_next_btn'),
@@ -979,29 +935,29 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 1-Tap Quick Templates Strip
+        // Compact 1-Tap Quick Templates Strip
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.sand,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.slateBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(Icons.flash_on_rounded,
-                      size: 17, color: AppColors.qatarMaroon),
+                  const Icon(Icons.bolt_rounded,
+                      size: 17, color: AppColors.navy),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       isAr
-                          ? 'قوالب تعبئة فورية لمواقع قطر (ضغطة واحدة)'
-                          : '1-Tap Qatar Construction Templates',
+                          ? 'قوالب تعبئة فورية لمواقع العمل (ضغطة واحدة)'
+                          : '1-Tap Worksite Supply Templates',
                       style: AppTypography.label(color: AppColors.navy)
-                          .copyWith(fontWeight: FontWeight.w800, fontSize: 12.5),
+                          .copyWith(fontWeight: FontWeight.w700, fontSize: 12.5),
                     ),
                   ),
                 ],
@@ -1012,27 +968,26 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                 child: Row(
                   children: _quickTemplates.map((tpl) {
                     final selected = _selectedTemplateId == tpl.id;
-                    final meta = mashwarCategoryMetaFor(tpl.category);
                     return Padding(
                       padding: const EdgeInsetsDirectional.only(end: 8),
                       child: MashwarHoverCard(
                         key: ValueKey('create_quick_template_${tpl.id}'),
                         borderRadius: BorderRadius.circular(12),
-                        backgroundColor:
-                            selected ? meta.surfaceColor : Colors.white,
-                        borderColor: selected
-                            ? meta.accentColor
-                            : AppColors.borderDisabled,
-                        hoverBorderColor: meta.accentColor,
+                        backgroundColor: selected
+                            ? AppColors.cobaltSurface
+                            : AppColors.slateBg,
+                        borderColor:
+                            selected ? AppColors.navy : AppColors.slateBorder,
+                        hoverBorderColor: AppColors.navy,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 8),
+                            horizontal: 10, vertical: 7),
                         onTap: () => _applyQuickTemplate(tpl, isAr),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             MashwarCategoryIcon(
                               category: tpl.category,
-                              size: 28,
+                              size: 26,
                               showSurface: true,
                             ),
                             const SizedBox(width: 8),
@@ -1045,7 +1000,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                                   style: AppTypography.label(
                                           color: AppColors.navy)
                                       .copyWith(
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     fontSize: 11.5,
                                   ),
                                 ),
@@ -1072,361 +1027,395 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
-        _buildFieldLabel(isAr ? 'فئة التوريد' : 'Supply Category'),
-        const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final colCount = constraints.maxWidth >= 560 ? 3 : 2;
-            const spacing = 8.0;
-            final cardWidth =
-                (constraints.maxWidth - (spacing * (colCount - 1))) / colCount;
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: mashwarWorksiteCategories.map((meta) {
-                final selected = _selectedCategory == meta.id;
-                return SizedBox(
-                  width: cardWidth,
-                  child: MashwarHoverCard(
-                    key: ValueKey('create_category_${meta.id}'),
-                    borderRadius: BorderRadius.circular(14),
-                    backgroundColor:
-                        selected ? meta.surfaceColor : Colors.white,
-                    borderColor: selected
-                        ? meta.accentColor
-                        : AppColors.borderDisabled,
-                    hoverBorderColor: meta.accentColor,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 9),
-                    onTap: () => setState(() => _selectedCategory = meta.id),
-                    child: Row(
+        // Category & Item Details Card
+        _buildSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildFieldLabel(isAr ? 'فئة التوريد' : 'Supply Category'),
+              const SizedBox(height: 8),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final colCount = constraints.maxWidth >= 560 ? 3 : 2;
+                  const spacing = 8.0;
+                  final cardWidth =
+                      (constraints.maxWidth - (spacing * (colCount - 1))) /
+                          colCount;
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: mashwarWorksiteCategories.map((meta) {
+                      final selected = _selectedCategory == meta.id;
+                      return SizedBox(
+                        width: cardWidth,
+                        child: MashwarHoverCard(
+                          key: ValueKey('create_category_${meta.id}'),
+                          borderRadius: BorderRadius.circular(12),
+                          backgroundColor: selected
+                              ? AppColors.cobaltSurface
+                              : Colors.white,
+                          borderColor:
+                              selected ? AppColors.navy : AppColors.slateBorder,
+                          hoverBorderColor: AppColors.navy,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
+                          onTap: () =>
+                              setState(() => _selectedCategory = meta.id),
+                          child: Row(
+                            children: [
+                              MashwarCategoryIcon(
+                                category: meta.id,
+                                size: 28,
+                                showSurface: true,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  meta.title(isArabic: isAr),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style:
+                                      AppTypography.label(color: AppColors.navy)
+                                          .copyWith(
+                                    fontWeight: selected
+                                        ? FontWeight.w700
+                                        : FontWeight.w600,
+                                    fontSize: 11.5,
+                                    height: 1.2,
+                                  ),
+                                ),
+                              ),
+                              if (selected) ...[
+                                const SizedBox(width: 4),
+                                const Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 16,
+                                  color: AppColors.navy,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+              if (_selectedCategory == 'other') ...[
+                const SizedBox(height: 12),
+                _buildFieldLabel(isAr
+                    ? 'حدد نوع الخدمة أو التوريد المخصص *'
+                    : 'Specify Custom Service / Category *'),
+                const SizedBox(height: 6),
+                TextField(
+                  key: const ValueKey('create_custom_category_input'),
+                  controller: _customCategoryController,
+                  decoration: _cleanInputDecoration(
+                    hintText: isAr
+                        ? 'مثال: صيانة تكييف، مستلزمات زراعية، قطع غيار مولدات...'
+                        : 'e.g. HVAC spares, landscape materials, generator parts...',
+                    prefixIcon: const Icon(
+                      Icons.edit_note_rounded,
+                      color: AppColors.navy,
+                    ),
+                  ),
+                  onChanged: (_) {
+                    if (_stepValidationError != null) {
+                      setState(() => _stepValidationError = null);
+                    }
+                  },
+                ),
+              ],
+              const SizedBox(height: 16),
+
+              _buildFieldLabel(
+                  isAr ? 'عنوان طلب التوريد *' : 'Supply Request Title *'),
+              const SizedBox(height: 6),
+              TextField(
+                key: const ValueKey('create_step1_title'),
+                controller: _titleController,
+                decoration: _cleanInputDecoration(
+                  hintText: isAr
+                      ? 'مثال: قواطع كهربائية 32A ووصلات نحاسية'
+                      : 'e.g. 12x 32A Circuit Breakers & Copper Fittings',
+                ),
+                onChanged: (_) {
+                  if (_stepValidationError != null) {
+                    setState(() => _stepValidationError = null);
+                  }
+                },
+              ),
+              const SizedBox(height: 14),
+
+              _buildFieldLabel(isAr
+                  ? 'وصف المواد والمواصفات الفنية *'
+                  : 'Item Description & Specifications *'),
+              const SizedBox(height: 6),
+              TextField(
+                key: const ValueKey('create_step1_desc'),
+                controller: _descriptionController,
+                maxLines: 3,
+                decoration: _cleanInputDecoration(
+                  hintText: isAr
+                      ? 'اذكر الماركة أو المقاس أو رقم القطعة المطلوب بدقة...'
+                      : 'Specify brand, dimensions, part numbers, or quality requirements...',
+                ),
+                onChanged: (_) {
+                  if (_stepValidationError != null) {
+                    setState(() => _stepValidationError = null);
+                  }
+                },
+              ),
+              const SizedBox(height: 14),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        MashwarCategoryIcon(
-                          category: meta.id,
-                          size: 32,
-                          showSurface: true,
+                        _buildFieldLabel(isAr ? 'الكمية *' : 'Quantity *'),
+                        const SizedBox(height: 6),
+                        TextField(
+                          key: const ValueKey('create_step1_qty'),
+                          controller: _quantityController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          decoration: _cleanInputDecoration(hintText: '1'),
+                          onChanged: (_) {
+                            if (_stepValidationError != null) {
+                              setState(() => _stepValidationError = null);
+                            }
+                          },
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            meta.title(isArabic: isAr),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTypography.label(color: AppColors.navy)
-                                .copyWith(
-                              fontWeight:
-                                  selected ? FontWeight.w800 : FontWeight.w700,
-                              fontSize: 11.5,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-                        if (selected) ...[
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.check_circle_rounded,
-                            size: 16,
-                            color: meta.accentColor,
-                          ),
-                        ],
                       ],
                     ),
                   ),
-                );
-              }).toList(),
-            );
-          },
-        ),
-        if (_selectedCategory == 'other') ...[
-          const SizedBox(height: 12),
-          _buildFieldLabel(isAr
-              ? 'حدد نوع الخدمة أو التوريد المخصص *'
-              : 'Specify Custom Service / Category *'),
-          const SizedBox(height: 6),
-          TextField(
-            key: const ValueKey('create_custom_category_input'),
-            controller: _customCategoryController,
-            decoration: InputDecoration(
-              hintText: isAr
-                  ? 'مثال: صيانة تكييف، مستلزمات زراعية، قطع غيار مولدات...'
-                  : 'e.g. HVAC spares, landscape materials, generator parts...',
-              prefixIcon: const Icon(
-                Icons.edit_note_rounded,
-                color: AppColors.cobalt,
-              ),
-            ),
-            onChanged: (_) {
-              if (_stepValidationError != null) {
-                setState(() => _stepValidationError = null);
-              }
-            },
-          ),
-        ],
-        const SizedBox(height: 18),
-
-        _buildFieldLabel(isAr
-            ? 'عنوان طلب التوريد *'
-            : 'Supply Request Title *'),
-        const SizedBox(height: 6),
-        TextField(
-          key: const ValueKey('create_step1_title'),
-          controller: _titleController,
-          decoration: InputDecoration(
-            hintText: isAr
-                ? 'مثال: قواطع كهربائية 32A ووصلات نحاسية'
-                : 'e.g. 12x 32A Circuit Breakers & Copper Fittings',
-          ),
-          onChanged: (_) {
-            if (_stepValidationError != null) {
-              setState(() => _stepValidationError = null);
-            }
-          },
-        ),
-        const SizedBox(height: 16),
-
-        _buildFieldLabel(isAr
-            ? 'وصف المواد والمواصفات الفنية *'
-            : 'Item Description & Specifications *'),
-        const SizedBox(height: 6),
-        TextField(
-          key: const ValueKey('create_step1_desc'),
-          controller: _descriptionController,
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: isAr
-                ? 'اذكر الماركة أو المقاس أو رقم القطعة المطلوب بدقة...'
-                : 'Specify brand, dimensions, part numbers, or quality requirements...',
-          ),
-          onChanged: (_) {
-            if (_stepValidationError != null) {
-              setState(() => _stepValidationError = null);
-            }
-          },
-        ),
-        const SizedBox(height: 16),
-
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              flex: 2,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFieldLabel(isAr ? 'الكمية *' : 'Quantity *'),
-                  const SizedBox(height: 6),
-                  TextField(
-                    key: const ValueKey('create_step1_qty'),
-                    controller: _quantityController,
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: const InputDecoration(hintText: '1'),
-                    onChanged: (_) {
-                      if (_stepValidationError != null) {
-                        setState(() => _stepValidationError = null);
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 3,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFieldLabel(isAr ? 'الوحدة' : 'Unit'),
-                  const SizedBox(height: 6),
-                  DropdownButtonFormField<String>(
-                    key: const ValueKey('create_step1_unit_dropdown'),
-                    initialValue: _selectedUnit,
-                    isExpanded: true,
-                    items: _units
-                        .map(
-                          (u) => DropdownMenuItem<String>(
-                            value: u.$1,
-                            child: Text(isAr ? u.$2 : u.$3),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) setState(() => _selectedUnit = v);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        if (_selectedUnit == 'other') ...[
-          const SizedBox(height: 12),
-          TextField(
-            key: const ValueKey('create_custom_unit_input'),
-            controller: _customUnitController,
-            decoration: InputDecoration(
-              labelText: isAr ? 'اكتب الوحدة المخصصة *' : 'Custom Unit *',
-              hintText: isAr
-                  ? 'مثال: لتر، طن، صندوق خشبي، عبوة...'
-                  : 'e.g. liter, ton, crate, pack...',
-            ),
-            onChanged: (_) {
-              if (_stepValidationError != null) {
-                setState(() => _stepValidationError = null);
-              }
-            },
-          ),
-        ],
-        const SizedBox(height: 16),
-
-        _buildFieldLabel(isAr
-            ? 'صورة مرجعية للعينة / القطعة (اختياري · حتى 10MB)'
-            : 'Reference Item Photo (Optional · Max 10 MB)'),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                key: const ValueKey('upload_reference_photo_btn'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.navy,
-                  side: const BorderSide(color: AppColors.teal),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                ),
-                onPressed: _isUploadingReferencePhoto
-                    ? null
-                    : () => _handlePickReferencePhoto(
-                          ImageSource.gallery,
-                          isAr,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel(isAr ? 'الوحدة' : 'Unit'),
+                        const SizedBox(height: 6),
+                        DropdownButtonFormField<String>(
+                          key: const ValueKey('create_step1_unit_dropdown'),
+                          initialValue: _selectedUnit,
+                          isExpanded: true,
+                          decoration: _cleanInputDecoration(),
+                          items: _units
+                              .map(
+                                (u) => DropdownMenuItem<String>(
+                                  value: u.$1,
+                                  child: Text(isAr ? u.$2 : u.$3),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: (v) {
+                            if (v != null) setState(() => _selectedUnit = v);
+                          },
                         ),
-                icon: _isUploadingReferencePhoto
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.teal,
-                        ),
-                      )
-                    : const Icon(Icons.cloud_upload_outlined,
-                        size: 18, color: AppColors.teal),
-                label: Text(
-                  _isUploadingReferencePhoto
-                      ? (isAr ? 'جاري رفع الصورة...' : 'Uploading photo...')
-                      : (isAr ? 'رفع صورة مرجعية' : 'Upload Reference Photo'),
-                  style: AppTypography.label(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              key: const ValueKey('capture_reference_photo_btn'),
-              tooltip: isAr ? 'التقاط بالكاميرا' : 'Take Photo',
-              icon: const Icon(Icons.photo_camera_outlined,
-                  color: AppColors.navy),
-              onPressed: _isUploadingReferencePhoto
-                  ? null
-                  : () => _handlePickReferencePhoto(ImageSource.camera, isAr),
-            ),
-          ],
-        ),
-        if (_uploadedReferencePhoto != null) ...[
-          const SizedBox(height: 8),
-          Container(
-            key: const ValueKey('reference_photo_uploaded_pill'),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.tealSurface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.memory(
-                    _uploadedReferencePhoto!.bytes,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 40,
-                      height: 40,
-                      color: Colors.white,
-                      child: const Icon(Icons.image_rounded,
-                          color: AppColors.teal, size: 20),
+                      ],
                     ),
                   ),
+                ],
+              ),
+              if (_selectedUnit == 'other') ...[
+                const SizedBox(height: 12),
+                TextField(
+                  key: const ValueKey('create_custom_unit_input'),
+                  controller: _customUnitController,
+                  decoration: _cleanInputDecoration(
+                    labelText:
+                        isAr ? 'اكتب الوحدة المخصصة *' : 'Custom Unit *',
+                    hintText: isAr
+                        ? 'مثال: لتر، طن، صندوق خشبي، عبوة...'
+                        : 'e.g. liter, ton, crate, pack...',
+                  ),
+                  onChanged: (_) {
+                    if (_stepValidationError != null) {
+                      setState(() => _stepValidationError = null);
+                    }
+                  },
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _uploadedReferencePhoto!.fileName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.label(color: AppColors.navy)
-                            .copyWith(fontWeight: FontWeight.w800),
+              ],
+              const SizedBox(height: 14),
+
+              _buildFieldLabel(isAr
+                  ? 'صورة مرجعية للعينة / القطعة (اختياري · حتى 10MB)'
+                  : 'Reference Item Photo (Optional · Max 10 MB)'),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('upload_reference_photo_btn'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(
+                          color: AppColors.slateBorder,
+                          width: 1.0,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      Text(
-                        '${_uploadedReferencePhoto!.formattedSize} · ${_uploadedReferencePhoto!.mimeType}',
-                        style: AppTypography.label(
-                                color: AppColors.textSecondary)
-                            .copyWith(fontSize: 11),
+                      onPressed: _isUploadingReferencePhoto
+                          ? null
+                          : () => _handlePickReferencePhoto(
+                                ImageSource.gallery,
+                                isAr,
+                              ),
+                      icon: _isUploadingReferencePhoto
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.navy,
+                              ),
+                            )
+                          : const Icon(Icons.cloud_upload_outlined,
+                              size: 18, color: AppColors.navy),
+                      label: Text(
+                        _isUploadingReferencePhoto
+                            ? (isAr ? 'جاري رفع الصورة...' : 'Uploading photo...')
+                            : (isAr
+                                ? 'رفع صورة مرجعية'
+                                : 'Upload Reference Photo'),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    key: const ValueKey('capture_reference_photo_btn'),
+                    tooltip: isAr ? 'التقاط بالكاميرا' : 'Take Photo',
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppColors.slateBg,
+                      side: const BorderSide(color: AppColors.slateBorder),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.photo_camera_outlined,
+                        color: AppColors.navy, size: 20),
+                    onPressed: _isUploadingReferencePhoto
+                        ? null
+                        : () =>
+                            _handlePickReferencePhoto(ImageSource.camera, isAr),
+                  ),
+                ],
+              ),
+              if (_uploadedReferencePhoto != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  key: const ValueKey('reference_photo_uploaded_pill'),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                        Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(
+                          _uploadedReferencePhoto!.bytes,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 40,
+                            height: 40,
+                            color: Colors.white,
+                            child: const Icon(Icons.image_rounded,
+                                color: AppColors.teal, size: 20),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _uploadedReferencePhoto!.fileName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            Text(
+                              '${_uploadedReferencePhoto!.formattedSize} · ${_uploadedReferencePhoto!.mimeType}',
+                              style: AppTypography.label(
+                                      color: AppColors.textSecondary)
+                                  .copyWith(fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded,
+                            size: 18, color: AppColors.navy),
+                        tooltip: isAr ? 'إزالة الصورة' : 'Remove photo',
+                        onPressed: () {
+                          setState(() {
+                            _uploadedReferencePhoto = null;
+                            _referencePhotoController.clear();
+                          });
+                        },
                       ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded,
-                      size: 18, color: AppColors.navy),
-                  tooltip: isAr ? 'إزالة الصورة' : 'Remove photo',
-                  onPressed: () {
-                    setState(() {
-                      _uploadedReferencePhoto = null;
-                      _referencePhotoController.clear();
-                    });
-                  },
+              ],
+              if (_referenceUploadError != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  key: const ValueKey('reference_photo_upload_error'),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.dangerBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: AppColors.danger.withValues(alpha: 0.35)),
+                  ),
+                  child: Text(
+                    _referenceUploadError!,
+                    style: AppTypography.label(color: AppColors.danger)
+                        .copyWith(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
-            ),
-          ),
-        ],
-        if (_referenceUploadError != null) ...[
-          const SizedBox(height: 8),
-          Container(
-            key: const ValueKey('reference_photo_upload_error'),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.dangerBg,
-              borderRadius: BorderRadius.circular(10),
-              border:
-                  Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
-            ),
-            child: Text(
-              _referenceUploadError!,
-              style: AppTypography.label(color: AppColors.danger)
-                  .copyWith(fontWeight: FontWeight.w700),
-            ),
-          ),
-        ],
-        const SizedBox(height: 8),
-        TextField(
-          key: const ValueKey('create_step1_photo'),
-          controller: _referencePhotoController,
-          keyboardType: TextInputType.url,
-          decoration: InputDecoration(
-            hintText: isAr
-                ? 'أو الصق رابط الصورة المرجعية (https://...)'
-                : 'Or paste uploaded reference URL (https://...)',
-            prefixIcon: const Icon(Icons.photo_camera_back_outlined,
-                color: AppColors.navy),
+              const SizedBox(height: 8),
+              TextField(
+                key: const ValueKey('create_step1_photo'),
+                controller: _referencePhotoController,
+                keyboardType: TextInputType.url,
+                decoration: _cleanInputDecoration(
+                  hintText: isAr
+                      ? 'أو الصق رابط الصورة المرجعية (https://...)'
+                      : 'Or paste uploaded reference URL (https://...)',
+                  prefixIcon: const Icon(Icons.photo_camera_back_outlined,
+                      color: AppColors.navy, size: 19),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -1501,8 +1490,8 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.sand,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.slateBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1517,14 +1506,14 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.factory_outlined,
-                          size: 18, color: AppColors.qatarMaroon),
+                          size: 18, color: AppColors.navy),
                       const SizedBox(width: 6),
                       Text(
-                        isAr
-                            ? 'مواقع العمل المحفوظة'
-                            : 'Saved Worksites',
-                        style: AppTypography.body(color: AppColors.navy)
-                            .copyWith(fontWeight: FontWeight.w800, fontSize: 14),
+                        isAr ? 'مواقع العمل المحفوظة' : 'Saved Worksites',
+                        style: AppTypography.title().copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15.5,
+                        ),
                       ),
                     ],
                   ),
@@ -1538,17 +1527,17 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const ProviderProfileScreen(focusSavedWorksites: true),
+                          builder: (_) => const ProviderProfileScreen(
+                              focusSavedWorksites: true),
                         ),
                       );
                     },
                     icon: const Icon(Icons.add_location_alt_outlined,
-                        size: 15, color: AppColors.teal),
+                        size: 15, color: AppColors.navy),
                     label: Text(
                       isAr ? 'إدارة المواقع' : 'Manage Sites',
-                      style: AppTypography.label(color: AppColors.teal)
-                          .copyWith(fontWeight: FontWeight.w800),
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -1559,7 +1548,9 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                   isAr
                       ? 'لا توجد مواقع محفوظة بعد. يمكنك إدخال العنوان أدناه أو حفظ مواقعك المتكررة من ملفك.'
                       : 'No saved worksites yet. Enter the delivery address below or save frequent sites in your profile.',
-                  style: AppTypography.bodySmall(),
+                  style: AppTypography.bodySmall(
+                    color: AppColors.textSecondary,
+                  ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                 )
               else
                 Wrap(
@@ -1573,8 +1564,12 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                         '${site.label} (${AppStrings.translateCity(site.municipality, isArabic: isAr)})',
                       ),
                       selected: isSelected,
-                      selectedColor: AppColors.teal,
+                      selectedColor: AppColors.navy,
                       backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color:
+                            isSelected ? AppColors.navy : AppColors.slateBorder,
+                      ),
                       labelStyle: TextStyle(
                         color: isSelected ? Colors.white : AppColors.navy,
                         fontWeight: FontWeight.w700,
@@ -1588,169 +1583,181 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
 
-        _buildFieldLabel(isAr
-            ? 'متجر أو نقطة الاستلام (المورّد) *'
-            : 'Pickup Store / Supplier Location *'),
-        const SizedBox(height: 6),
-        TextField(
-          key: const ValueKey('create_step2_pickup'),
-          controller: _pickupController,
-          decoration: InputDecoration(
-            hintText: isAr
-                ? 'مثال: المنطقة الصناعية - شارع 10، مستودع الكهرباء'
-                : 'e.g. Industrial Area - St 10 Electrical Supply',
-            prefixIcon: const Icon(Icons.storefront_outlined,
-                color: AppColors.teal),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: pickupPresets
-              .map(
-                (preset) => InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () => setState(() => _pickupController.text = preset),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceLight,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.borderDisabled),
+        _buildSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildFieldLabel(isAr
+                  ? 'متجر أو نقطة الاستلام (المورّد) *'
+                  : 'Pickup Store / Supplier Location *'),
+              const SizedBox(height: 6),
+              TextField(
+                key: const ValueKey('create_step2_pickup'),
+                controller: _pickupController,
+                decoration: _cleanInputDecoration(
+                  hintText: isAr
+                      ? 'مثال: المنطقة الصناعية - شارع 10، مستودع الكهرباء'
+                      : 'e.g. Industrial Area - St 10 Electrical Supply',
+                  prefixIcon: const Icon(Icons.storefront_outlined,
+                      color: AppColors.teal, size: 20),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: pickupPresets
+                    .map(
+                      (preset) => InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () =>
+                            setState(() => _pickupController.text = preset),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.slateBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.slateBorder),
+                          ),
+                          child: Text(
+                            preset,
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+
+              _buildFieldLabel(isAr
+                  ? 'المنطقة / البلدية في قطر *'
+                  : 'Qatar Area / Municipality *'),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                key: const ValueKey('create_step2_area'),
+                initialValue: _selectedArea,
+                isExpanded: true,
+                decoration: _cleanInputDecoration(),
+                items: [
+                  ..._qatarAreasAr.map(
+                    (area) => DropdownMenuItem<String>(
+                      value: area,
+                      child: Text(
+                        AppStrings.translateCity(area, isArabic: isAr),
+                      ),
                     ),
+                  ),
+                  DropdownMenuItem<String>(
+                    value: _otherAreaValue,
                     child: Text(
-                      preset,
-                      style: AppTypography.label(color: AppColors.navy)
-                          .copyWith(fontSize: 11),
+                      isAr ? 'أخرى (حدد المنطقة بنفسك)' : 'Other (Specify Area)',
+                      style: const TextStyle(
+                        color: AppColors.navy,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
+                ],
+                onChanged: (v) {
+                  if (v != null) setState(() => _selectedArea = v);
+                },
+              ),
+              if (_selectedArea == _otherAreaValue) ...[
+                const SizedBox(height: 10),
+                TextField(
+                  key: const ValueKey('create_custom_area_input'),
+                  controller: _customAreaController,
+                  decoration: _cleanInputDecoration(
+                    labelText: isAr
+                        ? 'اكتب اسم المنطقة أو المشروع *'
+                        : 'Specify Custom Area / Project *',
+                    hintText: isAr
+                        ? 'مثال: ميناء حمد، سيلين، طريق الشمال...'
+                        : 'e.g. Hamad Port, Sealine, Al Shamal Road...',
+                    prefixIcon: const Icon(
+                      Icons.add_location_alt_outlined,
+                      color: AppColors.navy,
+                    ),
+                  ),
+                  onChanged: (_) {
+                    if (_stepValidationError != null) {
+                      setState(() => _stepValidationError = null);
+                    }
+                  },
                 ),
-              )
-              .toList(),
-        ),
-        const SizedBox(height: 16),
+              ],
+              const SizedBox(height: 16),
 
-        _buildFieldLabel(isAr
-            ? 'المنطقة / البلدية في قطر *'
-            : 'Qatar Area / Municipality *'),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          key: const ValueKey('create_step2_area'),
-          initialValue: _selectedArea,
-          isExpanded: true,
-          items: [
-            ..._qatarAreasAr.map(
-              (area) => DropdownMenuItem<String>(
-                value: area,
-                child: Text(
-                  AppStrings.translateCity(area, isArabic: isAr),
+              _buildFieldLabel(isAr
+                  ? 'عنوان موقع العمل للتسليم *'
+                  : 'Delivery Worksite Address *'),
+              const SizedBox(height: 6),
+              TextField(
+                key: const ValueKey('create_step2_dropoff'),
+                controller: _dropoffController,
+                decoration: _cleanInputDecoration(
+                  hintText: isAr
+                      ? 'مثال: مشروع مارينا لوسيل - بوابة المقاولين رقم 3'
+                      : 'e.g. Lusail Marina Plot 42 - Contractors Gate 3',
+                  prefixIcon: const Icon(Icons.location_on_outlined,
+                      color: AppColors.navy, size: 20),
                 ),
               ),
-            ),
-            DropdownMenuItem<String>(
-              value: _otherAreaValue,
-              child: Text(
-                isAr ? 'أخرى (حدد المنطقة بنفسك)' : 'Other (Specify Area)',
-                style: const TextStyle(
-                  color: AppColors.cobalt,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-          onChanged: (v) {
-            if (v != null) setState(() => _selectedArea = v);
-          },
-        ),
-        if (_selectedArea == _otherAreaValue) ...[
-          const SizedBox(height: 10),
-          TextField(
-            key: const ValueKey('create_custom_area_input'),
-            controller: _customAreaController,
-            decoration: InputDecoration(
-              labelText: isAr
-                  ? 'اكتب اسم المنطقة أو المشروع *'
-                  : 'Specify Custom Area / Project *',
-              hintText: isAr
-                  ? 'مثال: ميناء حمد، سيلين، طريق الشمال...'
-                  : 'e.g. Hamad Port, Sealine, Al Shamal Road...',
-              prefixIcon: const Icon(
-                Icons.add_location_alt_outlined,
-                color: AppColors.cobalt,
-              ),
-            ),
-            onChanged: (_) {
-              if (_stepValidationError != null) {
-                setState(() => _stepValidationError = null);
-              }
-            },
-          ),
-        ],
-        const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-        _buildFieldLabel(isAr
-            ? 'عنوان موقع العمل للتسليم *'
-            : 'Delivery Worksite Address *'),
-        const SizedBox(height: 6),
-        TextField(
-          key: const ValueKey('create_step2_dropoff'),
-          controller: _dropoffController,
-          decoration: InputDecoration(
-            hintText: isAr
-                ? 'مثال: مشروع مارينا لوسيل - بوابة المقاولين رقم 3'
-                : 'e.g. Lusail Marina Plot 42 - Contractors Gate 3',
-            prefixIcon: const Icon(Icons.location_on_outlined,
-                color: AppColors.qatarMaroon),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
+              Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildFieldLabel(isAr
-                      ? 'مسؤول الاستلام بالموقع'
-                      : 'Site Contact Name'),
-                  const SizedBox(height: 6),
-                  TextField(
-                    key: const ValueKey('create_step2_contact_name'),
-                    controller: _siteContactNameController,
-                    decoration: InputDecoration(
-                      hintText: isAr ? 'م. فهد' : 'Eng. Fahad',
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel(isAr
+                            ? 'مسؤول الاستلام بالموقع'
+                            : 'Site Contact Name'),
+                        const SizedBox(height: 6),
+                        TextField(
+                          key: const ValueKey('create_step2_contact_name'),
+                          controller: _siteContactNameController,
+                          decoration: _cleanInputDecoration(
+                            hintText: isAr ? 'م. فهد' : 'Eng. Fahad',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel(isAr
+                            ? 'جوال الموقع (+974)'
+                            : 'Site Phone (+974)'),
+                        const SizedBox(height: 6),
+                        TextField(
+                          key: const ValueKey('create_step2_contact_phone'),
+                          controller: _siteContactPhoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: _cleanInputDecoration(
+                            hintText: '55112233',
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFieldLabel(isAr
-                      ? 'جوال الموقع (+974)'
-                      : 'Site Phone (+974)'),
-                  const SizedBox(height: 6),
-                  TextField(
-                    key: const ValueKey('create_step2_contact_phone'),
-                    controller: _siteContactPhoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      hintText: '55112233',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -1771,274 +1778,305 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildFieldLabel(isAr
-            ? 'الموعد النهائي المطلوب للتسليم *'
-            : 'Requested Delivery Deadline *'),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            ...List.generate(4, (idx) {
-              final selected = _deadlinePresetIndex == idx;
-              return ChoiceChip(
-                key: ValueKey('deadline_chip_$idx'),
-                label: Text(_deadlineLabel(isAr, idx)),
-                selected: selected,
-                selectedColor: AppColors.navy,
-                backgroundColor: Colors.white,
-                labelStyle: TextStyle(
-                  color: selected ? Colors.white : AppColors.navy,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                  fontFamily: 'Cairo',
-                ),
-                onSelected: (_) => setState(() => _deadlinePresetIndex = idx),
-              );
-            }),
-            ChoiceChip(
-              key: const ValueKey('deadline_chip_custom'),
-              avatar: Icon(
-                Icons.event_available_rounded,
-                size: 16,
-                color: _deadlinePresetIndex == 4
-                    ? Colors.white
-                    : AppColors.teal,
-              ),
-              label: Text(
-                _deadlinePresetIndex == 4 && _customDeadlineLocal != null
-                    ? _formatCustomDeadline(_customDeadlineLocal!, isAr)
-                    : (isAr ? 'تحديد تاريخ ووقت' : 'Custom Date & Time'),
-              ),
-              selected: _deadlinePresetIndex == 4,
-              selectedColor: AppColors.teal,
-              backgroundColor: AppColors.tealSurface,
-              labelStyle: TextStyle(
-                color:
-                    _deadlinePresetIndex == 4 ? Colors.white : AppColors.navy,
-                fontWeight: FontWeight.w700,
-                fontSize: 12,
-                fontFamily: 'Cairo',
-              ),
-              onSelected: (_) => _pickCustomDeadline(context, isAr),
-            ),
-          ],
-        ),
-        const SizedBox(height: 18),
-
-        _buildFieldLabel(isAr
-            ? 'التكلفة التقديرية للمشتريات (QAR) *'
-            : 'Estimated Items Cost (QAR) *'),
-        const SizedBox(height: 6),
-        TextField(
-          key: const ValueKey('create_step3_items_qar'),
-          controller: _estimatedItemsQarController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            hintText: '180',
-            suffixText: isAr ? 'ر.ق' : 'QAR',
-          ),
-          onChanged: (_) => setState(() {}),
-        ),
-        const SizedBox(height: 14),
-
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFieldLabel(isAr
-                      ? 'سقف الفاتورة الأقصى (QAR)'
-                      : 'Max Receipt Cap (QAR)'),
-                  const SizedBox(height: 6),
-                  TextField(
-                    key: const ValueKey('create_step3_cap_qar'),
-                    controller: _maxCapQarController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      hintText: '220',
-                      suffixText: isAr ? 'ر.ق' : 'QAR',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildFieldLabel(isAr
-                      ? 'ميزانية التوصيل (QAR) *'
-                      : 'Delivery Fee Budget (QAR) *'),
-                  const SizedBox(height: 6),
-                  TextField(
-                    key: const ValueKey('create_step3_fee_qar'),
-                    controller: _deliveryFeeQarController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      hintText: '45',
-                      suffixText: isAr ? 'ر.ق' : 'QAR',
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-
-        // Live QAR Cost Breakdown & Receipt Cap Summary Card
-        Container(
-          key: const ValueKey('create_live_cost_summary'),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.sand,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: hasValidCap
-                  ? AppColors.gold.withValues(alpha: 0.45)
-                  : AppColors.danger.withValues(alpha: 0.45),
-            ),
-          ),
+        _buildSectionCard(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
+              _buildFieldLabel(isAr
+                  ? 'الموعد النهائي المطلوب للتسليم *'
+                  : 'Requested Delivery Deadline *'),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Icon(
-                    Icons.calculate_outlined,
-                    size: 18,
-                    color: hasValidCap ? AppColors.navy : AppColors.danger,
+                  ...List.generate(4, (idx) {
+                    final selected = _deadlinePresetIndex == idx;
+                    return ChoiceChip(
+                      key: ValueKey('deadline_chip_$idx'),
+                      label: Text(_deadlineLabel(isAr, idx)),
+                      selected: selected,
+                      selectedColor: AppColors.navy,
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color:
+                            selected ? AppColors.navy : AppColors.slateBorder,
+                      ),
+                      labelStyle: TextStyle(
+                        color: selected ? Colors.white : AppColors.navy,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        fontFamily: 'Cairo',
+                      ),
+                      onSelected: (_) =>
+                          setState(() => _deadlinePresetIndex = idx),
+                    );
+                  }),
+                  ChoiceChip(
+                    key: const ValueKey('deadline_chip_custom'),
+                    avatar: Icon(
+                      Icons.event_available_rounded,
+                      size: 16,
+                      color: _deadlinePresetIndex == 4
+                          ? Colors.white
+                          : AppColors.navy,
+                    ),
+                    label: Text(
+                      _deadlinePresetIndex == 4 && _customDeadlineLocal != null
+                          ? _formatCustomDeadline(_customDeadlineLocal!, isAr)
+                          : (isAr ? 'تحديد تاريخ ووقت' : 'Custom Date & Time'),
+                    ),
+                    selected: _deadlinePresetIndex == 4,
+                    selectedColor: AppColors.navy,
+                    backgroundColor: AppColors.cobaltSurface,
+                    side: BorderSide(
+                      color: _deadlinePresetIndex == 4
+                          ? AppColors.navy
+                          : AppColors.slateBorder,
+                    ),
+                    labelStyle: TextStyle(
+                      color: _deadlinePresetIndex == 4
+                          ? Colors.white
+                          : AppColors.navy,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                      fontFamily: 'Cairo',
+                    ),
+                    onSelected: (_) => _pickCustomDeadline(context, isAr),
                   ),
-                  const SizedBox(width: 6),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              _buildFieldLabel(isAr
+                  ? 'التكلفة التقديرية للمشتريات (QAR) *'
+                  : 'Estimated Items Cost (QAR) *'),
+              const SizedBox(height: 6),
+              TextField(
+                key: const ValueKey('create_step3_items_qar'),
+                controller: _estimatedItemsQarController,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: _cleanInputDecoration(
+                  hintText: '180',
+                  suffixText: isAr ? 'ر.ق' : 'QAR',
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 14),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Expanded(
-                    child: Text(
-                      isAr
-                          ? 'ملخص التكلفة وسقف الفاتورة المباشر'
-                          : 'Live QAR Cost & Receipt Cap Breakdown',
-                      style: AppTypography.label(color: AppColors.navy)
-                          .copyWith(fontWeight: FontWeight.w800, fontSize: 13),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel(isAr
+                            ? 'سقف الفاتورة الأقصى (QAR)'
+                            : 'Max Receipt Cap (QAR)'),
+                        const SizedBox(height: 6),
+                        TextField(
+                          key: const ValueKey('create_step3_cap_qar'),
+                          controller: _maxCapQarController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          decoration: _cleanInputDecoration(
+                            hintText: '220',
+                            suffixText: isAr ? 'ر.ق' : 'QAR',
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildFieldLabel(isAr
+                            ? 'ميزانية التوصيل (QAR) *'
+                            : 'Delivery Fee Budget (QAR) *'),
+                        const SizedBox(height: 6),
+                        TextField(
+                          key: const ValueKey('create_step3_fee_qar'),
+                          controller: _deliveryFeeQarController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          decoration: _cleanInputDecoration(
+                            hintText: '45',
+                            suffixText: isAr ? 'ر.ق' : 'QAR',
+                          ),
+                          onChanged: (_) => setState(() {}),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              _buildCostLine(
-                isAr ? 'تقدير المشتريات' : 'Estimated Items',
-                effectiveItems.format(isArabic: isAr),
+              const SizedBox(height: 14),
+
+              // Live QAR Cost Breakdown & Receipt Cap Summary Card
+              Container(
+                key: const ValueKey('create_live_cost_summary'),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.sand,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: hasValidCap
+                        ? AppColors.slateBorder
+                        : AppColors.danger.withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.calculate_outlined,
+                          size: 18,
+                          color: hasValidCap ? AppColors.navy : AppColors.danger,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            isAr
+                                ? 'ملخص التكلفة وسقف الفاتورة المباشر'
+                                : 'Live QAR Cost & Receipt Cap Breakdown',
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildCostLine(
+                      isAr ? 'تقدير المشتريات' : 'Estimated Items',
+                      effectiveItems.format(isArabic: isAr),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildCostLine(
+                      isAr ? 'هامش سقف الفاتورة' : 'Receipt Cap Buffer',
+                      hasValidCap
+                          ? '+${MoneyMinor(capBufferMinor).format(isArabic: isAr)}'
+                          : (isAr
+                              ? 'أقل من التكلفة التقديرية'
+                              : 'Below estimated cost'),
+                      valueColor: hasValidCap ? AppColors.teal : AppColors.danger,
+                    ),
+                    const SizedBox(height: 4),
+                    _buildCostLine(
+                      isAr ? 'سقف الفاتورة المعتمد' : 'Max Receipt Cap',
+                      effectiveCap.format(isArabic: isAr),
+                    ),
+                    const SizedBox(height: 4),
+                    _buildCostLine(
+                      isAr ? 'رسوم التوصيل والتوريد' : 'Delivery Fee Budget',
+                      effectiveFee.format(isArabic: isAr),
+                    ),
+                    const Divider(height: 14, color: AppColors.slateBorder),
+                    _buildCostLine(
+                      isAr ? 'الإجمالي التقديري' : 'Est. Total Outlay',
+                      totalPreview.format(isArabic: isAr),
+                      valueColor: AppColors.teal,
+                      bold: true,
+                    ),
+                    const SizedBox(height: 3),
+                    _buildCostLine(
+                      isAr ? 'الحد الأقصى مع السقف' : 'Worst-Case Total (w/ Cap)',
+                      maxTotalWithCap.format(isArabic: isAr),
+                      valueColor: AppColors.navy,
+                      bold: true,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 4),
-              _buildCostLine(
-                isAr ? 'هامش سقف الفاتورة' : 'Receipt Cap Buffer',
-                hasValidCap
-                    ? '+${MoneyMinor(capBufferMinor).format(isArabic: isAr)}'
-                    : (isAr
-                        ? 'أقل من التكلفة التقديرية'
-                        : 'Below estimated cost'),
-                valueColor: hasValidCap ? AppColors.teal : AppColors.danger,
-              ),
-              const SizedBox(height: 4),
-              _buildCostLine(
-                isAr ? 'سقف الفاتورة المعتمد' : 'Max Receipt Cap',
-                effectiveCap.format(isArabic: isAr),
-              ),
-              const SizedBox(height: 4),
-              _buildCostLine(
-                isAr ? 'رسوم التوصيل والتوريد' : 'Delivery Fee Budget',
-                effectiveFee.format(isArabic: isAr),
-              ),
-              const Divider(height: 14, color: AppColors.borderDisabled),
-              _buildCostLine(
-                isAr ? 'الإجمالي التقديري' : 'Est. Total Outlay',
-                totalPreview.format(isArabic: isAr),
-                valueColor: AppColors.teal,
-                bold: true,
-              ),
-              const SizedBox(height: 3),
-              _buildCostLine(
-                isAr ? 'الحد الأقصى مع السقف' : 'Worst-Case Total (w/ Cap)',
-                maxTotalWithCap.format(isArabic: isAr),
-                valueColor: AppColors.navy,
-                bold: true,
+              const SizedBox(height: 8),
+
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                activeTrackColor: AppColors.teal,
+                title: Text(
+                  isAr
+                      ? 'إلزام المنفّذ بإرفاق صورة فاتورة الشراء الأصلية'
+                      : 'Require original store purchase receipt photo',
+                  style: AppTypography.bodySecondary(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w700, fontSize: 13.5),
+                ),
+                value: _requiresPurchaseReceipt,
+                onChanged: (v) => setState(() => _requiresPurchaseReceipt = v),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
 
-        SwitchListTile.adaptive(
-          contentPadding: EdgeInsets.zero,
-          activeTrackColor: AppColors.teal,
-          title: Text(
-            isAr
-                ? 'إلزام المنفّذ بإرفاق صورة فاتورة الشراء الأصلية'
-                : 'Require original store purchase receipt photo',
-            style: AppTypography.bodySecondary(color: AppColors.navy)
-                .copyWith(fontWeight: FontWeight.w700),
-          ),
-          value: _requiresPurchaseReceipt,
-          onChanged: (v) => setState(() => _requiresPurchaseReceipt = v),
-        ),
-        const SizedBox(height: 12),
+        _buildSectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildFieldLabel(isAr
+                  ? 'طريقة السداد (المرحلة التجريبية قطر)'
+                  : 'Pilot Payment Method (Qatar)'),
+              const SizedBox(height: 8),
+              _buildPaymentOptionTile(
+                method: PaymentMethod.cashOnDelivery,
+                icon: Icons.payments_outlined,
+                title: PaymentMethod.cashOnDelivery.label(isArabic: isAr),
+                subtitle: isAr
+                    ? 'تسوية نقدية مباشرة عند التسليم والتحقق من الفاتورة بالموقع.'
+                    : 'Settle in QAR cash upon delivery and receipt check at worksite.',
+              ),
+              const SizedBox(height: 8),
+              _buildPaymentOptionTile(
+                method: PaymentMethod.bankTransferManual,
+                icon: Icons.receipt_long_outlined,
+                title: PaymentMethod.bankTransferManual.label(isArabic: isAr),
+                subtitle: isAr
+                    ? 'تحويل بنكي يدوي / فوراً مع إرفاق إيصال التحويل للتوثيق.'
+                    : 'Manual bank transfer / Fawran with uploaded transfer proof.',
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.slateBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.slateBorder),
+                ),
+                child: Text(
+                  AppEnvironment.paymentsEscrowNotice(isArabic: isAr),
+                  style: AppTypography.bodySmall(
+                    color: AppColors.textSecondary,
+                  ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+              ),
+              const SizedBox(height: 14),
 
-        _buildFieldLabel(isAr
-            ? 'طريقة السداد (المرحلة التجريبية قطر)'
-            : 'Pilot Payment Method (Qatar)'),
-        const SizedBox(height: 8),
-        _buildPaymentOptionTile(
-          method: PaymentMethod.cashOnDelivery,
-          icon: Icons.payments_outlined,
-          title: PaymentMethod.cashOnDelivery.label(isArabic: isAr),
-          subtitle: isAr
-              ? 'تسوية نقدية مباشرة عند التسليم والتحقق من الفاتورة بالموقع.'
-              : 'Settle in QAR cash upon delivery and receipt check at worksite.',
-        ),
-        const SizedBox(height: 8),
-        _buildPaymentOptionTile(
-          method: PaymentMethod.bankTransferManual,
-          icon: Icons.receipt_long_outlined,
-          title: PaymentMethod.bankTransferManual.label(isArabic: isAr),
-          subtitle: isAr
-              ? 'تحويل بنكي يدوي / فوراً مع إرفاق إيصال التحويل للتوثيق.'
-              : 'Manual bank transfer / Fawran with uploaded transfer proof.',
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.slateBg,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.slateBorder),
-          ),
-          child: Text(
-            AppEnvironment.paymentsEscrowNotice(isArabic: isAr),
-            style: AppTypography.bodySmall(),
+              _buildFieldLabel(isAr
+                  ? 'تعليمات إضافية للمنفّذ / تصريح البوابة'
+                  : 'Additional Instructions / Gate Access'),
+              const SizedBox(height: 6),
+              TextField(
+                key: const ValueKey('create_step3_notes'),
+                controller: _instructionsController,
+                maxLines: 2,
+                decoration: _cleanInputDecoration(
+                  hintText: isAr
+                      ? 'مثال: الاتصال قبل الوصول بـ 10 دقائق لتجهيز تصريح الدخول...'
+                      : 'e.g. Call site supervisor 10 mins prior for gate pass...',
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
-
-        _buildFieldLabel(isAr
-            ? 'تعليمات إضافية للمنفّذ / تصريح البوابة'
-            : 'Additional Instructions / Gate Access'),
-        const SizedBox(height: 6),
-        TextField(
-          key: const ValueKey('create_step3_notes'),
-          controller: _instructionsController,
-          maxLines: 2,
-          decoration: InputDecoration(
-            hintText: isAr
-                ? 'مثال: الاتصال قبل الوصول بـ 10 دقائق لتجهيز تصريح الدخول...'
-                : 'e.g. Call site supervisor 10 mins prior for gate pass...',
-          ),
-        ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
 
         // Review Summary Card
         Container(
@@ -2047,7 +2085,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.navy.withValues(alpha: 0.18)),
+            border: Border.all(color: AppColors.slateBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2055,18 +2093,22 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
               Row(
                 children: [
                   const Icon(Icons.fact_check_outlined,
-                      color: AppColors.teal, size: 18),
+                      color: AppColors.teal, size: 19),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      isAr ? 'ملخص المراجعة قبل النشر' : 'Review Before Publishing',
-                      style: AppTypography.body(color: AppColors.navy)
-                          .copyWith(fontWeight: FontWeight.w800),
+                      isAr
+                          ? 'ملخص المراجعة قبل النشر'
+                          : 'Review Before Publishing',
+                      style: AppTypography.title().copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
               ),
-              const Divider(height: 18, color: AppColors.borderDisabled),
+              const Divider(height: 18, color: AppColors.slateBorder),
               _buildSummaryRow(
                 isAr ? 'الطلب' : 'Item',
                 '${_titleController.text.trim()} (${_quantityController.text.trim()} $_selectedUnit)',
@@ -2086,7 +2128,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                 isAr ? 'السداد' : 'Payment',
                 _paymentMethod.label(isArabic: isAr),
               ),
-              const Divider(height: 18, color: AppColors.borderDisabled),
+              const Divider(height: 18, color: AppColors.slateBorder),
               Wrap(
                 alignment: WrapAlignment.spaceBetween,
                 spacing: 8,
@@ -2096,12 +2138,14 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                     isAr
                         ? 'الإجمالي التقديري (مشتريات + توصيل)'
                         : 'Estimated Total (Items + Delivery)',
-                    style: AppTypography.label(color: AppColors.textSecondary),
+                    style: AppTypography.bodySmall(
+                      color: AppColors.textSecondary,
+                    ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                   Text(
                     totalPreview.format(isArabic: isAr),
                     style: AppTypography.title(color: AppColors.teal)
-                        .copyWith(fontSize: 16),
+                        .copyWith(fontSize: 16, fontWeight: FontWeight.w800),
                   ),
                 ],
               ),
@@ -2126,18 +2170,17 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.tealSurface : Colors.white,
+          color: selected ? AppColors.cobaltSurface : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? AppColors.teal : AppColors.borderDisabled,
-            width: selected ? 1.6 : 1.0,
+            color: selected ? AppColors.navy : AppColors.slateBorder,
+            width: selected ? 1.4 : 1.0,
           ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon,
-                color: selected ? AppColors.teal : AppColors.navy, size: 20),
+            Icon(icon, color: AppColors.navy, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -2146,12 +2189,17 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
                   Text(
                     title,
                     style: AppTypography.body(color: AppColors.navy).copyWith(
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w700,
                       fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(subtitle, style: AppTypography.bodySmall()),
+                  Text(
+                    subtitle,
+                    style: AppTypography.bodySmall(
+                      color: AppColors.textSecondary,
+                    ).copyWith(fontSize: 12, fontWeight: FontWeight.w500),
+                  ),
                 ],
               ),
             ),
@@ -2159,7 +2207,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
               selected
                   ? Icons.radio_button_checked_rounded
                   : Icons.radio_button_off_rounded,
-              color: selected ? AppColors.teal : AppColors.textSecondary,
+              color: selected ? AppColors.navy : AppColors.textSecondary,
               size: 20,
             ),
           ],
@@ -2181,8 +2229,8 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
           child: Text(
             label,
             style: AppTypography.label(color: AppColors.textSecondary).copyWith(
-              fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
-              fontSize: bold ? 12.5 : 11.5,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+              fontSize: bold ? 12.5 : 12,
             ),
           ),
         ),
@@ -2190,7 +2238,7 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
         Text(
           value,
           style: AppTypography.label(color: valueColor).copyWith(
-            fontWeight: FontWeight.w800,
+            fontWeight: FontWeight.w700,
             fontSize: bold ? 13 : 12,
           ),
         ),
@@ -2206,7 +2254,8 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
           width: 96,
           child: Text(
             label,
-            style: AppTypography.label(color: AppColors.textSecondary),
+            style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                .copyWith(fontSize: 12, fontWeight: FontWeight.w500),
           ),
         ),
         const SizedBox(width: 8),
@@ -2221,11 +2270,60 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
     );
   }
 
+  InputDecoration _cleanInputDecoration({
+    String? labelText,
+    String? hintText,
+    String? suffixText,
+    Widget? prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      suffixText: suffixText,
+      prefixIcon: prefixIcon,
+      filled: true,
+      fillColor: AppColors.slateBg,
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      labelStyle: AppTypography.label(color: AppColors.navy).copyWith(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+        borderSide: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+        borderSide: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppDimens.radiusField),
+        borderSide: const BorderSide(color: AppColors.navy, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({required Widget child}) {
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.slateBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: child,
+      ),
+    );
+  }
+
   Widget _buildFieldLabel(String text) {
     return Text(
       text,
       style: AppTypography.label(color: AppColors.navy)
-          .copyWith(fontWeight: FontWeight.w800, fontSize: 13),
+          .copyWith(fontWeight: FontWeight.w700, fontSize: 13),
     );
   }
 }

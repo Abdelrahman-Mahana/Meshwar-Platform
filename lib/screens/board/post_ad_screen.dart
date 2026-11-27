@@ -444,12 +444,16 @@ class _PostAdScreenState extends State<PostAdScreen> {
         surfaceTintColor: Colors.transparent,
         title: Text(
           isAr ? 'انشر إعلان على اللوحة' : 'Post Ad on Board',
-          style: AppTypography.title().copyWith(fontSize: 17.5),
+          style: AppTypography.title().copyWith(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
+            size: 19,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -463,7 +467,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
               children: [
                 Container(
                   color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
                   child: MashwarWizardStepHeader(
                     currentStep: _visualStep,
                     stepTitles: wizardTitles,
@@ -475,7 +479,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppDimens.space16,
-                      vertical: 14,
+                      vertical: 12,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,7 +490,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                             const Icon(
                               Icons.bolt_rounded,
                               size: 16,
-                              color: AppColors.cobalt,
+                              color: AppColors.navy,
                             ),
                             const SizedBox(width: 4),
                             Expanded(
@@ -495,8 +499,11 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                     ? 'قوالب سريعة جاهزة (تعبئة بنقرة واحدة)'
                                     : 'Quick 1-Tap Service Templates',
                                 style: AppTypography.label(
-                                  color: AppColors.cobalt,
-                                ).copyWith(fontWeight: FontWeight.w800),
+                                  color: AppColors.navy,
+                                ).copyWith(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ],
@@ -516,16 +523,16 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 160),
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 7,
+                                      horizontal: 11,
+                                      vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
                                       color:
-                                          isSel ? AppColors.cobalt : Colors.white,
+                                          isSel ? AppColors.navy : Colors.white,
                                       borderRadius: BorderRadius.circular(18),
                                       border: Border.all(
                                         color: isSel
-                                            ? AppColors.cobalt
+                                            ? AppColors.navy
                                             : AppColors.slateBorder,
                                       ),
                                     ),
@@ -533,7 +540,9 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                       quickPresets[i],
                                       style: TextStyle(
                                         fontSize: 11.5,
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: isSel
+                                            ? FontWeight.w700
+                                            : FontWeight.w600,
                                         color:
                                             isSel ? Colors.white : AppColors.navy,
                                         fontFamily: 'Cairo',
@@ -545,21 +554,25 @@ class _PostAdScreenState extends State<PostAdScreen> {
                             }),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
                         // Step 1 Section: Intent & Category
                         Text(
                           isAr
                               ? '1. ما الذي ترغب في نشره؟'
                               : '1. What would you like to post?',
-                          style: AppTypography.title().copyWith(fontSize: 15.5),
+                          style: AppTypography.title().copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE2E8F0),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.slateBorder),
                           ),
                           child: Row(
                             children: [
@@ -583,6 +596,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                   },
                                 ),
                               ),
+                              const SizedBox(width: 4),
                               Expanded(
                                 child: _buildIntentTab(
                                   index: 1,
@@ -604,7 +618,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                         ),
                         const SizedBox(height: 12),
                         _buildCategoryGrid(isAr),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 18),
 
                         if (_formError != null) ...[
                           Container(
@@ -646,11 +660,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
                           isAr
                               ? '2. المسار والموعد المفضل'
                               : '2. Route & Schedule',
-                          style: AppTypography.title().copyWith(fontSize: 15.5),
+                          style: AppTypography.title().copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         _buildConnectedRouteCard(isAr),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 12),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
@@ -681,14 +698,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                   isAr ? 'أخرى (موعد مخصص)' : 'Other (Custom)',
                                   style: const TextStyle(
                                     fontSize: 11.5,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.cobalt,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.navy,
                                     fontFamily: 'Cairo',
                                   ),
                                 ),
                                 backgroundColor: AppColors.cobaltSurface,
-                                side: BorderSide(
-                                  color: AppColors.cobalt.withValues(alpha: 0.35),
+                                side: const BorderSide(
+                                  color: AppColors.slateBorder,
                                 ),
                                 onPressed: () => setState(() {
                                   _timeController.clear();
@@ -706,7 +723,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                               : 'Specify day and preferred time',
                           prefixIcon: const Icon(
                             Icons.access_time_rounded,
-                            color: AppColors.cobalt,
+                            color: AppColors.navy,
                             size: 20,
                           ),
                           onChanged: (_) {
@@ -715,20 +732,23 @@ class _PostAdScreenState extends State<PostAdScreen> {
                             }
                           },
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 18),
 
                         // Step 3 Section: Details, Budget & Verification
                         Text(
                           isAr
                               ? '3. التفاصيل والميزانية المقترحة'
                               : '3. Details & Proposed Budget',
-                          style: AppTypography.title().copyWith(fontSize: 15.5),
+                          style: AppTypography.title().copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const SizedBox(height: 10),
                         _buildDynamicFields(isAr),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                         _buildPriceSection(isAr),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
                         // Verification & Receipt Protection Card
                         Container(
@@ -736,9 +756,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: AppColors.emerald.withValues(alpha: 0.35),
-                            ),
+                            border: Border.all(color: AppColors.slateBorder),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,7 +765,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                 children: [
                                   const Icon(
                                     Icons.verified_user_outlined,
-                                    color: AppColors.emerald,
+                                    color: AppColors.teal,
                                     size: 19,
                                   ),
                                   const SizedBox(width: 8),
@@ -756,11 +774,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                       isAr
                                           ? 'توثيق التسليم وإثبات الفاتورة'
                                           : 'OTP Handover & Receipt Verification',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                        fontSize: 13.5,
+                                      style: AppTypography.title().copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 15,
                                         color: AppColors.navy,
-                                        fontFamily: 'Cairo',
                                       ),
                                     ),
                                   ),
@@ -777,7 +794,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                   children: [
                                     Checkbox(
                                       value: _hasEscrowProtection,
-                                      activeColor: AppColors.emerald,
+                                      activeColor: AppColors.teal,
                                       onChanged: (v) => setState(() {
                                         _visualStep = 3;
                                         _hasEscrowProtection = v ?? true;
@@ -788,10 +805,11 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                         isAr
                                             ? 'توثيق الاستلام والتسليم بكود الأمان OTP'
                                             : 'Confirm handover with 4-digit OTP protection',
-                                        style: const TextStyle(
-                                          fontSize: 12,
+                                        style: AppTypography.label(
+                                          color: AppColors.navy,
+                                        ).copyWith(
+                                          fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
-                                          fontFamily: 'Cairo',
                                         ),
                                       ),
                                     ),
@@ -809,7 +827,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                   children: [
                                     Checkbox(
                                       value: _requiresReceiptProof,
-                                      activeColor: AppColors.cobalt,
+                                      activeColor: AppColors.navy,
                                       onChanged: (v) => setState(() {
                                         _visualStep = 3;
                                         _requiresReceiptProof = v ?? false;
@@ -820,10 +838,11 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                         isAr
                                             ? 'يشترط إرفاق صورة الفاتورة الأصلية + الغرض (للمشتريات والتوريد)'
                                             : 'Require store receipt & item photo before dispatch',
-                                        style: const TextStyle(
-                                          fontSize: 12,
+                                        style: AppTypography.label(
+                                          color: AppColors.navy,
+                                        ).copyWith(
+                                          fontSize: 12.5,
                                           fontWeight: FontWeight.w700,
-                                          fontFamily: 'Cairo',
                                         ),
                                       ),
                                     ),
@@ -844,7 +863,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
 
                         MashwarTextField(
                           controller: _notesController,
@@ -854,7 +873,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                           hint: _getNotesHint(isAr),
                           maxLines: 2,
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -905,25 +924,16 @@ class _PostAdScreenState extends State<PostAdScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(11),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.06),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
+          color: isSelected ? AppColors.navy : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 18,
-              color: isSelected ? AppColors.cobalt : const Color(0xFF64748B),
+              size: 17,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
             ),
             const SizedBox(width: 6),
             Flexible(
@@ -932,9 +942,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   fontSize: 12.5,
-                  color: isSelected ? AppColors.navy : const Color(0xFF64748B),
+                  color: isSelected ? Colors.white : AppColors.navy,
+                  fontFamily: 'Cairo',
                 ),
               ),
             ),
@@ -955,9 +966,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'حجز مقعد مع مسافر متجه لنفس الوجهة'
               : 'Book a seat with a traveler',
-          'icon': Icons.person_search_rounded,
           'pillar': MashwarServicePillar.sharedTrips,
-          'color': AppColors.cobalt,
         },
         {
           'type': BoardAdType.parcelRequest,
@@ -965,9 +974,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'توصيل طرد أو طلبات على الطريق بكود OTP'
               : 'Route parcel & OTP delivery',
-          'icon': Icons.inventory_2_outlined,
           'pillar': MashwarServicePillar.routeParcels,
-          'color': AppColors.indigo,
         },
         {
           'type': BoardAdType.goodsDelivery,
@@ -975,9 +982,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'توريد لمواقع العمل أو مستلزمات محلات بفاتورة'
               : 'Site parts & store stock with receipt',
-          'icon': Icons.inventory_outlined,
           'pillar': MashwarServicePillar.smartSupply,
-          'color': AppColors.emerald,
         },
         {
           'type': BoardAdType.errandService,
@@ -985,9 +990,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'جلب مستند أو شراء غرض مع مسافر بالطريق'
               : 'Collect papers or items along route',
-          'icon': Icons.description_outlined,
           'pillar': MashwarServicePillar.routeParcels,
-          'color': AppColors.indigo,
         },
         {
           'type': BoardAdType.localTrip,
@@ -995,9 +998,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'توصيل مدارس أو تنقل يومي منتظم'
               : 'Daily school & district commute',
-          'icon': Icons.family_restroom_rounded,
           'pillar': MashwarServicePillar.sharedTrips,
-          'color': AppColors.teal,
         },
         {
           'type': BoardAdType.errandService,
@@ -1006,9 +1007,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'اكتب أي خدمة أو مشوار مختلف غير مدرج أعلاه'
               : 'Specify any custom errand or service freely',
-          'icon': Icons.add_circle_outline_rounded,
           'pillar': MashwarServicePillar.smartSupply,
-          'color': AppColors.navy,
         },
       ];
     } else {
@@ -1019,9 +1018,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'مسافر ومعي مقاعد شاغرة في سيارتي'
               : 'Empty seats in my private car',
-          'icon': Icons.directions_car_outlined,
           'pillar': MashwarServicePillar.sharedTrips,
-          'color': AppColors.cobalt,
         },
         {
           'type': BoardAdType.parcelRequest,
@@ -1029,9 +1026,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'مسافر ومستعد لتوصيل طرود وأمانات بكود OTP'
               : 'Traveler ready to carry parcels',
-          'icon': Icons.inventory_2_outlined,
           'pillar': MashwarServicePillar.routeParcels,
-          'color': AppColors.indigo,
         },
         {
           'type': BoardAdType.goodsDelivery,
@@ -1039,9 +1034,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'مركبة مجهزة لتوريد المواقع والمحلات بالفاتورة'
               : 'Vehicle ready for site/store supply',
-          'icon': Icons.local_shipping_outlined,
           'pillar': MashwarServicePillar.smartSupply,
-          'color': AppColors.emerald,
         },
         {
           'type': BoardAdType.errandService,
@@ -1049,9 +1042,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'متحرك بطريقي ومستعد لشراء طلبات أو جلب أوراق'
               : 'Traveler ready to buy or fetch docs',
-          'icon': Icons.description_outlined,
           'pillar': MashwarServicePillar.routeParcels,
-          'color': AppColors.indigo,
         },
         {
           'type': BoardAdType.localTrip,
@@ -1059,9 +1050,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'مسافر موثق لتوصيل المدارس والمشاوير اليومية'
               : 'Verified daily & school rides',
-          'icon': Icons.family_restroom_rounded,
           'pillar': MashwarServicePillar.sharedTrips,
-          'color': AppColors.teal,
         },
         {
           'type': BoardAdType.errandService,
@@ -1070,9 +1059,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
           'subtitle': isAr
               ? 'اعرض أي خدمة مساندة أو توصيل خاص غير مدرج'
               : 'Offer any custom assistance or delivery',
-          'icon': Icons.add_circle_outline_rounded,
           'pillar': MashwarServicePillar.smartSupply,
-          'color': AppColors.navy,
         },
       ];
     }
@@ -1082,17 +1069,16 @@ class _PostAdScreenState extends State<PostAdScreen> {
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            final cardWidth = (constraints.maxWidth - 12) / 2;
+            final cardWidth = (constraints.maxWidth - 10) / 2;
             return Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: 10,
+              runSpacing: 10,
               children: items.map((item) {
                 final type = item['type'] as BoardAdType;
                 final isOtherCard = item['isOther'] == true;
                 final isSelected = isOtherCard
                     ? _isOtherCategory
                     : (!_isOtherCategory && _selectedCategory == type);
-                final accentColor = item['color'] as Color;
                 return SizedBox(
                   width: cardWidth,
                   child: InkWell(
@@ -1111,84 +1097,89 @@ class _PostAdScreenState extends State<PostAdScreen> {
                         }
                       });
                     },
-                borderRadius: BorderRadius.circular(16),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? accentColor.withValues(alpha: 0.06)
-                        : Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: isSelected ? accentColor : AppColors.slateBorder,
-                      width: isSelected ? 1.8 : 1.0,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.all(11),
+                      decoration: BoxDecoration(
+                        color:
+                            isSelected ? AppColors.cobaltSurface : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color:
+                              isSelected ? AppColors.navy : AppColors.slateBorder,
+                          width: isSelected ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          MashwarServicePillarIcon(
-                            pillar: item['pillar'] as MashwarServicePillar,
-                            size: 36,
-                          ),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 180),
-                            width: 20,
-                            height: 20,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: isSelected
-                                  ? accentColor
-                                  : Colors.transparent,
-                              border: Border.all(
-                                color: isSelected
-                                    ? accentColor
-                                    : const Color(0xFFCBD5E1),
-                                width: 1.5,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              MashwarServicePillarIcon(
+                                pillar: item['pillar'] as MashwarServicePillar,
+                                size: 32,
                               ),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                width: 19,
+                                height: 19,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isSelected
+                                      ? AppColors.navy
+                                      : Colors.transparent,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? AppColors.navy
+                                        : AppColors.slateBorder,
+                                    width: 1.4,
+                                  ),
+                                ),
+                                child: isSelected
+                                    ? const Icon(
+                                        Icons.check_rounded,
+                                        size: 12,
+                                        color: Colors.white,
+                                      )
+                                    : null,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            item['title'] as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.title().copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.navy,
                             ),
-                            child: isSelected
-                                ? const Icon(
-                                    Icons.check_rounded,
-                                    size: 13,
-                                    color: Colors.white,
-                                  )
-                                : null,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item['subtitle'] as String,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTypography.bodySmall(
+                              color: AppColors.textSecondary,
+                            ).copyWith(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                              height: 1.28,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        item['title'] as String,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.title().copyWith(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        item['subtitle'] as String,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.bodySmall(
-                          color: AppColors.textSecondary,
-                        ).copyWith(fontSize: 11, height: 1.3),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
+                );
+              }).toList(),
             );
-          }).toList(),
-        );
-      },
-    ),
+          },
+        ),
         if (_isOtherCategory) ...[
           const SizedBox(height: 12),
           MashwarTextField(
@@ -1490,17 +1481,15 @@ class _PostAdScreenState extends State<PostAdScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.cobaltSurface,
+                          color: AppColors.sand,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: AppColors.cobalt.withValues(alpha: 0.2),
-                          ),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Row(
                           children: [
                             const Icon(
                               Icons.alt_route_rounded,
-                              color: AppColors.cobalt,
+                              color: AppColors.navy,
                               size: 15,
                             ),
                             const SizedBox(width: 6),
@@ -1513,6 +1502,7 @@ class _PostAdScreenState extends State<PostAdScreen> {
                                   fontSize: 11.5,
                                   color: AppColors.navy,
                                   fontWeight: FontWeight.w700,
+                                  fontFamily: 'Cairo',
                                 ),
                               ),
                             ),
@@ -1543,18 +1533,19 @@ class _PostAdScreenState extends State<PostAdScreen> {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.cobalt : Colors.white,
+          color: isSelected ? AppColors.navy : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppColors.cobalt : AppColors.slateBorder,
+            color: isSelected ? AppColors.navy : AppColors.slateBorder,
           ),
         ),
         child: Text(
           text,
           style: TextStyle(
             fontSize: 12,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            color: isSelected ? Colors.white : AppColors.textPrimary,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+            color: isSelected ? Colors.white : AppColors.navy,
+            fontFamily: 'Cairo',
           ),
         ),
       ),
@@ -1563,29 +1554,40 @@ class _PostAdScreenState extends State<PostAdScreen> {
 
   Widget _buildDynamicFields(bool isAr) {
     if (_selectedCategory == BoardAdType.parcelRequest) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isAr ? 'مواصفات الأمانة أو الطرد' : 'Parcel Specifications',
-            style: AppTypography.title().copyWith(fontSize: 14.5),
-          ),
-          const SizedBox(height: 8),
-          MashwarTextField(
-            controller: _parcelDescController,
-            label: isAr ? 'وصف الأمانة' : 'Parcel Contents',
-            hint: isAr
-                ? 'مثال: ملف أوراق رسمية، حقيبة، جهاز إلكتروني'
-                : 'e.g. Official documents folder, gift bag',
-          ),
-          const SizedBox(height: 10),
-          MashwarTextField(
-            controller: _weightController,
-            label: isAr ? 'الوزن التقريبي (كجم)' : 'Approximate Weight (kg)',
-            hint: '2',
-            keyboardType: TextInputType.number,
-          ),
-        ],
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.slateBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isAr ? 'مواصفات الأمانة أو الطرد' : 'Parcel Specifications',
+              style: AppTypography.title().copyWith(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 10),
+            MashwarTextField(
+              controller: _parcelDescController,
+              label: isAr ? 'وصف الأمانة' : 'Parcel Contents',
+              hint: isAr
+                  ? 'مثال: ملف أوراق رسمية، حقيبة، جهاز إلكتروني'
+                  : 'e.g. Official documents folder, gift bag',
+            ),
+            const SizedBox(height: 10),
+            MashwarTextField(
+              controller: _weightController,
+              label: isAr ? 'الوزن التقريبي (كجم)' : 'Approximate Weight (kg)',
+              hint: '2',
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
       );
     }
 
@@ -1604,53 +1606,64 @@ class _PostAdScreenState extends State<PostAdScreen> {
               'Pharmacy prescription',
             ];
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isAr
-                ? 'تفاصيل المعاملة والأوراق الرسمية'
-                : 'Official Errand Details',
-            style: AppTypography.title().copyWith(fontSize: 14.5),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: quickErrands.map((chipText) {
-              final isSelected = _errandDescController.text.trim() == chipText;
-              return ActionChip(
-                label: Text(chipText),
-                labelStyle: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                ),
-                backgroundColor:
-                    isSelected ? AppColors.indigo : Colors.white,
-                side: BorderSide(
-                  color: isSelected ? AppColors.indigo : AppColors.slateBorder,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _visualStep = 3;
-                    _errandDescController.text = chipText;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-          MashwarTextField(
-            controller: _errandDescController,
-            label: isAr
-                ? 'نوع المعاملة أو طلب الشراء'
-                : 'Errand / Shopping Description',
-            hint: isAr
-                ? 'مثال: استلام شهادة مختومة أو شراء غرض من متجر'
-                : 'e.g. Collect stamped document or store item',
-          ),
-        ],
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.slateBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isAr
+                  ? 'تفاصيل المعاملة والأوراق الرسمية'
+                  : 'Official Errand Details',
+              style: AppTypography.title().copyWith(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: quickErrands.map((chipText) {
+                final isSelected = _errandDescController.text.trim() == chipText;
+                return ActionChip(
+                  label: Text(chipText),
+                  labelStyle: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    color: isSelected ? Colors.white : AppColors.navy,
+                    fontFamily: 'Cairo',
+                  ),
+                  backgroundColor: isSelected ? AppColors.navy : Colors.white,
+                  side: BorderSide(
+                    color: isSelected ? AppColors.navy : AppColors.slateBorder,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _visualStep = 3;
+                      _errandDescController.text = chipText;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+            MashwarTextField(
+              controller: _errandDescController,
+              label: isAr
+                  ? 'نوع المعاملة أو طلب الشراء'
+                  : 'Errand / Shopping Description',
+              hint: isAr
+                  ? 'مثال: استلام شهادة مختومة أو شراء غرض من متجر'
+                  : 'e.g. Collect stamped document or store item',
+            ),
+          ],
+        ),
       );
     }
 
@@ -1667,167 +1680,194 @@ class _PostAdScreenState extends State<PostAdScreen> {
               'Workshop orders & materials',
             ];
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            isAr ? 'تفاصيل البضاعة والتوريد' : 'Commercial Cargo Details',
-            style: AppTypography.title().copyWith(fontSize: 14.5),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: quickGoods.map((chipText) {
-              final isSelected = _goodsDescController.text.trim() == chipText;
-              return ActionChip(
-                label: Text(chipText),
-                labelStyle: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                ),
-                backgroundColor:
-                    isSelected ? AppColors.emerald : Colors.white,
-                side: BorderSide(
-                  color: isSelected ? AppColors.emerald : AppColors.slateBorder,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _visualStep = 3;
-                    _goodsDescController.text = chipText;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-          MashwarTextField(
-            controller: _goodsDescController,
-            label: isAr ? 'وصف المستلزمات والكمية' : 'Goods & Quantity',
-            hint: isAr
-                ? 'مثال: 5 كراتين مستلزمات، أدوات كهربائية...'
-                : 'e.g. 5 stock boxes, electrical tools...',
-          ),
-        ],
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.slateBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isAr ? 'تفاصيل البضاعة والتوريد' : 'Commercial Cargo Details',
+              style: AppTypography.title().copyWith(
+                fontSize: 15.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: quickGoods.map((chipText) {
+                final isSelected = _goodsDescController.text.trim() == chipText;
+                return ActionChip(
+                  label: Text(chipText),
+                  labelStyle: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                    color: isSelected ? Colors.white : AppColors.navy,
+                    fontFamily: 'Cairo',
+                  ),
+                  backgroundColor: isSelected ? AppColors.navy : Colors.white,
+                  side: BorderSide(
+                    color: isSelected ? AppColors.navy : AppColors.slateBorder,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _visualStep = 3;
+                      _goodsDescController.text = chipText;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+            MashwarTextField(
+              controller: _goodsDescController,
+              label: isAr ? 'وصف المستلزمات والكمية' : 'Goods & Quantity',
+              hint: isAr
+                  ? 'مثال: 5 كراتين مستلزمات، أدوات كهربائية...'
+                  : 'e.g. 5 stock boxes, electrical tools...',
+            ),
+          ],
+        ),
       );
     }
 
     // Rides & Local Trips
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                _selectedCategory == BoardAdType.rideOffer
-                    ? (isAr ? 'عدد المقاعد الشاغرة' : 'Available Seats')
-                    : (isAr ? 'عدد المقاعد المطلوبة' : 'Seats Needed'),
-                style: AppTypography.title().copyWith(fontSize: 14),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.slateBorder),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    iconSize: 18,
-                    padding: const EdgeInsets.all(4),
-                    constraints:
-                        const BoxConstraints(minWidth: 34, minHeight: 34),
-                    onPressed: () => _adjustSeats(-1),
-                    icon: const Icon(Icons.remove_rounded, color: AppColors.navy),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      _seatsController.text,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    iconSize: 18,
-                    padding: const EdgeInsets.all(4),
-                    constraints:
-                        const BoxConstraints(minWidth: 34, minHeight: 34),
-                    onPressed: () => _adjustSeats(1),
-                    icon: const Icon(Icons.add_rounded, color: AppColors.navy),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: AppColors.slateBorder),
-          ),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.slateBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Checkbox(
-                value: _ladiesOnly,
-                activeColor: AppColors.ladiesPink,
-                onChanged: (val) => setState(() => _ladiesOnly = val ?? false),
-              ),
               Expanded(
                 child: Text(
-                  isAr ? 'مخصص للسيدات فقط' : 'Ladies Only Ride',
-                  style: AppTypography.body()
-                      .copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                  _selectedCategory == BoardAdType.rideOffer
+                      ? (isAr ? 'عدد المقاعد الشاغرة' : 'Available Seats')
+                      : (isAr ? 'عدد المقاعد المطلوبة' : 'Seats Needed'),
+                  style: AppTypography.label(color: AppColors.navy).copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.slateBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.slateBorder),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      iconSize: 18,
+                      padding: const EdgeInsets.all(4),
+                      constraints:
+                          const BoxConstraints(minWidth: 34, minHeight: 34),
+                      onPressed: () => _adjustSeats(-1),
+                      icon:
+                          const Icon(Icons.remove_rounded, color: AppColors.navy),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        _seatsController.text,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      iconSize: 18,
+                      padding: const EdgeInsets.all(4),
+                      constraints:
+                          const BoxConstraints(minWidth: 34, minHeight: 34),
+                      onPressed: () => _adjustSeats(1),
+                      icon: const Icon(Icons.add_rounded, color: AppColors.navy),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-        ),
-        if (_selectedCategory == BoardAdType.rideOffer) ...[
           const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.slateBg,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: AppColors.slateBorder),
             ),
             child: Row(
               children: [
                 Checkbox(
-                  value: _acceptsParcels,
-                  activeColor: AppColors.indigo,
-                  onChanged: (val) =>
-                      setState(() => _acceptsParcels = val ?? true),
+                  value: _ladiesOnly,
+                  activeColor: AppColors.ladiesPink,
+                  onChanged: (val) => setState(() => _ladiesOnly = val ?? false),
                 ),
                 Expanded(
                   child: Text(
-                    isAr
-                        ? 'أقبل توصيل أمانات وطرود خفيفة على طريقي'
-                        : 'Accept light parcels along my route',
-                    style: AppTypography.body()
-                        .copyWith(fontWeight: FontWeight.w600, fontSize: 13),
+                    isAr ? 'مخصص للسيدات فقط' : 'Ladies Only Ride',
+                    style: AppTypography.label(color: AppColors.navy).copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
+          if (_selectedCategory == BoardAdType.rideOffer) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.slateBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.slateBorder),
+              ),
+              child: Row(
+                children: [
+                  Checkbox(
+                    value: _acceptsParcels,
+                    activeColor: AppColors.teal,
+                    onChanged: (val) =>
+                        setState(() => _acceptsParcels = val ?? true),
+                  ),
+                  Expanded(
+                    child: Text(
+                      isAr
+                          ? 'أقبل توصيل أمانات وطرود خفيفة على طريقي'
+                          : 'Accept light parcels along my route',
+                      style: AppTypography.label(color: AppColors.navy).copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -1852,20 +1892,32 @@ class _PostAdScreenState extends State<PostAdScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: AppTypography.label(color: AppColors.navy).copyWith(
               fontWeight: FontWeight.w700,
               fontSize: 13,
-              color: AppColors.navy,
             ),
           ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton.filledTonal(
-                onPressed: () => _adjustPrice(-5),
-                icon: const Icon(Icons.remove_rounded),
-                color: AppColors.navy,
+              InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => _adjustPrice(-5),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.slateBorder),
+                  ),
+                  child: const Icon(
+                    Icons.remove_rounded,
+                    color: AppColors.navy,
+                    size: 20,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
               Container(
@@ -1876,24 +1928,41 @@ class _PostAdScreenState extends State<PostAdScreen> {
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
                   style: const TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.w900,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
                     color: AppColors.navy,
+                    fontFamily: 'Cairo',
                   ),
                   decoration: InputDecoration(
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    filled: false,
                     isDense: true,
                     suffixText: isAr ? 'ر.ق' : 'QAR',
-                    suffixStyle: AppTypography.body(color: AppColors.cobalt)
-                        .copyWith(fontSize: 14, fontWeight: FontWeight.bold),
+                    suffixStyle: AppTypography.body(color: AppColors.navy)
+                        .copyWith(fontSize: 13.5, fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-              IconButton.filledTonal(
-                onPressed: () => _adjustPrice(5),
-                icon: const Icon(Icons.add_rounded),
-                color: AppColors.navy,
+              InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => _adjustPrice(5),
+                child: Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.slateBorder),
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    color: AppColors.navy,
+                    size: 20,
+                  ),
+                ),
               ),
             ],
           ),
@@ -1908,13 +1977,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
                 label: Text(isAr ? '$preset ر.ق' : '$preset QAR'),
                 labelStyle: TextStyle(
                   fontSize: 11.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                  color: isSelected ? Colors.white : AppColors.navy,
+                  fontFamily: 'Cairo',
                 ),
-                backgroundColor:
-                    isSelected ? AppColors.cobalt : AppColors.slateBg,
+                backgroundColor: isSelected ? AppColors.navy : Colors.white,
                 side: BorderSide(
-                  color: isSelected ? AppColors.cobalt : AppColors.slateBorder,
+                  color: isSelected ? AppColors.navy : AppColors.slateBorder,
                 ),
                 onPressed: () {
                   setState(() {
