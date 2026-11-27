@@ -167,7 +167,7 @@ class _MainNavShellState extends State<MainNavShell> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
             decoration: BoxDecoration(
-              color: AppColors.qatarMaroon,
+              color: AppColors.navy,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.white, width: 1.2),
             ),
@@ -178,7 +178,7 @@ class _MainNavShellState extends State<MainNavShell> {
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 9,
-                fontWeight: FontWeight.w800,
+                fontWeight: FontWeight.w700,
                 height: 1.1,
               ),
             ),
@@ -194,17 +194,18 @@ class _MainNavShellState extends State<MainNavShell> {
     int badgeCount = 0,
   }) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
+      margin: const EdgeInsets.only(bottom: 2),
       padding: EdgeInsets.symmetric(
-        horizontal: active ? 12 : 6,
+        horizontal: active ? 14 : 8,
         vertical: 4,
       ),
       decoration: BoxDecoration(
         color: active
-            ? AppColors.navy.withValues(alpha: 0.11)
+            ? AppColors.navy.withValues(alpha: 0.09)
             : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: _buildIconWithBadge(
         icon,
@@ -227,9 +228,9 @@ class _MainNavShellState extends State<MainNavShell> {
       coreIcon = MashwarUserAvatar(
         avatarUrl: user.avatarUrl,
         fullName: user.fullName.isNotEmpty ? user.fullName : 'م',
-        size: 25,
-        borderWidth: active ? 2.0 : 1.5,
-        borderColor: active ? AppColors.gold : AppColors.teal,
+        size: 24,
+        borderWidth: active ? 1.8 : 1.2,
+        borderColor: active ? AppColors.navy : AppColors.slateBorder,
       );
       if (badgeCount > 0) {
         coreIcon = Stack(
@@ -242,7 +243,7 @@ class _MainNavShellState extends State<MainNavShell> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
-                  color: AppColors.qatarMaroon,
+                  color: AppColors.navy,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white, width: 1.2),
                 ),
@@ -253,7 +254,7 @@ class _MainNavShellState extends State<MainNavShell> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 9,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     height: 1.1,
                   ),
                 ),
@@ -272,17 +273,18 @@ class _MainNavShellState extends State<MainNavShell> {
 
     if (!pillStyle) return coreIcon;
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
+      margin: const EdgeInsets.only(bottom: 2),
       padding: EdgeInsets.symmetric(
-        horizontal: active ? 12 : 6,
+        horizontal: active ? 14 : 8,
         vertical: 4,
       ),
       decoration: BoxDecoration(
         color: active
-            ? AppColors.navy.withValues(alpha: 0.11)
+            ? AppColors.navy.withValues(alpha: 0.09)
             : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: coreIcon,
     );
@@ -363,12 +365,12 @@ class _MainNavShellState extends State<MainNavShell> {
       NavigationRailDestination(
         icon: _buildIconWithBadge(
           Icons.assignment_outlined,
-          color: AppColors.textSecondary,
+          color: const Color(0xFF64748B),
           badgeCount: activityBadgeCount,
         ),
         selectedIcon: _buildIconWithBadge(
           Icons.assignment_rounded,
-          color: AppColors.cobalt,
+          color: AppColors.navy,
           badgeCount: activityBadgeCount,
         ),
         label: Text(isAr ? 'نشاطي' : 'My Activity'),
@@ -448,21 +450,25 @@ class _MainNavShellState extends State<MainNavShell> {
                   onDestinationSelected: (index) =>
                       setState(() => _currentIndex = index),
                   extended: isExtended,
-                  minWidth: 82,
-                  minExtendedWidth: 232,
+                  minWidth: 84,
+                  minExtendedWidth: 236,
                   backgroundColor: Colors.white,
-                  indicatorColor: AppColors.cobaltSurface,
-                  selectedIconTheme:
-                      const IconThemeData(color: AppColors.cobalt, size: 22),
-                  unselectedIconTheme: const IconThemeData(
-                      color: AppColors.textSecondary, size: 22),
-                  selectedLabelTextStyle: AppTypography.body().copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.navy,
-                    fontSize: 13,
+                  indicatorColor: AppColors.navy.withValues(alpha: 0.09),
+                  indicatorShape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  unselectedLabelTextStyle:
-                      AppTypography.bodySecondary().copyWith(fontSize: 13),
+                  selectedIconTheme:
+                      const IconThemeData(color: AppColors.navy, size: 22),
+                  unselectedIconTheme: const IconThemeData(
+                      color: Color(0xFF64748B), size: 21),
+                  selectedLabelTextStyle: AppTypography.body().copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.navy,
+                    fontSize: 12.5,
+                  ),
+                  unselectedLabelTextStyle: AppTypography.bodySecondary(
+                    color: const Color(0xFF64748B),
+                  ).copyWith(fontSize: 12.5, fontWeight: FontWeight.w500),
                   leading: Padding(
                     padding: EdgeInsets.symmetric(
                       vertical: 20,
@@ -482,6 +488,7 @@ class _MainNavShellState extends State<MainNavShell> {
                             ? OutlinedButton.icon(
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.navy,
+                                  backgroundColor: Colors.white,
                                   side: const BorderSide(
                                       color: AppColors.slateBorder),
                                   padding: const EdgeInsets.symmetric(
@@ -536,23 +543,24 @@ class _MainNavShellState extends State<MainNavShell> {
             decoration: BoxDecoration(
               color: Colors.white,
               border: const Border(
-                top: BorderSide(color: AppColors.slateBorder, width: 0.9),
+                top: BorderSide(color: AppColors.slateBorder, width: 1.0),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.navy.withValues(alpha: 0.05),
-                  blurRadius: 14,
-                  offset: const Offset(0, -3),
+                  color: AppColors.navy.withValues(alpha: 0.04),
+                  blurRadius: 12,
+                  offset: const Offset(0, -2),
                 ),
               ],
             ),
             child: BottomNavigationBar(
               currentIndex: safeIndex,
               onTap: (index) => setState(() => _currentIndex = index),
-              selectedLabelStyle: AppTypography.label()
-                  .copyWith(fontWeight: FontWeight.w800, fontSize: 10.5),
-              unselectedLabelStyle: AppTypography.label()
-                  .copyWith(fontWeight: FontWeight.w600, fontSize: 10),
+              selectedLabelStyle: AppTypography.label(color: AppColors.navy)
+                  .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+              unselectedLabelStyle:
+                  AppTypography.label(color: const Color(0xFF64748B))
+                      .copyWith(fontWeight: FontWeight.w500, fontSize: 11),
               selectedItemColor: AppColors.navy,
               unselectedItemColor: const Color(0xFF64748B),
               backgroundColor: Colors.white,
@@ -948,7 +956,6 @@ class _MainNavShellState extends State<MainNavShell> {
                               index: 0,
                               label: isAr ? 'الكل' : 'All',
                               icon: Icons.apps_rounded,
-                              accent: AppColors.navy,
                             ),
                             const SizedBox(width: 8),
                             _buildActivityFilterPill(
@@ -956,7 +963,6 @@ class _MainNavShellState extends State<MainNavShell> {
                               index: 1,
                               label: isAr ? 'الرحلات' : 'Trips',
                               icon: Icons.directions_car_outlined,
-                              accent: AppColors.cobalt,
                             ),
                             const SizedBox(width: 8),
                             _buildActivityFilterPill(
@@ -964,7 +970,6 @@ class _MainNavShellState extends State<MainNavShell> {
                               index: 2,
                               label: isAr ? 'الطرود' : 'Parcels',
                               icon: Icons.inventory_2_outlined,
-                              accent: AppColors.indigo,
                             ),
                             const SizedBox(width: 8),
                             _buildActivityFilterPill(
@@ -972,7 +977,6 @@ class _MainNavShellState extends State<MainNavShell> {
                               index: 3,
                               label: isAr ? 'التوريد' : 'Supply',
                               icon: Icons.fact_check_outlined,
-                              accent: AppColors.emerald,
                             ),
                           ],
                         ),
@@ -990,7 +994,7 @@ class _MainNavShellState extends State<MainNavShell> {
                         '${_isActiveOrders}_$_activityServiceFilter',
                       ),
                       child: RefreshIndicator(
-                        color: AppColors.cobalt,
+                        color: AppColors.navy,
                         onRefresh: () async {
                           await Future.wait([
                             rides.loadRides(),
@@ -1028,21 +1032,20 @@ class _MainNavShellState extends State<MainNavShell> {
     required int index,
     required String label,
     required IconData icon,
-    required Color accent,
   }) {
     final selected = _activityServiceFilter == index;
     return MashwarPressable(
       key: key,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       onTap: () => setState(() => _activityServiceFilter = index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? accent : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          color: selected ? AppColors.navy : Colors.white,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? accent : AppColors.slateBorder,
+            color: selected ? AppColors.navy : AppColors.slateBorder,
           ),
         ),
         child: Row(
@@ -1051,14 +1054,17 @@ class _MainNavShellState extends State<MainNavShell> {
             Icon(
               icon,
               size: 15,
-              color: selected ? Colors.white : accent,
+              color: selected ? Colors.white : const Color(0xFF64748B),
             ),
             const SizedBox(width: 6),
             Text(
               label,
               style: AppTypography.label(
                 color: selected ? Colors.white : AppColors.navy,
-              ).copyWith(fontWeight: FontWeight.w800),
+              ).copyWith(
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                fontSize: 12,
+              ),
             ),
           ],
         ),
@@ -1082,13 +1088,14 @@ class _MainNavShellState extends State<MainNavShell> {
                 constraints: const BoxConstraints(maxWidth: 420),
                 child: MashwarSectionCard(
                   padding: const EdgeInsets.all(AppDimens.space24),
-                  borderRadius: 18,
+                  borderRadius: 16,
+                  borderColor: AppColors.slateBorder,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const MashwarTrustEmblem(
                         type: MashwarTrustType.liveCorridor,
-                        size: 46,
+                        size: 44,
                       ),
                       const SizedBox(height: 12),
                       Text(
@@ -1100,7 +1107,10 @@ class _MainNavShellState extends State<MainNavShell> {
                                 ? 'لا يوجد سجل مكتمل بعد'
                                 : 'No Completed History Yet'),
                         textAlign: TextAlign.center,
-                        style: AppTypography.title().copyWith(fontSize: 16),
+                        style: AppTypography.title().copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -1108,7 +1118,8 @@ class _MainNavShellState extends State<MainNavShell> {
                             ? 'انشر رحلة بمقاعد شاغرة، أرسل طرداً مع مسافر، أو أنشئ طلب توريد جديد.'
                             : 'Publish a shared trip, send a parcel on route, or create a smart supply request.',
                         textAlign: TextAlign.center,
-                        style: AppTypography.bodySecondary(),
+                        style: AppTypography.bodySecondary()
+                            .copyWith(fontSize: 13),
                       ),
                       const SizedBox(height: 16),
                       Wrap(
@@ -1118,8 +1129,14 @@ class _MainNavShellState extends State<MainNavShell> {
                         children: [
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.cobalt,
+                              backgroundColor: AppColors.navy,
                               foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                             onPressed: () {
                               Navigator.of(context).push(
@@ -1134,6 +1151,17 @@ class _MainNavShellState extends State<MainNavShell> {
                             ),
                           ),
                           OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppColors.navy,
+                              side: const BorderSide(
+                                  color: AppColors.slateBorder),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -1148,6 +1176,17 @@ class _MainNavShellState extends State<MainNavShell> {
                             ),
                           ),
                           OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppColors.navy,
+                              side: const BorderSide(
+                                  color: AppColors.slateBorder),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
@@ -1174,6 +1213,48 @@ class _MainNavShellState extends State<MainNavShell> {
     );
   }
 
+  ButtonStyle get _activityPrimaryBtnStyle => ElevatedButton.styleFrom(
+        backgroundColor: AppColors.navy,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        textStyle: AppTypography.label(color: Colors.white).copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 12.5,
+        ),
+      );
+
+  ButtonStyle get _activitySecondaryBtnStyle => OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: AppColors.navy,
+        side: const BorderSide(color: AppColors.slateBorder),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        textStyle: AppTypography.label(color: AppColors.navy).copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 12.5,
+        ),
+      );
+
+  Widget _buildActivityCategoryTag(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+      decoration: BoxDecoration(
+        color: AppColors.slateBg,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.slateBorder),
+      ),
+      child: Text(
+        label,
+        style: AppTypography.label(color: AppColors.navy).copyWith(
+          fontWeight: FontWeight.w700,
+          fontSize: 11.5,
+        ),
+      ),
+    );
+  }
+
   Widget _buildTripActivityCard({
     required BuildContext context,
     required RideModel ride,
@@ -1182,9 +1263,9 @@ class _MainNavShellState extends State<MainNavShell> {
   }) {
     return MashwarHoverCard(
       key: ValueKey('activity_trip_${ride.id}'),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       borderColor: AppColors.slateBorder,
-      hoverBorderColor: AppColors.cobalt,
+      hoverBorderColor: AppColors.navy.withValues(alpha: 0.35),
       padding: const EdgeInsets.all(16),
       onTap: () {
         Navigator.of(context).push(
@@ -1198,7 +1279,7 @@ class _MainNavShellState extends State<MainNavShell> {
             children: [
               const MashwarServicePillarIcon(
                 pillar: MashwarServicePillar.sharedTrips,
-                size: 36,
+                size: 34,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1208,20 +1289,10 @@ class _MainNavShellState extends State<MainNavShell> {
                   spacing: 8,
                   runSpacing: 6,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.cobaltSurface,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isPublished
-                            ? (isAr ? 'رحلتي المنشورة' : 'Published Trip')
-                            : (isAr ? 'مقعد محجوز' : 'Booked Seat'),
-                        style: AppTypography.label(color: AppColors.cobalt)
-                            .copyWith(fontWeight: FontWeight.w800),
-                      ),
+                    _buildActivityCategoryTag(
+                      isPublished
+                          ? (isAr ? 'رحلتي المنشورة' : 'Published Trip')
+                          : (isAr ? 'مقعد محجوز' : 'Booked Seat'),
                     ),
                     MashwarBadge(
                       type: BadgeType.confirmed,
@@ -1245,6 +1316,8 @@ class _MainNavShellState extends State<MainNavShell> {
             trailingTop: '${ride.departureDate} · ${ride.departureTime}',
             compact: true,
           ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: AppColors.slateBorder),
           const SizedBox(height: 10),
           Wrap(
             alignment: WrapAlignment.spaceBetween,
@@ -1259,8 +1332,8 @@ class _MainNavShellState extends State<MainNavShell> {
                     avatarUrl: null,
                     fullName: ride.driverName,
                     size: 28,
-                    borderWidth: 1.4,
-                    borderColor: AppColors.gold,
+                    borderWidth: 1.2,
+                    borderColor: AppColors.slateBorder,
                     autoCommunityPortrait: true,
                   ),
                   const SizedBox(width: 8),
@@ -1270,7 +1343,7 @@ class _MainNavShellState extends State<MainNavShell> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.body(color: AppColors.navy)
-                          .copyWith(fontWeight: FontWeight.w800, fontSize: 13.5),
+                          .copyWith(fontWeight: FontWeight.w700, fontSize: 13.5),
                     ),
                   ),
                 ],
@@ -1280,6 +1353,7 @@ class _MainNavShellState extends State<MainNavShell> {
                 runSpacing: 6,
                 children: [
                   OutlinedButton.icon(
+                    style: _activitySecondaryBtnStyle,
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -1296,11 +1370,7 @@ class _MainNavShellState extends State<MainNavShell> {
                     label: Text(isAr ? 'محادثة' : 'Chat'),
                   ),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cobalt,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                    ),
+                    style: _activityPrimaryBtnStyle,
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -1326,9 +1396,9 @@ class _MainNavShellState extends State<MainNavShell> {
     final deliveryOtp = parcel.deliveryOtp ?? '';
     return MashwarHoverCard(
       key: ValueKey('activity_parcel_${parcel.id}'),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       borderColor: AppColors.slateBorder,
-      hoverBorderColor: AppColors.indigo,
+      hoverBorderColor: AppColors.navy.withValues(alpha: 0.35),
       padding: const EdgeInsets.all(16),
       onTap: () {
         Navigator.of(context).push(
@@ -1344,7 +1414,7 @@ class _MainNavShellState extends State<MainNavShell> {
             children: [
               const MashwarServicePillarIcon(
                 pillar: MashwarServicePillar.routeParcels,
-                size: 36,
+                size: 34,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1354,24 +1424,10 @@ class _MainNavShellState extends State<MainNavShell> {
                   spacing: 8,
                   runSpacing: 6,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.indigoSurface,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        parcel.hasAssignedTraveler
-                            ? (isAr
-                                ? 'طرد مع مسافر'
-                                : 'Matched Route Parcel')
-                            : (isAr
-                                ? 'طلب طرد مفتوح'
-                                : 'Open Parcel Request'),
-                        style: AppTypography.label(color: AppColors.indigo)
-                            .copyWith(fontWeight: FontWeight.w800),
-                      ),
+                    _buildActivityCategoryTag(
+                      parcel.hasAssignedTraveler
+                          ? (isAr ? 'طرد مع مسافر' : 'Matched Route Parcel')
+                          : (isAr ? 'طلب طرد مفتوح' : 'Open Parcel Request'),
                     ),
                     MashwarBadge(
                       type: parcel.status == ParcelStatusStep.delivered
@@ -1389,7 +1445,10 @@ class _MainNavShellState extends State<MainNavShell> {
             parcel.description,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.title().copyWith(fontSize: 15.5),
+            style: AppTypography.title().copyWith(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -1402,7 +1461,7 @@ class _MainNavShellState extends State<MainNavShell> {
             runSpacing: 6,
             children: [
               InkWell(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: parcel.pickupOtp));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -1421,11 +1480,9 @@ class _MainNavShellState extends State<MainNavShell> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.sand,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.40),
-                    ),
+                    color: AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.slateBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1433,7 +1490,7 @@ class _MainNavShellState extends State<MainNavShell> {
                       const Icon(
                         Icons.copy_rounded,
                         size: 13,
-                        color: AppColors.goldDark,
+                        color: AppColors.navy,
                       ),
                       const SizedBox(width: 5),
                       Text(
@@ -1441,7 +1498,7 @@ class _MainNavShellState extends State<MainNavShell> {
                             ? 'كود الاستلام: ${parcel.pickupOtp}'
                             : 'Pickup OTP: ${parcel.pickupOtp}',
                         style: AppTypography.label(color: AppColors.navy)
-                            .copyWith(fontWeight: FontWeight.w800),
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -1449,7 +1506,7 @@ class _MainNavShellState extends State<MainNavShell> {
               ),
               if (deliveryOtp.isNotEmpty)
                 InkWell(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: deliveryOtp));
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -1468,8 +1525,11 @@ class _MainNavShellState extends State<MainNavShell> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppColors.emeraldSurface,
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.tealSurface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.teal.withValues(alpha: 0.25),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1477,15 +1537,15 @@ class _MainNavShellState extends State<MainNavShell> {
                         const Icon(
                           Icons.copy_rounded,
                           size: 13,
-                          color: AppColors.emerald,
+                          color: AppColors.teal,
                         ),
                         const SizedBox(width: 5),
                         Text(
                           isAr
                               ? 'كود التسليم: $deliveryOtp'
                               : 'Delivery OTP: $deliveryOtp',
-                          style: AppTypography.label(color: AppColors.emerald)
-                              .copyWith(fontWeight: FontWeight.w800),
+                          style: AppTypography.label(color: AppColors.teal)
+                              .copyWith(fontWeight: FontWeight.w700),
                         ),
                       ],
                     ),
@@ -1493,6 +1553,8 @@ class _MainNavShellState extends State<MainNavShell> {
                 ),
             ],
           ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: AppColors.slateBorder),
           const SizedBox(height: 10),
           Wrap(
             alignment: WrapAlignment.spaceBetween,
@@ -1502,15 +1564,11 @@ class _MainNavShellState extends State<MainNavShell> {
             children: [
               Text(
                 '${parcel.fee} ${isAr ? "ر.ق" : "QAR"}',
-                style: AppTypography.body(color: AppColors.indigo)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.body(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700, fontSize: 14.5),
               ),
               ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.indigo,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                ),
+                style: _activityPrimaryBtnStyle,
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -1533,13 +1591,11 @@ class _MainNavShellState extends State<MainNavShell> {
     required BoardAdModel ad,
     required bool isAr,
   }) {
-    final isParcelAd = ad.type == BoardAdType.parcelRequest;
-    final accent = isParcelAd ? AppColors.indigo : AppColors.cobalt;
     return MashwarHoverCard(
       key: ValueKey('activity_ad_${ad.id}'),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       borderColor: AppColors.slateBorder,
-      hoverBorderColor: accent,
+      hoverBorderColor: AppColors.navy.withValues(alpha: 0.35),
       padding: const EdgeInsets.all(16),
       onTap: () {
         Navigator.of(context).push(
@@ -1555,25 +1611,11 @@ class _MainNavShellState extends State<MainNavShell> {
             spacing: 8,
             runSpacing: 6,
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: isParcelAd
-                      ? AppColors.indigoSurface
-                      : AppColors.cobaltSurface,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  ad.displaySubTag(isAr),
-                  style: AppTypography.label(color: accent)
-                      .copyWith(fontWeight: FontWeight.w800),
-                ),
-              ),
+              _buildActivityCategoryTag(ad.displaySubTag(isAr)),
               Text(
                 '${ad.myOfferPrice ?? ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"}',
-                style: AppTypography.body(color: accent)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.body(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700, fontSize: 14.5),
               ),
             ],
           ),
@@ -1617,9 +1659,9 @@ class _MainNavShellState extends State<MainNavShell> {
 
     return MashwarHoverCard(
       key: ValueKey('activity_card_${req.id}'),
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       borderColor: AppColors.slateBorder,
-      hoverBorderColor: AppColors.emerald,
+      hoverBorderColor: AppColors.navy.withValues(alpha: 0.35),
       padding: const EdgeInsets.all(16),
       onTap: () {
         Navigator.of(context).push(
@@ -1645,23 +1687,10 @@ class _MainNavShellState extends State<MainNavShell> {
                   spacing: 8,
                   runSpacing: 6,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: isMyReq
-                            ? AppColors.emeraldSurface
-                            : AppColors.cobaltSurface,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isMyReq
-                            ? (isAr ? 'طلب توريد خاص بي' : 'My Supply Request')
-                            : (isAr ? 'مهمة مسندة لي' : 'Assigned Supply Job'),
-                        style: AppTypography.label(
-                          color: isMyReq ? AppColors.emerald : AppColors.cobalt,
-                        ).copyWith(fontWeight: FontWeight.w800),
-                      ),
+                    _buildActivityCategoryTag(
+                      isMyReq
+                          ? (isAr ? 'طلب توريد خاص بي' : 'My Supply Request')
+                          : (isAr ? 'مهمة مسندة لي' : 'Assigned Supply Job'),
                     ),
                     MashwarBadge(
                       type: req.status == WorkRequestStatus.completed
@@ -1679,7 +1708,10 @@ class _MainNavShellState extends State<MainNavShell> {
           const SizedBox(height: 10),
           Text(
             req.title,
-            style: AppTypography.title().copyWith(fontSize: 16),
+            style: AppTypography.title().copyWith(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 8),
           MashwarRouteTimeline(
@@ -1700,27 +1732,18 @@ class _MainNavShellState extends State<MainNavShell> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: req.status ==
-                        WorkRequestStatus.deliveredPendingConfirmation
-                    ? AppColors.goldSurface
-                    : AppColors.emeraldSurface,
+                color: AppColors.tealSurface,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: req.status ==
-                          WorkRequestStatus.deliveredPendingConfirmation
-                      ? AppColors.gold.withValues(alpha: 0.5)
-                      : AppColors.emerald.withValues(alpha: 0.35),
+                  color: AppColors.teal.withValues(alpha: 0.28),
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.key_rounded,
+                  const Icon(
+                    Icons.verified_user_outlined,
                     size: 16,
-                    color: req.status ==
-                            WorkRequestStatus.deliveredPendingConfirmation
-                        ? AppColors.warning
-                        : AppColors.emerald,
+                    color: AppColors.teal,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
@@ -1740,13 +1763,15 @@ class _MainNavShellState extends State<MainNavShell> {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.label(color: AppColors.navy)
-                          .copyWith(fontWeight: FontWeight.w800),
+                          .copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: AppColors.slateBorder),
           const SizedBox(height: 10),
           Wrap(
             alignment: WrapAlignment.spaceBetween,
@@ -1756,8 +1781,8 @@ class _MainNavShellState extends State<MainNavShell> {
             children: [
               Text(
                 req.effectiveTotalMinor.format(isArabic: isAr),
-                style: AppTypography.body(color: AppColors.emerald)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.body(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700, fontSize: 14.5),
               ),
               Wrap(
                 spacing: 8,
@@ -1766,6 +1791,7 @@ class _MainNavShellState extends State<MainNavShell> {
                   if (isMyReq)
                     OutlinedButton.icon(
                       key: ValueKey('activity_reorder_${req.id}'),
+                      style: _activitySecondaryBtnStyle,
                       onPressed: () {
                         final draft = worksite.buildReorderDraft(req);
                         Navigator.of(context).push(
@@ -1776,16 +1802,12 @@ class _MainNavShellState extends State<MainNavShell> {
                           ),
                         );
                       },
-                      icon: const Icon(Icons.replay_rounded, size: 16),
+                      icon: const Icon(Icons.replay_rounded, size: 15),
                       label: Text(isAr ? 'إعادة طلب' : 'Quick Reorder'),
                     ),
                   ElevatedButton(
                     key: ValueKey('activity_details_${req.id}'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.emerald,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                    ),
+                    style: _activityPrimaryBtnStyle,
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -1829,6 +1851,24 @@ class _MainNavShellState extends State<MainNavShell> {
             ? user.email!
             : (isAr ? 'عضو مشوار' : 'MASHWAR Member'));
 
+    final contactParts = <String>[
+      if (user.phone.trim().isNotEmpty) user.phone.trim(),
+      if (user.email != null &&
+          user.email!.trim().isNotEmpty &&
+          user.email!.trim() != displayName)
+        user.email!.trim(),
+    ];
+    final contactSubtitle = contactParts.join(' · ');
+
+    final isVerifiedIdentity = worksite.isApprovedProvider ||
+        user.isVerified ||
+        user.idVerificationStatus == IdVerificationStatus.verified;
+    final statusLabel = prov != null
+        ? prov.approvalStatus.label(isArabic: isAr)
+        : (isVerifiedIdentity
+            ? (isAr ? 'هوية موثّقة' : 'Identity Verified')
+            : (isAr ? 'عضو نشط' : 'Active Member'));
+
     final realRating =
         (prov != null && prov.rating > 0) ? prov.rating : user.rating;
     final myReqCount = uid.isEmpty
@@ -1845,7 +1885,14 @@ class _MainNavShellState extends State<MainNavShell> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        title: Text(isAr ? 'حسابي' : 'Account', style: AppTypography.title()),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.slateBorder),
+        ),
+        title: Text(
+          isAr ? 'حسابي' : 'Account',
+          style: AppTypography.title().copyWith(fontSize: 18),
+        ),
         actions: [
           IconButton(
             tooltip: isAr ? 'الإشعارات' : 'Notifications',
@@ -1878,35 +1925,40 @@ class _MainNavShellState extends State<MainNavShell> {
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 820),
+            constraints: const BoxConstraints(maxWidth: 760),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppDimens.space20),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.space20,
+                vertical: AppDimens.space16,
+              ),
               child: MashwarFadeSlideIn(
-                duration: const Duration(milliseconds: 280),
-                offsetY: 10,
+                duration: const Duration(milliseconds: 260),
+                offsetY: 8,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 1. Identity & Multi-Service Profile Summary Card
+                    // 1. Clean Uber-Style Executive Identity & 4-Stat Header
                     MashwarSectionCard(
-                      padding: const EdgeInsets.all(18),
-                      borderRadius: 18,
+                      padding: const EdgeInsets.all(20),
+                      borderRadius: 16,
+                      borderColor: AppColors.slateBorder,
                       child: Column(
                         children: [
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               MashwarUserAvatar(
                                 key: const ValueKey('account_tab_avatar_btn'),
                                 avatarUrl: user.avatarUrl,
                                 fullName: displayName,
-                                size: 64,
-                                borderWidth: 2.4,
-                                borderColor: AppColors.gold,
+                                size: 60,
+                                borderWidth: 1.5,
+                                borderColor: AppColors.slateBorder,
                                 showCameraBadge: true,
                                 onTap: () =>
                                     pickAndSaveCurrentUserAvatar(context),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 14),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1919,91 +1971,108 @@ class _MainNavShellState extends State<MainNavShell> {
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: AppTypography.title()
-                                                .copyWith(fontSize: 18),
+                                                .copyWith(
+                                              fontSize: 17.5,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                         ),
-                                        if (worksite.isApprovedProvider ||
-                                            user.isVerified) ...[
-                                          const SizedBox(width: 6),
-                                          const Icon(Icons.verified_rounded,
-                                              color: AppColors.emerald,
-                                              size: 18),
+                                        if (isVerifiedIdentity) ...[
+                                          const SizedBox(width: 5),
+                                          const Icon(
+                                            Icons.verified_rounded,
+                                            color: AppColors.teal,
+                                            size: 17,
+                                          ),
                                         ],
                                       ],
                                     ),
-                                    if (user.email != null &&
-                                        user.email!.isNotEmpty)
+                                    if (contactSubtitle.isNotEmpty) ...[
+                                      const SizedBox(height: 3),
                                       Text(
-                                        user.email!,
+                                        contactSubtitle,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: AppTypography.bodySecondary(),
+                                        style: AppTypography.bodySecondary()
+                                            .copyWith(fontSize: 12.5),
                                       ),
-                                    if (user.phone.isNotEmpty)
-                                      Text(user.phone,
-                                          style: AppTypography.label()),
+                                    ],
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isVerifiedIdentity
+                                            ? AppColors.tealSurface
+                                            : AppColors.slateBg,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: isVerifiedIdentity
+                                              ? AppColors.teal
+                                                  .withValues(alpha: 0.25)
+                                              : AppColors.slateBorder,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        statusLabel,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: AppTypography.label(
+                                          color: isVerifiedIdentity
+                                              ? AppColors.teal
+                                              : AppColors.textSecondary,
+                                        ).copyWith(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
+                              const SizedBox(width: 10),
                               OutlinedButton(
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.cobalt,
-                                  side: BorderSide(
-                                    color: AppColors.cobalt
-                                        .withValues(alpha: 0.35),
+                                  foregroundColor: AppColors.navy,
+                                  backgroundColor: AppColors.slateBg,
+                                  side: const BorderSide(
+                                    color: AppColors.slateBorder,
                                   ),
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 6),
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
                                   minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                 ),
                                 onPressed: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                        builder: (_) =>
-                                            const UserProfileScreen()),
+                                      builder: (_) => const UserProfileScreen(),
+                                    ),
                                   );
                                 },
                                 child: Text(
-                                  isAr ? 'الملف' : 'Profile',
-                                  style: AppTypography.label(
-                                          color: AppColors.cobalt)
-                                      .copyWith(fontWeight: FontWeight.w800),
+                                  isAr ? 'عرض الملف' : 'Profile',
+                                  style:
+                                      AppTypography.label(color: AppColors.navy)
+                                          .copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            alignment: WrapAlignment.start,
-                            children: [
-                              _buildAccountTrustChip(
-                                MashwarTrustType.qatarIdCrest,
-                                prov != null
-                                    ? prov.approvalStatus.label(isArabic: isAr)
-                                    : (user.idVerificationStatus ==
-                                            IdVerificationStatus.verified
-                                        ? (isAr
-                                            ? 'هوية موثّقة'
-                                            : 'Identity Verified')
-                                        : (isAr
-                                            ? 'عضوية نشطة'
-                                            : 'Active Member')),
-                              ),
-                              _buildAccountTrustChip(
-                                MashwarTrustType.verifiedReceipt,
-                                isAr ? 'فواتير موثّقة' : 'Verified Invoices',
-                              ),
-                              _buildAccountTrustChip(
-                                MashwarTrustType.handoverShield,
-                                isAr ? 'تأكيد OTP وتسليم' : 'OTP Handover',
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                           const Divider(height: 1, color: AppColors.slateBorder),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 14),
                           Row(
                             children: [
                               Expanded(
@@ -2040,225 +2109,282 @@ class _MainNavShellState extends State<MainNavShell> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 20),
+
+                    // 2. Group 1: النشاط والخدمات / Services & Activity
+                    _buildAccountSectionLabel(
+                      isAr ? 'النشاط والخدمات' : 'Services & Activity',
+                    ),
+                    _buildAccountGroupCard([
+                      _buildMenuItem(
+                        key: const ValueKey('account_driver_rides_tile'),
+                        icon: Icons.directions_car_outlined,
+                        iconColor: AppColors.navy,
+                        title: isAr
+                            ? 'رحلاتي المنشورة'
+                            : 'My Published Trips',
+                        trailingText: publishedTripsCount > 0
+                            ? '$publishedTripsCount'
+                            : null,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const DriverRidesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildMenuDivider(),
+                      _buildMenuItem(
+                        key: const ValueKey('account_board_ads_tile'),
+                        icon: Icons.route_outlined,
+                        iconColor: AppColors.navy,
+                        title: isAr
+                            ? 'طلبات السفر والطرود'
+                            : 'Trip & Parcel Requests',
+                        trailingText: board.myAds.isNotEmpty
+                            ? '${board.myAds.length}'
+                            : null,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const MyBoardAdsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildMenuDivider(),
+                      _buildMenuItem(
+                        key: const ValueKey('account_provider_profile_tile'),
+                        icon: Icons.verified_user_outlined,
+                        iconColor: AppColors.teal,
+                        title: isAr
+                            ? 'ملف المزود والمواقع المحفوظة'
+                            : 'Provider Profile & QID Verification',
+                        badge: prov != null
+                            ? MashwarBadge(
+                                type: prov.approvalStatus ==
+                                        ProviderApprovalStatus.approved
+                                    ? BadgeType.verified
+                                    : (prov.approvalStatus ==
+                                            ProviderApprovalStatus.rejected
+                                        ? BadgeType.rejected
+                                        : BadgeType.pending),
+                                customLabel:
+                                    prov.approvalStatus.label(isArabic: isAr),
+                              )
+                            : null,
+                        trailingText: prov == null &&
+                                worksite.savedWorksites.isNotEmpty
+                            ? '${worksite.savedWorksites.length}'
+                            : null,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ProviderProfileScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ]),
                     const SizedBox(height: 18),
 
-                    // 2. Clean International Multi-Service Account Hub Menu
-                    Material(
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppDimens.radiusCard),
-                        side: const BorderSide(color: AppColors.slateBorder),
+                    // 3. Group 2: التوثيق والتنبيهات / Verification & Alerts
+                    _buildAccountSectionLabel(
+                      isAr ? 'التوثيق والتنبيهات' : 'Verification & Alerts',
+                    ),
+                    _buildAccountGroupCard([
+                      _buildMenuItem(
+                        key: const ValueKey('account_identity_tile'),
+                        icon: Icons.shield_outlined,
+                        iconColor: AppColors.teal,
+                        title: isAr
+                            ? 'توثيق الهوية والبيانات الشخصية'
+                            : 'Identity Verification & Personal Info',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const IdVerificationScreen(
+                                isOnboarding: false,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Column(
-                        children: [
-                          _buildMenuItem(
-                            key: const ValueKey('account_identity_tile'),
-                            icon: Icons.badge_outlined,
-                            iconBg: AppColors.cobaltSurface,
-                            iconColor: AppColors.cobalt,
-                            title: isAr
-                                ? 'توثيق الهوية والبيانات الشخصية'
-                                : 'Identity Verification & Personal Info',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const IdVerificationScreen(
-                                    isOnboarding: false,
+                      _buildMenuDivider(),
+                      _buildMenuItem(
+                        key: const ValueKey('account_notifications_tile'),
+                        icon: Icons.notifications_none_rounded,
+                        iconColor: AppColors.navy,
+                        title: isAr ? 'الإشعارات' : 'Notifications',
+                        badge: unreadCount > 0
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: AppColors.navy,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  '$unreadCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              );
-                            },
-                          ),
-                          const Divider(height: 1, color: AppColors.slateBorder),
-                          _buildMenuItem(
-                            key: const ValueKey('account_driver_rides_tile'),
-                            icon: Icons.directions_car_outlined,
-                            iconBg: AppColors.cobaltSurface,
-                            iconColor: AppColors.cobalt,
-                            title: isAr
-                                ? 'رحلاتي المنشورة'
-                                : 'My Published Trips',
-                            trailingText: publishedTripsCount > 0
-                                ? '$publishedTripsCount'
-                                : null,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const DriverRidesScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const Divider(height: 1, color: AppColors.slateBorder),
-                          _buildMenuItem(
-                            key: const ValueKey('account_board_ads_tile'),
-                            icon: Icons.campaign_outlined,
-                            iconBg: AppColors.indigoSurface,
-                            iconColor: AppColors.indigo,
-                            title: isAr
-                                ? 'طلبات السفر والطرود'
-                                : 'Trip & Parcel Requests',
-                            trailingText: board.myAds.isNotEmpty
-                                ? '${board.myAds.length}'
-                                : null,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const MyBoardAdsScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const Divider(height: 1, color: AppColors.slateBorder),
-                          _buildMenuItem(
-                            key: const ValueKey('account_provider_profile_tile'),
-                            icon: Icons.verified_user_outlined,
-                            iconBg: AppColors.emeraldSurface,
-                            iconColor: AppColors.emerald,
-                            title: isAr
-                                ? 'ملف المزود والمواقع المحفوظة'
-                                : 'Provider Profile & QID Verification',
-                            badge: prov != null
-                                ? MashwarBadge(
-                                    type: prov.approvalStatus ==
-                                            ProviderApprovalStatus.approved
-                                        ? BadgeType.verified
-                                        : (prov.approvalStatus ==
-                                                ProviderApprovalStatus.rejected
-                                            ? BadgeType.rejected
-                                            : BadgeType.pending),
-                                    customLabel: prov.approvalStatus
-                                        .label(isArabic: isAr),
-                                  )
-                                : null,
-                            trailingText: prov == null &&
-                                    worksite.savedWorksites.isNotEmpty
-                                ? '${worksite.savedWorksites.length}'
-                                : null,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const ProviderProfileScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const Divider(height: 1, color: AppColors.slateBorder),
-                          _buildMenuItem(
-                            key: const ValueKey('account_notifications_tile'),
-                            icon: Icons.notifications_active_outlined,
-                            iconBg: AppColors.goldSurface,
-                            iconColor: AppColors.warning,
-                            title: isAr ? 'الإشعارات' : 'Notifications',
-                            badge: unreadCount > 0
-                                ? Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.cobalt,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      '$unreadCount',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  )
-                                : null,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      const NotificationsCenterScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                          const Divider(height: 1, color: AppColors.slateBorder),
-                          _buildMenuItem(
-                            key: const ValueKey('account_help_support_tile'),
-                            icon: Icons.support_agent_rounded,
-                            iconBg: AppColors.emeraldSurface,
-                            iconColor: AppColors.emerald,
-                            title: isAr ? 'المساعدة والدعم' : 'Help & Support',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (_) => const HelpSupportScreen()),
-                              );
-                            },
-                          ),
-                          const Divider(height: 1, color: AppColors.slateBorder),
-                          _buildMenuItem(
-                            key: const ValueKey('account_settings_tile'),
-                            icon: Icons.settings_outlined,
-                            iconBg: AppColors.slateBg,
-                            iconColor: AppColors.navy,
-                            title: isAr
-                                ? 'الإعدادات واللغة'
-                                : 'Settings & Language',
-                            trailingText: isAr ? 'العربية' : 'English',
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (_) => const SettingsScreen()),
-                              );
-                            },
-                          ),
-                          const Divider(height: 1, color: AppColors.slateBorder),
-                          _buildMenuItem(
-                            icon: Icons.gavel_outlined,
-                            iconBg: AppColors.slateBg,
-                            iconColor: AppColors.navy,
-                            title: isAr
-                                ? 'الشروط القانونية والخصوصية'
-                                : 'Legal Terms & Privacy',
-                            onTap: () =>
-                                _showPilotLegalDisclaimersSheet(context, isAr),
-                          ),
-                        ],
+                              )
+                            : null,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const NotificationsCenterScreen(),
+                            ),
+                          );
+                        },
                       ),
-                    ),
+                    ]),
                     const SizedBox(height: 18),
 
-                    // Platform Scope Disclosure Card
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.slateBorder),
-                      ),
-                      child: Text(
-                        AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
-                        style: AppTypography.bodySmall(
-                            color: AppColors.textSecondary),
-                      ),
+                    // 4. Group 3: الإعدادات والدعم / Preferences & Support
+                    _buildAccountSectionLabel(
+                      isAr ? 'الإعدادات والدعم' : 'Preferences & Support',
                     ),
-                    const SizedBox(height: 22),
+                    _buildAccountGroupCard([
+                      _buildMenuItem(
+                        key: const ValueKey('account_settings_tile'),
+                        icon: Icons.tune_rounded,
+                        iconColor: AppColors.navy,
+                        title: isAr
+                            ? 'الإعدادات واللغة'
+                            : 'Settings & Language',
+                        trailingText: isAr ? 'العربية' : 'English',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const SettingsScreen()),
+                          );
+                        },
+                      ),
+                      _buildMenuDivider(),
+                      _buildMenuItem(
+                        key: const ValueKey('account_help_support_tile'),
+                        icon: Icons.support_agent_rounded,
+                        iconColor: AppColors.navy,
+                        title: isAr ? 'المساعدة والدعم' : 'Help & Support',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const HelpSupportScreen()),
+                          );
+                        },
+                      ),
+                      _buildMenuDivider(),
+                      _buildMenuItem(
+                        icon: Icons.description_outlined,
+                        iconColor: AppColors.navy,
+                        title: isAr
+                            ? 'الشروط القانونية والخصوصية'
+                            : 'Legal Terms & Privacy',
+                        onTap: () =>
+                            _showPilotLegalDisclaimersSheet(context, isAr),
+                      ),
+                    ]),
+                    const SizedBox(height: 18),
 
-                    MashwarButton(
-                      key: const ValueKey('mvp_logout_btn'),
-                      text: isAr ? 'تسجيل الخروج' : 'Log Out',
-                      variant: MashwarButtonVariant.danger,
-                      isLoading: auth.isLoading,
-                      onPressed: () async {
-                        await auth.logout();
-                        if (!context.mounted) return;
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (_) => const WelcomeScreen()),
-                          (route) => false,
-                        );
-                      },
+                    // 5. Quiet, Toned-Down Log Out Button (preserves mvp_logout_btn)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: OutlinedButton.icon(
+                        key: const ValueKey('mvp_logout_btn'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.danger,
+                          backgroundColor: Colors.white,
+                          side: BorderSide(
+                            color: AppColors.danger.withValues(alpha: 0.28),
+                            width: 1.0,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: auth.isLoading
+                            ? null
+                            : () async {
+                                await auth.logout();
+                                if (!context.mounted) return;
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                      builder: (_) => const WelcomeScreen()),
+                                  (route) => false,
+                                );
+                              },
+                        icon: auth.isLoading
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.danger,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.logout_rounded,
+                                size: 17,
+                                color: AppColors.danger,
+                              ),
+                        label: Text(
+                          isAr ? 'تسجيل الخروج' : 'Log Out',
+                          style: AppTypography.body(color: AppColors.danger)
+                              .copyWith(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
+
+                    // 6. Compact, Quiet Legal Scope Caption
+                    InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () =>
+                          _showPilotLegalDisclaimersSheet(context, isAr),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(top: 2),
+                              child: Icon(
+                                Icons.info_outline_rounded,
+                                size: 14,
+                                color: Color(0xFF94A3B8),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                AppEnvironment.pilotScopeDisclaimer(
+                                    isArabic: isAr),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.bodySmall(
+                                  color: const Color(0xFF64748B),
+                                ).copyWith(fontSize: 11, height: 1.35),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                   ],
                 ),
               ),
@@ -2269,6 +2395,41 @@ class _MainNavShellState extends State<MainNavShell> {
     );
   }
 
+  Widget _buildAccountSectionLabel(String text) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: 4, end: 4, bottom: 8),
+      child: Text(
+        text,
+        style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(
+          fontSize: 12.5,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccountGroupCard(List<Widget> children) {
+    return Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: children),
+    );
+  }
+
+  Widget _buildMenuDivider() {
+    return const Divider(
+      height: 1,
+      thickness: 1,
+      indent: 64,
+      endIndent: 16,
+      color: AppColors.slateBorder,
+    );
+  }
+
   Widget _buildStatColumn(String value, String label) {
     return Column(
       children: [
@@ -2276,28 +2437,32 @@ class _MainNavShellState extends State<MainNavShell> {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.title(color: AppColors.navy)
-              .copyWith(fontSize: 16),
+          style: AppTypography.title(color: AppColors.navy).copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.label(color: AppColors.textSecondary),
+          style: AppTypography.label(color: AppColors.textSecondary).copyWith(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
   }
 
   Widget _buildStatDivider() {
-    return Container(width: 1, height: 28, color: AppColors.slateBorder);
+    return Container(width: 1, height: 26, color: AppColors.slateBorder);
   }
 
   Widget _buildMenuItem({
     Key? key,
     required IconData icon,
-    required Color iconBg,
     required Color iconColor,
     required String title,
     required VoidCallback onTap,
@@ -2307,19 +2472,23 @@ class _MainNavShellState extends State<MainNavShell> {
     return ListTile(
       key: key,
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       leading: Container(
-        width: 38,
-        height: 38,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
-          color: iconBg,
+          color: AppColors.slateBg,
           borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AppColors.slateBorder.withValues(alpha: 0.75),
+          ),
         ),
         child: Icon(icon, color: iconColor, size: 19),
       ),
       title: Text(
         title,
-        style: AppTypography.body().copyWith(
-          fontWeight: FontWeight.w700,
+        style: AppTypography.body(color: AppColors.navy).copyWith(
+          fontWeight: FontWeight.w600,
           fontSize: 14,
         ),
       ),
@@ -2331,46 +2500,27 @@ class _MainNavShellState extends State<MainNavShell> {
             const SizedBox(width: 6),
           ],
           if (trailingText != null) ...[
-            Text(
-              trailingText,
-              style: AppTypography.label(color: AppColors.cobalt)
-                  .copyWith(fontWeight: FontWeight.w800),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.slateBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.slateBorder),
+              ),
+              child: Text(
+                trailingText,
+                style: AppTypography.label(color: AppColors.navy).copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11.5,
+                ),
+              ),
             ),
             const SizedBox(width: 6),
           ],
           const Icon(
             Icons.chevron_right_rounded,
             size: 20,
-            color: AppColors.textSecondary,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAccountTrustChip(MashwarTrustType type, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.slateBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.slateBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MashwarTrustEmblem(type: type, size: 22),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTypography.label(color: AppColors.navy).copyWith(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+            color: Color(0xFF94A3B8),
           ),
         ],
       ),

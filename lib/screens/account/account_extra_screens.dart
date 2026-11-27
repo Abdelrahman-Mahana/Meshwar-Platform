@@ -64,12 +64,27 @@ class UserProfileScreen extends StatelessWidget {
     final unreadNotificationsCount = worksite?.unreadNotificationsCount ?? 0;
     final savedSites = worksite?.savedWorksites ?? const <SavedWorksite>[];
 
+    final metaParts = <String>[
+      if (user.phone.trim().isNotEmpty) user.phone.trim(),
+      if (user.city != null && user.city!.trim().isNotEmpty)
+        user.city!.trim()
+      else if (user.governorate != null && user.governorate!.trim().isNotEmpty)
+        user.governorate!.trim(),
+      if (user.occupation != null && user.occupation!.trim().isNotEmpty)
+        user.occupation!.trim(),
+    ];
+    final metaLine = metaParts.join(' · ');
+
     return Scaffold(
       backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.slateBorder),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.navy),
@@ -77,21 +92,28 @@ class UserProfileScreen extends StatelessWidget {
         ),
         title: Text(
           isAr ? 'الملف الشخصي' : 'My Profile',
-          style: AppTypography.title(),
+          style: AppTypography.title().copyWith(fontSize: 18),
         ),
         actions: [
-          TextButton.icon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-              );
-            },
-            icon: const Icon(Icons.edit_outlined,
-                size: 18, color: AppColors.cobalt),
-            label: Text(
-              isAr ? 'تعديل' : 'Edit',
-              style: AppTypography.label(color: AppColors.cobalt)
-                  .copyWith(fontWeight: FontWeight.w700),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 8),
+            child: TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.navy,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                );
+              },
+              icon: const Icon(Icons.edit_outlined,
+                  size: 17, color: AppColors.navy),
+              label: Text(
+                isAr ? 'تعديل' : 'Edit',
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
             ),
           ),
         ],
@@ -103,7 +125,12 @@ class UserProfileScreen extends StatelessWidget {
 
             final heroCard = MashwarFadeSlideIn(
               child: MashwarSectionCard(
-                padding: const EdgeInsets.all(AppDimens.space20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppDimens.space20,
+                  vertical: 22,
+                ),
+                borderRadius: 16,
+                borderColor: AppColors.slateBorder,
                 child: Column(
                   children: [
                     MashwarUserAvatar(
@@ -112,9 +139,9 @@ class UserProfileScreen extends StatelessWidget {
                       fullName: user.fullName.isNotEmpty
                           ? user.fullName
                           : (isAr ? 'عضو مشوار' : 'MASHWAR Member'),
-                      size: 86,
-                      borderWidth: 2.6,
-                      borderColor: AppColors.gold,
+                      size: 80,
+                      borderWidth: 1.8,
+                      borderColor: AppColors.slateBorder,
                       showCameraBadge: true,
                       onTap: () => pickAndSaveCurrentUserAvatar(context),
                     ),
@@ -122,16 +149,20 @@ class UserProfileScreen extends StatelessWidget {
                     TextButton.icon(
                       key: const ValueKey('user_profile_change_photo_btn'),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.teal,
+                        foregroundColor: AppColors.navy,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                          horizontal: 10,
                           vertical: 4,
                         ),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       onPressed: () => pickAndSaveCurrentUserAvatar(context),
-                      icon: const Icon(Icons.add_a_photo_outlined, size: 15),
+                      icon: const Icon(
+                        Icons.camera_alt_outlined,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                       label: Text(
                         (user.avatarUrl != null &&
                                 user.avatarUrl!.trim().isNotEmpty)
@@ -139,11 +170,14 @@ class UserProfileScreen extends StatelessWidget {
                             : (isAr
                                 ? 'إضافة صورة شخصية'
                                 : 'Add Profile Photo'),
-                        style: AppTypography.label(color: AppColors.teal)
-                            .copyWith(fontWeight: FontWeight.w800),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -154,142 +188,77 @@ class UserProfileScreen extends StatelessWidget {
                                 : (isAr ? 'عضو مشوار' : 'MASHWAR Member'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypography.title().copyWith(fontSize: 20),
+                            style: AppTypography.title().copyWith(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                         if (isIdVerified ||
                             (prov?.canAcceptWorksiteJobs ?? false)) ...[
                           const SizedBox(width: 6),
                           const Icon(Icons.verified_rounded,
-                              color: AppColors.emerald, size: 20),
+                              color: AppColors.teal, size: 19),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    if (user.phone.isNotEmpty)
-                      Text(user.phone, style: AppTypography.bodySecondary()),
+                    if (metaLine.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        metaLine,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: AppTypography.bodySecondary()
+                            .copyWith(fontSize: 12.5),
+                      ),
+                    ],
                     if (user.email != null && user.email!.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
                         user.email!,
-                        style:
-                            AppTypography.label(color: AppColors.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(
+                          color: AppColors.textSecondary,
+                        ).copyWith(fontSize: 11.5, fontWeight: FontWeight.w500),
                       ),
                     ],
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        MashwarBadge(
-                          type: isIdVerified
-                              ? BadgeType.verified
-                              : BadgeType.pending,
-                          customLabel: isIdVerified
-                              ? (isAr ? 'هوية موثّقة' : 'Identity Verified')
-                              : (isAr ? 'بانتظار التوثيق' : 'Unverified'),
-                        ),
-                        if (prov != null)
-                          MashwarBadge(
-                            type: prov.approvalStatus ==
-                                    ProviderApprovalStatus.approved
-                                ? BadgeType.verified
-                                : (prov.approvalStatus ==
-                                        ProviderApprovalStatus.rejected
-                                    ? BadgeType.rejected
-                                    : BadgeType.pending),
-                            customLabel:
-                                prov.approvalStatus.label(isArabic: isAr),
-                          ),
-                        if (user.governorate != null &&
-                            user.governorate!.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.slateBg,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.slateBorder),
-                            ),
-                            child: Text(
-                              user.city != null
-                                  ? '${user.governorate} · ${user.city}'
-                                  : user.governorate!,
-                              style: AppTypography.label(color: AppColors.navy)
-                                  .copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        if (user.occupation != null &&
-                            user.occupation!.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.emeraldSurface,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Text(
-                              user.occupation!,
-                              style:
-                                  AppTypography.label(color: AppColors.emerald)
-                                      .copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                      ],
+                    MashwarBadge(
+                      type: isIdVerified
+                          ? BadgeType.verified
+                          : BadgeType.pending,
+                      customLabel: isIdVerified
+                          ? (isAr ? 'هوية موثّقة' : 'Identity Verified')
+                          : (isAr ? 'بانتظار التوثيق' : 'Unverified'),
                     ),
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        _buildPillarMiniTag(
-                          MashwarServicePillar.sharedTrips,
-                          isAr
-                              ? 'رحلات ($publishedTripsCount)'
-                              : 'Trips ($publishedTripsCount)',
-                        ),
-                        _buildPillarMiniTag(
-                          MashwarServicePillar.routeParcels,
-                          isAr
-                              ? 'طرود ($activeParcelsCount)'
-                              : 'Parcels ($activeParcelsCount)',
-                        ),
-                        _buildPillarMiniTag(
-                          MashwarServicePillar.smartSupply,
-                          isAr
-                              ? 'توريد ($myRequestsCount)'
-                              : 'Supply ($myRequestsCount)',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     const Divider(height: 1, color: AppColors.slateBorder),
                     const SizedBox(height: 14),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         Expanded(
                           child: _buildStatItem(
-                            '$myRequestsCount',
-                            isAr ? 'طلباتي' : 'My Requests',
+                            '$publishedTripsCount',
+                            isAr ? 'رحلات' : 'Trips',
                           ),
                         ),
-                        Container(
-                            width: 1,
-                            height: 28,
-                            color: AppColors.slateBorder),
+                        _buildStatDivider(),
+                        Expanded(
+                          child: _buildStatItem(
+                            '$activeParcelsCount',
+                            isAr ? 'طرود' : 'Packages',
+                          ),
+                        ),
+                        _buildStatDivider(),
                         Expanded(
                           child: _buildStatItem(
                             '$completedSuppliesCount',
                             isAr ? 'مهام مكتملة' : 'Completed Jobs',
                           ),
                         ),
-                        Container(
-                            width: 1,
-                            height: 28,
-                            color: AppColors.slateBorder),
+                        _buildStatDivider(),
                         Expanded(
                           child: _buildStatItem(
                             realRating > 0
@@ -308,76 +277,117 @@ class UserProfileScreen extends StatelessWidget {
             final preferencesAndAccount = Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  isAr
-                      ? 'حالة التوثيق والمواقع المحفوظة'
-                      : 'QID Verification & Worksites',
-                  style: AppTypography.title().copyWith(fontSize: 15),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                      start: 4, end: 4, bottom: 8),
+                  child: Text(
+                    isAr
+                        ? 'حالة التوثيق والمواقع المحفوظة'
+                        : 'QID Verification & Worksites',
+                    style: AppTypography.label(color: const Color(0xFF64748B))
+                        .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
                 ),
-                const SizedBox(height: 8),
                 MashwarSectionCard(
                   padding: const EdgeInsets.all(AppDimens.space16),
                   borderRadius: 14,
+                  borderColor: AppColors.slateBorder,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          const MashwarTrustEmblem(
-                            type: MashwarTrustType.qatarIdCrest,
-                            size: 32,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isAr
-                                      ? 'حالة توثيق الهوية والمزود'
-                                      : 'Identity & Provider Status',
-                                  style: AppTypography.label(
-                                      color: AppColors.textSecondary),
-                                ),
-                                Text(
-                                  prov != null
-                                      ? prov.approvalStatus
-                                          .label(isArabic: isAr)
-                                      : (isIdVerified
-                                          ? (isAr
-                                              ? 'هوية موثّقة'
-                                              : 'Identity Verified')
-                                          : (isAr
-                                              ? 'عضو نشط (رحلات · طرود · توريد)'
-                                              : 'Active Member (Trips · Parcels · Supply)')),
-                                  style: AppTypography.body(
-                                          color: AppColors.navy)
-                                      .copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 14),
-                                ),
-                              ],
+                      InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ProviderProfileScreen(),
                             ),
-                          ),
-                        ],
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: AppColors.tealSurface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color:
+                                      AppColors.teal.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: const Icon(
+                                Icons.verified_user_outlined,
+                                size: 18,
+                                color: AppColors.teal,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isAr
+                                        ? 'توثيق الهوية القطرية والمزود'
+                                        : 'QID & Provider Verification',
+                                    style: AppTypography.body(
+                                      color: AppColors.navy,
+                                    ).copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13.5,
+                                    ),
+                                  ),
+                                  Text(
+                                    prov != null
+                                        ? prov.approvalStatus
+                                            .label(isArabic: isAr)
+                                        : (isIdVerified
+                                            ? (isAr
+                                                ? 'هوية موثّقة ومعتمدة'
+                                                : 'Verified Identity')
+                                            : (isAr
+                                                ? 'عضو نشط · اضغط لإكمال التوثيق'
+                                                : 'Active Member · Tap to verify QID')),
+                                    style: AppTypography.label(
+                                      color: AppColors.textSecondary,
+                                    ).copyWith(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              size: 20,
+                              color: Color(0xFF94A3B8),
+                            ),
+                          ],
+                        ),
                       ),
-                      const Divider(height: 20, color: AppColors.slateBorder),
+                      const Divider(height: 22, color: AppColors.slateBorder),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
                             child: Text(
-                              isAr
-                                  ? 'المواقع ومقار العمل المحفوظة'
-                                  : 'Saved Locations & Worksites',
+                              isAr ? 'المواقع المحفوظة' : 'Saved Worksites',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.bodySecondary(),
+                              style: AppTypography.body(color: AppColors.navy)
+                                  .copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           TextButton(
                             style: TextButton.styleFrom(
+                              foregroundColor: AppColors.navy,
                               padding: EdgeInsets.zero,
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -393,8 +403,8 @@ class UserProfileScreen extends StatelessWidget {
                             },
                             child: Text(
                               isAr ? 'إدارة' : 'Manage',
-                              style: AppTypography.label(color: AppColors.cobalt)
-                                  .copyWith(fontWeight: FontWeight.w800),
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                         ],
@@ -403,7 +413,7 @@ class UserProfileScreen extends StatelessWidget {
                       if (savedSites.isEmpty)
                         Text(
                           isAr
-                              ? 'لم تتم إضافة مواقع محفوظة بعد.'
+                              ? 'لا توجد مواقع محفوظة بعد.'
                               : 'No saved worksites added yet.',
                           style: AppTypography.bodySmall(),
                         )
@@ -414,21 +424,22 @@ class UserProfileScreen extends StatelessWidget {
                           children: savedSites.take(4).map((site) {
                             return Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
+                                  horizontal: 10, vertical: 4.5),
                               decoration: BoxDecoration(
-                                color: AppColors.cobaltSurface,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color:
-                                      AppColors.cobalt.withValues(alpha: 0.25),
-                                ),
+                                color: AppColors.slateBg,
+                                borderRadius: BorderRadius.circular(8),
+                                border:
+                                    Border.all(color: AppColors.slateBorder),
                               ),
                               child: Text(
                                 '${site.label} · ${AppStrings.translateCity(site.municipality, isArabic: isAr)}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.label(color: AppColors.navy)
-                                    .copyWith(fontWeight: FontWeight.w700),
+                                    .copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 11.5,
+                                ),
                               ),
                             );
                           }).toList(),
@@ -437,34 +448,38 @@ class UserProfileScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppDimens.space20),
-                Text(
-                  isAr ? 'إدارة الحساب والخدمات' : 'Account & Services',
-                  style: AppTypography.title().copyWith(fontSize: 15),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(
+                      start: 4, end: 4, bottom: 8),
+                  child: Text(
+                    isAr ? 'إدارة الحساب والخدمات' : 'Account & Services',
+                    style: AppTypography.label(color: const Color(0xFF64748B))
+                        .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
                 ),
-                const SizedBox(height: 8),
                 Material(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                     side: const BorderSide(
-                        color: AppColors.slateBorder, width: 0.9),
+                        color: AppColors.slateBorder, width: 1.0),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
                       _buildActionTile(
-                        icon: Icons.person_outline_rounded,
-                        title: isAr
-                            ? 'تعديل البيانات الشخصية'
-                            : 'Edit Personal Info',
+                        icon: Icons.assignment_outlined,
+                        title: isAr ? 'طلباتي للتوريد والمهام' : 'My Requests',
+                        trailingText:
+                            myRequestsCount > 0 ? '$myRequestsCount' : null,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                                builder: (_) => const EditProfileScreen()),
+                                builder: (_) => const ProviderProfileScreen()),
                           );
                         },
                       ),
-                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildIndentedDivider(),
                       _buildActionTile(
                         icon: Icons.directions_car_outlined,
                         title: isAr
@@ -480,12 +495,12 @@ class UserProfileScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildIndentedDivider(),
                       _buildActionTile(
-                        icon: Icons.campaign_outlined,
+                        icon: Icons.route_outlined,
                         title: isAr
-                            ? 'طلبات السفر والطرود على الطريق'
-                            : 'Trip & Parcel Route Requests',
+                            ? 'طلبات المسار والتوصيل'
+                            : 'Route & Delivery Requests',
                         trailingText:
                             routeAdsCount > 0 ? '$routeAdsCount' : null,
                         onTap: () {
@@ -495,39 +510,9 @@ class UserProfileScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildIndentedDivider(),
                       _buildActionTile(
-                        icon: Icons.badge_outlined,
-                        title: isAr
-                            ? 'ملف المزود وتوثيق الهوية'
-                            : 'Provider Profile & QID Verification',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const ProviderProfileScreen()),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1, color: AppColors.slateBorder),
-                      _buildActionTile(
-                        icon: Icons.location_city_outlined,
-                        title: isAr
-                            ? 'المواقع المحفوظة'
-                            : 'Saved Worksites',
-                        trailingText: '${savedSites.length}',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ProviderProfileScreen(
-                                focusSavedWorksites: true,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1, color: AppColors.slateBorder),
-                      _buildActionTile(
-                        icon: Icons.notifications_active_outlined,
+                        icon: Icons.notifications_none_rounded,
                         title: isAr
                             ? 'مركز الإشعارات'
                             : 'Notifications Center',
@@ -542,7 +527,18 @@ class UserProfileScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      const Divider(height: 1, color: AppColors.slateBorder),
+                      _buildIndentedDivider(),
+                      _buildActionTile(
+                        icon: Icons.tune_rounded,
+                        title: isAr ? 'الإعدادات' : 'Settings',
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const SettingsScreen()),
+                          );
+                        },
+                      ),
+                      _buildIndentedDivider(),
                       _buildActionTile(
                         icon: Icons.support_agent_rounded,
                         title: isAr ? 'المساعدة والدعم' : 'Help & Support',
@@ -550,17 +546,6 @@ class UserProfileScreen extends StatelessWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                                 builder: (_) => const HelpSupportScreen()),
-                          );
-                        },
-                      ),
-                      const Divider(height: 1, color: AppColors.slateBorder),
-                      _buildActionTile(
-                        icon: Icons.settings_outlined,
-                        title: isAr ? 'الإعدادات' : 'Settings',
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const SettingsScreen()),
                           );
                         },
                       ),
@@ -605,26 +590,17 @@ class UserProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPillarMiniTag(MashwarServicePillar pillar, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.slateBg,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.slateBorder),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MashwarServicePillarIcon(pillar: pillar, size: 20),
-          const SizedBox(width: 5),
-          Text(
-            text,
-            style: AppTypography.label(color: AppColors.navy)
-                .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
-          ),
-        ],
-      ),
+  Widget _buildStatDivider() {
+    return Container(width: 1, height: 26, color: AppColors.slateBorder);
+  }
+
+  Widget _buildIndentedDivider() {
+    return const Divider(
+      height: 1,
+      thickness: 1,
+      indent: 64,
+      endIndent: 16,
+      color: AppColors.slateBorder,
     );
   }
 
@@ -635,15 +611,20 @@ class UserProfileScreen extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.title(color: AppColors.navy)
-              .copyWith(fontSize: 16),
+          style: AppTypography.title(color: AppColors.navy).copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: AppTypography.label(color: AppColors.textSecondary),
+          style: AppTypography.label(color: AppColors.textSecondary).copyWith(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -656,33 +637,50 @@ class UserProfileScreen extends StatelessWidget {
     String? trailingText,
   }) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       leading: Container(
         width: 36,
         height: 36,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.slateBg,
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: AppColors.slateBorder.withValues(alpha: 0.75),
+          ),
         ),
-        child: Icon(icon, size: 18, color: AppColors.cobalt),
+        child: Icon(icon, size: 18, color: AppColors.navy),
       ),
       title: Text(
         title,
-        style: AppTypography.body()
+        style: AppTypography.body(color: AppColors.navy)
             .copyWith(fontWeight: FontWeight.w600, fontSize: 14),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (trailingText != null) ...[
-            Text(
-              trailingText,
-              style: AppTypography.label(color: AppColors.cobalt)
-                  .copyWith(fontWeight: FontWeight.w700),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.slateBg,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.slateBorder),
+              ),
+              child: Text(
+                trailingText,
+                style: AppTypography.label(color: AppColors.navy).copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11.5,
+                ),
+              ),
             ),
             const SizedBox(width: 6),
           ],
-          const Icon(Icons.chevron_right_rounded,
-              size: 20, color: AppColors.textSecondary),
+          const Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: Color(0xFF94A3B8),
+          ),
         ],
       ),
       onTap: onTap,
@@ -775,6 +773,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  InputDecoration _fieldDecoration({
+    String? errorText,
+    bool readOnly = false,
+  }) {
+    return InputDecoration(
+      filled: true,
+      fillColor: readOnly ? AppColors.slateBg : Colors.white,
+      errorText: errorText,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.slateBorder, width: 1.0),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.navy, width: 1.4),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
@@ -786,6 +808,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.slateBorder),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.navy),
@@ -793,239 +819,213 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         title: Text(
           isAr ? 'تعديل الملف الشخصي' : 'Edit Profile',
-          style: AppTypography.title(),
+          style: AppTypography.title().copyWith(fontSize: 18),
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppDimens.space24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 580),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppDimens.space20),
+              child: MashwarSectionCard(
+                padding: const EdgeInsets.all(AppDimens.space20),
+                borderRadius: 16,
+                borderColor: AppColors.slateBorder,
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    MashwarUserAvatar(
-                      key: const ValueKey('edit_profile_avatar_btn'),
-                      avatarUrl: _avatarChanged ? _avatarUrl : user.avatarUrl,
-                      fullName: _nameController.text.trim().isNotEmpty
-                          ? _nameController.text.trim()
-                          : user.fullName,
-                      size: 88,
-                      borderWidth: 2.8,
-                      borderColor: AppColors.gold,
-                      showCameraBadge: true,
-                      onTap: () {
-                        showMashwarAvatarPickerSheet(
-                          context,
-                          currentAvatarUrl:
-                              _avatarChanged ? _avatarUrl : user.avatarUrl,
-                          fullName: _nameController.text.trim().isNotEmpty
-                              ? _nameController.text.trim()
-                              : user.fullName,
-                          onAvatarSelected: (picked) {
-                            setState(() {
-                              _avatarUrl = picked;
-                              _avatarChanged = true;
-                            });
-                            context.read<AuthProvider>().updateAvatar(picked);
-                          },
-                        );
-                      },
+                    Center(
+                      child: Column(
+                        children: [
+                          MashwarUserAvatar(
+                            key: const ValueKey('edit_profile_avatar_btn'),
+                            avatarUrl:
+                                _avatarChanged ? _avatarUrl : user.avatarUrl,
+                            fullName: _nameController.text.trim().isNotEmpty
+                                ? _nameController.text.trim()
+                                : user.fullName,
+                            size: 82,
+                            borderWidth: 1.8,
+                            borderColor: AppColors.slateBorder,
+                            showCameraBadge: true,
+                            onTap: () {
+                              showMashwarAvatarPickerSheet(
+                                context,
+                                currentAvatarUrl: _avatarChanged
+                                    ? _avatarUrl
+                                    : user.avatarUrl,
+                                fullName: _nameController.text.trim().isNotEmpty
+                                    ? _nameController.text.trim()
+                                    : user.fullName,
+                                onAvatarSelected: (picked) {
+                                  setState(() {
+                                    _avatarUrl = picked;
+                                    _avatarChanged = true;
+                                  });
+                                  context
+                                      .read<AuthProvider>()
+                                      .updateAvatar(picked);
+                                },
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            key: const ValueKey(
+                                'edit_profile_change_photo_btn'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.navy,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              showMashwarAvatarPickerSheet(
+                                context,
+                                currentAvatarUrl: _avatarChanged
+                                    ? _avatarUrl
+                                    : user.avatarUrl,
+                                fullName: _nameController.text.trim().isNotEmpty
+                                    ? _nameController.text.trim()
+                                    : user.fullName,
+                                onAvatarSelected: (picked) {
+                                  setState(() {
+                                    _avatarUrl = picked;
+                                    _avatarChanged = true;
+                                  });
+                                  context
+                                      .read<AuthProvider>()
+                                      .updateAvatar(picked);
+                                },
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.photo_camera_outlined,
+                              size: 15,
+                              color: AppColors.textSecondary,
+                            ),
+                            label: Text(
+                              isAr
+                                  ? 'رفع أو تغيير الصورة الشخصية'
+                                  : 'Upload or Change Profile Photo',
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    TextButton.icon(
-                      key: const ValueKey('edit_profile_change_photo_btn'),
-                      onPressed: () {
-                        showMashwarAvatarPickerSheet(
-                          context,
-                          currentAvatarUrl:
-                              _avatarChanged ? _avatarUrl : user.avatarUrl,
-                          fullName: _nameController.text.trim().isNotEmpty
-                              ? _nameController.text.trim()
-                              : user.fullName,
-                          onAvatarSelected: (picked) {
-                            setState(() {
-                              _avatarUrl = picked;
-                              _avatarChanged = true;
-                            });
-                            context.read<AuthProvider>().updateAvatar(picked);
-                          },
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.photo_camera_outlined,
-                        size: 16,
-                        color: AppColors.teal,
-                      ),
-                      label: Text(
-                        isAr
-                            ? 'رفع أو تغيير الصورة الشخصية'
-                            : 'Upload or Change Profile Photo',
-                        style: AppTypography.label(color: AppColors.teal)
-                            .copyWith(fontWeight: FontWeight.w800),
-                      ),
+                    const SizedBox(height: AppDimens.space20),
+                    Text(
+                      isAr ? 'الاسم الكامل' : 'Full Name',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700, fontSize: 12.5),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _nameController,
+                      decoration: _fieldDecoration(errorText: _nameError),
+                    ),
+                    const SizedBox(height: AppDimens.space16),
+                    Text(
+                      isAr ? 'رقم الجوال' : 'Mobile Number',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700, fontSize: 12.5),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _phoneController,
+                      readOnly: true,
+                      decoration: _fieldDecoration(readOnly: true),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isAr
+                          ? 'يتطلب تغيير رقم الجوال رمز تأكيد جديد.'
+                          : 'Changing mobile number requires SMS OTP verification.',
+                      style: AppTypography.label(color: AppColors.textSecondary)
+                          .copyWith(fontSize: 11.5, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: AppDimens.space16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isAr
+                                    ? 'المنطقة / البلدية'
+                                    : 'Region / Municipality',
+                                style:
+                                    AppTypography.label(color: AppColors.navy)
+                                        .copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: _govController,
+                                decoration: _fieldDecoration(),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isAr ? 'المدينة' : 'City',
+                                style:
+                                    AppTypography.label(color: AppColors.navy)
+                                        .copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: _cityController,
+                                decoration: _fieldDecoration(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppDimens.space16),
+                    Text(
+                      isAr ? 'المهنة / التخصص' : 'Occupation',
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700, fontSize: 12.5),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: _occupationController,
+                      decoration: _fieldDecoration(),
+                    ),
+                    const SizedBox(height: AppDimens.space24),
+                    MashwarButton(
+                      text: _isSaving
+                          ? (isAr ? 'جاري الحفظ...' : 'Saving...')
+                          : (isAr ? 'حفظ' : 'Save Changes'),
+                      isLoading: _isSaving,
+                      onPressed: () => _handleSave(isAr),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppDimens.space16),
-              Text(
-                isAr ? 'الاسم الكامل' : 'Full Name',
-                style:
-                    AppTypography.label().copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  errorText: _nameError,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space16),
-              Text(
-                isAr ? 'رقم الجوال' : 'Mobile Number',
-                style:
-                    AppTypography.label().copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _phoneController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: AppColors.slateBg,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                isAr
-                    ? 'يتطلب تغيير رقم الجوال رمز تأكيد جديد.'
-                    : 'Changing mobile number requires SMS OTP verification.',
-                style: AppTypography.label(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: AppDimens.space16),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isAr ? 'المنطقة / البلدية' : 'Region / Municipality',
-                          style: AppTypography.label()
-                              .copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 6),
-                        TextField(
-                          controller: _govController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: AppColors.slateBorder, width: 0.9),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: AppColors.slateBorder, width: 0.9),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isAr ? 'المدينة' : 'City',
-                          style: AppTypography.label()
-                              .copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 6),
-                        TextField(
-                          controller: _cityController,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: AppColors.slateBorder, width: 0.9),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                  color: AppColors.slateBorder, width: 0.9),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppDimens.space16),
-              Text(
-                isAr ? 'المهنة / التخصص' : 'Occupation',
-                style:
-                    AppTypography.label().copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              TextField(
-                controller: _occupationController,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide:
-                        const BorderSide(color: AppColors.slateBorder, width: 0.9),
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppDimens.space32),
-              MashwarButton(
-                text: _isSaving
-                    ? (isAr ? 'جاري الحفظ...' : 'Saving...')
-                    : (isAr ? 'حفظ' : 'Save Changes'),
-                isLoading: _isSaving,
-                onPressed: () => _handleSave(isAr),
-              ),
-              const SizedBox(height: AppDimens.space16),
-            ],
+            ),
           ),
         ),
       ),
@@ -1093,6 +1093,10 @@ class HelpSupportScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.slateBorder),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.navy),
@@ -1100,7 +1104,7 @@ class HelpSupportScreen extends StatelessWidget {
         ),
         title: Text(
           isAr ? 'المساعدة والدعم' : 'Help & Support',
-          style: AppTypography.title(),
+          style: AppTypography.title().copyWith(fontSize: 18),
         ),
       ),
       body: SafeArea(
@@ -1115,14 +1119,26 @@ class HelpSupportScreen extends StatelessWidget {
                   children: [
                     MashwarSectionCard(
                       backgroundColor: Colors.white,
-                      borderColor: AppColors.cobalt.withValues(alpha: 0.25),
-                      padding: const EdgeInsets.all(14),
+                      borderColor: AppColors.slateBorder,
+                      padding: const EdgeInsets.all(16),
                       borderRadius: 14,
                       child: Row(
                         children: [
-                          const MashwarTrustEmblem(
-                            type: MashwarTrustType.handoverShield,
-                            size: 36,
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppColors.tealSurface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: AppColors.teal.withValues(alpha: 0.25),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.support_agent_rounded,
+                              color: AppColors.teal,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -1133,16 +1149,19 @@ class HelpSupportScreen extends StatelessWidget {
                                   isAr
                                       ? 'مكتب عمليات ودعم مشوار (الرحلات · الطرود · التوريد)'
                                       : 'Qatar Worksite Operations Desk',
-                                  style: AppTypography.label(
+                                  style: AppTypography.body(
                                           color: AppColors.navy)
-                                      .copyWith(fontWeight: FontWeight.w800),
+                                      .copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13.5,
+                                  ),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   'ops@mashwar.qa · +974 4400 9999',
                                   style: AppTypography.bodySmall(
-                                          color: AppColors.cobalt)
-                                      .copyWith(fontWeight: FontWeight.w700),
+                                          color: AppColors.textSecondary)
+                                      .copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
@@ -1150,41 +1169,61 @@ class HelpSupportScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    Text(
-                      isAr ? 'أسئلة شائعة' : 'Frequently Asked Questions',
-                      style: AppTypography.title().copyWith(fontSize: 16),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(
+                          start: 4, bottom: 8),
+                      child: Text(
+                        isAr ? 'أسئلة شائعة' : 'Frequently Asked Questions',
+                        style:
+                            AppTypography.label(color: const Color(0xFF64748B))
+                                .copyWith(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 12),
                     Expanded(
                       child: ListView(
                         children: faqs.map((f) {
                           return MashwarSectionCard(
                             margin: const EdgeInsets.only(bottom: 10),
                             padding: EdgeInsets.zero,
-                            borderRadius: 14,
-                            child: ExpansionTile(
-                              title: Text(
-                                f['q']!,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(14),
-                                  child: Text(
-                                    f['a']!,
-                                    style: AppTypography.bodySecondary(),
+                            borderRadius: 12,
+                            borderColor: AppColors.slateBorder,
+                            child: Theme(
+                              data: Theme.of(context)
+                                  .copyWith(dividerColor: Colors.transparent),
+                              child: ExpansionTile(
+                                iconColor: AppColors.navy,
+                                collapsedIconColor: const Color(0xFF94A3B8),
+                                title: Text(
+                                  f['q']!,
+                                  style: AppTypography.body(
+                                    color: AppColors.navy,
+                                  ).copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13.5,
                                   ),
                                 ),
-                              ],
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                        16, 0, 16, 14),
+                                    child: Text(
+                                      f['a']!,
+                                      style: AppTypography.bodySecondary()
+                                          .copyWith(fontSize: 12.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           );
                         }).toList(),
                       ),
                     ),
+                    const SizedBox(height: 8),
                     MashwarButton(
                       text: isAr
                           ? 'محادثة مباشرة عبر واتساب'
@@ -1217,18 +1256,18 @@ class HelpSupportScreen extends StatelessWidget {
                         }
                       },
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
                         backgroundColor: Colors.white,
                         side: const BorderSide(
-                            color: AppColors.slateBorder, width: 0.9),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                            color: AppColors.slateBorder, width: 1.0),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
-                      icon: const Icon(Icons.phone_in_talk_rounded, size: 18),
+                      icon: const Icon(Icons.phone_in_talk_rounded, size: 17),
                       onPressed: () async {
                         final messenger = ScaffoldMessenger.maybeOf(context);
                         final uri = Uri(scheme: 'tel', path: '+97444009999');
@@ -1255,21 +1294,25 @@ class HelpSupportScreen extends StatelessWidget {
                         isAr
                             ? 'الاتصال بالدعم المباشر (+974 4400 9999)'
                             : 'Call Qatar Support (+974 4400 9999)',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.cobalt,
+                        foregroundColor: AppColors.navy,
                         backgroundColor: Colors.white,
-                        side: BorderSide(
-                            color: AppColors.cobalt.withValues(alpha: 0.45)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(
+                            color: AppColors.slateBorder, width: 1.0),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
-                      icon: const Icon(Icons.mail_outline_rounded, size: 18),
+                      icon: const Icon(Icons.mail_outline_rounded, size: 17),
                       onPressed: () async {
                         final messenger = ScaffoldMessenger.maybeOf(context);
                         final uri = Uri(
@@ -1300,10 +1343,14 @@ class HelpSupportScreen extends StatelessWidget {
                         isAr
                             ? 'مراسلة العمليات (ops@mashwar.qa)'
                             : 'Email Operations (ops@mashwar.qa)',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: AppDimens.space16),
+                    const SizedBox(height: AppDimens.space12),
                   ],
                 ),
               ),
@@ -1741,14 +1788,14 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
       case 'new_offer':
         return (
           Icons.local_offer_outlined,
-          AppColors.emerald,
-          AppColors.emeraldSurface,
+          AppColors.teal,
+          AppColors.tealSurface,
         );
       case 'handover_pending':
         return (
-          Icons.key_rounded,
-          AppColors.warning,
-          AppColors.goldSurface,
+          Icons.verified_user_outlined,
+          AppColors.teal,
+          AppColors.tealSurface,
         );
       case 'dispute_alert':
         return (
@@ -1759,15 +1806,15 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
       case 'request_completed':
         return (
           Icons.task_alt_rounded,
-          AppColors.emerald,
-          AppColors.emeraldSurface,
+          AppColors.teal,
+          AppColors.tealSurface,
         );
       case 'status_update':
       default:
         return (
           Icons.local_shipping_outlined,
-          AppColors.cobalt,
-          AppColors.cobaltSurface,
+          AppColors.navy,
+          AppColors.slateBg,
         );
     }
   }
@@ -1806,6 +1853,10 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.slateBorder),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
               color: AppColors.navy),
@@ -1819,7 +1870,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                 isAr ? 'الإشعارات' : 'Notifications',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.title(),
+                style: AppTypography.title().copyWith(fontSize: 18),
               ),
             ),
             if (unreadCount > 0) ...[
@@ -1827,16 +1878,14 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.cobaltSurface,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.cobalt.withValues(alpha: 0.35),
-                  ),
+                  color: AppColors.slateBg,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.slateBorder),
                 ),
                 child: Text(
                   '$unreadCount',
-                  style: AppTypography.label(color: AppColors.cobalt)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -1850,8 +1899,8 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                   : () => worksite.markAllNotificationsRead(),
               child: Text(
                 isAr ? 'تحديد الكل كمقروء' : 'Mark All Read',
-                style: AppTypography.label(color: AppColors.cobalt)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700),
               ),
             ),
         ],
@@ -1863,34 +1912,58 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                      AppDimens.space16, 10, AppDimens.space16, 6),
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimens.space16, vertical: 10),
                   child: Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
                       FilterChip(
                         selected: !_unreadOnly,
+                        selectedColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        checkmarkColor: Colors.white,
+                        side: BorderSide(
+                          color: !_unreadOnly
+                              ? AppColors.navy
+                              : AppColors.slateBorder,
+                        ),
                         onSelected: (_) => setState(() => _unreadOnly = false),
                         label: Text(
                           isAr
                               ? 'الكل (${allItems.length})'
                               : 'All (${allItems.length})',
+                          style: AppTypography.label(
+                            color: !_unreadOnly ? Colors.white : AppColors.navy,
+                          ).copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                       FilterChip(
                         selected: _unreadOnly,
+                        selectedColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        checkmarkColor: Colors.white,
+                        side: BorderSide(
+                          color: _unreadOnly
+                              ? AppColors.navy
+                              : AppColors.slateBorder,
+                        ),
                         onSelected: (_) => setState(() => _unreadOnly = true),
                         label: Text(
                           isAr
                               ? 'غير مقروءة ($unreadCount)'
                               : 'Unread ($unreadCount)',
+                          style: AppTypography.label(
+                            color: _unreadOnly ? Colors.white : AppColors.navy,
+                          ).copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
                   ),
                 ),
+                const Divider(height: 1, color: AppColors.slateBorder),
                 Expanded(
                   child: RefreshIndicator(
                     color: AppColors.navy,
@@ -1913,13 +1986,14 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                     child: MashwarSectionCard(
                                       padding: const EdgeInsets.all(
                                           AppDimens.space24),
-                                      borderRadius: 18,
+                                      borderRadius: 16,
+                                      borderColor: AppColors.slateBorder,
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           const MashwarTrustEmblem(
                                             type: MashwarTrustType.liveCorridor,
-                                            size: 48,
+                                            size: 46,
                                           ),
                                           const SizedBox(height: 12),
                                           Text(
@@ -1932,7 +2006,10 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                     : 'No Notifications Yet'),
                                             textAlign: TextAlign.center,
                                             style: AppTypography.title()
-                                                .copyWith(fontSize: 16),
+                                                .copyWith(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                           const SizedBox(height: 6),
                                           Text(
@@ -1947,6 +2024,17 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                               allItems.isNotEmpty) ...[
                                             const SizedBox(height: 14),
                                             OutlinedButton(
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: AppColors.navy,
+                                                backgroundColor: Colors.white,
+                                                side: const BorderSide(
+                                                  color: AppColors.slateBorder,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              ),
                                               onPressed: () => setState(
                                                   () => _unreadOnly = false),
                                               child: Text(
@@ -2014,12 +2102,10 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                               return MashwarFadeSlideIn(
                                 offsetY: 8,
                                 child: MashwarHoverCard(
-                                  backgroundColor:
-                                      isUnread ? Colors.white : AppColors.slateBg,
-                                  borderColor: isUnread
-                                      ? visual.$2.withValues(alpha: 0.45)
-                                      : AppColors.slateBorder,
-                                  hoverBorderColor: visual.$2,
+                                  backgroundColor: Colors.white,
+                                  borderColor: AppColors.slateBorder,
+                                  hoverBorderColor:
+                                      AppColors.navy.withValues(alpha: 0.35),
                                   padding:
                                       const EdgeInsets.all(AppDimens.space16),
                                   borderRadius: BorderRadius.circular(14),
@@ -2029,17 +2115,20 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Container(
-                                        width: 40,
-                                        height: 40,
+                                        width: 38,
+                                        height: 38,
                                         decoration: BoxDecoration(
                                           color: visual.$3,
                                           borderRadius:
                                               BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: AppColors.slateBorder,
+                                          ),
                                         ),
                                         child: Icon(
                                           visual.$1,
                                           color: visual.$2,
-                                          size: 20,
+                                          size: 19,
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -2056,12 +2145,13 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                   child: Text(
                                                     n.localizedTitle(
                                                         isArabic: isAr),
-                                                    style: TextStyle(
-                                                      fontWeight: isUnread
-                                                          ? FontWeight.w800
-                                                          : FontWeight.w600,
-                                                      fontSize: 14,
+                                                    style: AppTypography.body(
                                                       color: AppColors.navy,
+                                                    ).copyWith(
+                                                      fontWeight: isUnread
+                                                          ? FontWeight.w700
+                                                          : FontWeight.w600,
+                                                      fontSize: 13.5,
                                                     ),
                                                   ),
                                                 ),
@@ -2077,13 +2167,14 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                 if (isUnread) ...[
                                                   const SizedBox(width: 6),
                                                   Container(
-                                                    width: 8,
-                                                    height: 8,
+                                                    width: 7,
+                                                    height: 7,
                                                     margin:
                                                         const EdgeInsets.only(
-                                                            top: 4),
-                                                    decoration: BoxDecoration(
-                                                      color: visual.$2,
+                                                            top: 5),
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      color: AppColors.teal,
                                                       shape: BoxShape.circle,
                                                     ),
                                                   ),
@@ -2210,13 +2301,12 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                     style: OutlinedButton
                                                         .styleFrom(
                                                       foregroundColor:
-                                                          AppColors.teal,
+                                                          AppColors.navy,
                                                       backgroundColor:
-                                                          AppColors.tealSurface,
-                                                      side: BorderSide(
-                                                        color: AppColors.teal
-                                                            .withValues(
-                                                                alpha: 0.4),
+                                                          AppColors.slateBg,
+                                                      side: const BorderSide(
+                                                        color: AppColors
+                                                            .slateBorder,
                                                       ),
                                                       padding: const EdgeInsets
                                                           .symmetric(
@@ -2231,7 +2321,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                           RoundedRectangleBorder(
                                                         borderRadius:
                                                             BorderRadius
-                                                                .circular(20),
+                                                                .circular(8),
                                                       ),
                                                     ),
                                                     onPressed:
@@ -2239,6 +2329,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                     icon: const Icon(
                                                       Icons.done_all_rounded,
                                                       size: 14,
+                                                      color: AppColors.teal,
                                                     ),
                                                     label: Text(
                                                       isAr
@@ -2246,11 +2337,11 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                           : 'Mark as read',
                                                       style:
                                                           AppTypography.label(
-                                                        color: AppColors.teal,
+                                                        color: AppColors.navy,
                                                       ).copyWith(
                                                         fontSize: 11.5,
                                                         fontWeight:
-                                                            FontWeight.w800,
+                                                            FontWeight.w700,
                                                       ),
                                                     ),
                                                   )
@@ -2265,10 +2356,10 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                       vertical: 3,
                                                     ),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.white,
+                                                      color: AppColors.slateBg,
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                              16),
+                                                              8),
                                                       border: Border.all(
                                                         color: AppColors
                                                             .slateBorder,
@@ -2298,7 +2389,7 @@ class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
                                                           ).copyWith(
                                                             fontSize: 11,
                                                             fontWeight:
-                                                                FontWeight.w700,
+                                                                FontWeight.w600,
                                                           ),
                                                         ),
                                                       ],

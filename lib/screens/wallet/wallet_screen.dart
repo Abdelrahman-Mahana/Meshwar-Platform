@@ -173,9 +173,9 @@ class _WalletScreenState extends State<WalletScreen> {
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                                 decoration: BoxDecoration(
                                   color: isSel ? AppColors.navy : Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: isSel ? AppColors.navy : AppColors.borderDisabled,
+                                    color: isSel ? AppColors.navy : AppColors.slateBorder,
                                   ),
                                 ),
                                 alignment: Alignment.center,
@@ -185,7 +185,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                     '$amount ${isAr ? 'ر.ق' : 'QAR'}',
                                     style: TextStyle(
                                       color: isSel ? Colors.white : AppColors.navy,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                 ),
@@ -201,7 +201,10 @@ class _WalletScreenState extends State<WalletScreen> {
                     // Interactive Payment Method selector inside sheet
                     Text(
                       isAr ? 'طريقة الدفع' : 'Payment Method',
-                      style: AppTypography.body().copyWith(fontWeight: FontWeight.w700),
+                      style: AppTypography.body(color: AppColors.navy).copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ...channels.map((ch) {
@@ -209,14 +212,16 @@ class _WalletScreenState extends State<WalletScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                           onTap: () => setSheetState(() => selectedChannel = ch.$1),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                             decoration: BoxDecoration(
-                              color: isSel ? AppColors.sand : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: isSel ? AppColors.teal : AppColors.borderDisabled),
+                              color: isSel ? AppColors.tealSurface : Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isSel ? AppColors.teal : AppColors.slateBorder,
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -282,14 +287,18 @@ class _WalletScreenState extends State<WalletScreen> {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.slateBorder),
+        ),
         title: Text(
           isAr ? 'محفظة مشوار' : 'MASHWAR Wallet',
-          style: AppTypography.title(),
+          style: AppTypography.title().copyWith(fontSize: 18),
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
@@ -306,135 +315,152 @@ class _WalletScreenState extends State<WalletScreen> {
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [AppColors.navy, Color(0xFF1B4368)],
+                  colors: [AppColors.navy, Color(0xFF163654)],
                   begin: Alignment.topRight,
                   end: Alignment.bottomLeft,
                 ),
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.25),
+                    color: AppColors.navy.withValues(alpha: 0.16),
                     blurRadius: 16,
-                    offset: const Offset(0, 8),
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(AppDimens.space20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: Padding(
+                padding: const EdgeInsets.all(AppDimens.space20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  const MashwarPinIcon(size: 18, isLight: true),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      isAr ? 'الرصيد المتاح' : 'Available Balance',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTypography.bodySecondary(color: Colors.white70),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.shield_rounded, color: AppColors.gold, size: 14),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    isAr ? 'آمن ومشفر' : 'Encrypted',
-                                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: AlignmentDirectional.centerStart,
+                        Expanded(
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
                             children: [
-                              Text(
-                                user.walletBalance.toStringAsFixed(2),
-                                style: AppTypography.largeTitle(color: Colors.white).copyWith(fontSize: 34),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                isAr ? 'ريال قطري' : 'QAR',
-                                style: AppTypography.title(color: AppColors.gold).copyWith(fontSize: 18),
+                              const MashwarPinIcon(size: 17, isLight: true),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  isAr ? 'الرصيد المتاح' : 'Available Balance',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.bodySecondary(
+                                    color: Colors.white70,
+                                  ).copyWith(fontSize: 13),
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: AppDimens.space20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.gold,
-                                  foregroundColor: AppColors.navy,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: const Icon(Icons.add_circle_outline_rounded, size: 20),
-                                label: Text(
-                                  isAr ? 'شحن رصيد' : 'Deposit',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                onPressed: () => _showAddFundsSheet(context),
-                              ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: AppColors.teal.withValues(alpha: 0.28),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.16),
                             ),
-                            const SizedBox(width: AppDimens.space12),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.white,
-                                  side: const BorderSide(color: Colors.white54),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.shield_outlined, color: Colors.white, size: 13),
+                              const SizedBox(width: 4),
+                              Text(
+                                isAr ? 'آمن ومشفر' : 'Encrypted',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                icon: const Icon(Icons.arrow_downward_rounded, size: 20),
-                                label: Text(
-                                  isAr ? 'سحب رصيد' : 'Withdraw',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                onPressed: () => _showWithdrawSheet(context),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 10),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            user.walletBalance.toStringAsFixed(2),
+                            style: AppTypography.largeTitle(color: Colors.white).copyWith(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isAr ? 'ريال قطري' : 'QAR',
+                            style: AppTypography.body(color: Colors.white70).copyWith(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppDimens.space20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: AppColors.navy,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 11),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.add_rounded, size: 19),
+                            label: Text(
+                              isAr ? 'شحن رصيد' : 'Deposit',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                            onPressed: () => _showAddFundsSheet(context),
+                          ),
+                        ),
+                        const SizedBox(width: AppDimens.space12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              backgroundColor: Colors.white.withValues(alpha: 0.08),
+                              side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
+                              padding: const EdgeInsets.symmetric(vertical: 11),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(Icons.arrow_downward_rounded, size: 18),
+                            label: Text(
+                              isAr ? 'سحب رصيد' : 'Withdraw',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                            onPressed: () => _showWithdrawSheet(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
 
@@ -442,53 +468,49 @@ class _WalletScreenState extends State<WalletScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(AppDimens.space16),
               decoration: BoxDecoration(
-                color: AppColors.escrowSurface,
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                border: Border.all(color: AppColors.escrowGreen.withValues(alpha: 0.35)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.slateBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        width: 38,
+                        height: 38,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.tealSurface,
                           borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.teal.withValues(alpha: 0.25),
+                          ),
                         ),
-                        child: const Icon(Icons.verified_user_rounded, color: AppColors.escrowGreen, size: 20),
+                        child: const Icon(
+                          Icons.verified_user_outlined,
+                          color: AppColors.teal,
+                          size: 19,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.escrowGreen.withValues(alpha: 0.14),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'MASHWAR ESCROW',
-                                style: TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.escrowGreen,
-                                  letterSpacing: 0.6,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 3),
                             Text(
                               isAr ? 'رصيد الضمان المحجوز' : 'Protected Escrow Hold',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.navy,
-                                fontFamily: 'Cairo',
+                              style: AppTypography.body(color: AppColors.navy).copyWith(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            Text(
+                              'MASHWAR ESCROW',
+                              style: AppTypography.label(color: AppColors.teal).copyWith(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ],
@@ -497,23 +519,21 @@ class _WalletScreenState extends State<WalletScreen> {
                       const SizedBox(width: 8),
                       Text(
                         isAr ? '225 ر.ق' : '225 QAR',
-                        style: AppTypography.title(color: AppColors.escrowGreen).copyWith(fontSize: 18),
+                        style: AppTypography.title(color: AppColors.teal).copyWith(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     isAr
                         ? 'محفوظ لحماية صفقات الشراء وتوريد المواقع حتى اعتماد الفاتورة وإدخال OTP'
                         : 'Held safely until receipt approval & 4-digit OTP completion',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: AppColors.navy,
-                      fontFamily: 'Cairo',
-                      height: 1.35,
-                    ),
+                    style: AppTypography.bodySecondary().copyWith(fontSize: 12),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -521,23 +541,31 @@ class _WalletScreenState extends State<WalletScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.slateBg,
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Text(
                           isAr ? 'أتعاب جارية: 45 ر.ق' : 'Fee Hold: 45 QAR',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.navy, fontFamily: 'Cairo'),
+                          style: AppTypography.label(color: AppColors.navy).copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppColors.slateBg,
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Text(
                           isAr ? 'سقف فواتير: 180 ر.ق' : 'Receipt Cap: 180 QAR',
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.cobalt, fontFamily: 'Cairo'),
+                          style: AppTypography.label(color: AppColors.navy).copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -548,20 +576,23 @@ class _WalletScreenState extends State<WalletScreen> {
                     child: OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
-                        backgroundColor: Colors.white,
-                        side: BorderSide(color: AppColors.escrowGreen.withValues(alpha: 0.4)),
+                        backgroundColor: AppColors.slateBg,
+                        side: const BorderSide(color: AppColors.slateBorder),
                         padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const ServiceEscrowScreen()),
                         );
                       },
-                      icon: const Icon(Icons.shield_outlined, size: 17, color: AppColors.escrowGreen),
+                      icon: const Icon(Icons.shield_outlined, size: 17, color: AppColors.teal),
                       label: Text(
                         isAr ? 'إدارة صفقات الضمان وحماية الطرفين' : 'Manage Escrow Deals & Disputes',
-                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, fontFamily: 'Cairo'),
+                        style: AppTypography.label(color: AppColors.navy).copyWith(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -572,50 +603,51 @@ class _WalletScreenState extends State<WalletScreen> {
             final paymentMethodsSection = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isAr ? 'طرق الدفع المدعومة' : 'Supported Payment Methods',
-                  style: AppTypography.title().copyWith(fontSize: 16),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 4, bottom: 10),
+                  child: Text(
+                    isAr ? 'طرق الدفع المدعومة' : 'Supported Payment Methods',
+                    style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: AppDimens.space12),
                 Material(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                    side: const BorderSide(color: AppColors.borderDisabled),
+                    borderRadius: BorderRadius.circular(14),
+                    side: const BorderSide(color: AppColors.slateBorder),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
                     children: [
                       _buildPaymentTile(
                         icon: Icons.flash_on_rounded,
-                        iconColor: AppColors.cobalt,
                         title: isAr ? 'فوراً Fawran (التحويل اللحظي)' : 'Fawran (QCB Instant Transfer)',
                         subtitle: isAr ? 'تحويل بنكي فوري في قطر بدون رسوم إضافية' : 'Instant zero-fee bank transfer in Qatar',
                         isDefault: auth.selectedPaymentMethod == 'fawran',
                         onTap: () => auth.setSelectedPaymentMethod('fawran'),
                       ),
-                      const Divider(height: 1, color: AppColors.borderDisabled),
+                      const Divider(height: 1, indent: 64, endIndent: 16, color: AppColors.slateBorder),
                       _buildPaymentTile(
                         icon: Icons.credit_card_rounded,
-                        iconColor: AppColors.teal,
                         title: isAr ? 'كيوباي QPay وبطاقات البنوك القطرية' : 'QPay Debit & Qatari Bank Cards',
                         subtitle: isAr ? 'بطاقة هميان الوطنية، QPay، فيزا وماستركارد' : 'Himyan National Card, QPay, Visa & Mastercard',
                         isDefault: auth.selectedPaymentMethod == 'qpay',
                         onTap: () => auth.setSelectedPaymentMethod('qpay'),
                       ),
-                      const Divider(height: 1, color: AppColors.borderDisabled),
+                      const Divider(height: 1, indent: 64, endIndent: 16, color: AppColors.slateBorder),
                       _buildPaymentTile(
                         icon: Icons.phone_android_rounded,
-                        iconColor: const Color(0xFF1D4ED8),
                         title: isAr ? 'سكيب كاش SkipCash و Apple Pay' : 'SkipCash & Apple Pay',
                         subtitle: isAr ? 'دفع رقمي فوري عبر الهاتف في قطر' : 'Instant mobile digital payment in Qatar',
                         isDefault: auth.selectedPaymentMethod == 'skipcash',
                         onTap: () => auth.setSelectedPaymentMethod('skipcash'),
                       ),
-                      const Divider(height: 1, color: AppColors.borderDisabled),
+                      const Divider(height: 1, indent: 64, endIndent: 16, color: AppColors.slateBorder),
                       _buildPaymentTile(
                         icon: Icons.payments_outlined,
-                        iconColor: AppColors.gold,
                         title: isAr ? 'الدفع نقداً' : 'Cash upon meeting',
                         subtitle: isAr ? 'دفع قيمة المقعد أو الخدمة باليد مع توثيق OTP' : 'Direct cash handover verified with 4-digit OTP',
                         isDefault: auth.selectedPaymentMethod == 'cash',
@@ -630,23 +662,33 @@ class _WalletScreenState extends State<WalletScreen> {
             final transactionsSection = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isAr ? 'سجل العمليات الأخير' : 'Recent Transactions',
-                  style: AppTypography.title().copyWith(fontSize: 16),
+                Padding(
+                  padding: const EdgeInsetsDirectional.only(start: 4, bottom: 10),
+                  child: Text(
+                    isAr ? 'سجل العمليات الأخير' : 'Recent Transactions',
+                    style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: AppDimens.space12),
                 Material(
                   color: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                    side: const BorderSide(color: AppColors.borderDisabled),
+                    borderRadius: BorderRadius.circular(14),
+                    side: const BorderSide(color: AppColors.slateBorder),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: auth.walletTransactions.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderDisabled),
+                    separatorBuilder: (_, __) => const Divider(
+                      height: 1,
+                      indent: 64,
+                      endIndent: 16,
+                      color: AppColors.slateBorder,
+                    ),
                     itemBuilder: (context, index) {
                       final tx = auth.walletTransactions[index];
                       final rawAmount = tx['amount'];
@@ -681,32 +723,42 @@ class _WalletScreenState extends State<WalletScreen> {
                             : str.replaceAll('ر.ق', 'QAR').replaceAll('ج.م', 'QAR');
                       }
                       return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                         leading: Container(
-                          padding: const EdgeInsets.all(10),
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
-                            color: isPositive ? AppColors.tealSurface : AppColors.sand,
-                            shape: BoxShape.circle,
+                            color: isPositive ? AppColors.tealSurface : AppColors.slateBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isPositive
+                                  ? AppColors.teal.withValues(alpha: 0.25)
+                                  : AppColors.slateBorder,
+                            ),
                           ),
                           child: Icon(
-                            isPositive ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                            isPositive ? Icons.south_west_rounded : Icons.north_east_rounded,
                             color: isPositive ? AppColors.teal : AppColors.navy,
-                            size: 20,
+                            size: 18,
                           ),
                         ),
                         title: Text(
                           title,
-                          style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                          style: AppTypography.body(color: AppColors.navy)
+                              .copyWith(fontWeight: FontWeight.w600, fontSize: 13.5),
                         ),
                         subtitle: Text(
                           date,
-                          style: AppTypography.label(),
+                          style: AppTypography.label(color: AppColors.textSecondary)
+                              .copyWith(fontSize: 11.5),
                         ),
                         trailing: Text(
                           amountLabel,
-                          style: TextStyle(
-                            color: isPositive ? AppColors.teal : AppColors.textPrimary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                          style: AppTypography.body(
+                            color: isPositive ? AppColors.teal : AppColors.navy,
+                          ).copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
                           ),
                         ),
                       );
@@ -769,7 +821,6 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildPaymentTile({
     required IconData icon,
-    required Color iconColor,
     required String title,
     required String subtitle,
     required bool isDefault,
@@ -777,30 +828,53 @@ class _WalletScreenState extends State<WalletScreen> {
   }) {
     return ListTile(
       onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(8),
+          color: isDefault ? AppColors.tealSurface : AppColors.slateBg,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDefault
+                ? AppColors.teal.withValues(alpha: 0.25)
+                : AppColors.slateBorder,
+          ),
         ),
-        child: Icon(icon, color: iconColor, size: 22),
+        child: Icon(
+          icon,
+          color: isDefault ? AppColors.teal : AppColors.navy,
+          size: 19,
+        ),
       ),
-      title: Text(title, style: AppTypography.body().copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
-      subtitle: Text(subtitle, style: AppTypography.label()),
+      title: Text(
+        title,
+        style: AppTypography.body(color: AppColors.navy)
+            .copyWith(fontWeight: FontWeight.w600, fontSize: 13.5),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: AppTypography.label(color: AppColors.textSecondary)
+            .copyWith(fontSize: 11.5),
+      ),
       trailing: isDefault
           ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 color: AppColors.tealSurface,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.teal),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
               ),
               child: Text(
                 context.read<SettingsProvider>().isArabic ? 'أساسي' : 'Default',
-                style: const TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: AppColors.teal,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             )
-          : const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+          : const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 20),
     );
   }
 }
