@@ -271,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
         (rides.toCity.trim().isNotEmpty ? rides.toCity.trim() : 'لوسيل');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFBF8),
+      backgroundColor: AppColors.slateBg,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -284,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : (isUltraCompact ? 12.0 : AppDimens.space20);
 
             return RefreshIndicator(
-              color: AppColors.teal,
+              color: AppColors.navy,
               backgroundColor: Colors.white,
               onRefresh: () async {
                 await Future.wait([
@@ -453,10 +453,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: isWarning ? AppColors.goldSurface : AppColors.navy,
+        color: isWarning ? AppColors.goldSurface : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isWarning ? AppColors.gold : AppColors.teal,
+          color: isWarning
+              ? AppColors.gold.withValues(alpha: 0.45)
+              : AppColors.slateBorder,
         ),
       ),
       child: Row(
@@ -464,7 +466,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Icon(
             Icons.campaign_rounded,
             size: 18,
-            color: isWarning ? AppColors.navy : AppColors.gold,
+            color: isWarning ? AppColors.goldDark : AppColors.navy,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -472,10 +474,9 @@ class _HomeScreenState extends State<HomeScreen> {
               isAr
                   ? admin.broadcastBanner.messageAr
                   : admin.broadcastBanner.messageEn,
-              style: TextStyle(
-                color: isWarning ? AppColors.navy : Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+              style: AppTypography.body(color: AppColors.navy).copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -505,15 +506,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.borderDisabled),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.04),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -525,15 +519,16 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 BrandLogo(
-                  fontSize: isUltraCompact ? 22 : 26,
+                  fontSize: isUltraCompact ? 22 : 25,
                   showEnglish: !isUltraCompact,
                 ),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.sand,
+                    color: AppColors.slateBg,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.slateBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -545,8 +540,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           overflow: TextOverflow.ellipsis,
                           style:
                               AppTypography.body(color: AppColors.navy).copyWith(
-                            fontWeight: FontWeight.w800,
-                            fontSize: isUltraCompact ? 12.5 : 13.5,
+                            fontWeight: FontWeight.w600,
+                            fontSize: isUltraCompact ? 12 : 13,
                           ),
                         ),
                       ),
@@ -586,11 +581,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       width: 38,
                       height: 38,
                       decoration: BoxDecoration(
-                        color: AppColors.sand,
+                        color: AppColors.slateBg,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.gold.withValues(alpha: 0.35),
-                        ),
+                        border: Border.all(color: AppColors.slateBorder),
                       ),
                       child: Icon(
                         unreadCount > 0
@@ -610,7 +603,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             vertical: 1.5,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.qatarMaroon,
+                            color: AppColors.danger,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(color: Colors.white, width: 1.4),
                           ),
@@ -620,8 +613,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w800,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
                               height: 1.1,
                             ),
                           ),
@@ -646,9 +639,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   fullName: auth.user.fullName.isNotEmpty
                       ? auth.user.fullName
                       : 'م',
-                  size: isUltraCompact ? 38 : 44,
-                  borderWidth: 2.0,
-                  borderColor: AppColors.gold,
+                  size: isUltraCompact ? 38 : 42,
+                  borderWidth: 1.5,
+                  borderColor: AppColors.slateBorder,
                   backgroundColor: AppColors.navy,
                   initialColor: Colors.white,
                   showVerifiedBadge:
@@ -685,8 +678,6 @@ class _HomeScreenState extends State<HomeScreen> {
       String badge,
       String studioAsset,
       IconData fallbackIcon,
-      Color accent,
-      Color surface,
     })>[
       (
         index: 0,
@@ -695,8 +686,6 @@ class _HomeScreenState extends State<HomeScreen> {
         badge: isAr ? 'مقاعد شاغرة' : 'Empty Seats',
         studioAsset: 'assets/images/service_ride.jpg',
         fallbackIcon: Icons.directions_car_filled_rounded,
-        accent: AppColors.navy,
-        surface: AppColors.sand,
       ),
       (
         index: 1,
@@ -705,8 +694,6 @@ class _HomeScreenState extends State<HomeScreen> {
         badge: isAr ? 'في نفس الطريق' : 'On the Way',
         studioAsset: 'assets/images/service_parcel.jpg',
         fallbackIcon: Icons.inventory_2_rounded,
-        accent: AppColors.goldDark,
-        surface: AppColors.goldSurface,
       ),
       (
         index: 2,
@@ -715,8 +702,6 @@ class _HomeScreenState extends State<HomeScreen> {
         badge: isAr ? 'بفاتورة موثّقة' : 'With Receipt',
         studioAsset: 'assets/images/service_errand.jpg',
         fallbackIcon: Icons.shopping_bag_rounded,
-        accent: AppColors.teal,
-        surface: AppColors.tealSurface,
       ),
     ];
 
@@ -736,16 +721,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(
-          color: AppColors.gold.withValues(alpha: 0.32),
-          width: 1.2,
-        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.slateBorder),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.07),
-            blurRadius: 28,
-            offset: const Offset(0, 10),
+            color: AppColors.navy.withValues(alpha: 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -762,12 +744,12 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: AppColors.tealSurface,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: AppColors.teal.withValues(alpha: 0.28),
+                    color: AppColors.teal.withValues(alpha: 0.22),
                   ),
                 ),
                 child: Row(
@@ -775,7 +757,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     const MashwarLivePulseDot(
                       color: AppColors.teal,
-                      size: 7.5,
+                      size: 7.0,
                     ),
                     const SizedBox(width: 6),
                     Flexible(
@@ -786,7 +768,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.label(color: AppColors.tealDark)
-                            .copyWith(fontWeight: FontWeight.w800),
+                            .copyWith(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
@@ -799,21 +784,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     _showSavedWorksitePicker(context, worksite, isAr),
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.sand,
+                    color: AppColors.slateBg,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppColors.gold.withValues(alpha: 0.40),
-                    ),
+                    border: Border.all(color: AppColors.slateBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(
-                        Icons.bookmark_rounded,
+                        Icons.bookmark_border_rounded,
                         size: 15,
-                        color: AppColors.goldDark,
+                        color: AppColors.navy,
                       ),
                       const SizedBox(width: 4),
                       Flexible(
@@ -824,14 +807,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.label(color: AppColors.navy)
-                              .copyWith(fontWeight: FontWeight.w800),
+                              .copyWith(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 2),
                       const Icon(
                         Icons.keyboard_arrow_down_rounded,
                         size: 16,
-                        color: AppColors.navy,
+                        color: AppColors.textSecondary,
                       ),
                     ],
                   ),
@@ -841,24 +827,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Primary Headline & Subtitle
+          // Primary Headline & Concise 1-Line Subtitle
           Text(
             isAr
                 ? 'إلى أين مشوارك أو طلبك اليوم؟'
                 : 'Where does your journey take you today?',
             style: AppTypography.largeTitle(color: AppColors.navy).copyWith(
-              fontSize: isUltraCompact ? 20 : (isWide ? 27 : 23),
-              fontWeight: FontWeight.w900,
-              height: 1.25,
+              fontSize: isUltraCompact ? 18.5 : (isWide ? 23 : 20.5),
+              fontWeight: FontWeight.w700,
+              height: 1.28,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             isAr
-                ? 'اختر الخدمة من الأيقونات الثلاث وحدّد مسارك لتصلك العروض والرحلات فوراً'
-                : 'Pick one of the 3 services below and enter your route to connect instantly',
+                ? 'اختر الخدمة وحدّد مسارك للوصول الفوري إلى المسافرين والمزودين'
+                : 'Select a service and enter your route to connect right away',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: AppTypography.bodySecondary(color: AppColors.textSecondary)
-                .copyWith(fontSize: isUltraCompact ? 12.5 : 13.5),
+                .copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -891,9 +882,9 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: EdgeInsets.all(isUltraCompact ? 10 : 14),
             decoration: BoxDecoration(
               color: AppColors.sand,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: AppColors.gold.withValues(alpha: 0.30),
+                color: AppColors.gold.withValues(alpha: 0.22),
               ),
             ),
             child: Column(
@@ -960,8 +951,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           text: heroButtonLabel,
                           icon: const Icon(
                             Icons.arrow_forward_rounded,
-                            color: AppColors.gold,
-                            size: 19,
+                            color: Colors.white,
+                            size: 18,
                           ),
                           onPressed: () => _triggerHeroAction(
                             context: context,
@@ -1029,12 +1020,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         icon: const Icon(
                           Icons.close_rounded,
                           size: 15,
-                          color: AppColors.navy,
+                          color: AppColors.textSecondary,
                         ),
                         label: Text(
                           isAr ? 'مسح المسار' : 'Clear route',
-                          style: AppTypography.label(color: AppColors.navy)
-                              .copyWith(fontWeight: FontWeight.w800),
+                          style:
+                              AppTypography.label(color: AppColors.textSecondary)
+                                  .copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),
                     )
@@ -1045,8 +1037,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     text: heroButtonLabel,
                     icon: const Icon(
                       Icons.search_rounded,
-                      color: AppColors.gold,
-                      size: 20,
+                      color: Colors.white,
+                      size: 19,
                     ),
                     onPressed: () => _triggerHeroAction(
                       context: context,
@@ -1072,8 +1064,6 @@ class _HomeScreenState extends State<HomeScreen> {
       String badge,
       String studioAsset,
       IconData fallbackIcon,
-      Color accent,
-      Color surface,
     }) mode,
     required bool selected,
     required bool isWide,
@@ -1090,30 +1080,24 @@ class _HomeScreenState extends State<HomeScreen> {
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(
             horizontal: isUltraCompact ? 6 : 10,
-            vertical: isUltraCompact ? 8 : 12,
+            vertical: isUltraCompact ? 8 : 11,
           ),
           decoration: BoxDecoration(
-            color: selected ? mode.surface : Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            color: selected ? AppColors.slateBg : Colors.white,
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: selected ? mode.accent : AppColors.borderDisabled,
-              width: selected ? 2.0 : 1.1,
+              color: selected ? AppColors.navy : AppColors.slateBorder,
+              width: selected ? 1.5 : 1.0,
             ),
             boxShadow: selected
                 ? [
                     BoxShadow(
-                      color: mode.accent.withValues(alpha: 0.14),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: AppColors.navy.withValues(alpha: 0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ]
-                : [
-                    BoxShadow(
-                      color: AppColors.navy.withValues(alpha: 0.03),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                : null,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1121,14 +1105,14 @@ class _HomeScreenState extends State<HomeScreen> {
               // Pure-white studio stage holding the full 1:1 3D icon with ZERO crop
               Container(
                 width: double.infinity,
-                height: isWide ? 96 : (isUltraCompact ? 62 : 76),
+                height: isWide ? 92 : (isUltraCompact ? 60 : 74),
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(13),
                   border: Border.all(
                     color: selected
-                        ? mode.accent.withValues(alpha: 0.22)
+                        ? AppColors.slateBorder
                         : const Color(0xFFF1F5F9),
                   ),
                 ),
@@ -1141,8 +1125,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         alignment: Alignment.center,
                         errorBuilder: (_, __, ___) => Icon(
                           mode.fallbackIcon,
-                          size: 34,
-                          color: mode.accent,
+                          size: 32,
+                          color: AppColors.navy,
                         ),
                       ),
                     ),
@@ -1151,15 +1135,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         top: 2,
                         end: 2,
                         child: Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: mode.accent,
+                          width: 19,
+                          height: 19,
+                          decoration: const BoxDecoration(
+                            color: AppColors.teal,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.check_rounded,
-                            size: 13,
+                            size: 12,
                             color: Colors.white,
                           ),
                         ),
@@ -1174,25 +1158,29 @@ class _HomeScreenState extends State<HomeScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.body(color: AppColors.navy).copyWith(
-                  fontWeight: FontWeight.w900,
-                  fontSize: isUltraCompact ? 11.5 : (isWide ? 14.5 : 13),
+                  fontWeight: FontWeight.w700,
+                  fontSize: isUltraCompact ? 11.5 : (isWide ? 14.5 : 13.5),
                 ),
               ),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(
-                  color: selected ? Colors.white : mode.surface,
-                  borderRadius: BorderRadius.circular(10),
+                  color: selected ? AppColors.tealSurface : AppColors.slateBg,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   mode.badge,
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.label(color: mode.accent).copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: isUltraCompact ? 9.5 : 10.5,
+                  style: AppTypography.label(
+                    color: selected
+                        ? AppColors.tealDark
+                        : AppColors.textSecondary,
+                  ).copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: isUltraCompact ? 10.0 : 11.5,
                   ),
                 ),
               ),
@@ -1224,19 +1212,18 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: hasValue
-                  ? dotColor.withValues(alpha: 0.65)
-                  : AppColors.borderDisabled,
+                  ? AppColors.navy.withValues(alpha: 0.25)
+                  : AppColors.slateBorder,
             ),
           ),
           child: Row(
             children: [
               Container(
-                width: 11,
-                height: 11,
+                width: 9,
+                height: 9,
                 decoration: BoxDecoration(
                   color: dotColor,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.navy, width: 1.2),
                 ),
               ),
               const SizedBox(width: 10),
@@ -1250,7 +1237,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.label(
                         color: AppColors.textSecondary,
-                      ).copyWith(fontSize: 10.5),
+                      ).copyWith(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       value,
@@ -1262,7 +1252,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             : AppColors.textSecondary,
                       ).copyWith(
                         fontWeight:
-                            hasValue ? FontWeight.w800 : FontWeight.w600,
+                            hasValue ? FontWeight.w700 : FontWeight.w500,
                         fontSize: 13.5,
                       ),
                     ),
@@ -1282,12 +1272,12 @@ class _HomeScreenState extends State<HomeScreen> {
     bool isAr,
   ) {
     return Material(
-      color: AppColors.navy,
+      color: Colors.white,
       shape: const CircleBorder(
-        side: BorderSide(color: AppColors.gold, width: 1.5),
+        side: BorderSide(color: AppColors.slateBorder, width: 1.0),
       ),
-      elevation: 3,
-      shadowColor: AppColors.navy.withValues(alpha: 0.22),
+      elevation: 1,
+      shadowColor: AppColors.navy.withValues(alpha: 0.08),
       child: InkWell(
         key: const ValueKey('home_route_swap_btn'),
         customBorder: const CircleBorder(),
@@ -1297,15 +1287,15 @@ class _HomeScreenState extends State<HomeScreen> {
           board.setRouteFilter(from: rides.fromCity, to: rides.toCity);
         },
         child: Padding(
-          padding: const EdgeInsets.all(9),
+          padding: const EdgeInsets.all(8),
           child: AnimatedRotation(
             turns: _swapTurns,
             duration: const Duration(milliseconds: 240),
             curve: Curves.easeOutCubic,
             child: const Icon(
               Icons.swap_vert_rounded,
-              size: 19,
-              color: AppColors.gold,
+              size: 18,
+              color: AppColors.navy,
             ),
           ),
         ),
@@ -1328,12 +1318,12 @@ class _HomeScreenState extends State<HomeScreen> {
         fit: BoxFit.cover,
         alignment: Alignment.center,
         errorBuilder: (_, __, ___) => Container(
-          color: AppColors.navy,
+          color: AppColors.slateBg,
           child: const Center(
             child: Icon(
               Icons.directions_car_rounded,
-              color: AppColors.gold,
-              size: 42,
+              color: AppColors.navy,
+              size: 40,
             ),
           ),
         ),
@@ -1349,16 +1339,15 @@ class _HomeScreenState extends State<HomeScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.gold.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.gold.withValues(alpha: 0.45),
-              ),
+              color: AppColors.tealSurface,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
               isAr ? 'مسافر بسيارتك الخاصة؟' : 'Driving Along Your Route?',
-              style: AppTypography.label(color: AppColors.gold)
-                  .copyWith(fontWeight: FontWeight.w800),
+              style: AppTypography.label(color: AppColors.tealDark).copyWith(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -1366,20 +1355,23 @@ class _HomeScreenState extends State<HomeScreen> {
             isAr
                 ? 'شارك مقاعدك الفارغة أو وصّل طرداً خفيفاً معك في نفس الطريق'
                 : 'Share Your Empty Seats or Carry a Verified Parcel Along the Way',
-            style: AppTypography.title(color: Colors.white).copyWith(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              height: 1.3,
+            style: AppTypography.title(color: AppColors.navy).copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              height: 1.32,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             isAr
-                ? 'انشر وجهتك وموعد تحرّكك في أقل من دقيقة، واستقبل حجوزات الركاب وطلبات الطرود الموثّقة بكود OTP.'
-                : 'Publish your departure and empty seats in under a minute and offset your travel costs safely.',
-            style: AppTypography.bodySecondary(
-              color: Colors.white.withValues(alpha: 0.85),
-            ).copyWith(fontSize: 12.5, height: 1.4),
+                ? 'انشر وجهتك في أقل من دقيقة واستقبل حجوزات المقاعد والطرود الموثّقة.'
+                : 'Publish your departure in under a minute and offset travel costs safely.',
+            style: AppTypography.bodySecondary(color: AppColors.textSecondary)
+                .copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -1388,8 +1380,8 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.gold,
-                  foregroundColor: AppColors.navy,
+                  backgroundColor: AppColors.navy,
+                  foregroundColor: Colors.white,
                   elevation: 0,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1406,24 +1398,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 icon: const Icon(
                   Icons.add_road_rounded,
-                  size: 18,
-                  color: AppColors.navy,
+                  size: 17,
+                  color: Colors.white,
                 ),
                 label: Text(
                   isAr ? 'انشر رحلتك الآن' : 'Publish Your Trip',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: Colors.white,
                     fontFamily: 'Cairo',
                   ),
                 ),
               ),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.35),
-                  ),
+                  foregroundColor: AppColors.navy,
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.slateBorder),
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(
@@ -1441,13 +1433,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 icon: const Icon(
                   Icons.campaign_outlined,
                   size: 17,
-                  color: AppColors.gold,
+                  color: AppColors.navy,
                 ),
                 label: Text(
                   isAr ? 'طلبات المسافرين والطرود' : 'Route Requests',
                   style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: AppColors.navy,
                     fontFamily: 'Cairo',
                   ),
                 ),
@@ -1460,16 +1453,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.navy,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.12),
-            blurRadius: 22,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: isMedium
@@ -1503,20 +1489,17 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildServicePillarCard(
         pillar: MashwarServicePillar.sharedTrips,
         imageAsset: 'assets/images/pillar_shared_trips.jpg',
-        accent: AppColors.navy,
         badgeLabel: isAr ? 'مقاعد تشاركية' : 'Shared Seats',
-        badgeBg: AppColors.sand,
+        badgeBg: AppColors.slateBg,
         badgeFg: AppColors.navy,
         title: isAr ? 'سفر ومقاعد تشاركية' : 'Shared Trips & Empty Seats',
         benefit: isAr
-            ? 'شارك مقاعد سيارتك الشاغرة لتغطية تكاليف الطريق أو احجز مقعداً مريحاً مع مسافر موثّق.'
-            : 'Share empty seats along your route or book a comfortable ride with verified travelers.',
+            ? 'شارك مقاعد سيارتك الشاغرة أو احجز مقعداً مريحاً مع مسافر موثّق.'
+            : 'Share empty seats along your route or book a seat with verified travelers.',
         primaryKey: const ValueKey('home_publish_trip_cta'),
         primaryLabel: isAr
             ? 'انشر رحلتك (مقاعد شاغرة)'
             : 'Publish Trip (Empty Seats)',
-        primaryBg: AppColors.navy,
-        primaryFg: Colors.white,
         primaryIcon: Icons.add_road_rounded,
         onPrimary: () {
           Navigator.of(context).push(
@@ -1541,19 +1524,16 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildServicePillarCard(
         pillar: MashwarServicePillar.routeParcels,
         imageAsset: 'assets/images/pillar_route_parcels.jpg',
-        accent: AppColors.goldDark,
         badgeLabel: isAr ? 'تأكيد بكود OTP' : 'Dual OTP Safe',
-        badgeBg: AppColors.goldSurface,
-        badgeFg: AppColors.goldDark,
+        badgeBg: AppColors.tealSurface,
+        badgeFg: AppColors.tealDark,
         title: isAr ? 'طرود وأغراض مع مسافر' : 'Parcels & Items on the Way',
         benefit: isAr
-            ? 'أرسل الطرود والمستندات والأمانات بسرعة مع مسافر متجه لنفس الوجهة بتأكيد كود استلام وتسليم.'
-            : 'Send documents and packages faster with travelers already heading to your destination.',
+            ? 'أرسل الطرود والمستندات بسرعة مع مسافر متجه لنفس الوجهة بتأكيد OTP.'
+            : 'Send documents and packages faster with travelers heading your way.',
         primaryKey: const ValueKey('home_send_parcel_cta'),
         primaryLabel:
             isAr ? 'أرسل طرداً مع مسافر' : 'Send Parcel with Traveler',
-        primaryBg: AppColors.gold,
-        primaryFg: AppColors.navy,
         primaryIcon: Icons.local_shipping_outlined,
         onPrimary: () {
           Navigator.of(context).push(
@@ -1580,18 +1560,15 @@ class _HomeScreenState extends State<HomeScreen> {
       _buildServicePillarCard(
         pillar: MashwarServicePillar.smartSupply,
         imageAsset: 'assets/images/pillar_smart_supply.jpg',
-        accent: AppColors.teal,
         badgeLabel: isAr ? 'فاتورة موثّقة' : 'Verified Receipt',
         badgeBg: AppColors.tealSurface,
         badgeFg: AppColors.tealDark,
         title: isAr ? 'شراء وتوريد ومهام خاصة' : 'Smart Shopping & Supply',
         benefit: isAr
-            ? 'اطلب شراء وتوريد المواد والمعدات والطلبات الخاصة بفاتورة موثّقة ورمز تسليم من 6 خانات.'
+            ? 'اطلب شراء وتوريد المواد والطلبات الخاصة بفاتورة موثّقة ورمز تسليم.'
             : 'Coordinate hardware, site materials, and custom errands with verified receipts.',
         primaryKey: const ValueKey('home_create_request_cta'),
         primaryLabel: isAr ? 'إنشاء طلب توريد' : 'Create a Request',
-        primaryBg: AppColors.teal,
-        primaryFg: Colors.white,
         primaryIcon: Icons.add_task_rounded,
         onPrimary: () {
           Navigator.of(context).push(
@@ -1630,42 +1607,43 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 5,
-                  height: 20,
+                  width: 4,
+                  height: 18,
                   decoration: BoxDecoration(
-                    color: AppColors.gold,
-                    borderRadius: BorderRadius.circular(3),
+                    color: AppColors.navy,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     isAr ? 'خدمات مشوار الأساسية' : 'Core MASHWAR Services',
-                    style: AppTypography.title().copyWith(
-                      fontSize: 19,
-                      fontWeight: FontWeight.w900,
+                    style: AppTypography.title(color: AppColors.navy).copyWith(
+                      fontSize: 17.5,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ],
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.sand,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.gold.withValues(alpha: 0.40),
-                ),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.slateBorder),
               ),
               child: Text(
                 isAr
-                    ? 'ثنائي الاتجاه: اطلب أو نفّذ في طريقك'
-                    : 'Request or Earn Along Your Route',
+                    ? 'اطلب أو نفّذ في طريقك'
+                    : 'Request or Earn on Route',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.label(color: AppColors.navy)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.label(color: AppColors.textSecondary)
+                    .copyWith(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -1700,7 +1678,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildServicePillarCard({
     required MashwarServicePillar pillar,
     required String imageAsset,
-    required Color accent,
     required String badgeLabel,
     required Color badgeBg,
     required Color badgeFg,
@@ -1708,8 +1685,6 @@ class _HomeScreenState extends State<HomeScreen> {
     required String benefit,
     required Key primaryKey,
     required String primaryLabel,
-    required Color primaryBg,
-    required Color primaryFg,
     required IconData primaryIcon,
     required VoidCallback onPrimary,
     required Key secondaryKey,
@@ -1718,9 +1693,10 @@ class _HomeScreenState extends State<HomeScreen> {
     required VoidCallback onSecondary,
   }) {
     return MashwarHoverCard(
-      borderRadius: BorderRadius.circular(22),
-      borderColor: AppColors.borderDisabled,
-      hoverBorderColor: accent,
+      borderRadius: BorderRadius.circular(20),
+      backgroundColor: Colors.white,
+      borderColor: AppColors.slateBorder,
+      hoverBorderColor: AppColors.navy,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1732,9 +1708,9 @@ class _HomeScreenState extends State<HomeScreen> {
               fit: BoxFit.cover,
               alignment: Alignment.center,
               errorBuilder: (_, __, ___) => Container(
-                color: AppColors.sand,
+                color: AppColors.slateBg,
                 child: Center(
-                  child: Icon(primaryIcon, size: 40, color: accent),
+                  child: Icon(primaryIcon, size: 38, color: AppColors.navy),
                 ),
               ),
             ),
@@ -1748,7 +1724,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     MashwarServicePillarIcon(
                       pillar: pillar,
-                      size: 38,
+                      size: 36,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1758,8 +1734,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.title(color: AppColors.navy)
                             .copyWith(
-                          fontSize: 16.5,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
@@ -1769,26 +1745,29 @@ class _HomeScreenState extends State<HomeScreen> {
                           horizontal: 8, vertical: 3.5),
                       decoration: BoxDecoration(
                         color: badgeBg,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         badgeLabel,
                         style: AppTypography.label(color: badgeFg).copyWith(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11.5,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Text(
                   benefit,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.bodySecondary().copyWith(
-                    fontSize: 12.5,
-                    height: 1.42,
+                  style: AppTypography.bodySecondary(
+                    color: AppColors.textSecondary,
+                  ).copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    height: 1.4,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -1797,24 +1776,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ElevatedButton.icon(
                     key: primaryKey,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBg,
-                      foregroundColor: primaryFg,
+                      backgroundColor: AppColors.navy,
+                      foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(13),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: onPrimary,
-                    icon: Icon(primaryIcon, size: 18, color: primaryFg),
+                    icon: Icon(primaryIcon, size: 17, color: Colors.white),
                     label: Text(
                       primaryLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 12.5,
-                        color: primaryFg,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: Colors.white,
                         fontFamily: 'Cairo',
                       ),
                     ),
@@ -1827,24 +1806,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     key: secondaryKey,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.navy,
-                      backgroundColor: AppColors.sand,
-                      side: BorderSide(
-                        color: AppColors.navy.withValues(alpha: 0.22),
-                      ),
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: AppColors.slateBorder),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(13),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: onSecondary,
-                    icon: Icon(secondaryIcon, size: 16, color: accent),
+                    icon: Icon(secondaryIcon, size: 16, color: AppColors.navy),
                     label: Text(
                       secondaryLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
                         color: AppColors.navy,
                         fontFamily: 'Cairo',
                       ),
@@ -1876,9 +1853,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 14),
         MashwarHoverCard(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           backgroundColor: Colors.white,
-          borderColor: AppColors.teal.withValues(alpha: 0.28),
+          borderColor: AppColors.slateBorder,
           hoverBorderColor: AppColors.teal,
           padding: const EdgeInsets.all(14),
           onTap: () {
@@ -1891,15 +1868,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             children: [
               Container(
-                width: isMedium ? 80 : 64,
-                height: isMedium ? 80 : 64,
+                width: isMedium ? 74 : 60,
+                height: isMedium ? 74 : 60,
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: AppColors.sand,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: AppColors.gold.withValues(alpha: 0.35),
-                  ),
+                  color: AppColors.slateBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.slateBorder),
                 ),
                 child: Image.asset(
                   'assets/images/escrow_trust_shield.jpg',
@@ -1907,7 +1882,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   errorBuilder: (_, __, ___) => const Icon(
                     Icons.verified_user_rounded,
                     color: AppColors.teal,
-                    size: 32,
+                    size: 30,
                   ),
                 ),
               ),
@@ -1921,19 +1896,22 @@ class _HomeScreenState extends State<HomeScreen> {
                           ? 'حماية مزدوجة بكود الأمان OTP واعتماد الفواتير'
                           : 'Bilateral OTP Handover & Verified Receipt Protection',
                       style: AppTypography.body(color: AppColors.navy).copyWith(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       isAr
-                          ? 'توثيق هوية المسافرين والمزودين، تأكيد الاستلام والتسليم برمز سري، وحفظ حقوق الطرفين.'
-                          : 'Verified identities, dual pickup/delivery OTP codes, and transparent invoice confirmation.',
+                          ? 'توثيق الهوية، تأكيد الاستلام والتسليم بكود سري، واعتماد الفواتير.'
+                          : 'Verified profiles, dual pickup/delivery OTP codes, and transparent receipts.',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.bodySmall(
+                      style: AppTypography.bodySecondary(
                         color: AppColors.textSecondary,
+                      ).copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -1942,8 +1920,8 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(width: 6),
               const Icon(
                 Icons.arrow_forward_ios_rounded,
-                size: 16,
-                color: AppColors.teal,
+                size: 15,
+                color: AppColors.textSecondary,
               ),
             ],
           ),
@@ -1969,11 +1947,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 5,
+                    width: 4,
                     height: 18,
                     decoration: BoxDecoration(
                       color: AppColors.teal,
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -1982,7 +1960,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       isAr
                           ? 'مسافرون متاحون الآن (مقاعد ومساحة طرود)'
                           : 'Available Travelers (Seats & Parcel Space)',
-                      style: AppTypography.title().copyWith(fontSize: 18),
+                      style: AppTypography.title(color: AppColors.navy)
+                          .copyWith(
+                        fontSize: 17.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -1999,8 +1981,10 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: Text(
                 isAr ? 'كل الرحلات' : 'See All Trips',
-                style: AppTypography.label(color: AppColors.teal)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.label(color: AppColors.navy).copyWith(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -2011,6 +1995,8 @@ class _HomeScreenState extends State<HomeScreen> {
         else if (topTrips.isEmpty)
           MashwarSectionCard(
             padding: const EdgeInsets.all(18),
+            backgroundColor: Colors.white,
+            borderColor: AppColors.slateBorder,
             child: Column(
               children: [
                 Text(
@@ -2018,10 +2004,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? 'لا توجد رحلات مطابقة لهذا المسار حالياً — يمكنك نشر رحلتك أو طلب مقعد/طرد على الطريق.'
                       : 'No matching trips for this corridor right now — publish your trip or post a route request.',
                   textAlign: TextAlign.center,
-                  style: AppTypography.bodySecondary(),
+                  style: AppTypography.bodySecondary(
+                    color: AppColors.textSecondary,
+                  ).copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 10),
                 OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.navy,
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: AppColors.slateBorder),
+                  ),
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -2045,8 +2041,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: MashwarHoverCard(
                 key: ValueKey('home_live_trip_${ride.id}'),
                 borderRadius: BorderRadius.circular(18),
-                borderColor: AppColors.borderDisabled,
-                hoverBorderColor: AppColors.teal,
+                backgroundColor: Colors.white,
+                borderColor: AppColors.slateBorder,
+                hoverBorderColor: AppColors.navy,
                 padding: const EdgeInsets.all(14),
                 onTap: () {
                   Navigator.of(context).push(
@@ -2071,8 +2068,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               avatarUrl: null,
                               fullName: ride.driverName,
                               size: 36,
-                              borderWidth: 1.6,
-                              borderColor: AppColors.gold,
+                              borderWidth: 1.2,
+                              borderColor: AppColors.slateBorder,
                               autoCommunityPortrait: true,
                             ),
                             const SizedBox(width: 8),
@@ -2083,8 +2080,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 overflow: TextOverflow.ellipsis,
                                 style: AppTypography.body(color: AppColors.navy)
                                     .copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
                                 ),
                               ),
                             ),
@@ -2106,16 +2103,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: AppColors.goldSurface,
-                                borderRadius: BorderRadius.circular(10),
+                                color: AppColors.slateBg,
+                                borderRadius: BorderRadius.circular(8),
+                                border:
+                                    Border.all(color: AppColors.slateBorder),
                               ),
                               child: Text(
                                 isAr
                                     ? '${ride.remainingSeats} مقاعد شاغرة'
                                     : '${ride.remainingSeats} empty seats',
                                 style: AppTypography.label(
-                                        color: AppColors.goldDark)
-                                    .copyWith(fontWeight: FontWeight.w800),
+                                        color: AppColors.navy)
+                                    .copyWith(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                             if (ride.acceptsParcels)
@@ -2124,13 +2126,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                     horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
                                   color: AppColors.tealSurface,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   isAr ? 'يقبل طرود' : 'Accepts Parcels',
                                   style: AppTypography.label(
                                           color: AppColors.tealDark)
-                                      .copyWith(fontWeight: FontWeight.w800),
+                                      .copyWith(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                           ],
@@ -2158,7 +2163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               : '${ride.pricePerSeat} QAR / seat${ride.acceptsParcels ? " · Parcel ${ride.parcelPrice} QAR" : ""}',
                           style: AppTypography.body(color: AppColors.navy)
                               .copyWith(
-                                  fontWeight: FontWeight.w900, fontSize: 13),
+                                  fontWeight: FontWeight.w700, fontSize: 13.5),
                         ),
                         Wrap(
                           spacing: 8,
@@ -2171,7 +2176,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 foregroundColor: Colors.white,
                                 elevation: 0,
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 7),
+                                    horizontal: 12, vertical: 8),
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 shape: RoundedRectangleBorder(
@@ -2188,8 +2193,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Text(
                                 isAr ? 'حجز مقعد' : 'Book Seat',
                                 style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
                                   fontFamily: 'Cairo',
                                 ),
                               ),
@@ -2198,13 +2204,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               OutlinedButton.icon(
                                 key: ValueKey('home_trip_parcel_${ride.id}'),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.tealDark,
-                                  backgroundColor: AppColors.tealSurface,
-                                  side: BorderSide(
-                                    color: AppColors.teal.withValues(alpha: 0.4),
+                                  foregroundColor: AppColors.navy,
+                                  backgroundColor: Colors.white,
+                                  side: const BorderSide(
+                                    color: AppColors.slateBorder,
                                   ),
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 7),
+                                      horizontal: 10, vertical: 8),
                                   minimumSize: Size.zero,
                                   tapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
@@ -2222,13 +2228,14 @@ class _HomeScreenState extends State<HomeScreen> {
                                 icon: const Icon(
                                   Icons.inventory_2_outlined,
                                   size: 14,
-                                  color: AppColors.tealDark,
+                                  color: AppColors.navy,
                                 ),
                                 label: Text(
                                   isAr ? 'أرسل طرداً' : 'Send Parcel',
                                   style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.navy,
                                     fontFamily: 'Cairo',
                                   ),
                                 ),
@@ -2274,7 +2281,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const MashwarCategoryIcon(
                 category: 'general_site_supply',
-                size: 38,
+                size: 36,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -2285,13 +2292,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       isAr
                           ? 'فئات التوريد السريع للمشاريع والمهام'
                           : 'Quick Supply & Hardware Categories',
-                      style: AppTypography.title().copyWith(fontSize: 16),
+                      style: AppTypography.title(color: AppColors.navy)
+                          .copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     Text(
                       isAr
-                          ? 'اختر فئة المواد لفتح نموذج الطلب المباشر بنقرة واحدة'
-                          : 'Tap any category to open a pre-selected supply request',
-                      style: AppTypography.bodySmall(),
+                          ? 'اختر فئة المواد لفتح الطلب المباشر بنقرة واحدة'
+                          : 'Tap a category to open a pre-selected request',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.bodySecondary(
+                        color: AppColors.textSecondary,
+                      ).copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
@@ -2303,10 +2321,9 @@ class _HomeScreenState extends State<HomeScreen> {
             spacing: 8,
             runSpacing: 8,
             children: quickCategories.map((cat) {
-              final meta = mashwarCategoryMetaFor(cat.$1);
               return MashwarPressable(
                 key: ValueKey('home_quick_category_${cat.$1}'),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -2319,20 +2336,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
                   decoration: BoxDecoration(
-                    color: AppColors.sand,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: meta.accentColor.withValues(alpha: 0.28),
-                    ),
+                    color: AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.slateBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       MashwarCategoryIcon(
                         category: cat.$1,
-                        size: 24,
+                        size: 22,
                         showSurface: true,
                       ),
                       const SizedBox(width: 7),
@@ -2341,7 +2356,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: AppTypography.label(color: AppColors.navy)
                             .copyWith(
                           fontSize: 12,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -2361,7 +2376,7 @@ class _HomeScreenState extends State<HomeScreen> {
         fit: BoxFit.cover,
         alignment: Alignment.center,
         errorBuilder: (_, __, ___) => Container(
-          color: AppColors.sand,
+          color: AppColors.slateBg,
           child: const Center(
             child: Icon(
               Icons.handyman_rounded,
@@ -2377,8 +2392,8 @@ class _HomeScreenState extends State<HomeScreen> {
       key: const ValueKey('home_worksite_supply_card'),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.borderDisabled),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       clipBehavior: Clip.antiAlias,
       child: isMedium
@@ -2409,10 +2424,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return MashwarHoverCard(
       key: const ValueKey('home_notifications_summary'),
       borderRadius: BorderRadius.circular(16),
-      backgroundColor: hasActivity ? AppColors.goldSurface : Colors.white,
+      backgroundColor: Colors.white,
       borderColor: hasActivity
-          ? AppColors.gold.withValues(alpha: 0.45)
-          : AppColors.borderDisabled,
+          ? AppColors.teal.withValues(alpha: 0.35)
+          : AppColors.slateBorder,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       onTap: () {
         Navigator.of(context).push(
@@ -2427,9 +2442,7 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: hasActivity
-                  ? AppColors.gold.withValues(alpha: 0.22)
-                  : AppColors.sand,
+              color: hasActivity ? AppColors.tealSurface : AppColors.slateBg,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -2437,7 +2450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? Icons.notifications_active_outlined
                   : Icons.notifications_none_rounded,
               size: 18,
-              color: hasActivity ? AppColors.navy : AppColors.textSecondary,
+              color: hasActivity ? AppColors.tealDark : AppColors.textSecondary,
             ),
           ),
           const SizedBox(width: 10),
@@ -2457,8 +2470,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               : 'Notifications summary: You are all caught up.')),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.label(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 if (unreadCount > 0)
                   Text(
@@ -2467,8 +2482,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         : '$unreadCount unread alert(s) · Tap to open',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.bodySmall(color: AppColors.goldDark)
-                        .copyWith(fontSize: 11, fontWeight: FontWeight.w800),
+                    style: AppTypography.label(color: AppColors.tealDark)
+                        .copyWith(fontSize: 11.5, fontWeight: FontWeight.w600),
                   ),
               ],
             ),
@@ -2476,7 +2491,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 6),
           const Icon(
             Icons.chevron_right_rounded,
-            color: AppColors.navy,
+            color: AppColors.textSecondary,
             size: 20,
           ),
         ],
@@ -2500,11 +2515,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 5,
+                    width: 4,
                     height: 18,
                     decoration: BoxDecoration(
                       color: AppColors.navy,
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -2513,7 +2528,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       isAr
                           ? 'طلبات التوريد والمهام النشطة'
                           : 'Active Supply & Errand Requests',
-                      style: AppTypography.title().copyWith(fontSize: 17.5),
+                      style: AppTypography.title(color: AppColors.navy)
+                          .copyWith(
+                        fontSize: 17.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ],
@@ -2529,8 +2548,10 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: Text(
                 isAr ? 'عرض الكل' : 'View All',
-                style: AppTypography.label(color: AppColors.teal)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.label(color: AppColors.navy).copyWith(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -2549,12 +2570,19 @@ class _HomeScreenState extends State<HomeScreen> {
         else if (recentToShow.isEmpty)
           MashwarSectionCard(
             padding: const EdgeInsets.all(20),
+            backgroundColor: Colors.white,
+            borderColor: AppColors.slateBorder,
             child: Text(
               isAr
                   ? 'لا توجد طلبات توريد مسجلة بعد. ابدأ بإنشاء طلبك الأول أعلاه.'
                   : 'No supply requests yet. Create your first request above.',
               textAlign: TextAlign.center,
-              style: AppTypography.bodySecondary(),
+              style: AppTypography.bodySecondary(
+                color: AppColors.textSecondary,
+              ).copyWith(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           )
         else
@@ -2566,8 +2594,9 @@ class _HomeScreenState extends State<HomeScreen> {
               child: MashwarHoverCard(
                 key: ValueKey('home_recent_req_${req.id}'),
                 borderRadius: BorderRadius.circular(18),
-                borderColor: AppColors.borderDisabled,
-                hoverBorderColor: AppColors.teal,
+                backgroundColor: Colors.white,
+                borderColor: AppColors.slateBorder,
+                hoverBorderColor: AppColors.navy,
                 padding: const EdgeInsets.all(14),
                 onTap: () {
                   Navigator.of(context).push(
@@ -2603,8 +2632,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               Text(
                                 req.effectiveTotalMinor.format(isArabic: isAr),
-                                style: AppTypography.body(color: AppColors.teal)
-                                    .copyWith(fontWeight: FontWeight.w800),
+                                style: AppTypography.body(color: AppColors.navy)
+                                    .copyWith(
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ],
                           ),
@@ -2616,7 +2648,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       req.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.title().copyWith(fontSize: 15.5),
+                      style: AppTypography.title(color: AppColors.navy)
+                          .copyWith(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     MashwarRouteTimeline(
@@ -2632,12 +2668,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         OutlinedButton.icon(
                           key: ValueKey('home_quick_reorder_${req.id}'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.teal,
-                            side: const BorderSide(color: AppColors.teal),
+                            foregroundColor: AppColors.navy,
+                            backgroundColor: Colors.white,
+                            side:
+                                const BorderSide(color: AppColors.slateBorder),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                                horizontal: 10, vertical: 7),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                           onPressed: () {
                             final draft = worksite.buildReorderDraft(req);
@@ -2649,17 +2690,24 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             );
                           },
-                          icon: const Icon(Icons.replay_rounded, size: 15),
+                          icon: const Icon(
+                            Icons.replay_rounded,
+                            size: 15,
+                            color: AppColors.navy,
+                          ),
                           label: Text(
                             isAr ? 'إعادة طلب سريعة' : 'Quick Reorder',
-                            style: AppTypography.label(color: AppColors.teal)
-                                .copyWith(fontWeight: FontWeight.w800),
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                         TextButton(
                           style: TextButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                                horizontal: 10, vertical: 7),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
@@ -2674,8 +2722,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           },
                           child: Text(
                             isAr ? 'عرض التفاصيل' : 'View Details',
-                            style: AppTypography.label(color: AppColors.navy)
-                                .copyWith(fontWeight: FontWeight.w800),
+                            style: AppTypography.label(
+                              color: AppColors.textSecondary,
+                            ).copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
@@ -2710,7 +2762,7 @@ class _HomeScreenState extends State<HomeScreen> {
       key: const ValueKey('home_corridor_map_card'),
       padding: const EdgeInsets.all(16),
       backgroundColor: Colors.white,
-      borderColor: AppColors.borderDisabled,
+      borderColor: AppColors.slateBorder,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2729,36 +2781,56 @@ class _HomeScreenState extends State<HomeScreen> {
                       isAr
                           ? 'خريطة المسارات التفاعلية للرحلات والطرود والتوريد'
                           : 'Interactive Route & Supply Corridor Map',
-                      style: AppTypography.body(color: AppColors.navy)
-                          .copyWith(fontWeight: FontWeight.w800),
+                      style: AppTypography.title(color: AppColors.navy)
+                          .copyWith(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     Text(
                       '${AppStrings.translateCity(corridorFrom, isArabic: isAr)} → ${AppStrings.translateCity(previewHub, isArabic: isAr)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.label(color: AppColors.teal)
-                          .copyWith(fontWeight: FontWeight.w800),
+                      style: AppTypography.label(color: AppColors.tealDark)
+                          .copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
               ),
-              TextButton.icon(
+              OutlinedButton.icon(
                 key: const ValueKey('home_toggle_map_btn'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.navy,
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.slateBorder),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
                 onPressed: () =>
                     setState(() => _isMapExpanded = !_isMapExpanded),
                 icon: Icon(
                   _isMapExpanded
                       ? Icons.unfold_less_rounded
                       : Icons.unfold_more_rounded,
-                  size: 18,
+                  size: 16,
                   color: AppColors.navy,
                 ),
                 label: Text(
                   _isMapExpanded
                       ? (isAr ? 'تصغير' : 'Compact')
                       : (isAr ? 'توسيع' : 'Expand'),
-                  style: AppTypography.label(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.label(color: AppColors.navy).copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -2772,7 +2844,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 : (isWide ? 205 : 165),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderDisabled),
+              border: Border.all(color: AppColors.slateBorder),
             ),
             child: QatarLiveMapCanvas(
               style: QatarMapStyle.light,
@@ -2814,19 +2886,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.navy : AppColors.sand,
+                    color: isSelected ? AppColors.navy : Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: isSelected
-                          ? AppColors.navy
-                          : AppColors.gold.withValues(alpha: 0.35),
+                      color:
+                          isSelected ? AppColors.navy : AppColors.slateBorder,
                     ),
                   ),
                   child: Text(
                     AppStrings.translateCity(area, isArabic: isAr),
                     style: AppTypography.label(
-                      color: isSelected ? AppColors.gold : AppColors.navy,
-                    ).copyWith(fontWeight: FontWeight.w800),
+                      color: isSelected ? Colors.white : AppColors.navy,
+                    ).copyWith(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               );
@@ -2842,8 +2916,8 @@ class _HomeScreenState extends State<HomeScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 9,
-          height: 9,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
@@ -2853,7 +2927,7 @@ class _HomeScreenState extends State<HomeScreen> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTypography.label(color: AppColors.textSecondary)
-                .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+                .copyWith(fontWeight: FontWeight.w500, fontSize: 12),
           ),
         ),
       ],
@@ -2879,7 +2953,10 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 Text(
                   isAr ? 'اختيار الموقع المحفوظ' : 'Select Saved Location',
-                  style: AppTypography.title().copyWith(fontSize: 18),
+                  style: AppTypography.title(color: AppColors.navy).copyWith(
+                    fontSize: 17.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 if (sites.isEmpty)
@@ -2887,7 +2964,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     isAr
                         ? 'لا توجد مواقع محفوظة بعد. أضف مواقعك لتعبئة الطلبات تلقائياً.'
                         : 'No saved locations yet. Add your frequent spots for 1-tap prefill.',
-                    style: AppTypography.bodySecondary(),
+                    style: AppTypography.bodySecondary(
+                      color: AppColors.textSecondary,
+                    ).copyWith(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                    ),
                   )
                 else
                   ...sites.map(
@@ -2897,9 +2979,22 @@ class _HomeScreenState extends State<HomeScreen> {
                         Icons.location_on_rounded,
                         color: AppColors.teal,
                       ),
-                      title: Text(site.label),
+                      title: Text(
+                        site.label,
+                        style: AppTypography.body(color: AppColors.navy)
+                            .copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                       subtitle: Text(
                         '${AppStrings.translateCity(site.municipality, isArabic: isAr)} · ${site.zoneOrStreet}',
+                        style: AppTypography.bodySecondary(
+                          color: AppColors.textSecondary,
+                        ).copyWith(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       onTap: () {
                         setState(() => _selectedSavedWorksiteId = site.id);
@@ -2908,11 +3003,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 const SizedBox(height: 12),
-                MashwarButton(
-                  text: isAr
-                      ? 'إضافة / إدارة المواقع المحفوظة'
-                      : 'Add / Manage Saved Locations',
-                  variant: MashwarButtonVariant.secondary,
+                OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.navy,
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: AppColors.slateBorder),
+                    minimumSize: const Size(double.infinity, 46),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
                   onPressed: () {
                     Navigator.of(sheetCtx).pop();
                     Navigator.of(context).push(
@@ -2923,6 +3023,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     );
                   },
+                  child: Text(
+                    isAr
+                        ? 'إضافة / إدارة المواقع المحفوظة'
+                        : 'Add / Manage Saved Locations',
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.navy,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
                 ),
               ],
             ),
