@@ -79,14 +79,22 @@ class _BoardScreenState extends State<BoardScreen> {
               children: [
                 Text(
                   isAr ? 'نطاق عرض الإعلانات' : 'Display Radius',
-                  style: AppTypography.title(),
+                  style: AppTypography.title(color: AppColors.navy).copyWith(
+                    fontSize: 17.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   isAr
                       ? 'اختر المسافة لعرض رحلات وطلبات المسافرين القريبين من مسارك'
                       : 'Choose the radius to view trips and requests near your route',
-                  style: AppTypography.bodySecondary(),
+                  style: AppTypography.bodySecondary(
+                    color: AppColors.textSecondary,
+                  ).copyWith(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ...options.map((km) {
@@ -105,26 +113,30 @@ class _BoardScreenState extends State<BoardScreen> {
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
                             color: isSelected
-                                ? AppColors.cobalt
+                                ? AppColors.navy
                                 : AppColors.slateBorder,
                             width: isSelected ? 1.5 : 1.0,
                           ),
                         ),
                         leading: Icon(
                           Icons.radar_rounded,
-                          color: isSelected ? AppColors.cobalt : AppColors.navy,
+                          color: isSelected
+                              ? AppColors.navy
+                              : AppColors.textSecondary,
                         ),
                         title: Text(
                           label,
-                          style: AppTypography.body().copyWith(
+                          style: AppTypography.body(color: AppColors.navy)
+                              .copyWith(
+                            fontSize: 14.5,
                             fontWeight:
-                                isSelected ? FontWeight.w800 : FontWeight.w600,
+                                isSelected ? FontWeight.w700 : FontWeight.w500,
                           ),
                         ),
                         trailing: isSelected
                             ? const Icon(
                                 Icons.check_circle_rounded,
-                                color: AppColors.cobalt,
+                                color: AppColors.teal,
                               )
                             : null,
                         onTap: () {
@@ -154,31 +166,31 @@ class _BoardScreenState extends State<BoardScreen> {
           type: BoardAdType.rideOffer,
           label: isAr ? 'سفر ومقاعد شاغرة' : 'Shared Seats',
           icon: Icons.directions_car_outlined,
-          accentColor: AppColors.cobalt,
+          accentColor: AppColors.navy,
         ),
         _CategoryFilterOption(
           type: BoardAdType.rideRequest,
           label: isAr ? 'طلبات سفر' : 'Ride Requests',
           icon: Icons.person_search_rounded,
-          accentColor: AppColors.cobalt,
+          accentColor: AppColors.navy,
         ),
         _CategoryFilterOption(
           type: BoardAdType.parcelRequest,
           label: isAr ? 'طرود على الطريق' : 'Route Parcels',
           icon: Icons.inventory_2_outlined,
-          accentColor: AppColors.indigo,
+          accentColor: AppColors.teal,
         ),
         _CategoryFilterOption(
           type: BoardAdType.goodsDelivery,
           label: isAr ? 'توريد ومستلزمات' : 'Smart Supply',
           icon: Icons.local_shipping_outlined,
-          accentColor: AppColors.emerald,
+          accentColor: AppColors.teal,
         ),
         _CategoryFilterOption(
           type: BoardAdType.errandService,
           label: isAr ? 'مهام ومستندات' : 'Docs & Errands',
           icon: Icons.description_outlined,
-          accentColor: AppColors.indigo,
+          accentColor: AppColors.navy,
         ),
         _CategoryFilterOption(
           type: BoardAdType.localTrip,
@@ -236,7 +248,11 @@ class _BoardScreenState extends State<BoardScreen> {
                           isAr ? 'لوحة المسارات والطلبات' : 'Route & Service Board',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: AppTypography.title().copyWith(fontSize: 17),
+                          style: AppTypography.title(color: AppColors.navy)
+                              .copyWith(
+                            fontSize: 17.5,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -246,15 +262,15 @@ class _BoardScreenState extends State<BoardScreen> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.emeraldSurface,
-                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.tealSurface,
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           isAr ? 'مباشر' : 'LIVE',
                           style: const TextStyle(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.emerald,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.tealDark,
                             fontFamily: 'Cairo',
                           ),
                         ),
@@ -263,12 +279,16 @@ class _BoardScreenState extends State<BoardScreen> {
                   ),
                   Text(
                     isAr
-                        ? 'مقاعد تشاركية وطرود على الطريق وتوريد ذكي'
-                        : 'Shared trips, route parcels & verified supply',
+                        ? 'مقاعد تشاركية وطرود على الطريق وتوريد'
+                        : 'Shared trips, route parcels & supply',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.label(color: AppColors.textSecondary)
-                        .copyWith(fontSize: 11),
+                    style: AppTypography.bodySecondary(
+                      color: AppColors.textSecondary,
+                    ).copyWith(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -309,11 +329,9 @@ class _BoardScreenState extends State<BoardScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.cobaltSurface,
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: AppColors.cobalt.withValues(alpha: 0.28),
-                    ),
+                    border: Border.all(color: AppColors.slateBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -321,13 +339,16 @@ class _BoardScreenState extends State<BoardScreen> {
                       const Icon(
                         Icons.campaign_outlined,
                         size: 16,
-                        color: AppColors.cobalt,
+                        color: AppColors.navy,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         isAr ? 'إعلاناتي' : 'My Ads',
-                        style: AppTypography.label(color: AppColors.cobalt)
-                            .copyWith(fontWeight: FontWeight.w800),
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       if (activeMyAdsCount + sentOffersCount > 0) ...[
                         const SizedBox(width: 5),
@@ -337,15 +358,15 @@ class _BoardScreenState extends State<BoardScreen> {
                             vertical: 1,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.cobalt,
+                            color: AppColors.navy,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
                             '${activeMyAdsCount + sentOffersCount}',
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -367,11 +388,14 @@ class _BoardScreenState extends State<BoardScreen> {
         },
         backgroundColor: AppColors.navy,
         foregroundColor: Colors.white,
-        elevation: 3,
+        elevation: 2,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           isAr ? 'انشر إعلان' : 'Post Ad',
-          style: AppTypography.button(color: Colors.white),
+          style: AppTypography.button(color: Colors.white).copyWith(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       body: SafeArea(
@@ -593,6 +617,13 @@ class _BoardScreenState extends State<BoardScreen> {
                                     ),
                                     const SizedBox(height: 16),
                                     OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.navy,
+                                        backgroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: AppColors.slateBorder,
+                                        ),
+                                      ),
                                       onPressed: () {
                                         setState(() => _intentFilter = 0);
                                         board.setSelectedType(BoardAdType.all);
@@ -698,10 +729,10 @@ class _BoardScreenState extends State<BoardScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.cobalt : Colors.white,
+          color: isSelected ? AppColors.navy : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? AppColors.cobalt : AppColors.slateBorder,
+            color: isSelected ? AppColors.navy : AppColors.slateBorder,
           ),
         ),
         child: Row(
@@ -717,7 +748,7 @@ class _BoardScreenState extends State<BoardScreen> {
               opt.label,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 color: isSelected ? Colors.white : AppColors.navy,
                 fontFamily: 'Cairo',
               ),
@@ -765,8 +796,8 @@ class _BoardScreenState extends State<BoardScreen> {
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? AppColors.navy : AppColors.textSecondary,
                   fontFamily: 'Cairo',
                 ),
@@ -787,14 +818,12 @@ class _BoardScreenState extends State<BoardScreen> {
       onTap: () => setState(() => _escrowOnly = !_escrowOnly),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: _escrowOnly ? AppColors.emerald : AppColors.emeraldSurface,
+          color: _escrowOnly ? AppColors.teal : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: _escrowOnly
-                ? AppColors.emerald
-                : AppColors.emerald.withValues(alpha: 0.35),
+            color: _escrowOnly ? AppColors.teal : AppColors.slateBorder,
           ),
         ),
         child: Row(
@@ -803,15 +832,15 @@ class _BoardScreenState extends State<BoardScreen> {
             Icon(
               Icons.verified_user_rounded,
               size: 13,
-              color: _escrowOnly ? Colors.white : AppColors.emerald,
+              color: _escrowOnly ? Colors.white : AppColors.teal,
             ),
             const SizedBox(width: 4),
             Text(
               isAr ? 'مضمون بـ OTP' : 'OTP Verified',
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: _escrowOnly ? Colors.white : AppColors.emerald,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: _escrowOnly ? Colors.white : AppColors.navy,
                 fontFamily: 'Cairo',
               ),
             ),
@@ -834,7 +863,11 @@ class _BoardScreenState extends State<BoardScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.radar_rounded, size: 16, color: AppColors.cobalt),
+            const Icon(
+              Icons.radar_rounded,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -846,14 +879,17 @@ class _BoardScreenState extends State<BoardScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.label(color: AppColors.textSecondary)
-                    .copyWith(fontWeight: FontWeight.w600),
+                    .copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             const SizedBox(width: 2),
             const Icon(
               Icons.keyboard_arrow_down_rounded,
               size: 16,
-              color: AppColors.cobalt,
+              color: AppColors.textSecondary,
             ),
           ],
         ),
@@ -881,8 +917,10 @@ class _BoardScreenState extends State<BoardScreen> {
           isAr
               ? 'عروضي المرسلة ($sentOffersCount)'
               : 'Sent Offers ($sentOffersCount)',
-          style: AppTypography.label(color: AppColors.cobalt)
-              .copyWith(fontWeight: FontWeight.w800),
+          style: AppTypography.label(color: AppColors.navy).copyWith(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -894,36 +932,28 @@ class _BoardScreenState extends State<BoardScreen> {
     bool isAr,
     int index,
   ) {
-    Color typeColor;
     IconData typeIcon;
 
     switch (ad.type) {
       case BoardAdType.parcelRequest:
-        typeColor = AppColors.indigo;
         typeIcon = Icons.inventory_2_outlined;
         break;
       case BoardAdType.rideRequest:
-        typeColor = AppColors.cobalt;
         typeIcon = Icons.person_search_outlined;
         break;
       case BoardAdType.rideOffer:
-        typeColor = AppColors.cobalt;
         typeIcon = Icons.directions_car_outlined;
         break;
       case BoardAdType.localTrip:
-        typeColor = AppColors.teal;
         typeIcon = Icons.family_restroom_rounded;
         break;
       case BoardAdType.errandService:
-        typeColor = AppColors.indigo;
         typeIcon = Icons.description_outlined;
         break;
       case BoardAdType.goodsDelivery:
-        typeColor = AppColors.emerald;
         typeIcon = Icons.local_shipping_outlined;
         break;
       case BoardAdType.all:
-        typeColor = AppColors.navy;
         typeIcon = Icons.campaign_outlined;
         break;
     }
@@ -962,9 +992,9 @@ class _BoardScreenState extends State<BoardScreen> {
       child: Padding(
         padding: const EdgeInsets.only(bottom: AppDimens.space16),
         child: MashwarHoverCard(
-          borderColor:
-              isOfferSent ? AppColors.emerald : AppColors.slateBorder,
-          hoverBorderColor: typeColor,
+          backgroundColor: Colors.white,
+          borderColor: isOfferSent ? AppColors.teal : AppColors.slateBorder,
+          hoverBorderColor: AppColors.navy,
           padding: const EdgeInsets.all(AppDimens.space16),
           onTap: handleOpenAd,
           child: Column(
@@ -983,10 +1013,12 @@ class _BoardScreenState extends State<BoardScreen> {
                         width: 38,
                         height: 38,
                         decoration: BoxDecoration(
-                          color: typeColor.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
+                          color: AppColors.slateBg,
+                          borderRadius: BorderRadius.circular(11),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
-                        child: Icon(typeIcon, color: typeColor, size: 19),
+                        child:
+                            Icon(typeIcon, color: AppColors.navy, size: 19),
                       ),
                       const SizedBox(width: 9),
                       Column(
@@ -997,13 +1029,17 @@ class _BoardScreenState extends State<BoardScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 130),
+                                constraints: const BoxConstraints(maxWidth: 140),
                                 child: Text(
                                   ad.authorName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.body()
-                                      .copyWith(fontWeight: FontWeight.w800),
+                                  style: AppTypography.body(
+                                    color: AppColors.navy,
+                                  ).copyWith(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                               if (ad.isVerified) ...[
@@ -1011,7 +1047,7 @@ class _BoardScreenState extends State<BoardScreen> {
                                 const Icon(
                                   Icons.verified_rounded,
                                   size: 14,
-                                  color: AppColors.emerald,
+                                  color: AppColors.teal,
                                 ),
                               ],
                             ],
@@ -1026,7 +1062,12 @@ class _BoardScreenState extends State<BoardScreen> {
                               ),
                               Text(
                                 '${ad.authorRating}',
-                                style: AppTypography.label(),
+                                style: AppTypography.label(
+                                  color: AppColors.navy,
+                                ).copyWith(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 110),
@@ -1036,6 +1077,9 @@ class _BoardScreenState extends State<BoardScreen> {
                                   overflow: TextOverflow.ellipsis,
                                   style: AppTypography.label(
                                     color: AppColors.textSecondary,
+                                  ).copyWith(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ),
@@ -1057,17 +1101,21 @@ class _BoardScreenState extends State<BoardScreen> {
                         ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
+                          horizontal: 9,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: typeColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
+                          color: AppColors.slateBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Text(
                           ad.displaySubTag(isAr),
-                          style: AppTypography.label(color: typeColor)
-                              .copyWith(fontWeight: FontWeight.w800),
+                          style: AppTypography.label(color: AppColors.navy)
+                              .copyWith(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -1099,7 +1147,11 @@ class _BoardScreenState extends State<BoardScreen> {
                     const SizedBox(height: 7),
                     Row(
                       children: [
-                        Icon(Icons.schedule_rounded, size: 14, color: typeColor),
+                        const Icon(
+                          Icons.schedule_rounded,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
                         const SizedBox(width: 5),
                         Expanded(
                           child: Text(
@@ -1107,7 +1159,10 @@ class _BoardScreenState extends State<BoardScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.label(color: AppColors.navy)
-                                .copyWith(fontWeight: FontWeight.w700),
+                                .copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
@@ -1117,7 +1172,17 @@ class _BoardScreenState extends State<BoardScreen> {
               ),
               const SizedBox(height: 10),
 
-              Text(ad.description, style: AppTypography.bodySecondary()),
+              Text(
+                ad.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.bodySecondary(
+                  color: AppColors.textSecondary,
+                ).copyWith(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 14),
 
               LayoutBuilder(
@@ -1130,6 +1195,9 @@ class _BoardScreenState extends State<BoardScreen> {
                         ad.priceTagLabel(isAr),
                         style: AppTypography.label(
                           color: AppColors.textSecondary,
+                        ).copyWith(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       Row(
@@ -1139,16 +1207,20 @@ class _BoardScreenState extends State<BoardScreen> {
                         children: [
                           Text(
                             '${ad.suggestedPrice}',
-                            style: AppTypography.title().copyWith(
-                              color: AppColors.navy,
-                              fontSize: 20,
+                            style: AppTypography.title(color: AppColors.navy)
+                                .copyWith(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                           const SizedBox(width: 3),
                           Text(
                             isAr ? 'ر.ق' : 'QAR',
                             style: AppTypography.label(color: AppColors.navy)
-                                .copyWith(fontWeight: FontWeight.w800),
+                                .copyWith(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ],
                       ),
@@ -1164,16 +1236,14 @@ class _BoardScreenState extends State<BoardScreen> {
                         icon: Container(
                           padding: const EdgeInsets.all(7),
                           decoration: BoxDecoration(
-                            color: AppColors.emeraldSurface,
-                            border: Border.all(
-                              color: AppColors.emerald.withValues(alpha: 0.3),
-                            ),
+                            color: Colors.white,
+                            border: Border.all(color: AppColors.slateBorder),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
                             Icons.shield_outlined,
                             size: 17,
-                            color: AppColors.emerald,
+                            color: AppColors.teal,
                           ),
                         ),
                         onPressed: () {
@@ -1191,6 +1261,7 @@ class _BoardScreenState extends State<BoardScreen> {
                           icon: Container(
                             padding: const EdgeInsets.all(7),
                             decoration: BoxDecoration(
+                              color: Colors.white,
                               border: Border.all(color: AppColors.slateBorder),
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -1216,14 +1287,13 @@ class _BoardScreenState extends State<BoardScreen> {
                       Flexible(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isOfferSent
-                                ? AppColors.emerald
-                                : AppColors.cobalt,
+                            backgroundColor:
+                                isOfferSent ? AppColors.teal : AppColors.navy,
                             foregroundColor: Colors.white,
                             minimumSize: const Size(0, 40),
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(11),
                             ),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,
@@ -1236,7 +1306,11 @@ class _BoardScreenState extends State<BoardScreen> {
                             buttonText,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypography.button(color: Colors.white),
+                            style: AppTypography.button(color: Colors.white)
+                                .copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),

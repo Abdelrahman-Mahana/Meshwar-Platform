@@ -222,7 +222,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
         _searchController.text.trim().isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -245,7 +245,10 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                 isAr ? 'طلبات التوريد والمهام' : 'Supply & Task Requests',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.title().copyWith(fontSize: 18),
+                style: AppTypography.title(color: AppColors.navy).copyWith(
+                  fontSize: 17.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],
@@ -265,7 +268,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                 backgroundColor: AppColors.navy,
                 foregroundColor: Colors.white,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
@@ -279,8 +282,10 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
               icon: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
               label: Text(
                 isAr ? 'طلب جديد' : 'New Request',
-                style: AppTypography.label(color: Colors.white)
-                    .copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.label(color: Colors.white).copyWith(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -294,7 +299,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildFiltersBar(context, provider, isAr, hasAnyFilter),
-                const Divider(height: 1, color: AppColors.borderDisabled),
+                const Divider(height: 1, color: AppColors.slateBorder),
                 Expanded(
                   child: _buildFeedBody(
                     context,
@@ -348,7 +353,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   textInputAction: TextInputAction.search,
                   style: AppTypography.body(color: AppColors.navy).copyWith(
                     fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w500,
                   ),
                   decoration: InputDecoration(
                     isDense: true,
@@ -359,9 +364,9 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                     hintText: isAr
                         ? 'ابحث بالعنوان أو المواد أو المتجر أو المنطقة...'
                         : 'Search title, materials, store, or area...',
-                    hintStyle: AppTypography.label(
+                    hintStyle: AppTypography.bodySecondary(
                             color: AppColors.textSecondary)
-                        .copyWith(fontSize: 12),
+                        .copyWith(fontSize: 12.5, fontWeight: FontWeight.w500),
                     prefixIcon: const Icon(
                       Icons.search_rounded,
                       size: 19,
@@ -398,7 +403,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                          const BorderSide(color: AppColors.teal, width: 1.4),
+                          const BorderSide(color: AppColors.navy, width: 1.2),
                     ),
                   ),
                   onChanged: (val) {
@@ -439,9 +444,10 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                               _sortLabel(option, isAr),
                               style: AppTypography.label(color: AppColors.navy)
                                   .copyWith(
+                                fontSize: 12.5,
                                 fontWeight: activeSort == option
-                                    ? FontWeight.w800
-                                    : FontWeight.w600,
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                               ),
                             ),
                           ],
@@ -454,35 +460,30 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                       horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     color: activeSort != WorksiteSortOption.newest
-                        ? AppColors.tealSurface
-                        : AppColors.slateBg,
+                        ? AppColors.slateBg
+                        : Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: activeSort != WorksiteSortOption.newest
-                          ? AppColors.teal
+                          ? AppColors.navy
                           : AppColors.slateBorder,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.swap_vert_rounded,
                         size: 17,
-                        color: activeSort != WorksiteSortOption.newest
-                            ? AppColors.teal
-                            : AppColors.navy,
+                        color: AppColors.navy,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _sortLabel(activeSort, isAr),
-                        style: AppTypography.label(
-                          color: activeSort != WorksiteSortOption.newest
-                              ? AppColors.teal
-                              : AppColors.navy,
-                        ).copyWith(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 11.5,
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -502,7 +503,6 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   key: const ValueKey('feed_perspective_all'),
                   label: isAr ? 'الكل' : 'All',
                   selected: perspectiveAllSelected,
-                  accentColor: AppColors.navy,
                   onTap: () {
                     setState(() => _openMarketOnly = false);
                     provider.applyFilters(
@@ -516,7 +516,6 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   key: const ValueKey('feed_perspective_open_market'),
                   label: isAr ? 'متاح لتقديم عرض' : 'Open to Bid',
                   selected: perspectiveOpenMarketSelected,
-                  accentColor: AppColors.teal,
                   onTap: () {
                     setState(() => _openMarketOnly = true);
                     provider.applyFilters(
@@ -530,7 +529,6 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   key: const ValueKey('feed_perspective_mine'),
                   label: isAr ? 'طلباتي' : 'My Requests',
                   selected: provider.filterOnlyMine,
-                  accentColor: AppColors.navy,
                   onTap: () {
                     setState(() => _openMarketOnly = false);
                     provider.applyFilters(
@@ -544,7 +542,6 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   key: const ValueKey('feed_perspective_assigned'),
                   label: isAr ? 'مهامي كمزود' : 'Assigned Jobs',
                   selected: provider.filterAssignedToMe,
-                  accentColor: AppColors.indigo,
                   onTap: () {
                     setState(() => _openMarketOnly = false);
                     provider.applyFilters(
@@ -569,7 +566,6 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                     key: const ValueKey('feed_category_chip_all'),
                     label: isAr ? 'كل الفئات' : 'All Categories',
                     selected: activeCategory.isEmpty,
-                    accentColor: AppColors.navy,
                     onTap: () => provider.applyFilters(clearCategory: true),
                   ),
                 ),
@@ -592,12 +588,12 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                         padding: const EdgeInsetsDirectional.fromSTEB(
                             5, 3, 10, 3),
                         decoration: BoxDecoration(
-                          color: selected ? meta.accentColor : Colors.white,
+                          color: selected ? AppColors.navy : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: selected
-                                ? meta.accentColor
-                                : AppColors.borderDisabled,
+                                ? AppColors.navy
+                                : AppColors.slateBorder,
                           ),
                         ),
                         child: Row(
@@ -613,8 +609,8 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                               meta.title(isArabic: isAr),
                               style: TextStyle(
                                 color: selected ? Colors.white : AppColors.navy,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
                                 fontFamily: 'Cairo',
                               ),
                             ),
@@ -644,13 +640,17 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                     key: ValueKey(
                         'feed_area_chip_${area.isEmpty ? 'all' : area}'),
                     visualDensity: VisualDensity.compact,
+                    showCheckmark: false,
                     label: Text(label),
                     selected: selected,
                     selectedColor: AppColors.navy,
-                    backgroundColor: AppColors.surfaceLight,
+                    backgroundColor: Colors.white,
+                    side: BorderSide(
+                      color: selected ? AppColors.navy : AppColors.slateBorder,
+                    ),
                     labelStyle: TextStyle(
                       color: selected ? Colors.white : AppColors.navy,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                       fontSize: 11.5,
                       fontFamily: 'Cairo',
                     ),
@@ -700,7 +700,6 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   key: const ValueKey('feed_urgent_toggle'),
                   label: isAr ? 'عاجل فقط' : 'Urgent Only',
                   selected: _urgentOnly,
-                  accentColor: AppColors.cobalt,
                   onTap: () => setState(() => _urgentOnly = !_urgentOnly),
                 ),
                 const SizedBox(width: 10),
@@ -713,7 +712,6 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                       key: ValueKey('feed_budget_$qar'),
                       label: isAr ? '≤ $qar ر.ق' : '≤ $qar QAR',
                       selected: selected,
-                      accentColor: AppColors.teal,
                       onTap: () {
                         if (selected) {
                           provider.applyFilters(clearMaxBudget: true);
@@ -730,8 +728,11 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                     onPressed: () => _resetAllFilters(provider),
                     child: Text(
                       isAr ? 'مسح الفلاتر' : 'Clear Filters',
-                      style: AppTypography.label(color: AppColors.cobalt)
-                          .copyWith(fontWeight: FontWeight.w800),
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
               ],
@@ -746,7 +747,6 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
     Key? key,
     required String label,
     required bool selected,
-    Color accentColor = AppColors.navy,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -756,10 +756,10 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: selected ? accentColor : Colors.white,
+          color: selected ? AppColors.navy : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? accentColor : AppColors.borderDisabled,
+            color: selected ? AppColors.navy : AppColors.slateBorder,
           ),
         ),
         child: Text(
@@ -767,7 +767,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
           style: TextStyle(
             color: selected ? Colors.white : AppColors.navy,
             fontSize: 11.5,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
             fontFamily: 'Cairo',
           ),
         ),
@@ -786,9 +786,9 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.navy,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Row(
         children: [
@@ -803,11 +803,11 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   fit: BoxFit.cover,
                   alignment: Alignment.center,
                   errorBuilder: (_, __, ___) => Container(
-                    color: AppColors.navy,
+                    color: AppColors.slateBg,
                     child: const Center(
                       child: Icon(
                         Icons.handyman_rounded,
-                        color: AppColors.gold,
+                        color: AppColors.navy,
                         size: 24,
                       ),
                     ),
@@ -828,20 +828,23 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                       : '$totalCount Active Supply & Errand Requests',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.label(color: AppColors.gold)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.label(color: AppColors.tealDark)
+                      .copyWith(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   isAr
-                      ? 'شراء وتوريد بفاتورة أصلية موثّقة ورمز تسليم من 6 خانات'
+                      ? 'شراء وتوريد بفاتورة موثّقة ورمز تسليم من 6 خانات'
                       : 'Verified Receipt Purchasing & 6-Char Handover Code',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body(color: Colors.white).copyWith(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    height: 1.25,
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
                   ),
                 ),
               ],
@@ -899,13 +902,21 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   Text(
                     isAr ? 'تعذّر تحميل الطلبات' : 'Failed to Load Requests',
                     textAlign: TextAlign.center,
-                    style: AppTypography.title().copyWith(fontSize: 17),
+                    style: AppTypography.title(color: AppColors.navy).copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     errText,
                     textAlign: TextAlign.center,
-                    style: AppTypography.bodySecondary(),
+                    style: AppTypography.bodySecondary(
+                      color: AppColors.textSecondary,
+                    ).copyWith(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   MashwarButton(
@@ -934,20 +945,23 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.borderDisabled),
+                border: Border.all(color: AppColors.slateBorder),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.inbox_outlined,
-                      color: AppColors.navy, size: 42),
+                      color: AppColors.navy, size: 40),
                   const SizedBox(height: 12),
                   Text(
                     isAr
                         ? 'لا توجد طلبات توريد مطابقة'
                         : 'No Matching Supply Requests',
                     textAlign: TextAlign.center,
-                    style: AppTypography.title().copyWith(fontSize: 17),
+                    style: AppTypography.title(color: AppColors.navy).copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -959,14 +973,35 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                             ? 'انشر أول طلب توريد لموقع عملك وسيظهر للمزودين المعتمدين في قطر.'
                             : 'Publish a worksite supply request to reach approved providers across Qatar.'),
                     textAlign: TextAlign.center,
-                    style: AppTypography.bodySecondary(),
+                    style: AppTypography.bodySecondary(
+                      color: AppColors.textSecondary,
+                    ).copyWith(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   if (hasAnyFilter)
-                    MashwarButton(
-                      text: isAr ? 'مسح الفلاتر' : 'Clear Filters',
-                      variant: MashwarButtonVariant.secondary,
+                    OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: AppColors.slateBorder),
+                        minimumSize: const Size(double.infinity, 46),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                       onPressed: () => _resetAllFilters(provider),
+                      child: Text(
+                        isAr ? 'مسح الفلاتر' : 'Clear Filters',
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.navy,
+                          fontFamily: 'Cairo',
+                        ),
+                      ),
                     )
                   else
                     MashwarButton(
@@ -989,7 +1024,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
 
     // 4. Populated responsive list with pull-to-refresh
     return RefreshIndicator(
-      color: AppColors.teal,
+      color: AppColors.navy,
       onRefresh: () => provider.loadRequests(),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1071,10 +1106,9 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
     return MashwarHoverCard(
       key: ValueKey('feed_request_card_${req.id}'),
       borderRadius: BorderRadius.circular(16),
-      borderColor: urgent
-          ? AppColors.cobalt.withValues(alpha: 0.35)
-          : AppColors.borderDisabled,
-      hoverBorderColor: urgent ? AppColors.cobalt : AppColors.navy,
+      backgroundColor: Colors.white,
+      borderColor: AppColors.slateBorder,
+      hoverBorderColor: AppColors.navy,
       padding: const EdgeInsets.all(16),
       onTap: () {
         Navigator.of(context).push(
@@ -1102,12 +1136,14 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                         const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                     decoration: BoxDecoration(
                       color: sColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       req.status.label(isArabic: isAr),
-                      style: AppTypography.label(color: sColor)
-                          .copyWith(fontWeight: FontWeight.w800),
+                      style: AppTypography.label(color: sColor).copyWith(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   if (urgent)
@@ -1115,27 +1151,24 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: AppColors.cobaltSurface,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: AppColors.cobalt.withValues(alpha: 0.3),
-                        ),
+                        color: AppColors.goldSurface,
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const MashwarLivePulseDot(
-                            color: AppColors.cobalt,
+                            color: AppColors.goldDark,
                             size: 6.5,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             isAr ? 'عاجل' : 'Urgent',
                             style:
-                                AppTypography.label(color: AppColors.cobalt)
+                                AppTypography.label(color: AppColors.goldDark)
                                     .copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11.5,
                             ),
                           ),
                         ],
@@ -1148,13 +1181,15 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.slateBg,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: AppColors.slateBorder),
                 ),
                 child: Text(
                   req.effectiveTotalMinor.format(isArabic: isAr),
-                  style: AppTypography.label(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
@@ -1177,26 +1212,28 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                       req.title,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTypography.title().copyWith(fontSize: 15.5),
+                      style: AppTypography.title(color: AppColors.navy)
+                          .copyWith(
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2),
+                          horizontal: 8, vertical: 2.5),
                       decoration: BoxDecoration(
-                        color: catMeta.surfaceColor,
+                        color: AppColors.slateBg,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: catMeta.accentColor.withValues(alpha: 0.25),
-                        ),
+                        border: Border.all(color: AppColors.slateBorder),
                       ),
                       child: Text(
                         catMeta.title(isArabic: isAr),
-                        style:
-                            AppTypography.label(color: catMeta.accentColor)
-                                .copyWith(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
+                        style: AppTypography.label(
+                          color: AppColors.textSecondary,
+                        ).copyWith(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -1211,6 +1248,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
             decoration: BoxDecoration(
               color: AppColors.slateBg,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.slateBorder),
             ),
             child: MashwarRouteTimeline(
               from: req.pickupLocation,
@@ -1233,8 +1271,8 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                         ? req.requesterName
                         : 'عضو مشوار',
                     size: 22,
-                    borderWidth: 1.2,
-                    borderColor: AppColors.gold,
+                    borderWidth: 1.0,
+                    borderColor: AppColors.slateBorder,
                     autoCommunityPortrait: true,
                   ),
                   const SizedBox(width: 5),
@@ -1246,7 +1284,10 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.label(color: AppColors.navy)
-                          .copyWith(fontWeight: FontWeight.w800),
+                          .copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -1259,7 +1300,11 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                   const SizedBox(width: 4),
                   Text(
                     _formatDeadline(req, isAr),
-                    style: AppTypography.label(),
+                    style: AppTypography.label(color: AppColors.textSecondary)
+                        .copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -1267,34 +1312,41 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.local_offer_outlined,
-                      size: 14, color: AppColors.cobalt),
+                      size: 14, color: AppColors.teal),
                   const SizedBox(width: 4),
                   Text(
                     isAr
                         ? '${req.offerCount} عروض'
                         : '${req.offerCount} offers',
-                    style: AppTypography.label(color: AppColors.cobalt)
-                        .copyWith(fontWeight: FontWeight.w700),
+                    style: AppTypography.label(color: AppColors.tealDark)
+                        .copyWith(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
               Text(
                 '· ${req.paymentMethod.label(isArabic: isAr)}',
-                style: AppTypography.label(color: AppColors.textSecondary),
+                style: AppTypography.label(color: AppColors.textSecondary)
+                    .copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
               if (hasInvoice)
                 _buildAttachmentPill(
                   icon: Icons.receipt_long_rounded,
                   label: isAr ? 'فاتورة مرفقة' : 'Invoice',
-                  color: AppColors.escrowGreen,
-                  bgColor: AppColors.escrowSurface,
+                  color: AppColors.tealDark,
+                  bgColor: AppColors.tealSurface,
                 )
               else if (hasAttachments)
                 _buildAttachmentPill(
                   icon: Icons.attach_file_rounded,
                   label: isAr ? 'مرفقات' : 'Attachments',
-                  color: AppColors.info,
-                  bgColor: AppColors.infoBg,
+                  color: AppColors.navy,
+                  bgColor: AppColors.slateBg,
                 ),
             ],
           ),
@@ -1323,8 +1375,8 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
           Text(
             label,
             style: AppTypography.label(color: color).copyWith(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w800,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -1339,7 +1391,7 @@ class _WorkRequestsFeedScreenState extends State<WorkRequestsFeedScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderDisabled),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

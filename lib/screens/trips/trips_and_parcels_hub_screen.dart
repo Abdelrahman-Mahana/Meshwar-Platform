@@ -163,14 +163,14 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     const SizedBox(height: 16),
                     _ComposerOptionTile(
                       pillar: MashwarServicePillar.sharedTrips,
-                      accentColor: AppColors.cobalt,
-                      surfaceColor: AppColors.cobaltSurface,
+                      accentColor: AppColors.navy,
+                      surfaceColor: AppColors.slateBg,
                       title: isAr
                           ? 'مسافر ولديك مقاعد شاغرة (انشر رحلتك)'
                           : 'Traveling with Empty Seats (Publish Trip)',
                       subtitle: isAr
                           ? 'شارك مقاعد سيارتك أو استقبل طروداً خفيفة في طريقك'
-                          : 'Share empty car seats and optionally carry light parcels',
+                          : 'Share empty car seats and carry light parcels',
                       onTap: () {
                         final nav = Navigator.of(context);
                         Navigator.of(sheetCtx).pop();
@@ -191,8 +191,8 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                           ? 'تبحث عن سفر لوجهة معينة (انشر طلب رحلة)'
                           : 'Looking for a Ride (Post Ride Request)',
                       subtitle: isAr
-                          ? 'انشر وجهتك وموعدك ليصلك عرض مباشر من مسافر في نفس الطريق'
-                          : 'Post your route and schedule so travelers heading there can offer a seat',
+                          ? 'انشر وجهتك وموعدك ليصلك عرض مباشر من مسافر'
+                          : 'Post your route so travelers heading there can offer a seat',
                       onTap: () {
                         final nav = Navigator.of(context);
                         Navigator.of(sheetCtx).pop();
@@ -209,14 +209,14 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     const SizedBox(height: 10),
                     _ComposerOptionTile(
                       pillar: MashwarServicePillar.routeParcels,
-                      accentColor: AppColors.indigo,
-                      surfaceColor: AppColors.indigoSurface,
+                      accentColor: AppColors.navy,
+                      surfaceColor: AppColors.slateBg,
                       title: isAr
                           ? 'أرسل طرداً أو غرضاً على الطريق'
                           : 'Send a Parcel or Item Along the Route',
                       subtitle: isAr
-                          ? 'اختر مسافراً متجهاً الآن أو انشر طلب طرد محمي بكود الأمان OTP'
-                          : 'Pick an active traveler or post an OTP-protected parcel request',
+                          ? 'اختر مسافراً متجهاً الآن أو انشر طلب طرد محمي بكود OTP'
+                          : 'Pick an active traveler or post an OTP-protected parcel',
                       onTap: () {
                         final rides = context.read<RidesProvider>();
                         final nav = Navigator.of(context);
@@ -318,18 +318,25 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                         isAr ? 'الرحلات والطرود' : 'Trips & Parcels',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTypography.title().copyWith(fontSize: 16.5),
+                        style: AppTypography.title(color: AppColors.navy)
+                            .copyWith(
+                          fontSize: 17.5,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       if (showSubtitle)
                         Text(
                           isAr
-                              ? 'مقاعد شاغرة وطلبات طريق مباشرة بين المدن'
-                              : 'Shared seats & parcels along active routes',
+                              ? 'مقاعد شاغرة وطلبات طريق مباشرة'
+                              : 'Shared seats & parcels on active routes',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              AppTypography.label(color: AppColors.textSecondary)
-                                  .copyWith(fontSize: 11),
+                          style: AppTypography.bodySecondary(
+                            color: AppColors.textSecondary,
+                          ).copyWith(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                     ],
                   ),
@@ -345,7 +352,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
               child: FilledButton.icon(
                 key: const ValueKey('hub_open_composer_btn'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.cobalt,
+                  backgroundColor: AppColors.navy,
                   foregroundColor: Colors.white,
                   elevation: 0,
                   padding: EdgeInsets.symmetric(
@@ -368,8 +375,8 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
                     fontFamily: 'Cairo',
                   ),
                 ),
@@ -545,7 +552,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: hasRoute
-              ? AppColors.cobalt.withValues(alpha: 0.35)
+              ? AppColors.navy.withValues(alpha: 0.25)
               : AppColors.slateBorder,
         ),
       ),
@@ -565,10 +572,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                 child: Row(
                   children: [
                     Container(
-                      width: 10,
-                      height: 10,
+                      width: 9,
+                      height: 9,
                       decoration: const BoxDecoration(
-                        color: AppColors.emerald,
+                        color: AppColors.teal,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -582,7 +589,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                             isAr ? 'من أين' : 'From',
                             style: AppTypography.label(
                               color: AppColors.textSecondary,
-                            ).copyWith(fontSize: 10),
+                            ).copyWith(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           Text(
                             activeFrom.isNotEmpty
@@ -591,10 +601,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.body().copyWith(
-                              fontSize: 13,
+                              fontSize: 13.5,
                               fontWeight: activeFrom.isNotEmpty
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                               color: activeFrom.isNotEmpty
                                   ? AppColors.navy
                                   : AppColors.textSecondary,
@@ -628,7 +638,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                   child: const Icon(
                     Icons.swap_horiz_rounded,
                     size: 18,
-                    color: AppColors.cobalt,
+                    color: AppColors.navy,
                   ),
                 ),
               ),
@@ -648,10 +658,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                 child: Row(
                   children: [
                     Container(
-                      width: 10,
-                      height: 10,
+                      width: 9,
+                      height: 9,
                       decoration: BoxDecoration(
-                        color: AppColors.cobalt,
+                        color: AppColors.gold,
                         borderRadius: BorderRadius.circular(2.5),
                       ),
                     ),
@@ -665,7 +675,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                             isAr ? 'إلى أين' : 'To',
                             style: AppTypography.label(
                               color: AppColors.textSecondary,
-                            ).copyWith(fontSize: 10),
+                            ).copyWith(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           Text(
                             activeTo.isNotEmpty
@@ -674,10 +687,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: AppTypography.body().copyWith(
-                              fontSize: 13,
+                              fontSize: 13.5,
                               fontWeight: activeTo.isNotEmpty
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
                               color: activeTo.isNotEmpty
                                   ? AppColors.navy
                                   : AppColors.textSecondary,
@@ -726,12 +739,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? AppColors.indigo : AppColors.indigoSurface,
+          color: selected ? AppColors.navy : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected
-                ? AppColors.indigo
-                : AppColors.indigo.withValues(alpha: 0.28),
+            color: selected ? AppColors.navy : AppColors.slateBorder,
           ),
         ),
         child: Row(
@@ -740,15 +751,15 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
             Icon(
               Icons.inventory_2_outlined,
               size: 14,
-              color: selected ? Colors.white : AppColors.indigo,
+              color: selected ? Colors.white : AppColors.teal,
             ),
             const SizedBox(width: 6),
             Text(
               isAr ? 'يقبل طرود في طريقه' : 'Accepts Parcels on Route',
               style: TextStyle(
                 fontSize: 11.5,
-                fontWeight: FontWeight.w800,
-                color: selected ? Colors.white : AppColors.indigo,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : AppColors.navy,
                 fontFamily: 'Cairo',
               ),
             ),
@@ -776,7 +787,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
             child: _SegmentTabButton(
               key: const ValueKey('hub_tab_trips'),
               isSelected: _tabIndex == 0,
-              accentColor: AppColors.cobalt,
+              accentColor: AppColors.navy,
               icon: Icons.directions_car_outlined,
               label: isAr
                   ? 'مسافرون بمقاعد شاغرة'
@@ -790,7 +801,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
             child: _SegmentTabButton(
               key: const ValueKey('hub_tab_requests'),
               isSelected: _tabIndex == 1,
-              accentColor: AppColors.emerald,
+              accentColor: AppColors.navy,
               icon: Icons.alt_route_rounded,
               label: isAr
                   ? 'طلبات مسافرين وطرود'
@@ -819,7 +830,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
         : (isAr ? '$count طلبات مسار وطرود' : '$count Open Route Requests');
     final headline = isTripsTab
         ? (isAr
-            ? 'سافر بمقاعد تشاركية مريحة أو شارك مقاعد سيارتك الشاغرة'
+            ? 'سافر بمقاعد تشاركية موثّقة أو شارك مقاعد سيارتك الشاغرة'
             : 'Book Verified Shared Seats or Share Your Empty Car Seats')
         : (isAr
             ? 'أرسل طردك مع مسافر على نفس الخط بتأكيد مزدوج OTP'
@@ -839,10 +850,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
             fit: BoxFit.cover,
             alignment: Alignment.center,
             errorBuilder: (_, __, ___) => Container(
-              color: AppColors.navy,
+              color: AppColors.slateBg,
               child: const Center(
                 child:
-                    Icon(Icons.route_rounded, color: AppColors.gold, size: 24),
+                    Icon(Icons.route_rounded, color: AppColors.navy, size: 24),
               ),
             ),
           ),
@@ -854,9 +865,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.navy,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Row(
         children: [
@@ -871,18 +882,21 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                   badgeText,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.label(color: AppColors.gold)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.label(color: AppColors.tealDark)
+                      .copyWith(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   headline,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTypography.body(color: Colors.white).copyWith(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    height: 1.25,
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
                   ),
                 ),
               ],
@@ -892,11 +906,11 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
             const SizedBox(width: 10),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.gold,
-                foregroundColor: AppColors.navy,
+                backgroundColor: AppColors.navy,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 shape: RoundedRectangleBorder(
@@ -917,13 +931,14 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     ? Icons.add_road_rounded
                     : Icons.local_shipping_outlined,
                 size: 15,
-                color: AppColors.navy,
+                color: Colors.white,
               ),
               label: Text(
                 ctaLabel,
                 style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
+                  color: Colors.white,
                   fontFamily: 'Cairo',
                 ),
               ),
@@ -1053,8 +1068,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
       duration: Duration(milliseconds: 220 + (index.clamp(0, 4) * 25)),
       offsetY: 10,
       child: MashwarHoverCard(
+        backgroundColor: Colors.white,
         borderColor: AppColors.slateBorder,
-        hoverBorderColor: AppColors.cobalt,
+        hoverBorderColor: AppColors.navy,
         padding: const EdgeInsets.all(16),
         onTap: () {
           Navigator.of(context).push(
@@ -1080,15 +1096,16 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.navy,
+                          color: AppColors.slateBg,
                           borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Text(
                           ride.departureTime,
                           style: const TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
                             fontFamily: 'Cairo',
                           ),
                         ),
@@ -1097,24 +1114,27 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                         context.trDate(ride.departureDate),
                         style: AppTypography.label(
                           color: AppColors.textSecondary,
-                        ).copyWith(fontWeight: FontWeight.w700),
+                        ).copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       if (ride.isInstantBooking)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 2,
+                            horizontal: 8,
+                            vertical: 2.5,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.cobaltSurface,
+                            color: AppColors.tealSurface,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             isAr ? 'حجز فوري' : 'Instant',
                             style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.cobalt,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.tealDark,
                               fontFamily: 'Cairo',
                             ),
                           ),
@@ -1129,11 +1149,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.cobaltSurface,
+                    color: AppColors.slateBg,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: AppColors.cobalt.withValues(alpha: 0.25),
-                    ),
+                    border: Border.all(color: AppColors.slateBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1142,14 +1160,18 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     children: [
                       Text(
                         '${ride.pricePerSeat}',
-                        style: AppTypography.title(color: AppColors.cobalt)
-                            .copyWith(fontSize: 18, fontWeight: FontWeight.w900),
+                        style: AppTypography.title(color: AppColors.navy)
+                            .copyWith(fontSize: 16, fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(width: 3),
                       Text(
                         isAr ? 'ر.ق / مقعد' : 'QAR / seat',
-                        style: AppTypography.label(color: AppColors.navy)
-                            .copyWith(fontSize: 10, fontWeight: FontWeight.w700),
+                        style:
+                            AppTypography.label(color: AppColors.textSecondary)
+                                .copyWith(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -1183,7 +1205,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                         const Icon(
                           Icons.linear_scale_rounded,
                           size: 14,
-                          color: AppColors.cobalt,
+                          color: AppColors.textSecondary,
                         ),
                         const SizedBox(width: 5),
                         Expanded(
@@ -1193,8 +1215,12 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                                 : 'Via: ${context.trCity(ride.stopoverCity!)}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppTypography.label(color: AppColors.cobalt)
-                                .copyWith(fontWeight: FontWeight.w700),
+                            style: AppTypography.label(
+                              color: AppColors.textSecondary,
+                            ).copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ],
@@ -1211,9 +1237,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                 MashwarUserAvatar(
                   avatarUrl: null,
                   fullName: ride.driverName,
-                  size: 42,
-                  borderWidth: 1.8,
-                  borderColor: AppColors.gold,
+                  size: 40,
+                  borderWidth: 1.2,
+                  borderColor: AppColors.slateBorder,
                   autoCommunityPortrait: true,
                 ),
                 const SizedBox(width: 10),
@@ -1228,8 +1254,11 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                               ride.driverName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.body()
-                                  .copyWith(fontWeight: FontWeight.w800),
+                              style: AppTypography.body(color: AppColors.navy)
+                                  .copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                           if (ride.isVerified) ...[
@@ -1237,7 +1266,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                             const Icon(
                               Icons.verified_rounded,
                               size: 15,
-                              color: AppColors.emerald,
+                              color: AppColors.teal,
                             ),
                           ],
                         ],
@@ -1252,8 +1281,11 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                           const SizedBox(width: 2),
                           Text(
                             '${ride.driverRating}',
-                            style: AppTypography.label()
-                                .copyWith(fontWeight: FontWeight.w700),
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(width: 5),
                           Flexible(
@@ -1261,8 +1293,11 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                               '· ${ride.driverCar}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.label(
+                              style: AppTypography.bodySecondary(
                                 color: AppColors.textSecondary,
+                              ).copyWith(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
@@ -1289,7 +1324,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                   icon: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: AppColors.slateBg,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(9),
                       border: Border.all(color: AppColors.slateBorder),
                     ),
@@ -1316,15 +1351,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: ride.remainingSeats > 0
-                        ? AppColors.emeraldSurface
+                        ? AppColors.tealSurface
                         : AppColors.dangerBg,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: (ride.remainingSeats > 0
-                              ? AppColors.emerald
-                              : AppColors.danger)
-                          .withValues(alpha: 0.3),
-                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1333,7 +1362,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                         Icons.event_seat_outlined,
                         size: 13,
                         color: ride.remainingSeats > 0
-                            ? AppColors.emerald
+                            ? AppColors.tealDark
                             : AppColors.danger,
                       ),
                       const SizedBox(width: 4),
@@ -1347,10 +1376,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
                             color: ride.remainingSeats > 0
-                                ? AppColors.emerald
+                                ? AppColors.tealDark
                                 : AppColors.danger,
                             fontFamily: 'Cairo',
                           ),
@@ -1366,11 +1395,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.indigoSurface,
+                      color: AppColors.slateBg,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: AppColors.indigo.withValues(alpha: 0.28),
-                      ),
+                      border: Border.all(color: AppColors.slateBorder),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1378,7 +1405,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                         const Icon(
                           Icons.inventory_2_outlined,
                           size: 13,
-                          color: AppColors.indigo,
+                          color: AppColors.teal,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -1389,9 +1416,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.indigo,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.navy,
                               fontFamily: 'Cairo',
                             ),
                           ),
@@ -1440,8 +1467,8 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                       fontFamily: 'Cairo',
                     ),
                   ),
@@ -1454,11 +1481,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                 final parcelBtn = OutlinedButton.icon(
                   key: ValueKey('hub_send_parcel_${ride.id}'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.indigo,
-                    backgroundColor: AppColors.indigoSurface,
-                    side: BorderSide(
-                      color: AppColors.indigo.withValues(alpha: 0.35),
-                    ),
+                    foregroundColor: AppColors.navy,
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: AppColors.slateBorder),
                     minimumSize: const Size(0, 42),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -1475,14 +1500,19 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                       ),
                     );
                   },
-                  icon: const Icon(Icons.inventory_2_outlined, size: 16),
+                  icon: const Icon(
+                    Icons.inventory_2_outlined,
+                    size: 16,
+                    color: AppColors.navy,
+                  ),
                   label: Text(
                     isAr ? 'أرسل طرداً معه' : 'Send Parcel',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.navy,
                       fontFamily: 'Cairo',
                     ),
                   ),
@@ -1630,9 +1660,6 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
     final isParcelOrErrand = ad.type == BoardAdType.parcelRequest ||
         ad.type == BoardAdType.errandService ||
         ad.type == BoardAdType.goodsDelivery;
-    final accent = isParcelOrErrand ? AppColors.indigo : AppColors.cobalt;
-    final surface =
-        isParcelOrErrand ? AppColors.indigoSurface : AppColors.cobaltSurface;
     final isOwnAd = ad.id.startsWith('my_ad_');
     final isOfferSent = ad.status == BoardAdStatus.offerSent;
 
@@ -1655,9 +1682,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
       duration: Duration(milliseconds: 220 + (index.clamp(0, 4) * 25)),
       offsetY: 10,
       child: MashwarHoverCard(
-        borderColor:
-            isOfferSent ? AppColors.emerald : AppColors.slateBorder,
-        hoverBorderColor: accent,
+        backgroundColor: Colors.white,
+        borderColor: isOfferSent ? AppColors.teal : AppColors.slateBorder,
+        hoverBorderColor: AppColors.navy,
         padding: const EdgeInsets.all(16),
         onTap: openOfferFlow,
         child: Column(
@@ -1670,8 +1697,8 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                   avatarUrl: null,
                   fullName: ad.authorName,
                   size: 40,
-                  borderWidth: 1.8,
-                  borderColor: accent,
+                  borderWidth: 1.2,
+                  borderColor: AppColors.slateBorder,
                   autoCommunityPortrait: true,
                 ),
                 const SizedBox(width: 10),
@@ -1686,8 +1713,11 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                               ad.authorName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.body()
-                                  .copyWith(fontWeight: FontWeight.w800),
+                              style: AppTypography.body(color: AppColors.navy)
+                                  .copyWith(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                           if (ad.isVerified) ...[
@@ -1695,7 +1725,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                             const Icon(
                               Icons.verified_rounded,
                               size: 14,
-                              color: AppColors.emerald,
+                              color: AppColors.teal,
                             ),
                           ],
                         ],
@@ -1706,6 +1736,9 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.label(
                           color: AppColors.textSecondary,
+                        ).copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -1718,16 +1751,24 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: accent.withValues(alpha: 0.25)),
+                    color: isParcelOrErrand
+                        ? AppColors.tealSurface
+                        : AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isParcelOrErrand
+                          ? AppColors.teal.withValues(alpha: 0.22)
+                          : AppColors.slateBorder,
+                    ),
                   ),
                   child: Text(
                     ad.displaySubTag(isAr),
                     style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      color: accent,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: isParcelOrErrand
+                          ? AppColors.tealDark
+                          : AppColors.navy,
                       fontFamily: 'Cairo',
                     ),
                   ),
@@ -1760,7 +1801,11 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                   const SizedBox(height: 7),
                   Row(
                     children: [
-                      Icon(Icons.schedule_rounded, size: 14, color: accent),
+                      const Icon(
+                        Icons.schedule_rounded,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                      ),
                       const SizedBox(width: 5),
                       Expanded(
                         child: Text(
@@ -1768,7 +1813,10 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.label(color: AppColors.navy)
-                              .copyWith(fontWeight: FontWeight.w700),
+                              .copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -1782,7 +1830,12 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
               ad.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+              style: AppTypography.bodySecondary(
+                color: AppColors.textSecondary,
+              ).copyWith(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             const SizedBox(height: 14),
 
@@ -1795,12 +1848,15 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     Text(
                       ad.priceTagLabel(isAr),
                       style: AppTypography.label(color: AppColors.textSecondary)
-                          .copyWith(fontSize: 10.5),
+                          .copyWith(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       '${ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"}',
                       style: AppTypography.title(color: AppColors.navy)
-                          .copyWith(fontSize: 17, fontWeight: FontWeight.w900),
+                          .copyWith(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -1823,7 +1879,7 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                     icon: Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: AppColors.slateBg,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: AppColors.slateBorder),
                       ),
@@ -1839,7 +1895,8 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                   child: FilledButton(
                     key: ValueKey('hub_make_offer_${ad.id}'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: isOfferSent ? AppColors.emerald : accent,
+                      backgroundColor:
+                          isOfferSent ? AppColors.teal : AppColors.navy,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       minimumSize: const Size(0, 42),
@@ -1865,8 +1922,8 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
                         fontFamily: 'Cairo',
                       ),
                     ),
@@ -1899,23 +1956,31 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          MashwarServicePillarIcon(pillar: pillar, size: 56),
+          MashwarServicePillarIcon(pillar: pillar, size: 54),
           const SizedBox(height: 14),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: AppTypography.title().copyWith(fontSize: 16.5),
+            style: AppTypography.title(color: AppColors.navy).copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: AppTypography.bodySecondary(),
+            style: AppTypography.bodySecondary(
+              color: AppColors.textSecondary,
+            ).copyWith(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 18),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.cobalt,
+              backgroundColor: AppColors.navy,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
@@ -1926,19 +1991,31 @@ class _TripsAndParcelsHubScreenState extends State<TripsAndParcelsHubScreen> {
             child: Text(
               primaryLabel,
               style: const TextStyle(
-                fontWeight: FontWeight.w800,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
                 fontFamily: 'Cairo',
               ),
             ),
           ),
           if (secondaryLabel != null && onSecondary != null) ...[
             const SizedBox(height: 8),
-            TextButton(
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.navy,
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: AppColors.slateBorder),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               onPressed: onSecondary,
               child: Text(
                 secondaryLabel,
                 style: const TextStyle(
-                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.navy,
                   fontFamily: 'Cairo',
                 ),
@@ -1983,8 +2060,8 @@ class _SegmentTabButton extends StatelessWidget {
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.06),
-                    blurRadius: 8,
+                    color: AppColors.navy.withValues(alpha: 0.05),
+                    blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ]
@@ -2006,7 +2083,7 @@ class _SegmentTabButton extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected ? AppColors.navy : AppColors.textSecondary,
                   fontFamily: 'Cairo',
                 ),
@@ -2017,16 +2094,18 @@ class _SegmentTabButton extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? accentColor.withValues(alpha: 0.12)
+                    ? AppColors.tealSurface
                     : const Color(0xFFE2E8F0),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '$count',
                 style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                  color: isSelected ? accentColor : AppColors.textSecondary,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected
+                      ? AppColors.tealDark
+                      : AppColors.textSecondary,
                   fontFamily: 'Cairo',
                 ),
               ),
@@ -2062,7 +2141,7 @@ class _ComposerOptionTile extends StatelessWidget {
     return MashwarHoverCard(
       backgroundColor: Colors.white,
       borderColor: AppColors.slateBorder,
-      hoverBorderColor: accentColor,
+      hoverBorderColor: AppColors.navy,
       padding: const EdgeInsets.all(14),
       onTap: onTap,
       child: Row(
@@ -2074,7 +2153,7 @@ class _ComposerOptionTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: surfaceColor,
                 borderRadius: BorderRadius.circular(13),
-                border: Border.all(color: accentColor.withValues(alpha: 0.22)),
+                border: Border.all(color: AppColors.slateBorder),
               ),
               child: Icon(badgeIcon, color: accentColor, size: 22),
             )
@@ -2087,26 +2166,30 @@ class _ComposerOptionTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTypography.body().copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13.5,
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   subtitle,
-                  style: AppTypography.bodySmall(
+                  style: AppTypography.bodySecondary(
                     color: AppColors.textSecondary,
-                  ).copyWith(fontSize: 11.5, height: 1.35),
+                  ).copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    height: 1.35,
+                  ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          Icon(
+          const Icon(
             Icons.arrow_forward_ios_rounded,
             size: 15,
-            color: accentColor,
+            color: AppColors.textSecondary,
           ),
         ],
       ),
