@@ -1,27 +1,92 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:firebase_core/firebase_core.dart';
+
 import '../../../models/chat_message_model.dart';
-import '../../contracts/i_chat_repository.dart';
 import '../../../services/firebase_firestore_service.dart';
+import '../../contracts/i_chat_repository.dart';
+import '../chat_repository_impl.dart';
 
 class FirebaseChatRepository implements IChatRepository {
   final FirebaseFirestore? _injectedFirestore;
+  final ChatRepositoryImpl _localFallback = ChatRepositoryImpl();
 
   FirebaseChatRepository({FirebaseFirestore? firestore})
       : _injectedFirestore = firestore;
+
+  bool get _canUseFirestore {
+    if (_injectedFirestore != null) return true;
+    try {
+      return Firebase.apps.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String? get _currentAuthUid {
+    try {
+      if (Firebase.apps.isEmpty) return null;
+      final uid = fb_auth.FirebaseAuth.instance.currentUser?.uid;
+      return (uid != null && uid.trim().isNotEmpty) ? uid.trim() : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   FirebaseFirestore get _firestore =>
       _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<List<ChatMessageModel>> getMessages(String conversationId) async {
-    final snapshot = await _firestore
-        .collection(FirestoreCollections.conversations)
-        .doc(conversationId)
-        .collection(FirestoreCollections.messages)
-        .orderBy('timestamp', descending: false)
-        .get();
+  Future<List<ChatMessageModel>> getMessages(
+    String conversationId, {
+    String? peerName,
+    String? routeContext,
+  }) async {
+    final cleanId =
+        conversationId.trim().isEmpty ? 'chat_default' : conversationId.trim();
 
-    return snapshot.docs.map((doc) => ChatMessageModel.fromJson(doc.data())).toList();
+    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+      return _localFallback.getMessages(
+        cleanId,
+        peerName: peerName,
+        routeContext: routeContext,
+      );
+    }
+
+    try {
+      final snapshot = await _firestore
+          .collection(FirestoreCollections.conversations)
+          .doc(cleanId)
+          .collection(FirestoreCollections.messages)
+          .orderBy('timestamp', descending: false)
+          .get()
+          .timeout(const Duration(seconds: 4));
+
+      final remoteMessages = snapshot.docs
+          .map(
+            (doc) => ChatMessageModel.fromJson(
+              normalizeFirestoreDocument(doc.data(), fallbackId: doc.id),
+            ),
+          )
+          .toList();
+
+      if (remoteMessages.isNotEmpty) {
+        _localFallback.mergeRemoteMessages(cleanId, remoteMessages);
+      }
+
+      return await _localFallback.getMessages(
+        cleanId,
+        peerName: peerName,
+        routeContext: routeContext,
+      );
+    } catch (_) {
+      return _localFallback.getMessages(
+        cleanId,
+        peerName: peerName,
+        routeContext: routeContext,
+      );
+    }
   }
 
   @override
@@ -30,42 +95,131 @@ class FirebaseChatRepository implements IChatRepository {
     required String senderId,
     required String senderName,
     required String text,
+    String? attachmentUrl,
   }) async {
-    final msgRef = _firestore
-        .collection(FirestoreCollections.conversations)
-        .doc(conversationId)
-        .collection(FirestoreCollections.messages)
-        .doc();
+    final cleanId =
+        conversationId.trim().isEmpty ? 'chat_default' : conversationId.trim();
+    final authUid = _currentAuthUid;
+    final effectiveSenderId = (authUid != null && authUid.isNotEmpty)
+        ? authUid
+        : (senderId.trim().isEmpty ? 'usr_me_local' : senderId.trim());
+    final effectiveSenderName =
+        senderName.trim().length >= 2 ? senderName.trim() : 'مستخدم مشوار';
 
-    final message = ChatMessageModel(
-      id: msgRef.id,
-      conversationId: conversationId,
-      senderId: senderId,
-      senderName: senderName,
+    // Always persist locally first so re-opening ChatScreen preserves history
+    // even if offline, unauthenticated, or Firestore rules restrict writes.
+    final localMessage = await _localFallback.sendMessage(
+      conversationId: cleanId,
+      senderId: effectiveSenderId,
+      senderName: effectiveSenderName,
       text: text,
-      timestamp: DateTime.now(),
-      isRead: false,
+      attachmentUrl: attachmentUrl,
     );
 
-    await msgRef.set(message.toJson());
-    await _firestore.collection(FirestoreCollections.conversations).doc(conversationId).set({
-      'lastMessageText': text,
-      'lastMessageTimestamp': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    if (!_canUseFirestore || (_injectedFirestore == null && authUid == null)) {
+      return localMessage;
+    }
 
-    return message;
+    try {
+      final convRef =
+          _firestore.collection(FirestoreCollections.conversations).doc(cleanId);
+      final msgRef =
+          convRef.collection(FirestoreCollections.messages).doc(localMessage.id);
+
+      final truncatedPreview =
+          text.trim().length > 500 ? text.trim().substring(0, 500) : text.trim();
+
+      await convRef
+          .set(
+            {
+              'id': cleanId,
+              'participantIds': <String>[effectiveSenderId, 'peer_$cleanId'],
+              'lastMessage': truncatedPreview,
+              'lastMessageTimestamp': FieldValue.serverTimestamp(),
+              'lastSenderId': effectiveSenderId,
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          )
+          .timeout(const Duration(seconds: 4));
+
+      final payload = <String, dynamic>{
+        'id': localMessage.id,
+        'conversationId': cleanId,
+        'senderId': effectiveSenderId,
+        'senderName': effectiveSenderName,
+        'text': localMessage.text,
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+        if (localMessage.attachmentUrl != null)
+          'attachmentUrl': localMessage.attachmentUrl,
+      };
+
+      await msgRef.set(payload).timeout(const Duration(seconds: 4));
+    } catch (_) {
+      // Keep local fallback message intact if network or rules reject Firestore write.
+    }
+
+    return localMessage;
   }
 
   @override
   Stream<List<ChatMessageModel>> streamMessages(String conversationId) {
-    return _firestore
-        .collection(FirestoreCollections.conversations)
-        .doc(conversationId)
-        .collection(FirestoreCollections.messages)
-        .orderBy('timestamp', descending: false)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => ChatMessageModel.fromJson(doc.data())).toList();
+    final cleanId =
+        conversationId.trim().isEmpty ? 'chat_default' : conversationId.trim();
+
+    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+      return _localFallback.streamMessages(cleanId);
+    }
+
+    return Stream<List<ChatMessageModel>>.multi((subscriber) {
+      StreamSubscription<List<ChatMessageModel>>? fallbackSub;
+      StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? firestoreSub;
+
+      void switchToFallback() {
+        if (fallbackSub != null) return;
+        fallbackSub = _localFallback.streamMessages(cleanId).listen(
+              subscriber.add,
+              onError: subscriber.addError,
+            );
+      }
+
+      try {
+        firestoreSub = _firestore
+            .collection(FirestoreCollections.conversations)
+            .doc(cleanId)
+            .collection(FirestoreCollections.messages)
+            .orderBy('timestamp', descending: false)
+            .snapshots()
+            .listen(
+          (snapshot) async {
+            final remote = snapshot.docs
+                .map(
+                  (doc) => ChatMessageModel.fromJson(
+                    normalizeFirestoreDocument(doc.data(), fallbackId: doc.id),
+                  ),
+                )
+                .toList();
+            if (remote.isNotEmpty) {
+              _localFallback.mergeRemoteMessages(cleanId, remote);
+            }
+            final current = await _localFallback.getMessages(cleanId);
+            if (!subscriber.isClosed) {
+              subscriber.add(current);
+            }
+          },
+          onError: (_) {
+            switchToFallback();
+          },
+        );
+      } catch (_) {
+        switchToFallback();
+      }
+
+      subscriber.onCancel = () async {
+        await firestoreSub?.cancel();
+        await fallbackSub?.cancel();
+      };
     });
   }
 }

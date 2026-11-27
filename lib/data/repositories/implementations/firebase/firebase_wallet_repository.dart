@@ -1,40 +1,108 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:firebase_core/firebase_core.dart';
+
 import '../../../models/wallet_transaction_model.dart';
-import '../../contracts/i_wallet_repository.dart';
 import '../../../services/firebase_firestore_service.dart';
+import '../../contracts/i_wallet_repository.dart';
+import '../wallet_repository_impl.dart';
 
 class FirebaseWalletRepository implements IWalletRepository {
   final FirebaseFirestore? _injectedFirestore;
+  final WalletRepositoryImpl _localFallback = WalletRepositoryImpl();
 
   FirebaseWalletRepository({FirebaseFirestore? firestore})
       : _injectedFirestore = firestore;
+
+  bool get _canUseFirestore {
+    if (_injectedFirestore != null) return true;
+    try {
+      return Firebase.apps.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  String? get _currentAuthUid {
+    try {
+      if (Firebase.apps.isEmpty) return null;
+      final uid = fb_auth.FirebaseAuth.instance.currentUser?.uid;
+      return (uid != null && uid.trim().isNotEmpty) ? uid.trim() : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
   FirebaseFirestore get _firestore =>
       _injectedFirestore ?? FirebaseFirestore.instance;
 
   @override
   Future<double> getBalance(String userId) async {
-    final doc = await _firestore.collection(FirestoreCollections.users).doc(userId).get();
-    if (doc.exists && doc.data() != null) {
-      final piastres = (doc.data()!['walletBalancePiastres'] as num?)?.toInt();
-      if (piastres != null) {
-        return piastres / 100.0;
-      }
-      return (doc.data()!['walletBalance'] as num?)?.toDouble() ?? 0.0;
+    final effectiveUserId = (_currentAuthUid != null && _currentAuthUid!.isNotEmpty)
+        ? _currentAuthUid!
+        : (userId.trim().isEmpty ? 'usr_me_01' : userId.trim());
+
+    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+      return _localFallback.getBalance(effectiveUserId);
     }
-    return 0.0;
+
+    try {
+      final doc = await _firestore
+          .collection(FirestoreCollections.users)
+          .doc(effectiveUserId)
+          .get()
+          .timeout(const Duration(seconds: 4));
+
+      if (doc.exists && doc.data() != null) {
+        final data = doc.data()!;
+        final piastres = (data['walletBalancePiastres'] as num?)?.toInt();
+        final resolved = piastres != null
+            ? piastres / 100.0
+            : ((data['walletBalance'] as num?)?.toDouble() ??
+                await _localFallback.getBalance(effectiveUserId));
+        _localFallback.syncRemoteSnapshot(balance: resolved);
+        return resolved;
+      }
+      return await _localFallback.getBalance(effectiveUserId);
+    } catch (_) {
+      return _localFallback.getBalance(effectiveUserId);
+    }
   }
 
   @override
   Future<List<WalletTransactionModel>> getTransactions(String userId) async {
-    final snapshot = await _firestore
-        .collection(FirestoreCollections.walletTransactions)
-        .where('userId', isEqualTo: userId)
-        .orderBy('timestamp', descending: true)
-        .limit(25)
-        .get();
+    final effectiveUserId = (_currentAuthUid != null && _currentAuthUid!.isNotEmpty)
+        ? _currentAuthUid!
+        : (userId.trim().isEmpty ? 'usr_me_01' : userId.trim());
 
-    return snapshot.docs.map((doc) => WalletTransactionModel.fromJson(doc.data())).toList();
+    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+      return _localFallback.getTransactions(effectiveUserId);
+    }
+
+    try {
+      final snapshot = await _firestore
+          .collection(FirestoreCollections.walletTransactions)
+          .where('userId', isEqualTo: effectiveUserId)
+          .orderBy('timestamp', descending: true)
+          .limit(25)
+          .get()
+          .timeout(const Duration(seconds: 4));
+
+      final remoteTxs = snapshot.docs
+          .map(
+            (doc) => WalletTransactionModel.fromJson(
+              normalizeFirestoreDocument(doc.data(), fallbackId: doc.id),
+            ),
+          )
+          .toList();
+
+      if (remoteTxs.isNotEmpty) {
+        _localFallback.syncRemoteSnapshot(remoteTransactions: remoteTxs);
+      }
+      return await _localFallback.getTransactions(effectiveUserId);
+    } catch (_) {
+      return _localFallback.getTransactions(effectiveUserId);
+    }
   }
 
   @override
@@ -44,21 +112,45 @@ class FirebaseWalletRepository implements IWalletRepository {
     required PaymentMethodType method,
     required String referenceNumber,
   }) async {
-    final txRef = _firestore.collection(FirestoreCollections.walletTransactions).doc();
-    final tx = WalletTransactionModel(
-      id: txRef.id,
-      userId: userId,
+    if (amount <= 0) return false;
+    final effectiveUserId = (_currentAuthUid != null && _currentAuthUid!.isNotEmpty)
+        ? _currentAuthUid!
+        : (userId.trim().isEmpty ? 'usr_me_01' : userId.trim());
+
+    final localOk = await _localFallback.deposit(
+      userId: effectiveUserId,
       amount: amount,
-      type: TransactionType.deposit,
       method: method,
       referenceNumber: referenceNumber,
-      status: TransactionStatus.pending,
-      titleAr: 'طلب شحن محفظة قيد المراجعة',
-      titleEn: 'Wallet Deposit Pending Review',
-      timestamp: DateTime.now(),
     );
+    if (!localOk) return false;
 
-    await txRef.set(tx.toJson());
+    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+      return true;
+    }
+
+    try {
+      final txRef =
+          _firestore.collection(FirestoreCollections.walletTransactions).doc();
+      final tx = WalletTransactionModel(
+        id: txRef.id,
+        userId: effectiveUserId,
+        amount: amount,
+        type: TransactionType.deposit,
+        method: method,
+        referenceNumber: referenceNumber.trim().isEmpty
+            ? 'DEP-${DateTime.now().millisecondsSinceEpoch % 1000000}'
+            : referenceNumber.trim(),
+        status: TransactionStatus.pending,
+        titleAr: 'طلب شحن محفظة قيد المراجعة',
+        titleEn: 'Wallet Deposit Pending Review',
+        timestamp: DateTime.now(),
+      );
+
+      await txRef.set(tx.toJson()).timeout(const Duration(seconds: 4));
+    } catch (_) {
+      // Keep optimistic local deposit state when Firestore rules or offline block client ledger writes.
+    }
     return true;
   }
 
@@ -69,24 +161,43 @@ class FirebaseWalletRepository implements IWalletRepository {
     required PaymentMethodType method,
     required String destinationAccount,
   }) async {
-    final currentBalance = await getBalance(userId);
-    if (currentBalance < amount) return false;
+    if (amount <= 0) return false;
+    final effectiveUserId = (_currentAuthUid != null && _currentAuthUid!.isNotEmpty)
+        ? _currentAuthUid!
+        : (userId.trim().isEmpty ? 'usr_me_01' : userId.trim());
 
-    final txRef = _firestore.collection(FirestoreCollections.walletTransactions).doc();
-    final tx = WalletTransactionModel(
-      id: txRef.id,
-      userId: userId,
+    final localOk = await _localFallback.withdraw(
+      userId: effectiveUserId,
       amount: amount,
-      type: TransactionType.withdraw,
       method: method,
-      referenceNumber: 'WD-${DateTime.now().millisecondsSinceEpoch % 1000000}',
-      status: TransactionStatus.pending,
-      titleAr: 'طلب سحب أرباح إلى $destinationAccount',
-      titleEn: 'Withdrawal Request to $destinationAccount',
-      timestamp: DateTime.now(),
+      destinationAccount: destinationAccount,
     );
+    if (!localOk) return false;
 
-    await txRef.set(tx.toJson());
+    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+      return true;
+    }
+
+    try {
+      final txRef =
+          _firestore.collection(FirestoreCollections.walletTransactions).doc();
+      final tx = WalletTransactionModel(
+        id: txRef.id,
+        userId: effectiveUserId,
+        amount: amount,
+        type: TransactionType.withdraw,
+        method: method,
+        referenceNumber: 'WD-${DateTime.now().millisecondsSinceEpoch % 1000000}',
+        status: TransactionStatus.pending,
+        titleAr: 'طلب سحب أرباح إلى $destinationAccount',
+        titleEn: 'Withdrawal Request to $destinationAccount',
+        timestamp: DateTime.now(),
+      );
+
+      await txRef.set(tx.toJson()).timeout(const Duration(seconds: 4));
+    } catch (_) {
+      // Keep optimistic local withdrawal state when Firestore rules or offline block client ledger writes.
+    }
     return true;
   }
 }

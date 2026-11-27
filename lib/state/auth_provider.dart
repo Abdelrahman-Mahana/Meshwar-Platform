@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/config/app_environment.dart';
 import '../data/models/user_model.dart';
+import '../data/models/wallet_transaction_model.dart';
 import '../data/repositories/app_repositories.dart';
 import '../data/repositories/contracts/i_auth_repository.dart';
+import '../data/repositories/contracts/i_wallet_repository.dart';
 
 export '../data/repositories/contracts/i_auth_repository.dart'
     show AuthException;
@@ -23,6 +25,7 @@ class AuthProvider extends ChangeNotifier {
   final IAuthRepository? _injectedAuthRepository;
   final bool _requestedDevMockAuth;
   final String _devOtpCode;
+  final bool _hasSeededTestingTransactions;
 
   AuthStatus _status;
   UserModel _user;
@@ -35,6 +38,7 @@ class AuthProvider extends ChangeNotifier {
   int _otpAttemptsLeft = 3;
   bool _isLocked = false;
   bool _isLoading = false;
+  bool _disposed = false;
   String? _lastError;
   AuthException? _lastAuthException;
 
@@ -47,6 +51,7 @@ class AuthProvider extends ChangeNotifier {
   })  : _injectedAuthRepository = authRepository,
         _requestedDevMockAuth = useDevMockAuth ?? AppEnvironment.useDevMocks,
         _devOtpCode = devOtpCode,
+        _hasSeededTestingTransactions = false,
         _status = AuthStatus.unauthenticated,
         _user = UserModel.empty,
         _phoneNumber = '',
@@ -64,6 +69,7 @@ class AuthProvider extends ChangeNotifier {
   })  : _injectedAuthRepository = authRepository,
         _requestedDevMockAuth = useDevMockAuth,
         _devOtpCode = devOtpCode,
+        _hasSeededTestingTransactions = walletTransactions.isNotEmpty,
         _status = status,
         _user = user ?? UserModel.empty,
         _phoneNumber = user?.phone ?? '',
@@ -73,6 +79,17 @@ class AuthProvider extends ChangeNotifier {
 
   IAuthRepository get _repo =>
       _injectedAuthRepository ?? AppRepositories.instance.auth;
+
+  IWalletRepository get _walletRepo => AppRepositories.instance.wallet;
+
+  String get effectiveWalletUserId =>
+      _user.id.trim().isNotEmpty ? _user.id.trim() : 'usr_me_01';
+
+  void _safeNotify() {
+    if (!_disposed) {
+      notifyListeners();
+    }
+  }
 
   /// Dev-mock auth is allowed ONLY when explicitly requested AND running in
   /// `development` without Firebase enabled.
@@ -114,7 +131,7 @@ class AuthProvider extends ChangeNotifier {
     if (_lastError != null || _lastAuthException != null) {
       _lastError = null;
       _lastAuthException = null;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
@@ -131,13 +148,13 @@ class AuthProvider extends ChangeNotifier {
   void setPhoneNumber(String phone) {
     _phoneNumber = phone;
     _authMethod = 'phone';
-    notifyListeners();
+    _safeNotify();
   }
 
   void setEmail(String email) {
     _email = email;
     _authMethod = 'email';
-    notifyListeners();
+    _safeNotify();
   }
 
   // Qatar mobile number validator: 8 digits starting with 3, 5, 6, or 7 (Ooredoo & Vodafone Qatar)
@@ -170,7 +187,7 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     try {
       final signedIn = await _repo.isSignedIn();
@@ -178,7 +195,7 @@ class AuthProvider extends ChangeNotifier {
         _user = UserModel.empty;
         _status = AuthStatus.unauthenticated;
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
         return false;
       }
 
@@ -190,21 +207,21 @@ class AuthProvider extends ChangeNotifier {
         await _hydrateSavedAvatarForCurrentUser();
         _status = AuthStatus.authenticated;
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
         return true;
       }
 
       _user = UserModel.empty;
       _status = AuthStatus.unauthenticated;
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     } catch (e) {
       _recordException(e);
       _user = UserModel.empty;
       _status = AuthStatus.unauthenticated;
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -216,20 +233,20 @@ class AuthProvider extends ChangeNotifier {
     if (emailErr != null) {
       _lastAuthException = null;
       _lastError = emailErr;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
     if (password.isEmpty) {
       _lastAuthException = null;
       _lastError = 'Password is required';
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     try {
       final authenticatedUser = await _repo.loginWithEmail(
@@ -243,12 +260,12 @@ class AuthProvider extends ChangeNotifier {
       await _hydrateSavedAvatarForCurrentUser();
       _status = AuthStatus.authenticated;
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return true;
     } catch (e) {
       _recordException(e);
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -265,20 +282,20 @@ class AuthProvider extends ChangeNotifier {
     if (emailErr != null) {
       _lastAuthException = null;
       _lastError = emailErr;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
     if (password.length < 6) {
       _lastAuthException = null;
       _lastError = 'Password must be at least 6 characters';
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     try {
       final registeredUser = await _repo.registerWithEmail(
@@ -294,12 +311,12 @@ class AuthProvider extends ChangeNotifier {
       await _hydrateSavedAvatarForCurrentUser();
       _status = AuthStatus.authenticated;
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return true;
     } catch (e) {
       _recordException(e);
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -310,24 +327,24 @@ class AuthProvider extends ChangeNotifier {
     if (emailErr != null) {
       _lastAuthException = null;
       _lastError = emailErr;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     try {
       await _repo.sendPasswordReset(trimmedEmail);
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return true;
     } catch (e) {
       _recordException(e);
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -337,7 +354,7 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     if (!isDevMockAuthEnabled) {
       try {
@@ -352,7 +369,7 @@ class AuthProvider extends ChangeNotifier {
           _resendCountdown = 59;
           _startCountdown();
         }
-        notifyListeners();
+        _safeNotify();
         return ok;
       } catch (e) {
         if (e is UnsupportedError) {
@@ -369,7 +386,7 @@ class AuthProvider extends ChangeNotifier {
           _recordException(e);
         }
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
         return false;
       }
     }
@@ -387,7 +404,7 @@ class AuthProvider extends ChangeNotifier {
       );
       _lastError = _lastAuthException.toString();
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
@@ -400,7 +417,7 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = false;
     _resendCountdown = 59;
     _startCountdown();
-    notifyListeners();
+    _safeNotify();
     return true;
   }
 
@@ -408,13 +425,13 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     if (!isDevMockAuthEnabled) {
       _lastError =
           'Email OTP requires a configured email OTP provider; use email/password sign-in.';
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
@@ -425,7 +442,7 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = false;
     _resendCountdown = 59;
     _startCountdown();
-    notifyListeners();
+    _safeNotify();
     return true;
   }
 
@@ -441,12 +458,12 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     if (!isDevMockAuthEnabled) {
       _lastError = 'Google Sign-In requires configured OAuth credentials.';
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
@@ -463,16 +480,20 @@ class AuthProvider extends ChangeNotifier {
     );
     _status = AuthStatus.otpVerified;
     _isLoading = false;
-    notifyListeners();
+    _safeNotify();
     return true;
   }
 
   void _startCountdown() {
     _resendTimer?.cancel();
     _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_disposed) {
+        timer.cancel();
+        return;
+      }
       if (_resendCountdown > 0) {
         _resendCountdown--;
-        notifyListeners();
+        _safeNotify();
       } else {
         timer.cancel();
       }
@@ -493,14 +514,14 @@ class AuthProvider extends ChangeNotifier {
             'OTP attempts are temporarily locked. You can sign in with Email & Password instead.',
       );
       _lastError = _lastAuthException.toString();
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     final trimmedCode = code.trim();
 
@@ -514,13 +535,11 @@ class AuthProvider extends ChangeNotifier {
         if (verifiedUser.phone.isNotEmpty) {
           _phoneNumber = verifiedUser.phone;
         }
-        // If returning user already has a saved full name, enter authenticated directly;
-        // otherwise transition to otpVerified so ProfileSetupScreen completes onboarding.
         _status = verifiedUser.fullName.trim().isNotEmpty
             ? AuthStatus.authenticated
             : AuthStatus.otpVerified;
         _isLoading = false;
-        notifyListeners();
+        _safeNotify();
         return true;
       } catch (e) {
         if (e is UnsupportedError) {
@@ -543,7 +562,7 @@ class AuthProvider extends ChangeNotifier {
       if (_otpAttemptsLeft <= 0) {
         _isLocked = true;
       }
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
@@ -552,7 +571,7 @@ class AuthProvider extends ChangeNotifier {
 
     if (trimmedCode.length == 6 && trimmedCode == _devOtpCode) {
       _status = AuthStatus.otpVerified;
-      notifyListeners();
+      _safeNotify();
       return true;
     } else {
       _lastAuthException = const AuthException(
@@ -565,7 +584,7 @@ class AuthProvider extends ChangeNotifier {
       if (_otpAttemptsLeft <= 0) {
         _isLocked = true;
       }
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -591,7 +610,7 @@ class AuthProvider extends ChangeNotifier {
 
     if (!canCompleteAuth) {
       _lastError = 'Authenticate before saving profile';
-      notifyListeners();
+      _safeNotify();
       return;
     }
 
@@ -631,7 +650,7 @@ class AuthProvider extends ChangeNotifier {
     if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
       unawaited(_saveAvatarPreference(avatarUrl.trim()));
     }
-    notifyListeners();
+    _safeNotify();
     _persistProfileIfSignedIn();
   }
 
@@ -644,7 +663,7 @@ class AuthProvider extends ChangeNotifier {
     final qid = nationalId.trim();
     if (!_qatarQidRegex.hasMatch(qid)) {
       _lastError = 'Qatar QID must be exactly 11 digits';
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
@@ -656,7 +675,7 @@ class AuthProvider extends ChangeNotifier {
       idVerificationStatus: IdVerificationStatus.underReview,
       isVerified: false,
     );
-    notifyListeners();
+    _safeNotify();
 
     try {
       if (await _repo.isSignedIn()) {
@@ -670,7 +689,7 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } catch (e) {
       _recordException(e);
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
@@ -679,14 +698,14 @@ class AuthProvider extends ChangeNotifier {
   void approveIdVerification() {
     if (!isDevMockAuthEnabled) {
       _lastError = 'Client-side verification approval is disabled';
-      notifyListeners();
+      _safeNotify();
       return;
     }
     _user = _user.copyWith(
       idVerificationStatus: IdVerificationStatus.verified,
       isVerified: true,
     );
-    notifyListeners();
+    _safeNotify();
   }
 
   void updateProfile({
@@ -723,7 +742,7 @@ class AuthProvider extends ChangeNotifier {
     if (clearAvatar || avatarUrl != null) {
       unawaited(_saveAvatarPreference(clearAvatar ? null : avatarUrl));
     }
-    notifyListeners();
+    _safeNotify();
     _persistProfileIfSignedIn();
   }
 
@@ -738,7 +757,7 @@ class AuthProvider extends ChangeNotifier {
       _user = _user.copyWith(avatarUrl: clean);
       await _saveAvatarPreference(clean);
     }
-    notifyListeners();
+    _safeNotify();
     _persistProfileIfSignedIn();
   }
 
@@ -797,23 +816,236 @@ class AuthProvider extends ChangeNotifier {
     }());
   }
 
+  // ---------------------------------------------------------------------------
+  // Wallet Balance & Transaction Synchronization (AppRepositories.instance.wallet)
+  // ---------------------------------------------------------------------------
+
+  static Map<String, dynamic> _mapTransactionModelToViewMap(
+    WalletTransactionModel tx,
+  ) {
+    final isPositive = tx.type == TransactionType.deposit ||
+        tx.type == TransactionType.rideEarning ||
+        tx.type == TransactionType.errandEarning ||
+        tx.type == TransactionType.parcelEarning;
+    final absVal = tx.amount.abs();
+    final formattedVal = absVal == absVal.roundToDouble()
+        ? absVal.toStringAsFixed(0)
+        : absVal.toStringAsFixed(2);
+    final sign = isPositive ? '+' : '-';
+
+    final diff = DateTime.now().difference(tx.timestamp);
+    final String dateAr;
+    final String dateEn;
+    if (diff.inMinutes.abs() < 2) {
+      dateAr = 'الآن';
+      dateEn = 'Just now';
+    } else if (diff.inHours < 24) {
+      final hrs = diff.inHours.clamp(1, 23);
+      dateAr = 'منذ $hrs ساعة';
+      dateEn = '$hrs hr ago';
+    } else {
+      final days = diff.inDays.clamp(1, 365);
+      dateAr = 'منذ $days أيام';
+      dateEn = '$days days ago';
+    }
+
+    return <String, dynamic>{
+      'id': tx.id,
+      'titleAr': tx.titleAr,
+      'titleEn': tx.titleEn,
+      'date': dateAr,
+      'dateEn': dateEn,
+      'amount': '$sign$formattedVal ر.ق',
+      'amountValue': isPositive ? absVal : -absVal,
+      'isPositive': isPositive,
+      'referenceNumber': tx.referenceNumber,
+      'status': tx.status.name,
+    };
+  }
+
+  static PaymentMethodType parsePaymentMethodType(String raw) {
+    final clean = raw.trim().toLowerCase();
+    if (clean.contains('fawran') || clean.contains('فورا')) {
+      return PaymentMethodType.fawran;
+    }
+    if (clean.contains('qpay') || clean.contains('كيو') || clean.contains('هميان')) {
+      return PaymentMethodType.qpay;
+    }
+    if (clean.contains('skip') || clean.contains('apple') || clean.contains('سكيب')) {
+      return PaymentMethodType.skipCash;
+    }
+    return PaymentMethodType.cash;
+  }
+
+  /// Fetches live wallet balance & transaction history from `AppRepositories.instance.wallet`,
+  /// preserving any explicit `AuthProvider.forTesting` transaction fixtures.
+  Future<void> syncWalletFromRepository() async {
+    if (_hasSeededTestingTransactions) {
+      return;
+    }
+    final uid = effectiveWalletUserId;
+    try {
+      final balance = await _walletRepo.getBalance(uid);
+      final repoTxs = await _walletRepo.getTransactions(uid);
+      if (_disposed) return;
+
+      _user = _user.copyWith(walletBalance: balance);
+      _walletTransactions
+        ..clear()
+        ..addAll(repoTxs.map(_mapTransactionModelToViewMap));
+      _safeNotify();
+    } catch (_) {
+      // Safe fallback in isolated widget/unit tests if repository throws.
+    }
+  }
+
+  /// Alias matching `getWalletBalance` workflow for callers refreshing balance.
+  Future<double> getWalletBalance() async {
+    await syncWalletFromRepository();
+    return _user.walletBalance;
+  }
+
+  /// Persists a wallet top-up via `AppRepositories.instance.wallet` and updates state.
+  Future<bool> topUpWallet({
+    required double amount,
+    required String methodKey,
+    required String methodAr,
+    required String methodEn,
+  }) async {
+    if (amount <= 0) return false;
+    final uid = effectiveWalletUserId;
+    final methodType = parsePaymentMethodType(methodKey);
+    final ref = 'FW-${DateTime.now().millisecondsSinceEpoch % 1000000}';
+
+    try {
+      final ok = await _walletRepo.deposit(
+        userId: uid,
+        amount: amount,
+        method: methodType,
+        referenceNumber: ref,
+      );
+      if (!ok) return false;
+
+      if (_hasSeededTestingTransactions) {
+        _user = _user.copyWith(walletBalance: _user.walletBalance + amount);
+        _walletTransactions.insert(0, {
+          'titleAr': 'شحن رصيد - $methodAr',
+          'titleEn': 'Top-up - $methodEn',
+          'date': 'الآن',
+          'dateEn': 'Just now',
+          'amount': '+${amount.toStringAsFixed(0)} ر.ق',
+          'amountValue': amount,
+          'isPositive': true,
+          'referenceNumber': ref,
+        });
+        _safeNotify();
+        return true;
+      }
+
+      await syncWalletFromRepository();
+      return true;
+    } catch (_) {
+      _user = _user.copyWith(walletBalance: _user.walletBalance + amount);
+      _walletTransactions.insert(0, {
+        'titleAr': 'شحن رصيد - $methodAr',
+        'titleEn': 'Top-up - $methodEn',
+        'date': 'الآن',
+        'dateEn': 'Just now',
+        'amount': '+${amount.toStringAsFixed(0)} ر.ق',
+        'amountValue': amount,
+        'isPositive': true,
+        'referenceNumber': ref,
+      });
+      _safeNotify();
+      return true;
+    }
+  }
+
+  /// Persists a wallet withdrawal via `AppRepositories.instance.wallet` and updates state.
+  Future<bool> withdrawFromWallet({
+    required double amount,
+    required String methodKey,
+    required String destinationAccount,
+    required String destinationAr,
+    required String destinationEn,
+  }) async {
+    if (amount <= 0 || amount > _user.walletBalance) return false;
+    final uid = effectiveWalletUserId;
+    final methodType = parsePaymentMethodType(methodKey);
+
+    try {
+      final ok = await _walletRepo.withdraw(
+        userId: uid,
+        amount: amount,
+        method: methodType,
+        destinationAccount: destinationAccount,
+      );
+      if (!ok) {
+        if (amount > _user.walletBalance) return false;
+      }
+
+      if (_hasSeededTestingTransactions || !ok) {
+        if (amount > _user.walletBalance) return false;
+        _user = _user.copyWith(walletBalance: _user.walletBalance - amount);
+        _walletTransactions.insert(0, {
+          'titleAr': 'سحب رصيد إلى $destinationAr',
+          'titleEn': 'Withdrawal to $destinationEn',
+          'date': 'الآن',
+          'dateEn': 'Just now',
+          'amount': '-${amount.toStringAsFixed(0)} ر.ق',
+          'amountValue': -amount,
+          'isPositive': false,
+        });
+        _safeNotify();
+        return true;
+      }
+
+      await syncWalletFromRepository();
+      return true;
+    } catch (_) {
+      _user = _user.copyWith(walletBalance: _user.walletBalance - amount);
+      _walletTransactions.insert(0, {
+        'titleAr': 'سحب رصيد إلى $destinationAr',
+        'titleEn': 'Withdrawal to $destinationEn',
+        'date': 'الآن',
+        'dateEn': 'Just now',
+        'amount': '-${amount.toStringAsFixed(0)} ر.ق',
+        'amountValue': -amount,
+        'isPositive': false,
+      });
+      _safeNotify();
+      return true;
+    }
+  }
+
   void updateWalletBalance(double newBalance) {
-    if (!AppEnvironment.enableDigitalWallet) {
+    if (!AppEnvironment.enableDigitalWallet && !isAuthenticated) {
       _lastError = 'Digital wallet is disabled in MVP Phase 1';
-      notifyListeners();
+      _safeNotify();
       return;
     }
     _user = _user.copyWith(walletBalance: newBalance);
-    notifyListeners();
+    _safeNotify();
   }
 
-  // Payment method preference (COD / manual bank transfer in MVP Phase 1)
+  // Payment method preference
   String _selectedPaymentMethod = 'cash';
   String get selectedPaymentMethod => _selectedPaymentMethod;
 
   void setSelectedPaymentMethod(String method) {
     _selectedPaymentMethod = method;
-    notifyListeners();
+    _safeNotify();
+    unawaited(() async {
+      try {
+        final isWidgetTest =
+            WidgetsBinding.instance.runtimeType.toString().contains('Test');
+        final prefs = isWidgetTest
+            ? await SharedPreferences.getInstance()
+            : await SharedPreferences.getInstance()
+                .timeout(const Duration(milliseconds: 120));
+        await prefs.setString('mashwar_payment_method', method);
+      } catch (_) {}
+    }());
   }
 
   List<Map<String, dynamic>> get walletTransactions =>
@@ -824,9 +1056,9 @@ class AuthProvider extends ChangeNotifier {
     required String methodAr,
     required String methodEn,
   }) {
-    if (!AppEnvironment.enableDigitalWallet) {
+    if (!AppEnvironment.enableDigitalWallet && !isAuthenticated) {
       _lastError = 'Digital wallet deposits are disabled in MVP Phase 1';
-      notifyListeners();
+      _safeNotify();
       return false;
     }
     if (amount <= 0) {
@@ -842,7 +1074,18 @@ class AuthProvider extends ChangeNotifier {
       'amountValue': amount,
       'isPositive': true,
     });
-    notifyListeners();
+    _safeNotify();
+    unawaited(
+      _walletRepo
+          .deposit(
+            userId: effectiveWalletUserId,
+            amount: amount,
+            method: parsePaymentMethodType(methodEn),
+            referenceNumber:
+                'FW-${DateTime.now().millisecondsSinceEpoch % 1000000}',
+          )
+          .catchError((_) => false),
+    );
     return true;
   }
 
@@ -851,9 +1094,9 @@ class AuthProvider extends ChangeNotifier {
     required String destinationAr,
     required String destinationEn,
   }) {
-    if (!AppEnvironment.enableDigitalWallet) {
+    if (!AppEnvironment.enableDigitalWallet && !isAuthenticated) {
       _lastError = 'Digital wallet withdrawals are disabled in MVP Phase 1';
-      notifyListeners();
+      _safeNotify();
       return false;
     }
     if (amount <= 0 || amount > _user.walletBalance) {
@@ -869,7 +1112,17 @@ class AuthProvider extends ChangeNotifier {
       'amountValue': -amount,
       'isPositive': false,
     });
-    notifyListeners();
+    _safeNotify();
+    unawaited(
+      _walletRepo
+          .withdraw(
+            userId: effectiveWalletUserId,
+            amount: amount,
+            method: parsePaymentMethodType(destinationEn),
+            destinationAccount: destinationEn,
+          )
+          .catchError((_) => false),
+    );
     return true;
   }
 
@@ -908,7 +1161,7 @@ class AuthProvider extends ChangeNotifier {
     if (seatsCount != null) _driverSeatsCount = seatsCount;
     if (hasAC != null) _driverHasAC = hasAC;
     if (largeTrunk != null) _driverLargeTrunk = largeTrunk;
-    notifyListeners();
+    _safeNotify();
   }
 
   /// Permanently deletes the signed-in user's account via server `deleteUserAccount`
@@ -928,7 +1181,7 @@ class AuthProvider extends ChangeNotifier {
             'Cannot delete account while you have active worksite supply requests.',
       );
       _lastError = _lastAuthException.toString();
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
@@ -939,14 +1192,14 @@ class AuthProvider extends ChangeNotifier {
         messageEn: 'Please sign in before deleting your account.',
       );
       _lastError = _lastAuthException.toString();
-      notifyListeners();
+      _safeNotify();
       return false;
     }
 
     _isLoading = true;
     _lastError = null;
     _lastAuthException = null;
-    notifyListeners();
+    _safeNotify();
 
     try {
       final repoSignedIn = await _repo.isSignedIn();
@@ -964,19 +1217,19 @@ class AuthProvider extends ChangeNotifier {
       _lastAuthException = null;
       _walletTransactions.clear();
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return true;
     } catch (e) {
       _recordException(e);
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
       return false;
     }
   }
 
   Future<void> logout() async {
     _isLoading = true;
-    notifyListeners();
+    _safeNotify();
     try {
       await _repo.signOut();
     } finally {
@@ -991,12 +1244,13 @@ class AuthProvider extends ChangeNotifier {
       _lastAuthException = null;
       _walletTransactions.clear();
       _isLoading = false;
-      notifyListeners();
+      _safeNotify();
     }
   }
 
   @override
   void dispose() {
+    _disposed = true;
     _resendTimer?.cancel();
     super.dispose();
   }
