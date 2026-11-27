@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -9,10 +11,13 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_text_field.dart';
+import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/board_ad_model.dart';
+import '../../state/auth_provider.dart';
 import '../../state/board_provider.dart';
 import '../chat/chat_screen.dart';
 import '../escrow/service_escrow_screen.dart';
+import '../safety/safety_screens.dart';
 
 class MakeOfferSheet extends StatefulWidget {
   const MakeOfferSheet({super.key, required this.ad});
@@ -57,18 +62,60 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
     super.dispose();
   }
 
-  void _openChat(BuildContext context, bool isAr) {
+  void _openChat(BuildContext context, BoardAdModel ad) {
     final nav = Navigator.of(context);
     nav.pop();
     nav.push(
       MaterialPageRoute(
         builder: (_) => ChatScreen(
-          driverName: widget.ad.authorName,
-          driverCar: widget.ad.timeText,
-          tripRoute: context.trRoute(widget.ad.route),
+          driverName: ad.authorName,
+          driverCar: ad.timeText,
+          tripRoute: context.trRoute(ad.route),
         ),
       ),
     );
+  }
+
+  Future<void> _openRouteInGoogleMaps(
+    BuildContext context,
+    BoardAdModel ad,
+    bool isAr,
+  ) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final origin = '${ad.fromCity.trim()}, Qatar';
+    final dest = '${ad.toCity.trim()}, Qatar';
+    final buffer = StringBuffer(
+      'https://www.google.com/maps/dir/?api=1'
+      '&origin=${Uri.encodeComponent(origin)}'
+      '&destination=${Uri.encodeComponent(dest)}',
+    );
+    if (ad.stopoverCity != null && ad.stopoverCity!.trim().isNotEmpty) {
+      buffer.write(
+        '&waypoints=${Uri.encodeComponent('${ad.stopoverCity!.trim()}, Qatar')}',
+      );
+    }
+    buffer.write('&travelmode=driving');
+    final url = buffer.toString();
+    final uri = Uri.parse(url);
+
+    final launched = await launchMashwarExternalUri(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!launched) {
+      await Clipboard.setData(ClipboardData(text: url));
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            isAr
+                ? 'تم نسخ رابط المسار في Google Maps'
+                : 'Google Maps route link copied',
+          ),
+          backgroundColor: AppColors.navy,
+        ),
+      );
+    }
   }
 
   @override
@@ -178,15 +225,17 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.emeraldSurface,
+                        color: AppColors.tealSurface,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.emerald),
+                        border: Border.all(
+                          color: AppColors.teal.withValues(alpha: 0.45),
+                        ),
                       ),
                       child: Row(
                         children: [
                           const Icon(
                             Icons.check_circle_rounded,
-                            color: AppColors.emerald,
+                            color: AppColors.teal,
                             size: 22,
                           ),
                           const SizedBox(width: 10),
@@ -195,17 +244,15 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                               isAr
                                   ? 'تم إرسال عرضك (${currentAd.myOfferPrice ?? currentAd.priceOrBudget} ر.ق) إلى ${currentAd.authorName}. سنبلغك فور الرد.'
                                   : 'Your offer (${currentAd.myOfferPrice ?? currentAd.priceOrBudget} QAR) was sent to ${currentAd.authorName}.',
-                              style: AppTypography.body().copyWith(
-                                color: AppColors.navy,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: AppTypography.body(color: AppColors.navy)
+                                  .copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildDetailsCard(currentAd, isAr),
+                    _buildDetailsCard(context, currentAd, isAr),
                     const SizedBox(height: 18),
                     Row(
                       children: [
@@ -219,7 +266,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                               color: Colors.white,
                               size: 18,
                             ),
-                            onPressed: () => _openChat(context, isAr),
+                            onPressed: () => _openChat(context, currentAd),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -238,10 +285,10 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.emerald,
-                          backgroundColor: AppColors.emeraldSurface,
+                          foregroundColor: AppColors.teal,
+                          backgroundColor: AppColors.tealSurface,
                           side: BorderSide(
-                            color: AppColors.emerald.withValues(alpha: 0.4),
+                            color: AppColors.teal.withValues(alpha: 0.4),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 11),
                           shape: RoundedRectangleBorder(
@@ -254,10 +301,10 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                           isAr
                               ? 'معاينة كود الأمان OTP وتوثيق التسليم'
                               : 'Inspect OTP Handover Verification',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
+                          style: AppTypography.label(color: AppColors.teal)
+                              .copyWith(
+                            fontWeight: FontWeight.w700,
                             fontSize: 12.5,
-                            fontFamily: 'Cairo',
                           ),
                         ),
                         onPressed: () {
@@ -281,7 +328,8 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                         icon: const Icon(Icons.undo_rounded, size: 18),
                         label: Text(
                           isAr ? 'سحب العرض وإلغاؤه' : 'Withdraw Offer',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: AppTypography.label(color: AppColors.danger)
+                              .copyWith(fontWeight: FontWeight.w700),
                         ),
                         onPressed: () {
                           board.withdrawOffer(currentAd.id);
@@ -317,6 +365,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                     ),
                     const SizedBox(height: 12),
                     MashwarTextField(
+                      key: const ValueKey('make_offer_price_input'),
                       controller: _priceController,
                       label: currentAd.type == BoardAdType.parcelRequest
                           ? (isAr
@@ -328,6 +377,11 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                       hint: '${currentAd.priceOrBudget}',
                       errorText: _priceError,
                       keyboardType: TextInputType.number,
+                      onChanged: (_) {
+                        if (_priceError != null) {
+                          setState(() => _priceError = null);
+                        }
+                      },
                     ),
                     const SizedBox(height: 10),
 
@@ -370,10 +424,10 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.emeraldSurface,
+                        color: AppColors.tealSurface,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: AppColors.emerald.withValues(alpha: 0.3),
+                          color: AppColors.teal.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -382,7 +436,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                           const Icon(
                             Icons.check_circle_outline_rounded,
                             size: 14,
-                            color: AppColors.emerald,
+                            color: AppColors.teal,
                           ),
                           const SizedBox(width: 6),
                           Flexible(
@@ -390,10 +444,10 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                               isAr
                                   ? 'نطاق مشاركة التكلفة العادل لهذا المسار: $minFair - $maxFair ر.ق'
                                   : 'Fair cost-sharing range for this route: $minFair - $maxFair QAR',
-                              style: const TextStyle(
+                              style: AppTypography.label(color: AppColors.teal)
+                                  .copyWith(
                                 fontSize: 11,
-                                color: AppColors.emerald,
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
@@ -403,7 +457,8 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                     const SizedBox(height: 14),
                     Text(
                       isAr ? 'طريقة التسوية المفضلة' : 'Settlement Method',
-                      style: AppTypography.label(),
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 6),
                     Wrap(
@@ -430,23 +485,21 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: sel
-                                  ? AppColors.cobaltSurface
-                                  : AppColors.slateBg,
+                              color: sel ? AppColors.navy : AppColors.slateBg,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
                                 color: sel
-                                    ? AppColors.cobalt
+                                    ? AppColors.navy
                                     : AppColors.slateBorder,
                               ),
                             ),
                             child: Text(
                               ch.$2,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                color: sel ? AppColors.cobalt : AppColors.navy,
-                                fontFamily: 'Cairo',
+                              style: AppTypography.label(
+                                color: sel ? Colors.white : AppColors.navy,
+                              ).copyWith(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
@@ -455,6 +508,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                     ),
                     const SizedBox(height: 14),
                     MashwarTextField(
+                      key: const ValueKey('make_offer_note_input'),
                       controller: _noteController,
                       label: isAr
                           ? 'رسالة أو ملاحظة لصاحب الطلب'
@@ -465,23 +519,31 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                     ),
                     const SizedBox(height: 20),
                     MashwarButton(
+                      key: const ValueKey('make_offer_submit_btn'),
                       text: isAr ? 'إرسال العرض الآن' : 'Send Offer Now',
                       onPressed: () {
                         final price =
                             int.tryParse(_priceController.text.trim());
-                        if (price == null || price <= 0) {
+                        if (price == null || price <= 0 || price > 50000) {
                           setState(() {
                             _priceError = isAr
-                                ? 'ادخل سعراً صحيحاً'
-                                : 'Please enter a valid price';
+                                ? 'أدخل سعراً صحيحاً بين 1 و 50,000 ر.ق'
+                                : 'Please enter a valid price (1 - 50,000 QAR)';
                           });
                           return;
                         }
+                        final auth = Provider.of<AuthProvider?>(
+                          context,
+                          listen: false,
+                        );
                         setState(() => _priceError = null);
                         board.submitOffer(
                           adId: currentAd.id,
                           offerPrice: price,
                           note: _noteController.text.trim(),
+                          driverName: auth?.user.fullName,
+                          driverId: auth?.user.id,
+                          timeText: currentAd.timeText,
                         );
                         setState(() => _isMakingOffer = false);
                       },
@@ -493,48 +555,27 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                         Expanded(
                           child: Row(
                             children: [
-                              Container(
-                                width: 46,
-                                height: 46,
-                                decoration: const BoxDecoration(
-                                  color: AppColors.cobaltSurface,
-                                  shape: BoxShape.circle,
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  currentAd.authorName.isNotEmpty
-                                      ? currentAd.authorName[0]
-                                      : 'M',
-                                  style:
-                                      AppTypography.title(color: AppColors.cobalt),
-                                ),
+                              MashwarUserAvatar(
+                                avatarUrl: null,
+                                fullName: currentAd.authorName,
+                                size: 46,
+                                borderWidth: 1.5,
+                                borderColor: AppColors.slateBorder,
+                                autoCommunityPortrait: true,
+                                showVerifiedBadge: currentAd.isVerified,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Flexible(
-                                          child: Text(
-                                            currentAd.authorName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: AppTypography.body().copyWith(
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                        if (currentAd.isVerified) ...[
-                                          const SizedBox(width: 4),
-                                          const Icon(
-                                            Icons.verified_rounded,
-                                            size: 16,
-                                            color: AppColors.emerald,
-                                          ),
-                                        ],
-                                      ],
+                                    Text(
+                                      currentAd.authorName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTypography.body(
+                                        color: AppColors.navy,
+                                      ).copyWith(fontWeight: FontWeight.w700),
                                     ),
                                     Text(
                                       '★ ${currentAd.authorRating} · ${currentAd.tripCount} ${isAr ? "رحلة/طلب" : "trips"} · ${context.trDate(currentAd.timeAgo)}',
@@ -560,7 +601,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    _buildDetailsCard(currentAd, isAr),
+                    _buildDetailsCard(context, currentAd, isAr),
                     const SizedBox(height: 16),
                     Row(
                       children: [
@@ -583,7 +624,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                               color: AppColors.navy,
                               size: 18,
                             ),
-                            onPressed: () => _openChat(context, isAr),
+                            onPressed: () => _openChat(context, currentAd),
                           ),
                         ),
                       ],
@@ -599,7 +640,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
     );
   }
 
-  Widget _buildDetailsCard(BoardAdModel ad, bool isAr) {
+  Widget _buildDetailsCard(BuildContext context, BoardAdModel ad, bool isAr) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppDimens.space16),
@@ -611,10 +652,45 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MashwarRouteTimeline(
-            from: context.trCity(ad.fromCity),
-            to: context.trCity(ad.toCity),
-            compact: true,
+          Row(
+            children: [
+              Expanded(
+                child: MashwarRouteTimeline(
+                  from: context.trCity(ad.fromCity),
+                  to: context.trCity(ad.toCity),
+                  compact: true,
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
+                key: const ValueKey('make_offer_open_gmaps_btn'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.navy,
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.slateBorder),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () => _openRouteInGoogleMaps(context, ad, isAr),
+                icon: const Icon(
+                  Icons.map_outlined,
+                  size: 14,
+                  color: AppColors.teal,
+                ),
+                label: Text(
+                  isAr ? 'الخريطة' : 'Maps',
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w700, fontSize: 11.5),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Row(
@@ -622,7 +698,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
               const Icon(
                 Icons.schedule_rounded,
                 size: 15,
-                color: AppColors.cobalt,
+                color: AppColors.navy,
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -662,7 +738,7 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
               const SizedBox(width: 8),
               Text(
                 '${ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"}',
-                style: AppTypography.title().copyWith(color: AppColors.cobalt),
+                style: AppTypography.title(color: AppColors.navy),
               ),
             ],
           ),
@@ -678,14 +754,14 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
                         : 'Estimated Receipt Budget Cap',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTypography.label(color: AppColors.emerald),
+                    style: AppTypography.label(color: AppColors.teal),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   '${ad.estimatedItemCost} ${isAr ? "ر.ق" : "QAR"}',
-                  style: AppTypography.body(color: AppColors.emerald)
-                      .copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.body(color: AppColors.teal)
+                      .copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -707,19 +783,17 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.cobalt : AppColors.slateBg,
+          color: isSelected ? AppColors.navy : AppColors.slateBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? AppColors.cobalt : AppColors.slateBorder,
+            color: isSelected ? AppColors.navy : AppColors.slateBorder,
           ),
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
+          style: AppTypography.label(
             color: isSelected ? Colors.white : AppColors.navy,
-          ),
+          ).copyWith(fontWeight: FontWeight.w700),
         ),
       ),
     );

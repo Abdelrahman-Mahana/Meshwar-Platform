@@ -4,15 +4,38 @@ import 'package:flutter/material.dart';
 import '../data/mock_data.dart';
 import '../data/models/ride_model.dart';
 import '../data/repositories/app_repositories.dart';
+import '../data/repositories/implementations/rides_repository_impl.dart';
 
 enum RideMode {
-  seats,   // مقاعد
+  seats, // مقاعد
   parcels, // طرود
 }
 
 enum SortOption {
   closestTime, // الأقرب وقتاً
-  cheapest,    // الأرخص
+  cheapest, // الأرخص
+}
+
+class RideRatingRecord {
+  final String rideId;
+  final String driverName;
+  final int rating;
+  final List<String> tags;
+  final int tipAmount;
+  final String comment;
+  final bool isParcel;
+  final DateTime submittedAt;
+
+  const RideRatingRecord({
+    required this.rideId,
+    required this.driverName,
+    required this.rating,
+    this.tags = const [],
+    this.tipAmount = 0,
+    this.comment = '',
+    this.isParcel = false,
+    required this.submittedAt,
+  });
 }
 
 class RidesProvider extends ChangeNotifier {
@@ -42,6 +65,7 @@ class RidesProvider extends ChangeNotifier {
       MockData.initialRides.last,
   ];
   RideModel? _activeBooking = MockData.initialRides.first;
+  final Map<String, RideRatingRecord> _rideRatings = {};
 
   RideMode get rideMode => _rideMode;
   String get fromCity => _fromCity;
@@ -60,14 +84,30 @@ class RidesProvider extends ChangeNotifier {
   List<RideModel> get allRides => List.unmodifiable(_allRides);
   List<RideModel> get myPublishedRides => List.unmodifiable(_myPublishedRides);
   List<RideModel> get bookedRides => List.unmodifiable(_bookedRides);
+  Map<String, RideRatingRecord> get rideRatings =>
+      Map.unmodifiable(_rideRatings);
+
+  RideRatingRecord? ratingForRide(String rideId) => _rideRatings[rideId];
 
   static const Map<String, List<String>> _cityAliases = {
-    'الدوحة': ['doha', 'الدوحة', 'مشيرب', 'الخليج الغربي', 'west bay', 'msheireb'],
+    'الدوحة': [
+      'doha',
+      'الدوحة',
+      'مشيرب',
+      'الخليج الغربي',
+      'west bay',
+      'msheireb',
+    ],
     'لوسيل': ['lusail', 'لوسيل', 'marina'],
     'الخور': ['al khor', 'alkhor', 'khor', 'الخور'],
     'الوكرة': ['al wakrah', 'wakrah', 'الوكرة'],
     'الريان': ['al rayyan', 'rayyan', 'الريان'],
-    'المنطقة الصناعية': ['industrial area', 'industrial', 'المنطقة الصناعية', 'الصناعية'],
+    'المنطقة الصناعية': [
+      'industrial area',
+      'industrial',
+      'المنطقة الصناعية',
+      'الصناعية',
+    ],
     'دخان': ['dukhan', 'دخان'],
     'مسيعيد': ['mesaieed', 'مسيعيد'],
     'أم صلال': ['umm salal', 'أم صلال', 'ام صلال'],
@@ -75,7 +115,13 @@ class RidesProvider extends ChangeNotifier {
     'الشمال': ['al shamal', 'shamal', 'الشمال'],
     'رأس لفان': ['ras laffan', 'رأس لفان', 'راس لفان'],
     'المدينة التعليمية': ['education city', 'المدينة التعليمية'],
-    'مطار حمد الدولي': ['hamad international airport', 'hia', 'airport', 'مطار حمد الدولي', 'المطار'],
+    'مطار حمد الدولي': [
+      'hamad international airport',
+      'hia',
+      'airport',
+      'مطار حمد الدولي',
+      'المطار',
+    ],
   };
 
   static bool _matchesCityField(String query, List<String?> candidates) {
@@ -306,6 +352,173 @@ class RidesProvider extends ChangeNotifier {
     }
   }
 
+  /// Marks a ride as completed in memory and syncs gracefully with [AppRepositories.instance.rides].
+  RideModel? completeRide(String rideId, {RideModel? fallbackRide}) {
+    RideModel? updated;
+
+    final allIdx = _allRides.indexWhere((r) => r.id == rideId);
+    if (allIdx != -1) {
+      updated = _allRides[allIdx].copyWith(status: 'completed');
+      _allRides[allIdx] = updated;
+    }
+
+    final pubIdx = _myPublishedRides.indexWhere((r) => r.id == rideId);
+    if (pubIdx != -1) {
+      updated = _myPublishedRides[pubIdx].copyWith(status: 'completed');
+      _myPublishedRides[pubIdx] = updated;
+    }
+
+    final bookIdx = _bookedRides.indexWhere((r) => r.id == rideId);
+    if (bookIdx != -1) {
+      updated = _bookedRides[bookIdx].copyWith(status: 'completed');
+      _bookedRides[bookIdx] = updated;
+    } else if (fallbackRide != null) {
+      updated ??= fallbackRide.copyWith(status: 'completed');
+      _bookedRides.insert(0, updated);
+    }
+
+    if (_activeBooking != null && _activeBooking!.id == rideId) {
+      updated ??= _activeBooking!.copyWith(status: 'completed');
+      _activeBooking = updated;
+    }
+
+    notifyListeners();
+
+    if (updated != null) {
+      final repo = AppRepositories.instance.rides;
+      if (repo is! RidesRepositoryImpl) {
+        repo.publishRide(updated).ignore();
+      }
+    }
+    return updated;
+  }
+
+  /// Persists a passenger/sender trip rating, updates the driver's average rating & ride status,
+  /// and syncs gracefully with [AppRepositories.instance.rides].
+  Future<RideModel?> submitRideRating({
+    String? rideId,
+    String? driverName,
+    required int rating,
+    List<String> tags = const [],
+    int tipAmount = 0,
+    String? comment,
+    bool isParcel = false,
+  }) async {
+    final clampedRating = rating.clamp(1, 5);
+    final cleanId = rideId?.trim() ?? '';
+    final cleanDriver = driverName?.trim() ?? '';
+
+    RideModel? target;
+    if (cleanId.isNotEmpty) {
+      for (final r in [
+        ..._bookedRides,
+        ..._allRides,
+        ..._myPublishedRides,
+        if (_activeBooking != null) _activeBooking!,
+      ]) {
+        if (r.id == cleanId) {
+          target = r;
+          break;
+        }
+      }
+    }
+
+    if (target == null && cleanDriver.isNotEmpty) {
+      for (final r in [
+        if (_activeBooking != null) _activeBooking!,
+        ..._bookedRides,
+        ..._allRides,
+      ]) {
+        if (r.driverName.trim().toLowerCase() == cleanDriver.toLowerCase()) {
+          target = r;
+          break;
+        }
+      }
+    }
+
+    target ??= _activeBooking ??
+        (_bookedRides.isNotEmpty
+            ? _bookedRides.first
+            : (_allRides.isNotEmpty ? _allRides.first : null));
+
+    final recordId = target?.id ??
+        (cleanId.isNotEmpty
+            ? cleanId
+            : 'review_${DateTime.now().millisecondsSinceEpoch}');
+
+    _rideRatings[recordId] = RideRatingRecord(
+      rideId: recordId,
+      driverName: target?.driverName ??
+          (cleanDriver.isNotEmpty ? cleanDriver : 'MASHWAR Captain'),
+      rating: clampedRating,
+      tags: List<String>.unmodifiable(tags),
+      tipAmount: tipAmount.clamp(0, 5000),
+      comment: comment?.trim() ?? '',
+      isParcel: isParcel,
+      submittedAt: DateTime.now(),
+    );
+
+    if (target == null) {
+      notifyListeners();
+      return null;
+    }
+
+    final newDriverRating = double.parse(
+      (((target.driverRating * 4) + clampedRating) / 5)
+          .clamp(1.0, 5.0)
+          .toStringAsFixed(2),
+    );
+    final cleanComment = comment?.trim() ?? '';
+    final feedbackParts = <String>[
+      if (tags.isNotEmpty) tags.join('، '),
+      if (cleanComment.isNotEmpty) cleanComment,
+    ];
+    final updatedNotes = feedbackParts.isNotEmpty
+        ? feedbackParts.join(' — ')
+        : target.notes;
+
+    final updatedRide = target.copyWith(
+      driverRating: newDriverRating,
+      status: 'completed',
+      notes: updatedNotes,
+    );
+
+    void updateList(List<RideModel> list) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].id == updatedRide.id) {
+          list[i] = updatedRide;
+        } else if (list[i].driverName == updatedRide.driverName) {
+          list[i] = list[i].copyWith(driverRating: newDriverRating);
+        }
+      }
+    }
+
+    updateList(_allRides);
+    updateList(_myPublishedRides);
+    updateList(_bookedRides);
+    if (!_bookedRides.any((r) => r.id == updatedRide.id)) {
+      _bookedRides.insert(0, updatedRide);
+    }
+    if (_activeBooking != null && _activeBooking!.id == updatedRide.id) {
+      _activeBooking = updatedRide;
+    }
+
+    notifyListeners();
+
+    try {
+      final repo = AppRepositories.instance.rides;
+      if (repo is! RidesRepositoryImpl) {
+        await repo.publishRide(updatedRide);
+      } else {
+        await repo.getRideDetails(updatedRide.id);
+      }
+    } catch (_) {
+      // Keep local optimistic rating & completed status intact when offline.
+    }
+
+    return updatedRide;
+  }
+
   String? _resolveCurrentAuthUid() {
     try {
       if (Firebase.apps.isEmpty) return null;
@@ -338,11 +551,12 @@ class RidesProvider extends ChangeNotifier {
     bool isLadiesOnly = false,
     bool isInstantBooking = true,
   }) {
-    final resolvedStopover = (stopoverCity != null && stopoverCity.trim().isNotEmpty)
-        ? stopoverCity.trim()
-        : ((stopover != null && stopover.trim().isNotEmpty)
-            ? stopover.trim()
-            : null);
+    final resolvedStopover =
+        (stopoverCity != null && stopoverCity.trim().isNotEmpty)
+            ? stopoverCity.trim()
+            : ((stopover != null && stopover.trim().isNotEmpty)
+                ? stopover.trim()
+                : null);
     final resolvedDriverId = (driverId != null && driverId.trim().isNotEmpty)
         ? driverId.trim()
         : (_resolveCurrentAuthUid() ?? MockData.currentUser.id);
@@ -360,12 +574,10 @@ class RidesProvider extends ChangeNotifier {
       fromCity: fromCity.trim(),
       toCity: toCity.trim(),
       stopoverCity: resolvedStopover,
-      pickupPoint: pickupPoint.trim().isNotEmpty
-          ? pickupPoint.trim()
-          : fromCity.trim(),
-      dropoffPoint: dropoffPoint.trim().isNotEmpty
-          ? dropoffPoint.trim()
-          : toCity.trim(),
+      pickupPoint:
+          pickupPoint.trim().isNotEmpty ? pickupPoint.trim() : fromCity.trim(),
+      dropoffPoint:
+          dropoffPoint.trim().isNotEmpty ? dropoffPoint.trim() : toCity.trim(),
       departureTime: departureTime.trim(),
       departureDate: departureDate.trim(),
       remainingSeats: availableSeats.clamp(1, 10),

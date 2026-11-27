@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
-import '../../core/localization/app_strings.dart';
 
 class ProhibitedItemsSheet extends StatelessWidget {
   const ProhibitedItemsSheet({super.key});
@@ -44,7 +44,9 @@ class ProhibitedItemsSheet extends StatelessWidget {
         ),
         child: Material(
           color: Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppDimens.radiusBottomSheet)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppDimens.radiusBottomSheet),
+          ),
           clipBehavior: Clip.antiAlias,
           child: SafeArea(
             top: false,
@@ -60,28 +62,40 @@ class ProhibitedItemsSheet extends StatelessWidget {
                         ? 'لا نقبل نقل هذه المواد في الطرود بأي حال:'
                         : 'The following items are strictly prohibited from shipment:',
                     leadingIcon: Icons.gpp_bad_outlined,
-                    onClose: () => Navigator.of(context).pop(),
+                    onClose: () => Navigator.of(context).maybePop(),
                   ),
                   const SizedBox(height: AppDimens.space16),
 
-                  // Items container
                   Material(
-                    color: AppColors.surfaceLight,
+                    color: AppColors.slateBg,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                      side: const BorderSide(color: AppColors.borderDisabled, width: 0.8),
+                      side: const BorderSide(
+                        color: AppColors.slateBorder,
+                        width: AppDimens.borderWidth,
+                      ),
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: ListView.separated(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: items.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderDisabled),
+                      separatorBuilder: (_, __) => const Divider(
+                        height: 1,
+                        color: AppColors.slateBorder,
+                      ),
                       itemBuilder: (context, index) {
                         return ListTile(
                           dense: true,
-                          leading: const Icon(Icons.block_rounded, color: AppColors.danger, size: 20),
-                          title: Text(items[index], style: AppTypography.body().copyWith(fontSize: 14)),
+                          leading: const Icon(
+                            Icons.block_rounded,
+                            color: AppColors.danger,
+                            size: 20,
+                          ),
+                          title: Text(
+                            items[index],
+                            style: AppTypography.body().copyWith(fontSize: 14),
+                          ),
                         );
                       },
                     ),
@@ -89,8 +103,9 @@ class ProhibitedItemsSheet extends StatelessWidget {
                   const SizedBox(height: AppDimens.space24),
 
                   MashwarButton(
+                    key: const ValueKey('prohibited_items_agree_btn'),
                     text: isAr ? 'فهمت وموافق' : 'I Understand & Agree',
-                    onPressed: () => Navigator.of(context).pop(true),
+                    onPressed: () => Navigator.of(context).maybePop(true),
                   ),
                 ],
               ),

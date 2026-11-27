@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -8,45 +10,80 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../account/account_extra_screens.dart';
 import '../auth/welcome_screen.dart';
+import '../safety/safety_screens.dart';
 
 Widget _buildSystemStateScaffold({
   required BuildContext context,
   required IconData icon,
+  required Color accentColor,
+  required Color accentSurface,
+  required String badgeLabel,
   required String title,
   required String subtitle,
   required List<Widget> actions,
   Widget? topBanner,
 }) {
   return Scaffold(
-    backgroundColor: const Color(0xFFFCFCFD),
+    backgroundColor: AppColors.slateBg,
     body: SafeArea(
       child: LayoutBuilder(
         builder: (context, constraints) => SingleChildScrollView(
+          padding: const EdgeInsets.all(AppDimens.space24),
           child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - 48).clamp(0.0, 2000.0),
+            ),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppDimens.space24),
-                  child: MashwarFadeSlideIn(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        if (topBanner != null) topBanner else const SizedBox(height: AppDimens.space24),
-                        Column(
+                child: MashwarFadeSlideIn(
+                  duration: const Duration(milliseconds: 260),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (topBanner != null) ...[
+                        topBanner,
+                        const SizedBox(height: AppDimens.space20),
+                      ],
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(AppDimens.space24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.slateBorder),
+                        ),
+                        child: Column(
                           children: [
                             Container(
-                              width: 88,
-                              height: 88,
-                              decoration: BoxDecoration(
-                                color: AppColors.goldSurface,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.gold.withValues(alpha: 0.55), width: 1.5),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
                               ),
-                              child: Icon(icon, size: 42, color: AppColors.navy),
+                              decoration: BoxDecoration(
+                                color: accentSurface,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                badgeLabel,
+                                style: AppTypography.label(color: accentColor)
+                                    .copyWith(fontWeight: FontWeight.w700),
+                              ),
                             ),
-                            const SizedBox(height: AppDimens.space24),
+                            const SizedBox(height: AppDimens.space20),
+                            Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                color: accentSurface,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: accentColor.withValues(alpha: 0.25),
+                                ),
+                              ),
+                              child: Icon(icon, size: 38, color: accentColor),
+                            ),
+                            const SizedBox(height: AppDimens.space20),
                             Text(
                               title,
                               textAlign: TextAlign.center,
@@ -58,16 +95,12 @@ Widget _buildSystemStateScaffold({
                               textAlign: TextAlign.center,
                               style: AppTypography.bodySecondary(),
                             ),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            const SizedBox(height: AppDimens.space32),
+                            const SizedBox(height: AppDimens.space24),
                             ...actions,
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -90,25 +123,38 @@ class ForceUpdateScreen extends StatelessWidget {
     final isAr = context.isArabic;
     return _buildSystemStateScaffold(
       context: context,
-      icon: Icons.arrow_upward_rounded,
+      icon: Icons.system_update_alt_rounded,
+      accentColor: AppColors.navy,
+      accentSurface: AppColors.cobaltSurface,
+      badgeLabel: isAr ? 'إصدار جديد متاح' : 'New Release',
       title: isAr ? 'تحديث التطبيق مطلوب' : 'App Update Required',
       subtitle: isAr
           ? 'تتوفر نسخة جديدة تحتوي على تحسينات مهمة للأمان والأداء.'
           : 'A new version is available with important security and performance improvements.',
       actions: [
         MashwarButton(
+          key: const ValueKey('system_force_update_btn'),
           text: isAr ? 'تحديث الآن' : 'Update Now',
           onPressed: onUpdate ??
-              () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      isAr
-                          ? 'جاري فتح متجر التطبيقات لتحديث مشوار...'
-                          : 'Opening app store to update MASHWAR...',
-                    ),
-                  ),
+              () async {
+                final messenger = ScaffoldMessenger.maybeOf(context);
+                final uri = Uri.parse('https://mashwar.qa/update');
+                final ok = await launchMashwarExternalUri(
+                  uri,
+                  mode: LaunchMode.externalApplication,
                 );
+                if (!ok) {
+                  messenger?.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr
+                            ? 'جاري فتح متجر التطبيقات لتحديث مشوار...'
+                            : 'Opening app store to update MASHWAR...',
+                      ),
+                      backgroundColor: AppColors.navy,
+                    ),
+                  );
+                }
               },
         ),
       ],
@@ -127,13 +173,17 @@ class MaintenanceScreen extends StatelessWidget {
     final isAr = context.isArabic;
     return _buildSystemStateScaffold(
       context: context,
-      icon: Icons.settings_outlined,
+      icon: Icons.build_circle_outlined,
+      accentColor: AppColors.teal,
+      accentSurface: AppColors.tealSurface,
+      badgeLabel: isAr ? 'صيانة مجدولة' : 'Maintenance',
       title: isAr ? 'نُجري تحديثات لتحسين الخدمة' : 'Scheduled Maintenance',
       subtitle: isAr
           ? 'سنعود خلال وقت قصير. شكراً لتفهمك وصبرك.'
           : 'We will be back shortly. Thank you for your patience.',
       actions: [
         MashwarButton(
+          key: const ValueKey('system_maintenance_retry_btn'),
           text: isAr ? 'إعادة المحاولة' : 'Try Again',
           variant: MashwarButtonVariant.secondary,
           onPressed: onRetry ??
@@ -160,6 +210,9 @@ class OfflineScreen extends StatelessWidget {
     return _buildSystemStateScaffold(
       context: context,
       icon: Icons.wifi_off_rounded,
+      accentColor: AppColors.navy,
+      accentSurface: AppColors.cobaltSurface,
+      badgeLabel: isAr ? 'غير متصل بالشبكة' : 'Offline Mode',
       topBanner: AlertBanner(
         message: isAr ? 'لا يوجد اتصال بالإنترنت' : 'No internet connection',
         type: AlertBannerType.offline,
@@ -170,6 +223,7 @@ class OfflineScreen extends StatelessWidget {
           : 'Check your internet connection and try again.',
       actions: [
         MashwarButton(
+          key: const ValueKey('system_offline_retry_btn'),
           text: isAr ? 'إعادة المحاولة' : 'Try Again',
           onPressed: onRetry ??
               () {
@@ -194,13 +248,17 @@ class GeneralErrorScreen extends StatelessWidget {
     final isAr = context.isArabic;
     return _buildSystemStateScaffold(
       context: context,
-      icon: Icons.priority_high_rounded,
+      icon: Icons.error_outline_rounded,
+      accentColor: AppColors.danger,
+      accentSurface: AppColors.dangerBg,
+      badgeLabel: isAr ? 'تنبيه النظام' : 'System Notice',
       title: isAr ? 'حدث خطأ غير متوقع' : 'Something Went Wrong',
       subtitle: isAr
           ? 'لا تقلق، بياناتك في أمان. يرجى المحاولة مرة أخرى.'
           : 'Don\'t worry, your data is safe. Please try again.',
       actions: [
         MashwarButton(
+          key: const ValueKey('system_error_retry_btn'),
           text: isAr ? 'إعادة المحاولة' : 'Try Again',
           onPressed: onRetry ??
               () {
@@ -211,6 +269,7 @@ class GeneralErrorScreen extends StatelessWidget {
         ),
         const SizedBox(height: AppDimens.space12),
         MashwarButton(
+          key: const ValueKey('system_error_support_btn'),
           text: isAr ? 'تواصل مع الدعم' : 'Contact Support',
           variant: MashwarButtonVariant.secondary,
           onPressed: () {
@@ -235,13 +294,17 @@ class SessionExpiredScreen extends StatelessWidget {
     final isAr = context.isArabic;
     return _buildSystemStateScaffold(
       context: context,
-      icon: Icons.schedule_rounded,
+      icon: Icons.lock_clock_outlined,
+      accentColor: AppColors.navy,
+      accentSurface: AppColors.cobaltSurface,
+      badgeLabel: isAr ? 'حماية الحساب' : 'Session Security',
       title: isAr ? 'انتهت جلستك' : 'Session Expired',
       subtitle: isAr
           ? 'يرجى تسجيل الدخول مرة أخرى للمتابعة بأمان.'
           : 'Please sign in again to continue securely.',
       actions: [
         MashwarButton(
+          key: const ValueKey('system_session_login_btn'),
           text: isAr ? 'تسجيل الدخول' : 'Sign In',
           onPressed: onLogin ??
               () {
