@@ -1,11 +1,13 @@
 {
-    "name": "mashwar",
-    "short_name": "mashwar",
+    "name": "مشوار | MASHWAR — رحلات تشاركية، طرود وتوريد ذكي",
+    "short_name": "مشوار",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0F2A43",
+    "theme_color": "#0F2A43",
+    "description": "منصة مشوار المتكاملة للرحلات التشاركية، الطرود على الطريق، والتوريد الذكي في قطر والخليج مع توثيق QR و OTP.",
+    "lang": "ar",
+    "dir": "rtl",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
