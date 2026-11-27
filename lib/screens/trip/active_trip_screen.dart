@@ -610,42 +610,64 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                       border: Border.all(color: AppColors.slateBorder),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        Column(
-                          children: [
-                            Text(
-                              isAr ? 'الوقت المتوقع للوصول' : 'Estimated Arrival',
-                              style: AppTypography.label(
-                                color: AppColors.textSecondary,
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Text(
+                                isAr
+                                    ? 'الوقت المتوقع للوصول'
+                                    : 'Estimated Arrival',
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.label(
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              isAr ? '8:45 ص' : '8:45 AM',
-                              style: AppTypography.title(color: AppColors.teal),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                isAr ? '8:45 ص' : '8:45 AM',
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.title(
+                                  color: AppColors.teal,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         Container(
                           width: 1,
                           height: 32,
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
                           color: AppColors.slateBorder,
                         ),
-                        Column(
-                          children: [
-                            Text(
-                              isAr ? 'المسافة المتبقية' : 'Distance Remaining',
-                              style: AppTypography.label(
-                                color: AppColors.textSecondary,
+                        Expanded(
+                          child: Column(
+                            children: [
+                              Text(
+                                isAr ? 'المسافة المتبقية' : 'Distance Remaining',
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.label(
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              isAr ? '42 كم' : '42 km',
-                              style: AppTypography.title(color: AppColors.navy),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                isAr ? '42 كم' : '42 km',
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTypography.title(
+                                  color: AppColors.navy,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

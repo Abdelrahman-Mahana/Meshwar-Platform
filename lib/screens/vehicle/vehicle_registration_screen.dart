@@ -628,72 +628,60 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                       child: Padding(
                         padding: const EdgeInsets.all(AppDimens.space16),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    isAr
-                                        ? 'عدد المقاعد المتاحة للركاب'
-                                        : 'Available Seats',
-                                    style: AppTypography.body()
-                                        .copyWith(fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [1, 2, 3, 4, 6].map((count) {
-                                    final isSel = _seatsCount == count;
-                                    return Padding(
-                                      padding: const EdgeInsetsDirectional.only(
-                                        start: 6,
-                                      ),
-                                      child: Material(
-                                        color: isSel
-                                            ? AppColors.navy
-                                            : AppColors.slateBg,
+                            Text(
+                              isAr
+                                  ? 'عدد المقاعد المتاحة للركاب'
+                                  : 'Available Seats',
+                              style: AppTypography.body()
+                                  .copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [1, 2, 3, 4, 6].map((count) {
+                                final isSel = _seatsCount == count;
+                                return Material(
+                                  color: isSel
+                                      ? AppColors.navy
+                                      : AppColors.slateBg,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: InkWell(
+                                    key: ValueKey('vehicle_seats_$count'),
+                                    borderRadius: BorderRadius.circular(10),
+                                    onTap: () => setState(
+                                      () => _seatsCount = count,
+                                    ),
+                                    child: Container(
+                                      width: 44,
+                                      height: 42,
+                                      decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(10),
-                                        child: InkWell(
-                                          key: ValueKey('vehicle_seats_$count'),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          onTap: () => setState(
-                                            () => _seatsCount = count,
-                                          ),
-                                          child: Container(
-                                            width: 40,
-                                            height: 40,
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              border: Border.all(
-                                                color: isSel
-                                                    ? AppColors.navy
-                                                    : AppColors.slateBorder,
-                                              ),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                count == 6 ? '5+' : '$count',
-                                                style: AppTypography.body(
-                                                  color: isSel
-                                                      ? Colors.white
-                                                      : AppColors.navy,
-                                                ).copyWith(
-                                                  fontWeight: FontWeight.w700,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ),
+                                        border: Border.all(
+                                          color: isSel
+                                              ? AppColors.navy
+                                              : AppColors.slateBorder,
+                                        ),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          count == 6 ? '5+' : '$count',
+                                          style: AppTypography.body(
+                                            color: isSel
+                                                ? Colors.white
+                                                : AppColors.navy,
+                                          ).copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
                                           ),
                                         ),
                                       ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
                             ),
                             const Divider(
                               height: 24,
