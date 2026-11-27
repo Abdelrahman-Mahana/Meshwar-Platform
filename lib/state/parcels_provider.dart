@@ -6,9 +6,33 @@ import '../data/mock_data.dart';
 import '../data/models/parcel_model.dart';
 import '../data/models/ride_model.dart';
 import '../data/repositories/app_repositories.dart';
+import '../data/repositories/implementations/parcels_repository_impl.dart';
+
+class ParcelDisputeRecord {
+  final String id;
+  final String parcelId;
+  final String reason;
+  final String? customReason;
+  final String details;
+  final bool hasPhotoEvidence;
+  final String status;
+  final DateTime createdAt;
+
+  const ParcelDisputeRecord({
+    required this.id,
+    required this.parcelId,
+    required this.reason,
+    this.customReason,
+    required this.details,
+    this.hasPhotoEvidence = false,
+    this.status = 'under_review',
+    required this.createdAt,
+  });
+}
 
 class ParcelsProvider extends ChangeNotifier {
   final List<ParcelModel> _parcels = List.from(MockData.initialParcels);
+  final Map<String, ParcelDisputeRecord> _disputes = {};
   bool _isLoading = false;
 
   List<ParcelModel> get parcels => List.unmodifiable(_parcels);
@@ -17,6 +41,15 @@ class ParcelsProvider extends ChangeNotifier {
       _parcels.isNotEmpty ? _parcels.first : MockData.activeParcel;
   ParcelModel? get activeTrackingParcel =>
       _parcels.isNotEmpty ? _parcels.first : null;
+  Map<String, ParcelDisputeRecord> get disputes =>
+      Map.unmodifiable(_disputes);
+
+  ParcelDisputeRecord? disputeForParcel(String id) {
+    final clean = id.trim();
+    return _disputes[clean] ?? _disputes[clean.replaceAll('#', '')];
+  }
+
+  bool isParcelDisputed(String id) => disputeForParcel(id) != null;
 
   static String _generate4DigitOtp() {
     final rng = Random.secure();
@@ -230,8 +263,88 @@ class ParcelsProvider extends ChangeNotifier {
     if (index != -1) {
       _parcels[index] = _parcels[index].copyWith(status: newStatus);
       notifyListeners();
-      AppRepositories.instance.parcels.updateParcelStatus(id, newStatus).ignore();
+      AppRepositories.instance.parcels
+          .updateParcelStatus(id, newStatus)
+          .ignore();
     }
+  }
+
+  /// Submits a parcel dispute report, updating the parcel's dispute note/status
+  /// in memory and syncing safely via [AppRepositories.instance.parcels].
+  Future<ParcelModel?> submitParcelDispute({
+    String? parcelId,
+    required String reason,
+    String? customReason,
+    required String details,
+    bool hasPhotoEvidence = false,
+  }) async {
+    final rawId = parcelId?.trim() ?? '';
+    final normalizedId = rawId.replaceAll('#', '').trim();
+    final effectiveReason =
+        (customReason != null && customReason.trim().isNotEmpty)
+            ? customReason.trim()
+            : reason.trim();
+    final cleanDetails = details.trim();
+
+    int targetIdx = -1;
+    if (rawId.isNotEmpty) {
+      targetIdx = _parcels.indexWhere(
+        (p) => p.id == rawId || p.id == normalizedId,
+      );
+    }
+    if (targetIdx == -1 && _parcels.isNotEmpty) {
+      targetIdx = 0;
+    }
+
+    final resolvedParcelId =
+        targetIdx != -1 ? _parcels[targetIdx].id : (rawId.isNotEmpty ? rawId : 'parcel_dispute');
+    final disputeId = rawId.isNotEmpty ? rawId : '#4821';
+
+    final record = ParcelDisputeRecord(
+      id: disputeId,
+      parcelId: resolvedParcelId,
+      reason: effectiveReason,
+      customReason: customReason?.trim(),
+      details: cleanDetails,
+      hasPhotoEvidence: hasPhotoEvidence,
+      status: 'under_review',
+      createdAt: DateTime.now(),
+    );
+
+    _disputes[disputeId] = record;
+    if (normalizedId.isNotEmpty) {
+      _disputes[normalizedId] = record;
+    }
+    _disputes[resolvedParcelId] = record;
+
+    ParcelModel? updatedParcel;
+    if (targetIdx != -1) {
+      final current = _parcels[targetIdx];
+      final baseDesc = current.description.split(' [بلاغ:').first.trim();
+      final taggedDesc =
+          '$baseDesc [بلاغ: $effectiveReason${cleanDetails.isNotEmpty ? " — $cleanDetails" : ""}]';
+      final boundedDesc = taggedDesc.length > 240
+          ? '${taggedDesc.substring(0, 237)}...'
+          : taggedDesc;
+      updatedParcel = current.copyWith(description: boundedDesc);
+      _parcels[targetIdx] = updatedParcel;
+    }
+
+    notifyListeners();
+
+    if (updatedParcel != null) {
+      try {
+        final repo = AppRepositories.instance.parcels;
+        await repo.updateParcelStatus(updatedParcel.id, updatedParcel.status);
+        if (repo is! ParcelsRepositoryImpl) {
+          await repo.createParcel(updatedParcel);
+        }
+      } catch (_) {
+        // Keep optimistic local dispute record when offline or unauthenticated.
+      }
+    }
+
+    return updatedParcel;
   }
 
   void cancelParcel(String id) {

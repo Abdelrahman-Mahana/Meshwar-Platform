@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -14,14 +15,9 @@ import '../../data/mock_data.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../state/settings_provider.dart';
 import '../chat/chat_screen.dart';
+import '../safety/safety_screens.dart';
 
 /// Bilateral Anti-Fraud & Smart Service Escrow Screen ("نظام ضمان مشوار لحفظ حق الطرفين").
-///
-/// Guarantees:
-/// 1. Requester Protection: Funds + item purchase budget remain frozen in MASHWAR Escrow;
-///    store receipt & item photos require approval before handover; 4-digit OTP unlocks release.
-/// 2. Provider Protection: Agreed service fee + item cap are verified & locked in Escrow
-///    before driving or paying at any store, plus 1-tap fair dispute arbitration.
 class ServiceEscrowScreen extends StatefulWidget {
   const ServiceEscrowScreen({
     super.key,
@@ -54,6 +50,47 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
     super.dispose();
   }
 
+  Future<void> _openEscrowRouteInGoogleMaps(
+    BuildContext context,
+    BoardAdModel ad,
+    bool isAr,
+  ) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final origin = '${ad.fromCity.trim()}, Qatar';
+    final dest = '${ad.toCity.trim()}, Qatar';
+    final buffer = StringBuffer(
+      'https://www.google.com/maps/dir/?api=1'
+      '&origin=${Uri.encodeComponent(origin)}'
+      '&destination=${Uri.encodeComponent(dest)}',
+    );
+    if (ad.stopoverCity != null && ad.stopoverCity!.trim().isNotEmpty) {
+      buffer.write(
+        '&waypoints=${Uri.encodeComponent('${ad.stopoverCity!.trim()}, Qatar')}',
+      );
+    }
+    buffer.write('&travelmode=driving');
+    final url = buffer.toString();
+
+    final launched = await launchMashwarExternalUri(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!launched) {
+      await Clipboard.setData(ClipboardData(text: url));
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            isAr
+                ? 'تم نسخ رابط المسار في Google Maps إلى الحافظة'
+                : 'Google Maps route link copied to clipboard',
+          ),
+          backgroundColor: AppColors.navy,
+        ),
+      );
+    }
+  }
+
   void _releaseEscrowWithOtp(bool isAr) {
     final code = _otpController.text.trim();
     if (code.length != 4 || int.tryParse(code) == null) {
@@ -84,14 +121,17 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            const Icon(Icons.gavel_rounded, color: AppColors.cobalt, size: 22),
+            const Icon(Icons.gavel_rounded, color: AppColors.navy, size: 22),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                isAr ? 'تجميد الضمان وفتح نزاع محايد' : 'Freeze Escrow & Dispute Arbitration',
+                isAr
+                    ? 'تجميد الضمان وفتح نزاع محايد'
+                    : 'Freeze Escrow & Dispute Arbitration',
                 style: AppTypography.title().copyWith(fontSize: 16),
               ),
             ),
@@ -112,7 +152,10 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.navy,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () {
               setState(() => _disputeFrozen = true);
@@ -137,14 +180,16 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isAr = context.watch<SettingsProvider>().isArabic;
+    final settings = Provider.of<SettingsProvider?>(context);
+    final isAr = settings?.isArabic ?? context.isArabic;
     final ad = _activeAd;
     final serviceFee = ad.priceOrBudget;
-    final itemBudget = ad.estimatedItemCost ?? (ad.requiresReceiptProof ? 150 : 0);
+    final itemBudget =
+        ad.estimatedItemCost ?? (ad.requiresReceiptProof ? 150 : 0);
     final totalLocked = serviceFee + itemBudget;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -152,11 +197,17 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.verified_user_rounded, color: AppColors.cobalt, size: 20),
+            const Icon(
+              Icons.verified_user_rounded,
+              color: AppColors.teal,
+              size: 20,
+            ),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                isAr ? 'الضمان المالي وحماية الطرفين' : 'Bilateral Escrow Shield',
+                isAr
+                    ? 'الضمان المالي وحماية الطرفين'
+                    : 'Bilateral Escrow Shield',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.title().copyWith(fontSize: 17),
@@ -165,7 +216,10 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.navy,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -181,7 +235,6 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 1. Hero Shield Card + Qatari Al-Adaam Sadu Ribbon
                       _buildHeroShieldBanner(isAr, ad, totalLocked),
                       const SizedBox(height: 16),
 
@@ -214,6 +267,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                             Expanded(
                               flex: 6,
                               child: _buildFiveStageExecutionCard(
+                                context,
                                 isAr,
                                 ad: ad,
                                 itemBudget: itemBudget,
@@ -232,6 +286,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                         ),
                         const SizedBox(height: 16),
                         _buildFiveStageExecutionCard(
+                          context,
                           isAr,
                           ad: ad,
                           itemBudget: itemBudget,
@@ -239,7 +294,6 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                       ],
                       const SizedBox(height: 16),
 
-                      // Emergency & Dispute Arbitration Strip
                       _buildBottomArbitrationBar(isAr),
                       const SizedBox(height: 16),
                     ],
@@ -259,16 +313,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         gradient: const LinearGradient(
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
-          colors: [AppColors.navy, Color(0xFF132F4C), Color(0xFF0F172A)],
+          colors: [AppColors.navy, Color(0xFF132F4C)],
         ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.16),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -280,27 +327,36 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.22),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const MashwarLivePulseDot(color: AppColors.emerald, size: 7),
+                        const MashwarLivePulseDot(
+                          color: AppColors.teal,
+                          size: 7,
+                        ),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            isAr ? 'عقد مشوار الذكي للضمان' : 'MASHWAR Smart Escrow',
+                            isAr
+                                ? 'عقد مشوار الذكي للضمان'
+                                : 'MASHWAR Smart Escrow',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: AppTypography.label(color: Colors.white)
+                                .copyWith(
                               fontSize: 10.5,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                              fontFamily: 'Cairo',
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -312,20 +368,16 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                     isAr
                         ? 'حق الطالب وحق المنفّذ محفوظ 100% قبل التحرك'
                         : '100% Bilateral Protection Before Execution',
-                    style: AppTypography.title(color: Colors.white).copyWith(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: AppTypography.title(color: Colors.white)
+                        .copyWith(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 5),
                   Text(
                     '${ad.displaySubTag(isAr)} · ${context.trRoute(ad.route)} ($totalLocked ${isAr ? "ر.ق" : "QAR"})',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: AppTypography.bodySmall(
                       color: Colors.white.withValues(alpha: 0.85),
-                      fontFamily: 'Cairo',
                     ),
                   ),
                 ],
@@ -336,17 +388,19 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: AppColors.slateBg,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: AppColors.cobalt.withValues(alpha: 0.45), width: 1.5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                ),
               ),
               child: const MashwarAssetArt(
                 assetPath: 'assets/images/escrow_trust_shield.jpg',
-                width: 82,
-                height: 82,
+                width: 78,
+                height: 78,
                 fit: BoxFit.contain,
-                borderRadius: BorderRadius.all(Radius.circular(14)),
+                borderRadius: BorderRadius.all(Radius.circular(12)),
                 fallbackIcon: Icons.shield_rounded,
-                fallbackColor: AppColors.cobalt,
+                fallbackColor: AppColors.navy,
               ),
             ),
           ],
@@ -360,21 +414,24 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.cobaltSurface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.cobalt.withValues(alpha: 0.45)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.navy.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.lock_clock_rounded, color: AppColors.cobalt, size: 22),
+          const Icon(
+            Icons.lock_clock_rounded,
+            color: AppColors.navy,
+            size: 22,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               isAr
                   ? 'حساب الضمان مجمّد قيد المراجعة المحايدة من فريق ثقة مشوار — لن يُصرف أي مبلغ قبل الفصل.'
                   : 'Escrow frozen under neutral MASHWAR arbitration — zero funds move until resolved.',
-              style: AppTypography.bodySmall(color: AppColors.navy).copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+              style: AppTypography.bodySmall(color: AppColors.navy)
+                  .copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -387,21 +444,27 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         ? [
             (
               Icons.savings_outlined,
-              isAr ? 'مبلغك محفوظ بالضمان وليس بيد المنفّذ' : 'Funds stay locked in Escrow',
+              isAr
+                  ? 'مبلغك محفوظ بالضمان وليس بيد المنفّذ'
+                  : 'Funds stay locked in Escrow',
               isAr
                   ? 'لا يذهب أي مبلغ لحساب المنفّذ مقدمًا قبل استلامك وموافقتك.'
                   : 'Zero payout upfront until handover is confirmed.',
             ),
             (
               Icons.receipt_long_rounded,
-              isAr ? 'تصوير الفاتورة الأصلية والغرض قبل التحرك' : 'Live receipt & item photo check',
+              isAr
+                  ? 'تصوير الفاتورة الأصلية والغرض قبل التحرك'
+                  : 'Live receipt & item photo check',
               isAr
                   ? 'تشاهد صورة الغرض وفاتورة المحل وتعتمدها بنقرة قبل الدفع.'
                   : 'Inspect the bought item & store invoice before dispatch.',
             ),
             (
               Icons.pin_rounded,
-              isAr ? 'كود الاستلام OTP بيدك وحدك' : '4-digit OTP strictly in your hands',
+              isAr
+                  ? 'كود الاستلام OTP بيدك وحدك'
+                  : '4-digit OTP strictly in your hands',
               isAr
                   ? 'أعطِ المنفّذ كود الإتمام فقط عند تسليم الغرض أو وصول المشوار.'
                   : 'Release funds only after physical verification.',
@@ -410,21 +473,27 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         : [
             (
               Icons.verified_rounded,
-              isAr ? 'مستحقاتك + ميزانية الشراء محجوزة مسبقاً' : 'Fee + purchase cap locked upfront',
+              isAr
+                  ? 'مستحقاتك + ميزانية الشراء محجوزة مسبقاً'
+                  : 'Fee + purchase cap locked upfront',
               isAr
                   ? 'لن تشتري غرضاً أو تتحرك إلا والمبلغ محجوز ومؤكد في الضمان عبر فوراً.'
                   : 'Never spend upfront without verified Escrow backing.',
             ),
             (
               Icons.no_encryption_gmailerrorred_outlined,
-              isAr ? 'حماية تامة من التراجع أو رفض الاستلام' : 'Protection against cancellation/ghosting',
+              isAr
+                  ? 'حماية تامة من التراجع أو رفض الاستلام'
+                  : 'Protection against cancellation/ghosting',
               isAr
                   ? 'بمجرد اعتماد الطالب للفاتورة بالصورة، لا يمكنه إلغاء الطلب بدون تعويضك.'
                   : 'Once receipt is approved, cancellation cannot forfeit your fee.',
             ),
             (
               Icons.flash_on_rounded,
-              isAr ? 'تحويل فوري لمحفظتك بمجرد إدخال OTP' : 'Instant payout on OTP entry',
+              isAr
+                  ? 'تحويل فوري لمحفظتك بمجرد إدخال OTP'
+                  : 'Instant payout on OTP entry',
               isAr
                   ? 'فور تسليم الطلب وإدخال الكود يدخل أتعابك وقيمة الفاتورة لحسابك مباشرة.'
                   : 'Escrow credits your wallet the second OTP matches.',
@@ -435,29 +504,25 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            isAr ? 'كيف نضمن حق الطرفين ومنع النصب؟' : 'How Both Parties Are Protected',
+            isAr
+                ? 'كيف نضمن حق الطرفين ومنع النصب؟'
+                : 'How Both Parties Are Protected',
             style: AppTypography.title().copyWith(fontSize: 15.5),
           ),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
+              color: AppColors.slateBg,
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.slateBorder),
             ),
             child: Row(
               children: [
@@ -465,7 +530,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                   child: _buildRoleSegmentBtn(
                     label: isAr ? 'حماية طالب الخدمة' : 'Requester Shield',
                     selected: _viewAsRequester,
-                    activeColor: AppColors.cobalt,
+                    activeColor: AppColors.navy,
                     onTap: () => setState(() => _viewAsRequester = true),
                   ),
                 ),
@@ -498,7 +563,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                     child: Icon(
                       pt.$1,
                       size: 16,
-                      color: _viewAsRequester ? AppColors.cobalt : AppColors.teal,
+                      color:
+                          _viewAsRequester ? AppColors.navy : AppColors.teal,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -508,22 +574,16 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                       children: [
                         Text(
                           pt.$2,
-                          style: const TextStyle(
+                          style: AppTypography.body(color: AppColors.navy)
+                              .copyWith(
                             fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.navy,
-                            fontFamily: 'Cairo',
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           pt.$3,
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: AppColors.textSecondary,
-                            fontFamily: 'Cairo',
-                            height: 1.35,
-                          ),
+                          style: AppTypography.bodySmall(),
                         ),
                       ],
                     ),
@@ -552,15 +612,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
         decoration: BoxDecoration(
           color: selected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(9),
-          border: selected ? Border.all(color: activeColor.withValues(alpha: 0.45)) : null,
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 6,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
+          border: selected
+              ? Border.all(color: activeColor.withValues(alpha: 0.4))
               : null,
         ),
         child: Text(
@@ -568,12 +621,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          style: AppTypography.label(
             color: selected ? activeColor : AppColors.textSecondary,
-            fontFamily: 'Cairo',
-          ),
+          ).copyWith(fontWeight: selected ? FontWeight.w700 : FontWeight.w600),
         ),
       ),
     );
@@ -588,59 +638,65 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.sand,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.gold.withValues(alpha: 0.5)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Icon(Icons.account_balance_rounded, color: AppColors.navy, size: 19),
+              const Icon(
+                Icons.account_balance_rounded,
+                color: AppColors.navy,
+                size: 19,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  isAr ? 'ملخص خزينة الضمان المعلّق (Escrow)' : 'Escrow Vault Breakdown',
+                  isAr
+                      ? 'ملخص خزينة الضمان المعلّق (Escrow)'
+                      : 'Escrow Vault Breakdown',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.navy,
-                    fontFamily: 'Cairo',
-                  ),
+                  style: AppTypography.body(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w700, fontSize: 14),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 12),
           _buildFinanceRow(
-            label: isAr ? 'أتعاب المشوار / التوصيل المتفق عليها' : 'Agreed Service / Delivery Fee',
+            label: isAr
+                ? 'أتعاب المشوار / التوصيل المتفق عليها'
+                : 'Agreed Service / Delivery Fee',
             value: '$serviceFee ${isAr ? "ر.ق" : "QAR"}',
           ),
           if (itemBudget > 0) ...[
             const SizedBox(height: 6),
             _buildFinanceRow(
-              label: isAr ? 'سقف فاتورة المشتريات المودع بالضمان' : 'Reserved Store Receipt Budget',
+              label: isAr
+                  ? 'سقف فاتورة المشتريات المودع بالضمان'
+                  : 'Reserved Store Receipt Budget',
               value: '$itemBudget ${isAr ? "ر.ق" : "QAR"}',
             ),
           ],
-          const Divider(height: 18, color: Color(0xFFD6CBB5)),
+          const Divider(height: 18, color: AppColors.slateBorder),
           _buildFinanceRow(
-            label: isAr ? 'إجمالي المحجوز في الضمان' : 'Total Protected in Escrow',
+            label: isAr
+                ? 'إجمالي المحجوز في الضمان'
+                : 'Total Protected in Escrow',
             value: '$totalLocked ${isAr ? "ر.ق" : "QAR"}',
             isHighlight: true,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
-            isAr ? 'وسيلة الحجز والتسوية المعتمدة' : 'Escrow Funding & Payout Channel',
-            style: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w800,
-              color: AppColors.navy,
-              fontFamily: 'Cairo',
-            ),
+            isAr
+                ? 'وسيلة الحجز والتسوية المعتمدة'
+                : 'Escrow Funding & Payout Channel',
+            style: AppTypography.label(color: AppColors.navy)
+                .copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Wrap(
@@ -657,20 +713,22 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                 borderRadius: BorderRadius.circular(12),
                 onTap: () => setState(() => _fundingChannel = ch.$1),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
-                    color: sel ? AppColors.navy : Colors.white,
+                    color: sel ? AppColors.navy : AppColors.slateBg,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: sel ? AppColors.navy : const Color(0xFFD6CBB5)),
+                    border: Border.all(
+                      color: sel ? AppColors.navy : AppColors.slateBorder,
+                    ),
                   ),
                   child: Text(
                     ch.$2,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      color: sel ? AppColors.gold : AppColors.navy,
-                      fontFamily: 'Cairo',
-                    ),
+                    style: AppTypography.label(
+                      color: sel ? Colors.white : AppColors.navy,
+                    ).copyWith(fontSize: 11, fontWeight: FontWeight.w700),
                   ),
                 ),
               );
@@ -680,15 +738,18 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.slateBg,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.slateBorder),
             ),
             child: Row(
               children: [
                 Icon(
                   _escrowReleased
                       ? Icons.check_circle_rounded
-                      : (_escrowLocked ? Icons.lock_rounded : Icons.lock_open_rounded),
+                      : (_escrowLocked
+                          ? Icons.lock_rounded
+                          : Icons.lock_open_rounded),
                   size: 16,
                   color: _escrowReleased
                       ? AppColors.escrowGreen
@@ -698,20 +759,20 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                 Expanded(
                   child: Text(
                     _escrowReleased
-                        ? (isAr ? 'تم تحرير المستحقات بالكامل بعد مطابقة OTP' : 'Escrow settled after OTP match')
+                        ? (isAr
+                            ? 'تم تحرير المستحقات بالكامل بعد مطابقة OTP'
+                            : 'Escrow settled after OTP match')
                         : (_escrowLocked
                             ? (isAr
                                 ? 'محجوز عبر ${_fundingChannel.toUpperCase()} / محفظة مشوار (جاهز للتنفيذ)'
                                 : 'Locked via ${_fundingChannel.toUpperCase()} / Wallet — Ready')
-                            : (isAr ? 'في انتظار تأمين المبلغ' : 'Awaiting Escrow Lock')),
+                            : (isAr
+                                ? 'في انتظار تأمين المبلغ'
+                                : 'Awaiting Escrow Lock')),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.navy,
-                      fontFamily: 'Cairo',
-                    ),
+                    style: AppTypography.label(color: AppColors.navy)
+                        .copyWith(fontSize: 11.5, fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -735,29 +796,25 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: isHighlight ? 13 : 12,
-              fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w600,
-              color: isHighlight ? AppColors.navy : AppColors.textSecondary,
-              fontFamily: 'Cairo',
-            ),
+            style: isHighlight
+                ? AppTypography.body(color: AppColors.navy)
+                    .copyWith(fontSize: 13, fontWeight: FontWeight.w700)
+                : AppTypography.label(color: AppColors.textSecondary),
           ),
         ),
         const SizedBox(width: 8),
         Text(
           value,
-          style: TextStyle(
-            fontSize: isHighlight ? 16 : 13,
-            fontWeight: FontWeight.w900,
+          style: AppTypography.title(
             color: isHighlight ? AppColors.escrowGreen : AppColors.navy,
-            fontFamily: 'Cairo',
-          ),
+          ).copyWith(fontSize: isHighlight ? 16 : 13.5),
         ),
       ],
     );
   }
 
   Widget _buildFiveStageExecutionCard(
+    BuildContext context,
     bool isAr, {
     required BoardAdModel ad,
     required int itemBudget,
@@ -766,26 +823,25 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              const Icon(Icons.verified_rounded, color: AppColors.teal, size: 20),
+              const Icon(
+                Icons.verified_rounded,
+                color: AppColors.teal,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  isAr ? 'مراحل التنفيذ الموثّقة خطوة بخطوة' : '5-Stage Anti-Fraud Execution',
+                  isAr
+                      ? 'مراحل التنفيذ الموثّقة خطوة بخطوة'
+                      : '5-Stage Anti-Fraud Execution',
                   style: AppTypography.title().copyWith(fontSize: 15.5),
                 ),
               ),
@@ -797,7 +853,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           _buildStageRow(
             number: '1',
             isDone: true,
-            title: isAr ? 'توثيق الهوية بالبطاقة القطرية (QID) للطرفين' : 'Mutual Qatar ID (QID) Verification',
+            title: isAr
+                ? 'توثيق الهوية بالبطاقة القطرية (QID) للطرفين'
+                : 'Mutual Qatar ID (QID) Verification',
             subtitle: isAr
                 ? '${ad.authorName} & عبدالرحمن المهنا · كلاهما موثق برقم قطري'
                 : '${ad.authorName} & Abdelrahman · Both QID Verified',
@@ -807,7 +865,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           _buildStageRow(
             number: '2',
             isDone: _escrowLocked,
-            title: isAr ? 'حجز المبلغ في ضمان مشوار المالي (Escrow)' : 'Lock Agreed Amount in MASHWAR Escrow',
+            title: isAr
+                ? 'حجز المبلغ في ضمان مشوار المالي (Escrow)'
+                : 'Lock Agreed Amount in MASHWAR Escrow',
             subtitle: isAr
                 ? 'لا يتحرك المنفّذ قبل التأكد من وجود كامل المبلغ في الخزينة'
                 : 'Provider is guaranteed full funds are reserved beforehand',
@@ -823,7 +883,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           _buildStageRow(
             number: '3',
             isDone: _receiptApproved,
-            title: isAr ? 'توثيق صورة الغرض والفاتورة الأصلية' : 'Verify Item Photo & Original Receipt',
+            title: isAr
+                ? 'توثيق صورة الغرض والفاتورة الأصلية'
+                : 'Verify Item Photo & Original Receipt',
             subtitle: isAr
                 ? 'للمشتريات ومواقع الهندسة: اعتماد الفاتورة يمنع اختلاف الأسعار'
                 : 'For shopping & site supplies: approve receipt before dispatch',
@@ -832,12 +894,13 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             margin: const EdgeInsetsDirectional.only(start: 34, bottom: 12),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _receiptApproved ? AppColors.escrowSurface : const Color(0xFFF8FAFC),
+              color:
+                  _receiptApproved ? AppColors.escrowSurface : AppColors.slateBg,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: _receiptApproved
                     ? AppColors.escrowGreen.withValues(alpha: 0.4)
-                    : const Color(0xFFE2E8F0),
+                    : AppColors.slateBorder,
               ),
             ),
             child: Column(
@@ -850,9 +913,13 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: AppColors.slateBorder),
                       ),
-                      child: const Icon(Icons.receipt_long_rounded, color: AppColors.navy, size: 22),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        color: AppColors.navy,
+                        size: 22,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -860,29 +927,25 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isAr ? 'معاينة فاتورة وصورة الشراء المرفقة' : 'Attached Store Receipt & Item Preview',
+                            isAr
+                                ? 'معاينة فاتورة وصورة الشراء المرفقة'
+                                : 'Attached Store Receipt & Item Preview',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.navy,
-                              fontFamily: 'Cairo',
-                            ),
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(fontWeight: FontWeight.w700),
                           ),
                           Text(
                             itemBudget > 0
                                 ? (isAr
                                     ? 'فاتورة بقيمة ${(itemBudget * 0.92).round()} ر.ق ضمن السقف المحدد'
                                     : 'Receipt ${(itemBudget * 0.92).round()} QAR within approved cap')
-                                : (isAr ? 'مستند / غرض مطابق للمواصفات المتفق عليها' : 'Item matches agreed specs'),
+                                : (isAr
+                                    ? 'مستند / غرض مطابق للمواصفات المتفق عليها'
+                                    : 'Item matches agreed specs'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.textSecondary,
-                              fontFamily: 'Cairo',
-                            ),
+                            style: AppTypography.bodySmall(),
                           ),
                         ],
                       ),
@@ -894,9 +957,15 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                   spacing: 6,
                   runSpacing: 4,
                   children: [
-                    _buildMiniReceiptTag(isAr ? 'فاتورة #QA-8492' : 'Invoice #QA-8492'),
-                    _buildMiniReceiptTag(isAr ? 'صورة الغرض مرفقة ✓' : 'Item Photo ✓'),
-                    _buildMiniReceiptTag(isAr ? 'ختم توثيق QID' : 'QID Stamped'),
+                    _buildMiniReceiptTag(
+                      isAr ? 'فاتورة #QA-8492' : 'Invoice #QA-8492',
+                    ),
+                    _buildMiniReceiptTag(
+                      isAr ? 'صورة الغرض مرفقة ✓' : 'Item Photo ✓',
+                    ),
+                    _buildMiniReceiptTag(
+                      isAr ? 'ختم توثيق QID' : 'QID Stamped',
+                    ),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -904,29 +973,35 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                   height: 36,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _receiptApproved ? AppColors.escrowGreen : AppColors.navy,
+                      backgroundColor:
+                          _receiptApproved ? AppColors.escrowGreen : AppColors.navy,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                     onPressed: () {
                       setState(() => _receiptApproved = true);
                     },
                     icon: Icon(
-                      _receiptApproved ? Icons.check_circle_rounded : Icons.fact_check_rounded,
+                      _receiptApproved
+                          ? Icons.check_circle_rounded
+                          : Icons.fact_check_rounded,
                       size: 16,
                     ),
                     label: Text(
                       _receiptApproved
-                          ? (isAr ? 'تم اعتماد الفاتورة وصورة الغرض ✓' : 'Receipt & Item Approved ✓')
-                          : (isAr ? 'اعتماد الفاتورة وصورة الغرض' : 'Approve Receipt & Photo'),
+                          ? (isAr
+                              ? 'تم اعتماد الفاتورة وصورة الغرض ✓'
+                              : 'Receipt & Item Approved ✓')
+                          : (isAr
+                              ? 'اعتماد الفاتورة وصورة الغرض'
+                              : 'Approve Receipt & Photo'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'Cairo',
-                      ),
+                      style: AppTypography.label(color: Colors.white)
+                          .copyWith(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -934,89 +1009,144 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             ),
           ),
 
-          // Step 4: Enlarged Live GPS Tracking Preview + Direct Chat Shortcut
+          // Step 4: Live GPS Tracking Preview + Direct Chat + 1-Tap Google Maps
           _buildStageRow(
             number: '4',
             isDone: _receiptApproved,
-            title: isAr ? 'التتبع الحي عبر GPS ومشاركة المسار' : 'Live GPS Tracking & Route Share',
+            title: isAr
+                ? 'التتبع الحي عبر GPS ومشاركة المسار'
+                : 'Live GPS Tracking & Route Share',
             subtitle: isAr
                 ? '${context.trCity(ad.fromCity)} ← ${context.trCity(ad.toCity)}'
                 : '${context.trCity(ad.fromCity)} → ${context.trCity(ad.toCity)}',
           ),
           Container(
-            height: 156,
             margin: const EdgeInsetsDirectional.only(start: 34, bottom: 12),
             decoration: BoxDecoration(
+              color: AppColors.slateBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: AppColors.slateBorder),
             ),
-            child: Stack(
-              fit: StackFit.expand,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                QatarLiveMapCanvas(
-                  style: QatarMapStyle.routeFocused,
-                  activeFromCity: ad.fromCity,
-                  activeToCity: ad.toCity,
-                  borderRadius: 13,
-                ),
-                PositionedDirectional(
-                  top: 8,
-                  start: 8,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.94),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      isAr ? 'الوصول المتوقع ~22 د' : 'ETA ~22 min',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.navy,
-                        fontFamily: 'Cairo',
+                SizedBox(
+                  height: 152,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      QatarLiveMapCanvas(
+                        style: QatarMapStyle.routeFocused,
+                        activeFromCity: ad.fromCity,
+                        activeToCity: ad.toCity,
+                        borderRadius: 13,
                       ),
-                    ),
-                  ),
-                ),
-                PositionedDirectional(
-                  top: 8,
-                  end: 8,
-                  child: Material(
-                    color: AppColors.navy,
-                    borderRadius: BorderRadius.circular(10),
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MashwarPageRoute(
-                            builder: (_) => ChatScreen(
-                              driverName: ad.authorName,
-                              driverCar: ad.timeText,
-                              tripRoute: context.trRoute(ad.route),
+                      PositionedDirectional(
+                        top: 8,
+                        start: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.94),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.teal.withValues(alpha: 0.3),
                             ),
                           ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.chat_bubble_outline_rounded, size: 12, color: Colors.white),
-                            const SizedBox(width: 4),
-                            Text(
-                              isAr ? 'محادثة' : 'Chat',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                                fontFamily: 'Cairo',
+                          child: Text(
+                            isAr ? 'الوصول المتوقع ~22 د' : 'ETA ~22 min',
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                      PositionedDirectional(
+                        top: 8,
+                        end: 8,
+                        child: Material(
+                          color: AppColors.navy,
+                          borderRadius: BorderRadius.circular(10),
+                          clipBehavior: Clip.antiAlias,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MashwarPageRoute(
+                                  builder: (_) => ChatScreen(
+                                    driverName: ad.authorName,
+                                    driverCar: ad.timeText,
+                                    tripRoute: context.trRoute(ad.route),
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.chat_bubble_outline_rounded,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isAr ? 'محادثة' : 'Chat',
+                                    style: AppTypography.label(
+                                      color: Colors.white,
+                                    ).copyWith(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
+                          ),
                         ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: SizedBox(
+                    height: 36,
+                    child: OutlinedButton.icon(
+                      key: const ValueKey('escrow_open_gmaps_btn'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: AppColors.slateBorder),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () =>
+                          _openEscrowRouteInGoogleMaps(context, ad, isAr),
+                      icon: const Icon(
+                        Icons.map_outlined,
+                        size: 15,
+                        color: AppColors.teal,
+                      ),
+                      label: Text(
+                        isAr
+                            ? 'فتح المسار في Google Maps'
+                            : 'Open Route in Google Maps',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -1029,7 +1159,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           _buildStageRow(
             number: '5',
             isDone: _escrowReleased,
-            title: isAr ? 'كود إتمام التسليم (4-Digit OTP) وتحرير الضمان' : '4-Digit Handover OTP Settlement',
+            title: isAr
+                ? 'كود إتمام التسليم (4-Digit OTP) وتحرير الضمان'
+                : '4-Digit Handover OTP Settlement',
             subtitle: isAr
                 ? 'أدخل كود المستلم عند التسليم لتحرير أتعاب المنفّذ وقيمة الفاتورة فوراً'
                 : 'Enter the 4-digit OTP at physical handover to release Escrow immediately',
@@ -1038,10 +1170,13 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             margin: const EdgeInsetsDirectional.only(start: 34),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _escrowReleased ? AppColors.escrowSurface : const Color(0xFFF8FAFC),
+              color:
+                  _escrowReleased ? AppColors.escrowSurface : AppColors.slateBg,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _escrowReleased ? AppColors.escrowGreen : const Color(0xFFE2E8F0),
+                color: _escrowReleased
+                    ? AppColors.escrowGreen
+                    : AppColors.slateBorder,
               ),
             ),
             child: _escrowReleased
@@ -1050,18 +1185,22 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.verified_rounded, color: AppColors.escrowGreen, size: 24),
+                          const Icon(
+                            Icons.verified_rounded,
+                            color: AppColors.escrowGreen,
+                            size: 24,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               isAr
                                   ? 'تم التسليم وتحرير مبلغ الضمان بنجاح! شكراً لاستخدامك حماية مشوار.'
                                   : 'Handover complete & Escrow released! Protected by MASHWAR.',
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w800,
+                              style: AppTypography.label(
                                 color: AppColors.escrowGreen,
-                                fontFamily: 'Cairo',
+                              ).copyWith(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
@@ -1069,28 +1208,32 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                       ),
                       const SizedBox(height: 10),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: _ratingSubmitted
                             ? Row(
                                 children: [
-                                  const Icon(Icons.star_rounded, color: AppColors.gold, size: 18),
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    color: AppColors.gold,
+                                    size: 18,
+                                  ),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
                                       isAr
                                           ? 'شكراً! تم تسجيل تقييمك ($_selectedStars / 5 ★)'
                                           : 'Thank you! Rating ($_selectedStars / 5 ★) recorded.',
-                                      style: const TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w800,
+                                      style: AppTypography.label(
                                         color: AppColors.navy,
-                                        fontFamily: 'Cairo',
-                                      ),
+                                      ).copyWith(fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ],
@@ -1102,12 +1245,14 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                                 runSpacing: 6,
                                 children: [
                                   Text(
-                                    isAr ? 'قيّم تجربتك مع الطرف الآخر:' : 'Rate your experience:',
-                                    style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
+                                    isAr
+                                        ? 'قيّم تجربتك مع الطرف الآخر:'
+                                        : 'Rate your experience:',
+                                    style: AppTypography.label(
                                       color: AppColors.navy,
-                                      fontFamily: 'Cairo',
+                                    ).copyWith(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   Row(
@@ -1115,9 +1260,12 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                                     children: List.generate(5, (i) {
                                       final star = i + 1;
                                       return GestureDetector(
-                                        onTap: () => setState(() => _selectedStars = star),
+                                        onTap: () =>
+                                            setState(() => _selectedStars = star),
                                         child: Icon(
-                                          star <= _selectedStars ? Icons.star_rounded : Icons.star_border_rounded,
+                                          star <= _selectedStars
+                                              ? Icons.star_rounded
+                                              : Icons.star_border_rounded,
                                           size: 20,
                                           color: AppColors.gold,
                                         ),
@@ -1127,17 +1275,18 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                                   TextButton(
                                     style: TextButton.styleFrom(
                                       visualDensity: VisualDensity.compact,
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
                                     ),
-                                    onPressed: () => setState(() => _ratingSubmitted = true),
+                                    onPressed: () =>
+                                        setState(() => _ratingSubmitted = true),
                                     child: Text(
                                       isAr ? 'إرسال' : 'Submit',
-                                      style: const TextStyle(
-                                        fontSize: 11.5,
-                                        fontWeight: FontWeight.w800,
+                                      style: AppTypography.label(
                                         color: AppColors.teal,
-                                        fontFamily: 'Cairo',
-                                      ),
+                                      ).copyWith(fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ],
@@ -1148,13 +1297,12 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // QR Code alongside 4-digit OTP for rapid contactless settlement
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                          border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Row(
                           children: [
@@ -1174,11 +1322,11 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                                     isAr
                                         ? 'امسح QR أو أدخل الكود 4829'
                                         : 'Scan QR or Enter OTP 4829',
-                                    style: const TextStyle(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w800,
+                                    style: AppTypography.label(
                                       color: AppColors.navy,
-                                      fontFamily: 'Cairo',
+                                    ).copyWith(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -1188,13 +1336,17 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                                     children: [
                                       OutlinedButton.icon(
                                         key: const ValueKey(
-                                            'escrow_scan_qr_btn'),
+                                          'escrow_scan_qr_btn',
+                                        ),
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: AppColors.teal,
                                           side: const BorderSide(
-                                              color: AppColors.teal),
+                                            color: AppColors.teal,
+                                          ),
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 5),
+                                            horizontal: 8,
+                                            vertical: 5,
+                                          ),
                                           minimumSize: Size.zero,
                                           tapTargetSize:
                                               MaterialTapTargetSize.shrinkWrap,
@@ -1221,16 +1373,18 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                                         ),
                                         label: Text(
                                           isAr ? 'مسح QR' : 'Scan QR',
-                                          style: const TextStyle(
+                                          style: AppTypography.label(
+                                            color: AppColors.teal,
+                                          ).copyWith(
                                             fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                            fontFamily: 'Cairo',
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                       ),
                                       OutlinedButton.icon(
                                         key: const ValueKey(
-                                            'escrow_contingency_btn'),
+                                          'escrow_contingency_btn',
+                                        ),
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: AppColors.warning,
                                           side: BorderSide(
@@ -1238,7 +1392,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                                                 .withValues(alpha: 0.55),
                                           ),
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 5),
+                                            horizontal: 8,
+                                            vertical: 5,
+                                          ),
                                           minimumSize: Size.zero,
                                           tapTargetSize:
                                               MaterialTapTargetSize.shrinkWrap,
@@ -1256,10 +1412,11 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                                         ),
                                         label: Text(
                                           isAr ? 'حلول بديلة' : 'Fallbacks',
-                                          style: const TextStyle(
+                                          style: AppTypography.label(
+                                            color: AppColors.warning,
+                                          ).copyWith(
                                             fontSize: 11,
-                                            fontWeight: FontWeight.w800,
-                                            fontFamily: 'Cairo',
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                       ),
@@ -1279,16 +1436,31 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                               controller: _otpController,
                               keyboardType: TextInputType.number,
                               maxLength: 4,
-                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
                               decoration: InputDecoration(
                                 counterText: '',
                                 isDense: true,
                                 filled: true,
                                 fillColor: Colors.white,
-                                labelText: isAr ? 'كود الإتمام (4 أرقام)' : '4-Digit OTP',
+                                labelText: isAr
+                                    ? 'كود الإتمام (4 أرقام)'
+                                    : '4-Digit OTP',
                                 hintText: '4829',
                                 errorText: _otpError,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.slateBorder,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.slateBorder,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -1302,24 +1474,31 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.navy,
-                              side: const BorderSide(color: Color(0xFFCBD5E1)),
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(
+                                color: AppColors.slateBorder,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
                             ),
                             child: Text(
                               isAr ? 'تعبئة 4829' : 'Fill 4829',
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w800,
-                                fontFamily: 'Cairo',
-                              ),
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 10),
                       MashwarButton(
-                        text: isAr ? 'تأكيد الكود وتحرير المستحقات' : 'Verify OTP & Release Escrow',
+                        text: isAr
+                            ? 'تأكيد الكود وتحرير المستحقات'
+                            : 'Verify OTP & Release Escrow',
                         onPressed: () => _releaseEscrowWithOtp(isAr),
                       ),
                     ],
@@ -1346,19 +1525,20 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             width: 24,
             height: 24,
             decoration: BoxDecoration(
-              color: isDone ? AppColors.escrowGreen : AppColors.navy.withValues(alpha: 0.12),
+              color: isDone ? AppColors.escrowGreen : AppColors.cobaltSurface,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: isDone
-                  ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                  ? const Icon(
+                      Icons.check_rounded,
+                      size: 14,
+                      color: Colors.white,
+                    )
                   : Text(
                       number,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.navy,
-                      ),
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(fontSize: 11.5, fontWeight: FontWeight.w800),
                     ),
             ),
           ),
@@ -1369,20 +1549,12 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.navy,
-                    fontFamily: 'Cairo',
-                  ),
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontSize: 12.5, fontWeight: FontWeight.w700),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                    fontFamily: 'Cairo',
-                  ),
+                  style: AppTypography.bodySmall(),
                 ),
               ],
             ),
@@ -1399,16 +1571,12 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFDDE3EC)),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: AppColors.navy,
-          fontFamily: 'Cairo',
-        ),
+        style: AppTypography.label(color: AppColors.navy)
+            .copyWith(fontSize: 10, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -1418,8 +1586,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(color: AppColors.slateBorder),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1427,19 +1595,19 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           final msgRow = Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.support_agent_rounded, color: AppColors.cobalt, size: 20),
+              const Icon(
+                Icons.support_agent_rounded,
+                color: AppColors.navy,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   isAr
                       ? 'في حال أي اختلاف في الغرض أو السعر، جمّد الضمان بضغطة واحدة.'
                       : 'Notice a mismatch? Freeze Escrow immediately for arbitration.',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
-                    fontFamily: 'Cairo',
-                  ),
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -1447,9 +1615,11 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           final disputeBtn = OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.navy,
-              side: BorderSide(color: AppColors.cobalt.withValues(alpha: 0.45)),
+              side: const BorderSide(color: AppColors.slateBorder),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             onPressed: () => _openDisputeDialog(isAr),
             icon: const Icon(Icons.gavel_rounded, size: 16),
@@ -1457,7 +1627,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
               isAr ? 'تجميد الضمان وفتح نزاع' : 'Freeze & Dispute',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, fontFamily: 'Cairo'),
+              style: AppTypography.label(color: AppColors.navy)
+                  .copyWith(fontWeight: FontWeight.w700),
             ),
           );
 
@@ -1467,7 +1638,10 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
               children: [
                 msgRow,
                 const SizedBox(height: 10),
-                Align(alignment: AlignmentDirectional.centerEnd, child: disputeBtn),
+                Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: disputeBtn,
+                ),
               ],
             );
           }
