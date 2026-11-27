@@ -5,6 +5,7 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/widgets/mashwar_animations.dart';
+import '../../../core/widgets/mashwar_embedded_google_map.dart';
 import '../../../core/widgets/mashwar_google_map_panel.dart';
 import '../../../data/models/ride_model.dart';
 import '../../../data/repositories/app_repositories.dart';
@@ -35,6 +36,7 @@ class RideRouteMapView extends StatefulWidget {
 class _RideRouteMapViewState extends State<RideRouteMapView>
     with SingleTickerProviderStateMixin {
   late RoutePerspective _perspective;
+  bool _useLiveGoogleMap = true;
   bool _showSatellite = false;
   bool _isRouteExpanded = false;
   late RouteDetails _routeDetails;
@@ -119,15 +121,13 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
     return isAr ? fallback.ar : fallback.en;
   }
 
-  String get _directionsUrl {
-    final orig = widget.ride.pickupPoint.trim().isNotEmpty
-        ? '${widget.ride.pickupPoint}, ${widget.ride.fromCity}'
-        : widget.ride.fromCity;
-    final dest = widget.ride.dropoffPoint.trim().isNotEmpty
-        ? '${widget.ride.dropoffPoint}, ${widget.ride.toCity}'
-        : widget.ride.toCity;
-    return GoogleMapsService.buildDirectionsUrl(orig, dest);
-  }
+  String get _originQuery => widget.ride.pickupPoint.trim().isNotEmpty
+      ? '${widget.ride.pickupPoint}, ${widget.ride.fromCity}'
+      : widget.ride.fromCity;
+
+  String get _destinationQuery => widget.ride.dropoffPoint.trim().isNotEmpty
+      ? '${widget.ride.dropoffPoint}, ${widget.ride.toCity}'
+      : widget.ride.toCity;
 
   void _openFullScreenMap(BuildContext context, bool isAr) {
     Navigator.of(context).push(
@@ -136,10 +136,12 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
         builder: (_) => _FullScreenRouteMapModal(
           ride: widget.ride,
           perspective: _perspective,
+          originQuery: _originQuery,
+          destinationQuery: _destinationQuery,
+          initialSatellite: _showSatellite,
           distance: _distanceKm(isAr),
           duration: _durationFormatted(isAr),
           highway: _highwayName(isAr),
-          directionsUrl: _directionsUrl,
         ),
       ),
     );
@@ -186,9 +188,108 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
         ),
         const SizedBox(height: 10),
 
-        // 2. Main Map Canvas Container
+        // 2. Compact Map Layer Toolbar (Live Google Map / Vector Schematic + Satellite + Full-Screen)
+        Row(
+          children: [
+            Expanded(
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Container(
+                  key: const ValueKey('ride_map_mode_toggle'),
+                  padding: const EdgeInsets.all(2.5),
+                  decoration: BoxDecoration(
+                    color: AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.slateBorder),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildMapModeChip(
+                          selected: _useLiveGoogleMap,
+                          icon: Icons.map_rounded,
+                          label: isAr ? 'خريطة جوجل الحية' : 'Live Google Map',
+                          onTap: () => setState(() => _useLiveGoogleMap = true),
+                        ),
+                        const SizedBox(width: 3),
+                        _buildMapModeChip(
+                          selected: !_useLiveGoogleMap,
+                          icon: Icons.timeline_rounded,
+                          label: isAr ? 'مخطط المسار' : 'Schematic',
+                          onTap: () =>
+                              setState(() => _useLiveGoogleMap = false),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Tooltip(
+              message: _showSatellite
+                  ? (isAr ? 'عرض الخريطة العادية' : 'Standard Map')
+                  : (isAr ? 'عرض القمر الصناعي' : 'Satellite View'),
+              child: InkWell(
+                key: const ValueKey('ride_map_satellite_btn'),
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => setState(() {
+                  _showSatellite = !_showSatellite;
+                }),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: _showSatellite
+                        ? AppColors.tealSurface
+                        : AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _showSatellite
+                          ? AppColors.teal.withValues(alpha: 0.45)
+                          : AppColors.slateBorder,
+                    ),
+                  ),
+                  child: Icon(
+                    _showSatellite
+                        ? Icons.map_rounded
+                        : Icons.satellite_alt_rounded,
+                    size: 16,
+                    color: _showSatellite ? AppColors.tealDark : AppColors.navy,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Tooltip(
+              message: isAr ? 'تكبير الخريطة ملء الشاشة' : 'Full-Screen Map',
+              child: InkWell(
+                key: const ValueKey('ride_map_expand_btn'),
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => _openFullScreenMap(context, isAr),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.slateBorder),
+                  ),
+                  child: const Icon(
+                    Icons.fullscreen_rounded,
+                    size: 16,
+                    color: AppColors.navy,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // 2b. Main 250px Map Container (Live Embedded Google Map default + Animated Vector Schematic option)
         Container(
-          height: 240,
+          height: 250,
           decoration: BoxDecoration(
             color: _showSatellite ? const Color(0xFF1E2833) : const Color(0xFFF4F6F8),
             borderRadius: BorderRadius.circular(AppDimens.radiusCard),
@@ -203,60 +304,216 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-            child: Stack(
-              children: [
-                // Animated Vector Map Drawing
-                Positioned.fill(
-                  child: AnimatedBuilder(
-                    animation: _routeAnimController,
-                    builder: (context, _) {
-                      return CustomPaint(
-                        painter: _AccurateRouteMapPainter(
-                          perspective: _perspective,
-                          isSatellite: _showSatellite,
-                          fromCity: widget.ride.fromCity,
-                          toCity: widget.ride.toCity,
-                          pickupPoint: widget.ride.pickupPoint,
-                          dropoffPoint: widget.ride.dropoffPoint,
-                          isAr: isAr,
-                          animationProgress: _routeAnimController.value,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                // Top Info Bar: Highway & Live Traffic Badge
-                Positioned(
-                  top: 10,
-                  left: 10,
-                  right: 10,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: _useLiveGoogleMap
+                ? MashwarEmbeddedGoogleMap(
+                    origin: _originQuery,
+                    destination: _destinationQuery,
+                    satellite: _showSatellite,
+                    height: 250,
+                    borderRadius: AppDimens.radiusCard,
+                    interactive: true,
+                  )
+                : Stack(
                     children: [
-                      // Distance & Highway Chip
-                      Flexible(
+                      // Animated Vector Map Drawing
+                      Positioned.fill(
+                        child: AnimatedBuilder(
+                          animation: _routeAnimController,
+                          builder: (context, _) {
+                            return CustomPaint(
+                              painter: _AccurateRouteMapPainter(
+                                perspective: _perspective,
+                                isSatellite: _showSatellite,
+                                fromCity: widget.ride.fromCity,
+                                toCity: widget.ride.toCity,
+                                pickupPoint: widget.ride.pickupPoint,
+                                dropoffPoint: widget.ride.dropoffPoint,
+                                isAr: isAr,
+                                animationProgress: _routeAnimController.value,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Top Info Bar: Highway & Live Traffic Badge
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        right: 10,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.95),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.08),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.route_rounded,
+                                      size: 13,
+                                      color: AppColors.teal,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        '${_distanceKm(isAr)} · ${_durationFormatted(isAr)}',
+                                        style: AppTypography.label(
+                                          color: AppColors.navy,
+                                        ).copyWith(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.95),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.08),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 7,
+                                    height: 7,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF10B981),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isAr ? 'سالك' : 'Clear',
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.navy,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Floating Map Action Buttons (Expand & Layer Toggle)
+                      Positioned(
+                        bottom: 10,
+                        left: isAr ? 10 : null,
+                        right: isAr ? null : 10,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildFloatingMapButton(
+                              icon: _showSatellite
+                                  ? Icons.map_rounded
+                                  : Icons.satellite_alt_rounded,
+                              tooltip: isAr
+                                  ? 'تبديل طبقة الخريطة'
+                                  : 'Toggle Layer',
+                              onTap: () => setState(
+                                () => _showSatellite = !_showSatellite,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildFloatingMapButton(
+                              icon: Icons.fullscreen_rounded,
+                              tooltip: isAr
+                                  ? 'تكبير الخريطة للشاشة الكاملة'
+                                  : 'Full Screen Map',
+                              onTap: () => _openFullScreenMap(context, isAr),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Perspective Floating Pin Summary Card
+                      Positioned(
+                        bottom: 10,
+                        right: isAr ? 10 : null,
+                        left: isAr ? null : 10,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          constraints: const BoxConstraints(maxWidth: 210),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.95),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: const Color(0xFFE5E5EA),
+                              width: 0.8,
+                            ),
                             boxShadow: [
-                              BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4),
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.06),
+                                blurRadius: 6,
+                              ),
                             ],
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.route_rounded, size: 13, color: AppColors.teal),
-                              const SizedBox(width: 4),
-                              Flexible(
+                              Icon(
+                                _perspective == RoutePerspective.passenger
+                                    ? Icons.hail_rounded
+                                    : Icons.navigation_rounded,
+                                size: 16,
+                                color:
+                                    _perspective == RoutePerspective.passenger
+                                        ? AppColors.teal
+                                        : AppColors.navy,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
                                 child: Text(
-                                  '${_distanceKm(isAr)} · ${_durationFormatted(isAr)}',
-                                  style: AppTypography.label(color: AppColors.navy).copyWith(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
+                                  _perspective == RoutePerspective.passenger
+                                      ? (isAr
+                                          ? 'نقطة الركوب محددة بدقة'
+                                          : 'Pickup spot calibrated')
+                                      : (isAr
+                                          ? 'مسار الطريق السريع ومحطات التجمع'
+                                          : 'Highway route & stops'),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.navy,
                                   ),
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -264,118 +521,13 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
-
-                      // Traffic Condition Indicator
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.95),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 4),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF10B981),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              isAr ? 'سالك' : 'Clear',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.navy,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
-                ),
-
-                // Floating Map Action Buttons (Expand & Layer Toggle)
-                Positioned(
-                  bottom: 10,
-                  left: isAr ? 10 : null,
-                  right: isAr ? null : 10,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Satellite toggle
-                      _buildFloatingMapButton(
-                        icon: _showSatellite ? Icons.map_rounded : Icons.satellite_alt_rounded,
-                        tooltip: isAr ? 'تبديل طبقة الخريطة' : 'Toggle Layer',
-                        onTap: () => setState(() => _showSatellite = !_showSatellite),
-                      ),
-                      const SizedBox(width: 6),
-                      // Full screen expand
-                      _buildFloatingMapButton(
-                        icon: Icons.fullscreen_rounded,
-                        tooltip: isAr ? 'تكبير الخريطة للشاشة الكاملة' : 'Full Screen Map',
-                        onTap: () => _openFullScreenMap(context, isAr),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Perspective Floating Pin Summary Card
-                Positioned(
-                  bottom: 10,
-                  right: isAr ? 10 : null,
-                  left: isAr ? null : 10,
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 210),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
-                      boxShadow: [
-                        BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _perspective == RoutePerspective.passenger
-                              ? Icons.hail_rounded
-                              : Icons.navigation_rounded,
-                          size: 16,
-                          color: _perspective == RoutePerspective.passenger ? AppColors.teal : AppColors.navy,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            _perspective == RoutePerspective.passenger
-                                ? (isAr ? 'نقطة الركوب محددة بدقة' : 'Pickup spot calibrated')
-                                : (isAr ? 'مسار الطريق السريع ومحطات التجمع' : 'Highway route & stops'),
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.navy),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
         const SizedBox(height: 10),
 
-        // 2b. Dynamic Corridor Bar + 1-Tap Navigate in Google Maps Action
+        // 2c. Dynamic Corridor Bar + 1-Tap Full-Screen In-App Route Map Action
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
@@ -401,7 +553,7 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 230),
                     child: Text(
-                      _highwayName(isAr),
+                      '${_distanceKm(isAr)} · ${_durationFormatted(isAr)} · ${_highwayName(isAr)}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.label(color: AppColors.navy)
@@ -429,20 +581,21 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () => launchMashwarGoogleMapsUrl(
+                onPressed: () => openMashwarInAppMap(
                   context,
-                  _directionsUrl,
-                  isAr: isAr,
+                  origin: _originQuery,
+                  destination: _destinationQuery,
+                  initialSatellite: _showSatellite,
+                  titleAr: 'مسار الرحلة المباشر',
+                  titleEn: 'Live Trip Route Map',
                 ),
                 icon: const Icon(
-                  Icons.navigation_rounded,
+                  Icons.open_in_full_rounded,
                   size: 15,
                   color: AppColors.teal,
                 ),
                 label: Text(
-                  isAr
-                      ? 'فتح المسار في Google Maps'
-                      : 'Navigate in Google Maps',
+                  isAr ? 'عرض المسار ملء الشاشة' : 'Full-Screen Route Map',
                   style: AppTypography.label(color: AppColors.navy).copyWith(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
@@ -621,6 +774,54 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMapModeChip({
+    required bool selected,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(9),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.navy.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 13.5,
+              color: selected ? AppColors.teal : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: AppTypography.label(
+                color: selected ? AppColors.navy : AppColors.textSecondary,
+              ).copyWith(
+                fontSize: 10.5,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
               ),
             ),
           ],
@@ -1286,22 +1487,26 @@ class _AccurateRouteMapPainter extends CustomPainter {
   }
 }
 
-/// Fullscreen Interactive Map Modal with Zoom & Pan Capabilities
+/// Fullscreen Interactive In-App Google Maps & Route Modal
 class _FullScreenRouteMapModal extends StatefulWidget {
   final RideModel ride;
   final RoutePerspective perspective;
+  final String originQuery;
+  final String destinationQuery;
+  final bool initialSatellite;
   final String distance;
   final String duration;
   final String highway;
-  final String directionsUrl;
 
   const _FullScreenRouteMapModal({
     required this.ride,
     required this.perspective,
+    required this.originQuery,
+    required this.destinationQuery,
+    required this.initialSatellite,
     required this.distance,
     required this.duration,
     required this.highway,
-    required this.directionsUrl,
   });
 
   @override
@@ -1311,7 +1516,8 @@ class _FullScreenRouteMapModal extends StatefulWidget {
 class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
     with SingleTickerProviderStateMixin {
   late RoutePerspective _currentPerspective;
-  bool _isSat = false;
+  bool _useLiveGoogleMap = true;
+  late bool _isSat;
   final TransformationController _transformController = TransformationController();
   late final AnimationController _modalAnimController;
 
@@ -1319,6 +1525,7 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
   void initState() {
     super.initState();
     _currentPerspective = widget.perspective;
+    _isSat = widget.initialSatellite;
     _modalAnimController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 9),
@@ -1366,15 +1573,27 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
         ),
         actions: [
           IconButton(
+            icon: Icon(
+              _useLiveGoogleMap ? Icons.timeline_rounded : Icons.map_rounded,
+              color: AppColors.navy,
+            ),
+            tooltip: _useLiveGoogleMap
+                ? (isAr ? 'عرض المخطط التفاعلي' : 'View Schematic')
+                : (isAr ? 'عرض خريطة جوجل الحية' : 'View Live Google Map'),
+            onPressed: () =>
+                setState(() => _useLiveGoogleMap = !_useLiveGoogleMap),
+          ),
+          IconButton(
             icon: Icon(_isSat ? Icons.map_rounded : Icons.satellite_alt_rounded, color: AppColors.navy),
             tooltip: isAr ? 'تبديل طبقة الخريطة' : 'Toggle Satellite',
             onPressed: () => setState(() => _isSat = !_isSat),
           ),
-          IconButton(
-            icon: const Icon(Icons.center_focus_strong_rounded, color: AppColors.navy),
-            tooltip: isAr ? 'إعادة ضبط المنظور' : 'Recenter',
-            onPressed: () => _transformController.value = Matrix4.identity(),
-          ),
+          if (!_useLiveGoogleMap)
+            IconButton(
+              icon: const Icon(Icons.center_focus_strong_rounded, color: AppColors.navy),
+              tooltip: isAr ? 'إعادة ضبط المنظور' : 'Recenter',
+              onPressed: () => _transformController.value = Matrix4.identity(),
+            ),
         ],
       ),
       body: SafeArea(
@@ -1440,35 +1659,45 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
               ),
             ),
 
-            // Zoomable Interactive Canvas
+            // Full-Screen Live Embedded Google Map (default) or Zoomable Schematic Canvas
             Expanded(
-              child: InteractiveViewer(
-                transformationController: _transformController,
-                minScale: 0.8,
-                maxScale: 3.5,
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: 1.1,
-                    child: AnimatedBuilder(
-                      animation: _modalAnimController,
-                      builder: (context, _) {
-                        return CustomPaint(
-                          painter: _AccurateRouteMapPainter(
-                            perspective: _currentPerspective,
-                            isSatellite: _isSat,
-                            fromCity: widget.ride.fromCity,
-                            toCity: widget.ride.toCity,
-                            pickupPoint: widget.ride.pickupPoint,
-                            dropoffPoint: widget.ride.dropoffPoint,
-                            isAr: isAr,
-                            animationProgress: _modalAnimController.value,
+              child: _useLiveGoogleMap
+                  ? MashwarEmbeddedGoogleMap(
+                      origin: widget.originQuery,
+                      destination: widget.destinationQuery,
+                      satellite: _isSat,
+                      zoom: 11,
+                      height: double.infinity,
+                      borderRadius: 0,
+                      interactive: true,
+                    )
+                  : InteractiveViewer(
+                      transformationController: _transformController,
+                      minScale: 0.8,
+                      maxScale: 3.5,
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: 1.1,
+                          child: AnimatedBuilder(
+                            animation: _modalAnimController,
+                            builder: (context, _) {
+                              return CustomPaint(
+                                painter: _AccurateRouteMapPainter(
+                                  perspective: _currentPerspective,
+                                  isSatellite: _isSat,
+                                  fromCity: widget.ride.fromCity,
+                                  toCity: widget.ride.toCity,
+                                  pickupPoint: widget.ride.pickupPoint,
+                                  dropoffPoint: widget.ride.dropoffPoint,
+                                  isAr: isAr,
+                                  animationProgress: _modalAnimController.value,
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ),
             ),
 
             // Bottom Floating Route Summary Card
@@ -1511,13 +1740,21 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
-                        icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                        label: Text(isAr ? 'فتح الملاحة' : 'Open Nav'),
-                        onPressed: () => launchMashwarGoogleMapsUrl(
-                          context,
-                          widget.directionsUrl,
-                          isAr: isAr,
+                        icon: Icon(
+                          _isSat
+                              ? Icons.map_rounded
+                              : Icons.satellite_alt_rounded,
+                          size: 16,
                         ),
+                        label: Text(
+                          _isSat
+                              ? (isAr ? 'خريطة عادية' : 'Standard Map')
+                              : (isAr ? 'قمر صناعي' : 'Satellite'),
+                        ),
+                        onPressed: () => setState(() {
+                          _useLiveGoogleMap = true;
+                          _isSat = !_isSat;
+                        }),
                       ),
                     ],
                   ),

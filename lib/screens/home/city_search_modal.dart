@@ -377,21 +377,26 @@ class _CitySearchModalState extends State<CitySearchModal> {
                               IconButton(
                                 key: const ValueKey('city_preview_typed_gmaps_btn'),
                                 tooltip: isAr
-                                    ? 'معاينة في Google Maps'
-                                    : 'Preview in Google Maps',
+                                    ? 'معاينة على الخريطة داخل التطبيق'
+                                    : 'Preview on In-App Map',
                                 visualDensity: VisualDensity.compact,
                                 icon: const Icon(
-                                  Icons.map_outlined,
+                                  Icons.map_rounded,
                                   color: AppColors.teal,
                                   size: 19,
                                 ),
-                                onPressed: () => launchMashwarGoogleMapsUrl(
-                                  context,
-                                  GoogleMapsService.buildPlaceSearchUrl(
-                                    typedQuery,
-                                  ),
-                                  isAr: isAr,
-                                ),
+                                onPressed: () async {
+                                  final confirmed = await openMashwarInAppMap(
+                                    context,
+                                    placeQuery: typedQuery,
+                                    titleAr: typedQuery,
+                                    titleEn: typedQuery,
+                                    showConfirmLocationButton: true,
+                                  );
+                                  if (confirmed == true && mounted) {
+                                    Navigator.of(context).pop(typedQuery);
+                                  }
+                                },
                               ),
                               const Icon(
                                 Icons.chevron_right_rounded,
@@ -638,12 +643,6 @@ class _CitySearchModalState extends State<CitySearchModal> {
                           final coordsText = coords != null
                               ? ' · ${coords.lat.toStringAsFixed(2)}°N, ${coords.lng.toStringAsFixed(2)}°E'
                               : '';
-                          final gmapsPlaceUrl = meta?.googleMapsPlaceUrl ??
-                              GoogleMapsService.buildPlaceSearchUrl(
-                                item.name,
-                                lat: coords?.lat,
-                                lng: coords?.lng,
-                              );
 
                           return ListTile(
                             leading: Container(
@@ -683,19 +682,28 @@ class _CitySearchModalState extends State<CitySearchModal> {
                             trailing: IconButton(
                               key: ValueKey('city_preview_gmaps_$index'),
                               tooltip: isAr
-                                  ? 'معاينة في Google Maps'
-                                  : 'Preview in Google Maps',
+                                  ? 'معاينة على الخريطة داخل التطبيق'
+                                  : 'Preview on In-App Map',
                               visualDensity: VisualDensity.compact,
                               icon: const Icon(
-                                Icons.open_in_new_rounded,
-                                size: 18,
+                                Icons.map_rounded,
+                                size: 19,
                                 color: AppColors.teal,
                               ),
-                              onPressed: () => launchMashwarGoogleMapsUrl(
-                                context,
-                                gmapsPlaceUrl,
-                                isAr: isAr,
-                              ),
+                              onPressed: () async {
+                                final confirmed = await openMashwarInAppMap(
+                                  context,
+                                  placeQuery: item.name,
+                                  lat: coords?.lat,
+                                  lng: coords?.lng,
+                                  titleAr: localizedName,
+                                  titleEn: localizedName,
+                                  showConfirmLocationButton: true,
+                                );
+                                if (confirmed == true && mounted) {
+                                  Navigator.of(context).pop(item.name);
+                                }
+                              },
                             ),
                             onTap: () => Navigator.of(context).pop(item.name),
                           );

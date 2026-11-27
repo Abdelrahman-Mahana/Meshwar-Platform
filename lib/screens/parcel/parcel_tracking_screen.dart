@@ -253,7 +253,7 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                     _buildStatusBanner(isAr, hasTraveler: hasTraveler),
                     const SizedBox(height: 12),
 
-                    // Compact Live Corridor Map & 1-Tap Google Maps Route Tracking
+                    // Live Corridor Map & In-App Full-Screen Google Maps Route Tracking
                     Builder(
                       builder: (context) {
                         final endpoints = _resolveParcelEndpoints();
@@ -261,9 +261,9 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                           origin: endpoints.origin,
                           destination: endpoints.destination,
                           keyPrefix: 'parcel',
-                          mapHeight: 132.0,
-                          openButtonLabelAr: 'تتبع المسار عبر Google Maps',
-                          openButtonLabelEn: 'Track Route in Google Maps',
+                          mapHeight: 210.0,
+                          openButtonLabelAr: 'تكبير خريطة المسار داخل التطبيق',
+                          openButtonLabelEn: 'Full-Screen Route Map',
                         );
                       },
                     ),

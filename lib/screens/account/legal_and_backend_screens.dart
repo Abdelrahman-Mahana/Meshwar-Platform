@@ -11,6 +11,7 @@ import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
 import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../data/api/api_endpoints.dart';
 import '../../data/api/mashwar_api_client.dart';
@@ -1119,8 +1120,6 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
     final preset = _corridorPresets[_selectedCorridorIndex];
     final route = _testedRouteDetails ??
         GoogleMapsService.estimateRouteSync(preset.from, preset.to);
-    final directionsUrl =
-        GoogleMapsService.buildDirectionsUrl(preset.from, preset.to);
 
     final statusLabel = hasRuntime
         ? (isAr ? 'مفتاح تشغيلي مفعّل' : 'Runtime Key Active')
@@ -1411,6 +1410,21 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
                   ),
                 ],
                 const SizedBox(height: 10),
+                Container(
+                  height: 190,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.slateBorder),
+                  ),
+                  child: MashwarEmbeddedGoogleMap(
+                    origin: preset.from,
+                    destination: preset.to,
+                    height: 190,
+                    borderRadius: 11,
+                    interactive: true,
+                  ),
+                ),
+                const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -1468,18 +1482,22 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      onPressed: () => launchMashwarGoogleMapsUrl(
+                      onPressed: () => openMashwarInAppMap(
                         context,
-                        directionsUrl,
-                        isAr: isAr,
+                        origin: preset.from,
+                        destination: preset.to,
+                        titleAr: preset.labelAr,
+                        titleEn: preset.labelEn,
                       ),
                       icon: const Icon(
-                        Icons.navigation_rounded,
+                        Icons.open_in_full_rounded,
                         size: 15,
                         color: AppColors.teal,
                       ),
                       label: Text(
-                        isAr ? 'فتح في Google Maps' : 'Open in Google Maps',
+                        isAr
+                            ? 'تكبير الخريطة داخل التطبيق'
+                            : 'Full-Screen In-App Map',
                         style: AppTypography.label(color: AppColors.navy)
                             .copyWith(fontWeight: FontWeight.w700),
                       ),

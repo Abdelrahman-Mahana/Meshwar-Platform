@@ -320,17 +320,17 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
             ),
             const SizedBox(height: 14),
 
-            // 4b. Live Pickup -> Worksite Route Map, Distance/ETA & 1-Tap Google Maps Navigation
+            // 4b. Live Pickup -> Worksite Route Map, Distance/ETA & In-App Google Maps Navigation
             MashwarGoogleMapPanel(
               origin: req.pickupLocation.trim().isNotEmpty
                   ? req.pickupLocation
                   : req.municipality,
               destination: '${req.dropoffWorksite}, ${req.municipality}',
               keyPrefix: 'details',
-              mapHeight: 132.0,
-              openButtonLabelAr: 'الملاحة للموقع عبر Google Maps',
-              openButtonLabelEn: 'Navigate to Worksite in Google Maps',
-              urlLauncherOverride: _launchExternalUri,
+              mapHeight: 200.0,
+              openButtonLabelAr: 'تكبير خريطة الموقع داخل التطبيق',
+              openButtonLabelEn: 'Full-Screen Worksite Map',
+              urlLauncherOverride: WorkRequestDetailsScreen.debugUrlLauncher,
             ),
             const SizedBox(height: 14),
 

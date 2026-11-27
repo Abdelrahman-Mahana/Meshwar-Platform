@@ -9,6 +9,7 @@ import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
 import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
@@ -58,6 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedHeroMode = 0; // 0 = Trips, 1 = Parcels, 2 = Supply & Tasks
   double _swapTurns = 0.0;
   bool _isMapExpanded = false;
+  bool _useLiveGoogleMap = true;
+  bool _isMapSatellite = false;
   bool _dismissedOnboardingChecklist = false;
 
   String? _selectedSavedWorksiteId;
@@ -3265,10 +3268,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ? '${route.durationMinutes} دقيقة'
         : '${route.durationMinutes} min';
     final highwayText = route.corridorHighway(isArabic: isAr);
-    final gmapsUrl = GoogleMapsService.buildDirectionsUrl(
-      corridorFrom,
-      previewHub,
-    );
+    final double mapHeight = _isMapExpanded
+        ? (isWide ? 380.0 : 300.0)
+        : (isWide ? 250.0 : 210.0);
 
     const hubChips = [
       'الدوحة',
@@ -3356,27 +3358,85 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          // Sleek compact layer switcher: Live Google Map / Satellite / Corridor Schematic
+          Container(
+            key: const ValueKey('home_map_layer_toggle'),
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: AppColors.slateBg,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.slateBorder),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildMapLayerPill(
+                    selected: _useLiveGoogleMap && !_isMapSatellite,
+                    icon: Icons.map_rounded,
+                    label: isAr ? 'خريطة جوجل الحية' : 'Live Google Map',
+                    onTap: () => setState(() {
+                      _useLiveGoogleMap = true;
+                      _isMapSatellite = false;
+                    }),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildMapLayerPill(
+                    selected: _useLiveGoogleMap && _isMapSatellite,
+                    icon: Icons.satellite_alt_rounded,
+                    label: isAr ? 'قمر صناعي' : 'Satellite',
+                    onTap: () => setState(() {
+                      _useLiveGoogleMap = true;
+                      _isMapSatellite = true;
+                    }),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildMapLayerPill(
+                    selected: !_useLiveGoogleMap,
+                    icon: Icons.hub_rounded,
+                    label: isAr ? 'خريطة المحاور' : 'Corridor Map',
+                    onTap: () => setState(() {
+                      _useLiveGoogleMap = false;
+                    }),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            height: _isMapExpanded
-                ? (isWide ? 310 : 250)
-                : (isWide ? 205 : 165),
+            height: mapHeight,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.slateBorder),
             ),
-            child: QatarLiveMapCanvas(
-              style: QatarMapStyle.light,
-              showCarTrails: false,
-              activeFromCity: corridorFrom,
-              activeToCity: previewHub,
-              borderRadius: 15.0,
-              onHubTap: (city) {
-                setState(() => _previewHubCity = city);
-              },
-            ),
+            child: _useLiveGoogleMap
+                ? MashwarEmbeddedGoogleMap(
+                    origin: corridorFrom,
+                    destination: previewHub,
+                    satellite: _isMapSatellite,
+                    height: mapHeight,
+                    borderRadius: 15.0,
+                    interactive: true,
+                    fallbackStyle: QatarMapStyle.light,
+                    onHubTap: (city) {
+                      setState(() => _previewHubCity = city);
+                    },
+                  )
+                : QatarLiveMapCanvas(
+                    style: QatarMapStyle.light,
+                    showCarTrails: false,
+                    activeFromCity: corridorFrom,
+                    activeToCity: previewHub,
+                    borderRadius: 15.0,
+                    onHubTap: (city) {
+                      setState(() => _previewHubCity = city);
+                    },
+                  ),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -3455,18 +3515,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                onPressed: () => launchMashwarGoogleMapsUrl(
+                onPressed: () => openMashwarInAppMap(
                   context,
-                  gmapsUrl,
-                  isAr: isAr,
+                  origin: corridorFrom,
+                  destination: previewHub,
+                  initialSatellite: _isMapSatellite,
+                  titleAr: 'خريطة المسارات التفاعلية',
+                  titleEn: 'Interactive Route Corridor Map',
                 ),
                 icon: const Icon(
-                  Icons.navigation_rounded,
+                  Icons.open_in_full_rounded,
                   size: 14.5,
                   color: AppColors.teal,
                 ),
                 label: Text(
-                  isAr ? 'فتح في Google Maps' : 'Open in Google Maps',
+                  isAr ? 'تكبير الخريطة داخل التطبيق' : 'Full-Screen Map',
                   style: AppTypography.label(color: AppColors.navy).copyWith(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w700,
@@ -3525,6 +3588,55 @@ class _HomeScreenState extends State<HomeScreen> {
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMapLayerPill({
+    required bool selected,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(9),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: selected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.navy.withValues(alpha: 0.06),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: selected ? AppColors.teal : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: AppTypography.label(
+                color: selected ? AppColors.navy : AppColors.textSecondary,
+              ).copyWith(
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
