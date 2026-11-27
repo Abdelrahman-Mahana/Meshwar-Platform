@@ -13,6 +13,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/worksite_models.dart';
@@ -316,6 +317,20 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
               isAssignedProvider: isAssignedProvider,
               disputable: disputable,
               isAr: isAr,
+            ),
+            const SizedBox(height: 14),
+
+            // 4b. Live Pickup -> Worksite Route Map, Distance/ETA & 1-Tap Google Maps Navigation
+            MashwarGoogleMapPanel(
+              origin: req.pickupLocation.trim().isNotEmpty
+                  ? req.pickupLocation
+                  : req.municipality,
+              destination: '${req.dropoffWorksite}, ${req.municipality}',
+              keyPrefix: 'details',
+              mapHeight: 132.0,
+              openButtonLabelAr: 'الملاحة للموقع عبر Google Maps',
+              openButtonLabelEn: 'Navigate to Worksite in Google Maps',
+              urlLauncherOverride: _launchExternalUri,
             ),
             const SizedBox(height: 14),
 

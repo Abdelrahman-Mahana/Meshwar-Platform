@@ -189,18 +189,36 @@ const List<_QatarHub> _qatarHubs = [
 _QatarHub _resolveHub(String? rawCity, {required _QatarHub fallback}) {
   if (rawCity == null || rawCity.trim().isEmpty) return fallback;
   final q = rawCity.toLowerCase();
-  if (q.contains('خور') || q.contains('khor') || q.contains('ذخيرة')) return _qatarHubs[1];
-  if (q.contains('لوسيل') || q.contains('lusail') || q.contains('الضعاين')) return _qatarHubs[2];
-  if (q.contains('الدوحة') || q.contains('مشيرب') || q.contains('السد') || q.contains('الدفنة') || q.contains('doha')) {
+  if (q.contains('خور') || q.contains('khor') || q.contains('ذخيرة') || q.contains('لفان') || q.contains('laffan') || q.contains('سميسمة')) {
+    return _qatarHubs[1];
+  }
+  if (q.contains('لوسيل') || q.contains('lusail') || q.contains('الضعاين') || q.contains('daayen') || q.contains('اللؤلؤة') || q.contains('pearl') || q.contains('كتارا') || q.contains('katara') || q.contains('أم صلال') || q.contains('umm salal')) {
+    return _qatarHubs[2];
+  }
+  if (q.contains('مطار') || q.contains('airport') || q.contains('hia') || q.contains('مطار حمد')) {
+    return _qatarHubs[5];
+  }
+  if (q.contains('صناعية') || q.contains('industrial') || q.contains('سلوى') || q.contains('salwa') || q.contains('أبو سمرة') || q.contains('abu samra')) {
+    return _qatarHubs[6];
+  }
+  if (q.contains('مسيعيد') || q.contains('mesaieed') || q.contains('ميناء حمد') || q.contains('hamad port') || q.contains('سيلين') || q.contains('sealine')) {
+    return _qatarHubs[8];
+  }
+  if (q.contains('وكرة') || q.contains('wakrah') || q.contains('وكير')) {
+    return _qatarHubs[7];
+  }
+  if (q.contains('دخان') || q.contains('الشيحانية') || q.contains('dukhan') || q.contains('shahaniya')) {
+    return _qatarHubs[9];
+  }
+  if (q.contains('الشمال') || q.contains('shamal') || q.contains('الرويس') || q.contains('ruwais')) {
+    return _qatarHubs[0];
+  }
+  if (q.contains('ريان') || q.contains('التعليمية') || q.contains('rayyan') || q.contains('education') || q.contains('غرافة') || q.contains('gharafa')) {
+    return _qatarHubs[4];
+  }
+  if (q.contains('الدوحة') || q.contains('مشيرب') || q.contains('السد') || q.contains('الدفنة') || q.contains('doha') || q.contains('msheireb') || q.contains('west bay') || q.contains('وقود') || q.contains('woqod') || q.contains('مترو') || q.contains('metro')) {
     return _qatarHubs[3];
   }
-  if (q.contains('ريان') || q.contains('التعليمية') || q.contains('rayyan')) return _qatarHubs[4];
-  if (q.contains('مطار') || q.contains('airport') || q.contains('حمد')) return _qatarHubs[5];
-  if (q.contains('صناعية') || q.contains('industrial')) return _qatarHubs[6];
-  if (q.contains('وكرة') || q.contains('wakrah')) return _qatarHubs[7];
-  if (q.contains('مسيعيد') || q.contains('mesaieed')) return _qatarHubs[8];
-  if (q.contains('دخان') || q.contains('الشيحانية') || q.contains('dukhan')) return _qatarHubs[9];
-  if (q.contains('الشمال') || q.contains('shamal') || q.contains('الرويس')) return _qatarHubs[0];
   return fallback;
 }
 

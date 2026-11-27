@@ -5,9 +5,11 @@ import '../../../core/constants/app_dimens.dart';
 import '../../../core/constants/app_typography.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/widgets/mashwar_animations.dart';
+import '../../../core/widgets/mashwar_google_map_panel.dart';
 import '../../../data/models/ride_model.dart';
 import '../../../data/repositories/app_repositories.dart';
 import '../../../data/repositories/contracts/i_maps_repository.dart';
+import '../../../data/services/google_maps_service.dart';
 
 enum RoutePerspective {
   passenger, // منظور الراكب: تركيز على نقطة ركوبك ونزولك ومسافة المشي
@@ -35,13 +37,17 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
   late RoutePerspective _perspective;
   bool _showSatellite = false;
   bool _isRouteExpanded = false;
-  RouteDetails? _routeDetails;
+  late RouteDetails _routeDetails;
   late final AnimationController _routeAnimController;
 
   @override
   void initState() {
     super.initState();
     _perspective = widget.initialPerspective;
+    _routeDetails = GoogleMapsService.estimateRouteSync(
+      widget.ride.fromCity,
+      widget.ride.toCity,
+    );
     _routeAnimController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 9),
@@ -52,6 +58,19 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
       _routeAnimController.value = 0.42;
     }
     _loadRouteDetails();
+  }
+
+  @override
+  void didUpdateWidget(covariant RideRouteMapView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.ride.fromCity != widget.ride.fromCity ||
+        oldWidget.ride.toCity != widget.ride.toCity) {
+      _routeDetails = GoogleMapsService.estimateRouteSync(
+        widget.ride.fromCity,
+        widget.ride.toCity,
+      );
+      _loadRouteDetails();
+    }
   }
 
   @override
@@ -73,29 +92,42 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
   }
 
   // Route metrics dynamically derived via Google Maps & Qatar Expressway calculations
-  String get _distanceKm {
-    if (_routeDetails != null) {
-      return '${_routeDetails!.distanceKm.round()} كم';
-    }
-    return '52 كم';
+  String _distanceKm(bool isAr) {
+    final km = _routeDetails.distanceKm.round();
+    return isAr ? '$km كم' : '$km km';
   }
 
-  String get _durationFormatted {
-    if (_routeDetails != null) {
-      final hours = _routeDetails!.durationMinutes ~/ 60;
-      final mins = _routeDetails!.durationMinutes % 60;
-      if (hours > 0 && mins > 0) {
-        return '$hours س و $mins د';
-      } else if (hours > 0) {
-        return '$hours ساعات';
-      } else {
-        return '$mins دقيقة';
-      }
+  String _durationFormatted(bool isAr) {
+    final hours = _routeDetails.durationMinutes ~/ 60;
+    final mins = _routeDetails.durationMinutes % 60;
+    if (hours > 0 && mins > 0) {
+      return isAr ? '$hours س و $mins د' : '${hours}h ${mins}m';
+    } else if (hours > 0) {
+      return isAr ? '$hours ساعات' : '$hours hrs';
+    } else {
+      return isAr ? '$mins دقيقة' : '$mins min';
     }
-    return '45 دقيقة';
   }
 
-  String get _highwayName => 'طريق الخور الساحلي / طريق الشمال (طريق 1)';
+  String _highwayName(bool isAr) {
+    final dynamicName = _routeDetails.corridorHighway(isArabic: isAr);
+    if (dynamicName.isNotEmpty) return dynamicName;
+    final fallback = GoogleMapsService.resolveCorridorHighway(
+      origin: widget.ride.fromCity,
+      destination: widget.ride.toCity,
+    );
+    return isAr ? fallback.ar : fallback.en;
+  }
+
+  String get _directionsUrl {
+    final orig = widget.ride.pickupPoint.trim().isNotEmpty
+        ? '${widget.ride.pickupPoint}, ${widget.ride.fromCity}'
+        : widget.ride.fromCity;
+    final dest = widget.ride.dropoffPoint.trim().isNotEmpty
+        ? '${widget.ride.dropoffPoint}, ${widget.ride.toCity}'
+        : widget.ride.toCity;
+    return GoogleMapsService.buildDirectionsUrl(orig, dest);
+  }
 
   void _openFullScreenMap(BuildContext context, bool isAr) {
     Navigator.of(context).push(
@@ -104,9 +136,10 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
         builder: (_) => _FullScreenRouteMapModal(
           ride: widget.ride,
           perspective: _perspective,
-          distance: _distanceKm,
-          duration: _durationFormatted,
-          highway: _highwayName,
+          distance: _distanceKm(isAr),
+          duration: _durationFormatted(isAr),
+          highway: _highwayName(isAr),
+          directionsUrl: _directionsUrl,
         ),
       ),
     );
@@ -219,7 +252,7 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  '$_distanceKm · $_durationFormatted',
+                                  '${_distanceKm(isAr)} · ${_durationFormatted(isAr)}',
                                   style: AppTypography.label(color: AppColors.navy).copyWith(
                                     fontSize: 10.5,
                                     fontWeight: FontWeight.w700,
@@ -340,7 +373,86 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
+
+        // 2b. Dynamic Corridor Bar + 1-Tap Navigate in Google Maps Action
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.slateBorder),
+          ),
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.alt_route_rounded,
+                    size: 16,
+                    color: AppColors.teal,
+                  ),
+                  const SizedBox(width: 6),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 230),
+                    child: Text(
+                      _highwayName(isAr),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              OutlinedButton.icon(
+                key: const ValueKey('ride_map_open_gmaps_btn'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.navy,
+                  backgroundColor: AppColors.slateBg,
+                  side: const BorderSide(color: AppColors.slateBorder),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () => launchMashwarGoogleMapsUrl(
+                  context,
+                  _directionsUrl,
+                  isAr: isAr,
+                ),
+                icon: const Icon(
+                  Icons.navigation_rounded,
+                  size: 15,
+                  color: AppColors.teal,
+                ),
+                label: Text(
+                  isAr
+                      ? 'فتح المسار في Google Maps'
+                      : 'Navigate in Google Maps',
+                  style: AppTypography.label(color: AppColors.navy).copyWith(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
 
         // 3. Perspective-Specific Guidance Card
         _buildPerspectiveGuidanceCard(isAr),
@@ -422,22 +534,7 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                 iconColor: AppColors.teal,
               ),
 
-              if (_isRouteExpanded) ...[
-                _buildMilestoneItem(
-                  time: isAr ? '+15 دقيقة' : '+15 mins',
-                  title: isAr ? 'محور لوسيل / بوابة الشمال' : 'Lusail Expressway / North Gate',
-                  location: isAr ? 'مخرج لوسيل واستاد البيت السريع' : 'Lusail & Al Bayt Express Exit',
-                  icon: Icons.alt_route_rounded,
-                  iconColor: const Color(0xFF64748B),
-                ),
-                _buildMilestoneItem(
-                  time: isAr ? '+30 دقيقة' : '+30 mins',
-                  title: isAr ? 'طريق الخور الساحلي السريع' : 'Al Khor Coastal Highway',
-                  location: isAr ? 'تقاطع سميسمة - مخرج الخور الجنوبي' : 'Simaisma Interchange - South Al Khor Exit',
-                  icon: Icons.toll_rounded,
-                  iconColor: const Color(0xFF64748B),
-                ),
-              ],
+              if (_isRouteExpanded) ..._buildDynamicIntermediateMilestones(isAr),
 
               _buildMilestoneItem(
                 time: isAr ? 'الوقت المقدر' : 'Estimated Arrival',
@@ -628,8 +725,8 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                   const SizedBox(height: 2),
                   Text(
                     isAr
-                        ? 'المسار الموصى به: طريق الخور الساحلي / طريق الشمال (طريق 1). نقطة التوقف المحددة لالتقاط الراكب بمساحة ركن سهلة وآمنة.'
-                        : 'Recommended corridor: Al Khor Coastal / Al Shamal Rd (Route 1). Clear pull-over bay for safe passenger boarding.',
+                        ? 'المسار الموصى به: ${_highwayName(true)}. نقطة التوقف المحددة لالتقاط الراكب بمساحة ركن سهلة وآمنة.'
+                        : 'Recommended corridor: ${_highwayName(false)}. Clear pull-over bay for safe passenger boarding.',
                     style: const TextStyle(fontSize: 11, color: Color(0xFF0C4A6E)),
                   ),
                 ],
@@ -639,6 +736,55 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
         ),
       );
     }
+  }
+
+  List<Widget> _buildDynamicIntermediateMilestones(bool isAr) {
+    final origHub = GoogleMapsService.resolveHubEntry(widget.ride.fromCity);
+    final destHub = GoogleMapsService.resolveHubEntry(widget.ride.toCity);
+    final zones = <String>{
+      if (origHub != null) origHub.zoneCode,
+      if (destHub != null) destHub.zoneCode,
+    };
+
+    if (zones.contains('north_coast') || zones.contains('north')) {
+      return [
+        _buildMilestoneItem(
+          time: isAr ? '+15 دقيقة' : '+15 mins',
+          title: isAr
+              ? 'محور لوسيل / بوابة الشمال'
+              : 'Lusail Expressway / North Gate',
+          location: isAr
+              ? 'مخرج لوسيل واستاد البيت السريع'
+              : 'Lusail & Al Bayt Express Exit',
+          icon: Icons.alt_route_rounded,
+          iconColor: const Color(0xFF64748B),
+        ),
+        _buildMilestoneItem(
+          time: isAr ? '+30 دقيقة' : '+30 mins',
+          title: isAr
+              ? 'طريق الخور الساحلي السريع'
+              : 'Al Khor Coastal Highway',
+          location: isAr
+              ? 'تقاطع سميسمة - مخرج الخور الجنوبي'
+              : 'Simaisma Interchange - South Al Khor Exit',
+          icon: Icons.toll_rounded,
+          iconColor: const Color(0xFF64748B),
+        ),
+      ];
+    }
+
+    final halfMins = math.max(8, _routeDetails.durationMinutes ~/ 2);
+    return [
+      _buildMilestoneItem(
+        time: isAr ? '+$halfMins دقيقة' : '+$halfMins mins',
+        title: _highwayName(isAr),
+        location: isAr
+            ? '${context.trCity(widget.ride.fromCity)} ↔ ${context.trCity(widget.ride.toCity)}'
+            : '${context.trCity(widget.ride.fromCity)} ↔ ${context.trCity(widget.ride.toCity)}',
+        icon: Icons.alt_route_rounded,
+        iconColor: const Color(0xFF64748B),
+      ),
+    ];
   }
 
   Widget _buildMilestoneItem({
@@ -1147,6 +1293,7 @@ class _FullScreenRouteMapModal extends StatefulWidget {
   final String distance;
   final String duration;
   final String highway;
+  final String directionsUrl;
 
   const _FullScreenRouteMapModal({
     required this.ride,
@@ -1154,6 +1301,7 @@ class _FullScreenRouteMapModal extends StatefulWidget {
     required this.distance,
     required this.duration,
     required this.highway,
+    required this.directionsUrl,
   });
 
   @override
@@ -1356,6 +1504,7 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
                       ),
                       const SizedBox(width: 8),
                       ElevatedButton.icon(
+                        key: const ValueKey('ride_fullscreen_open_gmaps_btn'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.navy,
                           foregroundColor: Colors.white,
@@ -1364,18 +1513,11 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
                         ),
                         icon: const Icon(Icons.open_in_new_rounded, size: 16),
                         label: Text(isAr ? 'فتح الملاحة' : 'Open Nav'),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                isAr
-                                    ? 'تم إرسال إحداثيات المسار لتطبيقات الملاحة (Google Maps / Waze)'
-                                    : 'Route coordinates sent to navigation app (Google Maps / Waze)',
-                              ),
-                              backgroundColor: AppColors.navy,
-                            ),
-                          );
-                        },
+                        onPressed: () => launchMashwarGoogleMapsUrl(
+                          context,
+                          widget.directionsUrl,
+                          isAr: isAr,
+                        ),
                       ),
                     ],
                   ),

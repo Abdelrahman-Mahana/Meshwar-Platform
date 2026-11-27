@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
-import '../../core/widgets/mashwar_button.dart';
-import '../../core/widgets/mashwar_text_field.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
+import '../../core/widgets/mashwar_text_field.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/location_item.dart';
 import '../../data/repositories/app_repositories.dart';
+import '../../data/repositories/contracts/i_maps_repository.dart';
+import '../../data/services/google_maps_service.dart';
 
 class CitySearchModal extends StatefulWidget {
   const CitySearchModal({
@@ -26,55 +30,124 @@ class CitySearchModal extends StatefulWidget {
 class _CitySearchModalState extends State<CitySearchModal> {
   final TextEditingController _searchController = TextEditingController();
   List<LocationItem> _filtered = MockData.locations;
+  final Map<String, LocationSearchResult> _geoMetaByName = {};
   bool _showCustomMeetingPoint = false;
+  int _searchSeq = 0;
+
   final TextEditingController _customPointController =
       TextEditingController(text: 'مترو مشيرب، بوابة الدخول الرئيسية');
 
   @override
   void initState() {
     super.initState();
+    _seedLocalGeoMeta();
     if (widget.initialValue != null && widget.initialValue!.trim().isNotEmpty) {
       _searchController.text = widget.initialValue!;
       _filterList(widget.initialValue!);
     }
   }
 
+  void _seedLocalGeoMeta() {
+    for (final loc in MockData.locations) {
+      final entry = GoogleMapsService.resolveHubEntry(loc.name);
+      if (entry != null) {
+        _geoMetaByName[loc.name] = LocationSearchResult(
+          placeId: 'qa_${entry.id}',
+          mainText: loc.name,
+          secondaryText: entry.govAr,
+          latitude: entry.lat,
+          longitude: entry.lng,
+          googleMapsPlaceUrl: GoogleMapsService.buildPlaceSearchUrl(
+            entry.nameEn,
+            lat: entry.lat,
+            lng: entry.lng,
+          ),
+        );
+      }
+    }
+  }
+
+  bool _isSamePlace(LocationItem item, LocationSearchResult candidate) {
+    final itemLower = item.name.trim().toLowerCase();
+    final candLower = candidate.mainText.trim().toLowerCase();
+    if (itemLower == candLower) return true;
+    final itemEn =
+        AppStrings.translateCity(item.name, isArabic: false).toLowerCase();
+    if (itemEn == candLower) return true;
+    final itemHub = GoogleMapsService.resolveHubEntry(item.name);
+    final candHub = GoogleMapsService.resolveHubEntry(candidate.mainText);
+    if (itemHub != null && candHub != null && itemHub.id == candHub.id) {
+      return true;
+    }
+    return false;
+  }
+
   void _filterList(String query) {
     final q = query.trim().toLowerCase();
-    setState(() {
-      if (q.isEmpty) {
+    final seq = ++_searchSeq;
+
+    if (q.isEmpty) {
+      setState(() {
         _filtered = MockData.locations;
-      } else {
-        final localMatches = MockData.locations.where((loc) {
-          return loc.name.toLowerCase().contains(q) ||
-              loc.region.toLowerCase().contains(q) ||
-              AppStrings.translateCity(loc.name, isArabic: false)
-                  .toLowerCase()
-                  .contains(q);
-        }).toList();
+      });
+      return;
+    }
 
-        AppRepositories.instance.maps.searchLocations(query).then((results) {
-          if (!mounted) return;
-          final extraItems = <LocationItem>[];
-          for (final r in results) {
-            if (!localMatches.any((m) => m.name == r.mainText)) {
-              extraItems.add(LocationItem(
-                name: r.mainText,
-                region: r.secondaryText,
-                typeLabel: 'مدينة',
-              ));
-            }
-          }
-          if (extraItems.isNotEmpty && mounted) {
-            setState(() {
-              _filtered = [...localMatches, ...extraItems];
-            });
-          }
-        }).catchError((_) {});
+    final localMatches = MockData.locations.where((loc) {
+      return loc.name.toLowerCase().contains(q) ||
+          loc.region.toLowerCase().contains(q) ||
+          AppStrings.translateCity(loc.name, isArabic: false)
+              .toLowerCase()
+              .contains(q) ||
+          AppStrings.translateCity(loc.region, isArabic: false)
+              .toLowerCase()
+              .contains(q);
+    }).toList();
 
-        _filtered = localMatches;
+    // Instant synchronous bilingual geo-catalog matches
+    final syncCatalogMatches = GoogleMapsService.searchCatalogSync(query);
+    final mergedSync = <LocationItem>[...localMatches];
+    for (final r in syncCatalogMatches) {
+      _geoMetaByName[r.mainText] = r;
+      if (!mergedSync.any((m) => _isSamePlace(m, r))) {
+        mergedSync.add(
+          LocationItem(
+            name: r.mainText,
+            region: r.secondaryText,
+            typeLabel: 'منطقة',
+          ),
+        );
       }
+    }
+
+    setState(() {
+      _filtered = mergedSync;
     });
+
+    // Async search via AppRepositories.instance.maps.searchLocations (Google Places API New + catalog)
+    AppRepositories.instance.maps.searchLocations(query).then((results) {
+      if (!mounted || seq != _searchSeq) return;
+      final mergedAsync = <LocationItem>[...mergedSync];
+      bool addedAny = false;
+      for (final r in results) {
+        _geoMetaByName[r.mainText] = r;
+        if (!mergedAsync.any((m) => _isSamePlace(m, r))) {
+          mergedAsync.add(
+            LocationItem(
+              name: r.mainText,
+              region: r.secondaryText,
+              typeLabel: 'مدينة',
+            ),
+          );
+          addedAny = true;
+        }
+      }
+      if (addedAny && mounted) {
+        setState(() {
+          _filtered = mergedAsync;
+        });
+      }
+    }).catchError((_) {});
   }
 
   void _confirmTypedDestination() {
@@ -104,8 +177,10 @@ class _CitySearchModalState extends State<CitySearchModal> {
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: AppColors.navy),
+            icon: const Icon(
+              Icons.arrow_back_ios_new_rounded,
+              color: AppColors.navy,
+            ),
             onPressed: () => setState(() => _showCustomMeetingPoint = false),
           ),
           title: Text(
@@ -202,8 +277,10 @@ class _CitySearchModalState extends State<CitySearchModal> {
                               children: [
                                 IconButton(
                                   tooltip: isAr ? 'مسح' : 'Clear',
-                                  icon: const Icon(Icons.clear_rounded,
-                                      size: 18),
+                                  icon: const Icon(
+                                    Icons.clear_rounded,
+                                    size: 18,
+                                  ),
                                   onPressed: () {
                                     _searchController.clear();
                                     _filterList('');
@@ -235,7 +312,9 @@ class _CitySearchModalState extends State<CitySearchModal> {
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: const BorderSide(
-                            color: AppColors.cobalt, width: 1.5),
+                          color: AppColors.cobalt,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                   ),
@@ -250,7 +329,9 @@ class _CitySearchModalState extends State<CitySearchModal> {
                         onTap: _confirmTypedDestination,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
@@ -291,6 +372,25 @@ class _CitySearchModalState extends State<CitySearchModal> {
                                       ).copyWith(fontSize: 11),
                                     ),
                                   ],
+                                ),
+                              ),
+                              IconButton(
+                                key: const ValueKey('city_preview_typed_gmaps_btn'),
+                                tooltip: isAr
+                                    ? 'معاينة في Google Maps'
+                                    : 'Preview in Google Maps',
+                                visualDensity: VisualDensity.compact,
+                                icon: const Icon(
+                                  Icons.map_outlined,
+                                  color: AppColors.teal,
+                                  size: 19,
+                                ),
+                                onPressed: () => launchMashwarGoogleMapsUrl(
+                                  context,
+                                  GoogleMapsService.buildPlaceSearchUrl(
+                                    typedQuery,
+                                  ),
+                                  isAr: isAr,
                                 ),
                               ),
                               const Icon(
@@ -381,8 +481,11 @@ class _CitySearchModalState extends State<CitySearchModal> {
                         color: AppColors.cobalt,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.my_location_rounded,
-                          color: Colors.white, size: 18),
+                      child: const Icon(
+                        Icons.my_location_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                     title: Text(
                       isAr ? 'استخدم موقعي الحالي' : 'Use Current Location',
@@ -405,8 +508,11 @@ class _CitySearchModalState extends State<CitySearchModal> {
                         color: AppColors.emeraldSurface,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add_location_alt_outlined,
-                          color: AppColors.emerald, size: 18),
+                      child: const Icon(
+                        Icons.add_location_alt_outlined,
+                        color: AppColors.emerald,
+                        size: 18,
+                      ),
                     ),
                     title: Text(
                       isAr ? 'نقطة التقاء مخصصة' : 'Custom Meeting Point',
@@ -419,8 +525,10 @@ class _CitySearchModalState extends State<CitySearchModal> {
                           : 'Specify landmark, street, or gate',
                       style: AppTypography.label(),
                     ),
-                    trailing: const Icon(Icons.chevron_right_rounded,
-                        color: AppColors.navy),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.navy,
+                    ),
                     onTap: () => setState(() => _showCustomMeetingPoint = true),
                   ),
                 ],
@@ -428,20 +536,50 @@ class _CitySearchModalState extends State<CitySearchModal> {
             ),
             const Divider(height: 1, color: AppColors.slateBorder),
 
-            // Section Header
+            // Section Header with Google Maps / Geo Engine indicator
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-              child: Align(
-                alignment: isAr ? Alignment.centerRight : Alignment.centerLeft,
-                child: Text(
-                  typedQuery.isEmpty
-                      ? (isAr
-                          ? 'المدن والمحاور السريعة'
-                          : 'Suggested Cities & Hubs')
-                      : (isAr ? 'نتائج البحث' : 'Matching Locations'),
-                  style: AppTypography.label(color: AppColors.textSecondary)
-                      .copyWith(fontWeight: FontWeight.w700),
-                ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      typedQuery.isEmpty
+                          ? (isAr
+                              ? 'المدن والمحاور السريعة'
+                              : 'Suggested Cities & Hubs')
+                          : (isAr
+                              ? 'نتائج البحث الجغرافي (${_filtered.length})'
+                              : 'Matching Locations (${_filtered.length})'),
+                      style: AppTypography.label(color: AppColors.textSecondary)
+                          .copyWith(fontWeight: FontWeight.w700),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        GoogleMapsService.hasActiveApiKey
+                            ? Icons.cloud_done_rounded
+                            : Icons.pin_drop_outlined,
+                        size: 13,
+                        color: AppColors.teal,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        GoogleMapsService.hasActiveApiKey
+                            ? 'Google Places'
+                            : (isAr ? 'دليل قطر والخليج' : 'Qatar & GCC Geo'),
+                        style: AppTypography.label(color: AppColors.teal)
+                            .copyWith(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
 
@@ -484,19 +622,50 @@ class _CitySearchModalState extends State<CitySearchModal> {
                       child: ListView.separated(
                         itemCount: _filtered.length,
                         separatorBuilder: (_, __) => const Divider(
-                            height: 1, color: AppColors.slateBorder),
+                          height: 1,
+                          color: AppColors.slateBorder,
+                        ),
                         itemBuilder: (context, index) {
                           final item = _filtered[index];
+                          final meta = _geoMetaByName[item.name];
+                          final coords = (meta?.latitude != null &&
+                                  meta?.longitude != null)
+                              ? (lat: meta!.latitude!, lng: meta.longitude!)
+                              : GoogleMapsService.resolveCoordinates(item.name);
                           final localizedName = context.trCity(item.name);
                           final localizedRegion = context.trCity(item.region);
                           final localizedType = context.tr(item.typeLabel);
+                          final coordsText = coords != null
+                              ? ' · ${coords.lat.toStringAsFixed(2)}°N, ${coords.lng.toStringAsFixed(2)}°E'
+                              : '';
+                          final gmapsPlaceUrl = meta?.googleMapsPlaceUrl ??
+                              GoogleMapsService.buildPlaceSearchUrl(
+                                item.name,
+                                lat: coords?.lat,
+                                lng: coords?.lng,
+                              );
 
                           return ListTile(
-                            leading: Icon(
-                              item.isRecent
-                                  ? Icons.history_rounded
-                                  : Icons.location_on_outlined,
-                              color: AppColors.cobalt,
+                            leading: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: coords != null
+                                    ? AppColors.tealSurface
+                                    : AppColors.slateBg,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                item.isRecent
+                                    ? Icons.history_rounded
+                                    : (coords != null
+                                        ? Icons.pin_drop_rounded
+                                        : Icons.location_on_outlined),
+                                color: coords != null
+                                    ? AppColors.teal
+                                    : AppColors.cobalt,
+                                size: 19,
+                              ),
                             ),
                             title: Text(
                               localizedName,
@@ -504,9 +673,29 @@ class _CitySearchModalState extends State<CitySearchModal> {
                                   .copyWith(fontWeight: FontWeight.w700),
                             ),
                             subtitle: Text(
-                              '$localizedRegion · $localizedType',
+                              '$localizedRegion · $localizedType$coordsText',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: AppTypography.label(
-                                  color: AppColors.textSecondary),
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              key: ValueKey('city_preview_gmaps_$index'),
+                              tooltip: isAr
+                                  ? 'معاينة في Google Maps'
+                                  : 'Preview in Google Maps',
+                              visualDensity: VisualDensity.compact,
+                              icon: const Icon(
+                                Icons.open_in_new_rounded,
+                                size: 18,
+                                color: AppColors.teal,
+                              ),
+                              onPressed: () => launchMashwarGoogleMapsUrl(
+                                context,
+                                gmapsPlaceUrl,
+                                isAr: isAr,
+                              ),
                             ),
                             onTap: () => Navigator.of(context).pop(item.name),
                           );

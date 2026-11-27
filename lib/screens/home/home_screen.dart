@@ -9,11 +9,15 @@ import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/models/ride_model.dart';
 import '../../data/models/worksite_models.dart';
+import '../../data/repositories/app_repositories.dart';
+import '../../data/repositories/contracts/i_maps_repository.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/admin_provider.dart';
 import '../../state/auth_provider.dart';
 import '../../state/board_provider.dart';
@@ -54,6 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String? _selectedSavedWorksiteId;
   String? _previewHubCity;
+  RouteDetails? _corridorRouteDetails;
+  String? _lastCorridorFrom;
+  String? _lastCorridorTo;
+  int _corridorLoadSeq = 0;
   bool _didAttemptInitialLoad = false;
   WorksiteProvider? _lastInitializedWorksite;
 
@@ -2741,6 +2749,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _syncCorridorRouteDetails(String from, String to) {
+    if (_lastCorridorFrom == from &&
+        _lastCorridorTo == to &&
+        _corridorRouteDetails != null) {
+      return;
+    }
+    _lastCorridorFrom = from;
+    _lastCorridorTo = to;
+    _corridorRouteDetails = GoogleMapsService.estimateRouteSync(from, to);
+    final seq = ++_corridorLoadSeq;
+    AppRepositories.instance.maps.getRouteDetails(from, to).then((details) {
+      if (!mounted || seq != _corridorLoadSeq) return;
+      setState(() {
+        _corridorRouteDetails = details;
+      });
+    }).catchError((_) {});
+  }
+
   Widget _buildCollapsibleCorridorMapCard({
     required BuildContext context,
     required RidesProvider rides,
@@ -2749,6 +2775,21 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool isAr,
     required bool isWide,
   }) {
+    _syncCorridorRouteDetails(corridorFrom, previewHub);
+    final route = _corridorRouteDetails ??
+        GoogleMapsService.estimateRouteSync(corridorFrom, previewHub);
+    final distText = isAr
+        ? '${route.distanceKm.round()} كم'
+        : '${route.distanceKm.round()} km';
+    final etaText = isAr
+        ? '${route.durationMinutes} دقيقة'
+        : '${route.durationMinutes} min';
+    final highwayText = route.corridorHighway(isArabic: isAr);
+    final gmapsUrl = GoogleMapsService.buildDirectionsUrl(
+      corridorFrom,
+      previewHub,
+    );
+
     const hubChips = [
       'الدوحة',
       'لوسيل',
@@ -2788,7 +2829,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Text(
-                      '${AppStrings.translateCity(corridorFrom, isArabic: isAr)} → ${AppStrings.translateCity(previewHub, isArabic: isAr)}',
+                      '${AppStrings.translateCity(corridorFrom, isArabic: isAr)} → ${AppStrings.translateCity(previewHub, isArabic: isAr)} · $distText · $etaText',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: AppTypography.label(color: AppColors.tealDark)
@@ -2856,6 +2897,103 @@ class _HomeScreenState extends State<HomeScreen> {
                 setState(() => _previewHubCity = city);
               },
             ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.sand,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.gold.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.route_rounded,
+                          size: 13.5,
+                          color: AppColors.teal,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          '$distText · $etaText',
+                          style: AppTypography.label(color: AppColors.navy)
+                              .copyWith(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (highwayText.isNotEmpty)
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 230),
+                      child: Text(
+                        highwayText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(
+                          color: AppColors.textSecondary,
+                        ).copyWith(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              OutlinedButton.icon(
+                key: const ValueKey('home_open_gmaps_btn'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.navy,
+                  backgroundColor: AppColors.slateBg,
+                  side: const BorderSide(color: AppColors.slateBorder),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                    vertical: 7,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () => launchMashwarGoogleMapsUrl(
+                  context,
+                  gmapsUrl,
+                  isAr: isAr,
+                ),
+                icon: const Icon(
+                  Icons.navigation_rounded,
+                  size: 14.5,
+                  color: AppColors.teal,
+                ),
+                label: Text(
+                  isAr ? 'فتح في Google Maps' : 'Open in Google Maps',
+                  style: AppTypography.label(color: AppColors.navy).copyWith(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Wrap(

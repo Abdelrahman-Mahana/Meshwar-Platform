@@ -8,6 +8,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/alert_banner.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
@@ -34,6 +35,26 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
   void initState() {
     super.initState();
     _status = widget.parcel.status;
+  }
+
+  ({String origin, String destination}) _resolveParcelEndpoints() {
+    final fromRaw = widget.parcel.fromCity?.trim() ?? '';
+    final toRaw = widget.parcel.toCity?.trim() ?? '';
+    if (fromRaw.isNotEmpty && toRaw.isNotEmpty) {
+      return (origin: fromRaw, destination: toRaw);
+    }
+    final parts = widget.parcel.route
+        .split(RegExp(r'←|→|↔|-'))
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.length >= 2) {
+      return (origin: parts.first, destination: parts.last);
+    }
+    return (
+      origin: fromRaw.isNotEmpty ? fromRaw : 'الدوحة',
+      destination: toRaw.isNotEmpty ? toRaw : 'الخور',
+    );
   }
 
   List<String> _parseOtpDigits(String raw) {
@@ -230,6 +251,22 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                     const SizedBox(height: 12),
 
                     _buildStatusBanner(isAr, hasTraveler: hasTraveler),
+                    const SizedBox(height: 12),
+
+                    // Compact Live Corridor Map & 1-Tap Google Maps Route Tracking
+                    Builder(
+                      builder: (context) {
+                        final endpoints = _resolveParcelEndpoints();
+                        return MashwarGoogleMapPanel(
+                          origin: endpoints.origin,
+                          destination: endpoints.destination,
+                          keyPrefix: 'parcel',
+                          mapHeight: 132.0,
+                          openButtonLabelAr: 'تتبع المسار عبر Google Maps',
+                          openButtonLabelEn: 'Track Route in Google Maps',
+                        );
+                      },
+                    ),
                     const SizedBox(height: 14),
 
                     // Pickup & Delivery OTP Security Cards

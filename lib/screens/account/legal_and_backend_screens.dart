@@ -1,7 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -9,9 +11,13 @@ import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../data/api/api_endpoints.dart';
 import '../../data/api/mashwar_api_client.dart';
 import '../../data/mock_data.dart';
+import '../../data/repositories/app_repositories.dart';
+import '../../data/repositories/contracts/i_maps_repository.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 import '../system/system_screens.dart';
@@ -31,11 +37,16 @@ class LegalComplianceScreen extends StatelessWidget {
         length: 3,
         initialIndex: initialTabIndex.clamp(0, 2),
         child: Scaffold(
-          backgroundColor: const Color(0xFFFCFCFD),
+          backgroundColor: AppColors.slateBg,
           appBar: AppBar(
             title: Text(
-              isAr ? 'الشروط القانونية والامتثال التنظيمي' : 'Legal Terms & Regulatory Compliance',
-              style: AppTypography.title(),
+              isAr
+                  ? 'الشروط القانونية والامتثال التنظيمي'
+                  : 'Legal Terms & Regulatory Compliance',
+              style: AppTypography.title().copyWith(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             backgroundColor: Colors.white,
             elevation: 0,
@@ -44,6 +55,7 @@ class LegalComplianceScreen extends StatelessWidget {
               icon: const Icon(
                 Icons.arrow_back_ios_new_rounded,
                 color: AppColors.navy,
+                size: 19,
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -51,20 +63,32 @@ class LegalComplianceScreen extends StatelessWidget {
               labelColor: AppColors.teal,
               unselectedLabelColor: AppColors.textSecondary,
               indicatorColor: AppColors.teal,
-              labelStyle: AppTypography.bodySecondary().copyWith(fontWeight: FontWeight.bold),
+              indicatorWeight: 2.5,
+              dividerColor: AppColors.slateBorder,
+              labelStyle: AppTypography.bodySecondary()
+                  .copyWith(fontWeight: FontWeight.w700),
               tabs: [
                 Tab(text: isAr ? 'شروط الخدمة' : 'Terms of Service'),
                 Tab(text: isAr ? 'حماية البيانات' : 'Data Privacy'),
-                Tab(text: isAr ? 'الحدود التنظيمية والعلامة' : 'Regulatory & Trademark'),
+                Tab(
+                  text: isAr
+                      ? 'الحدود التنظيمية والعلامة'
+                      : 'Regulatory & Trademark',
+                ),
               ],
             ),
           ),
-          body: TabBarView(
-            children: [
-              _buildTermsTab(isAr),
-              _buildPrivacyTab(isAr),
-              _buildRegulatoryBoundariesTab(isAr),
-            ],
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 840),
+              child: TabBarView(
+                children: [
+                  _buildTermsTab(isAr),
+                  _buildPrivacyTab(isAr),
+                  _buildRegulatoryBoundariesTab(isAr),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -148,6 +172,25 @@ class LegalComplianceScreen extends StatelessWidget {
                   'Account Deletion Rights: Users may update their profile or permanently delete their account and KYC records in-app once any active or disputed worksite orders are closed.',
                 ],
         ),
+        const SizedBox(height: AppDimens.space16),
+        _buildInfoCard(
+          icon: Icons.map_outlined,
+          title: isAr
+              ? 'خدمات الخرائط والملاحة الجغرافية (Google Maps Platform)'
+              : 'Geolocation & Google Maps Platform Terms',
+          subtitle: isAr
+              ? 'البحث المكاني وحساب المسارات وروابط الملاحة الخارجية'
+              : 'Places Autocomplete, Route Estimation & External Navigation',
+          points: isAr
+              ? const [
+                  'يدمج التطبيق ميزات البحث الجغرافي وحساب المسارات وروابط التوجيه من Google Maps Platform، ويخضع استخدامها لشروط خدمة Google Maps الإضافية للمستخدم النهائي (maps.google.com/help/terms_maps) وسياسة خصوصية Google (policies.google.com/privacy).',
+                  'لا يتم تتبع الموقع الجغرافي في الخلفية دون إذن صريح وقابل للإلغاء من المستخدم، ولا تُستخدم بيانات الخرائط لتدريب أي نماذج ذكاء اصطناعي.',
+                ]
+              : const [
+                  'This application integrates Google Maps Platform features governed by the Google Maps/Google Earth Additional Terms of Service (maps.google.com/help/terms_maps) and the Google Privacy Policy (policies.google.com/privacy).',
+                  'Location lookup requires explicit, revocable user consent, and Google Maps Content is never cached beyond permitted session scope or used for model training.',
+                ],
+        ),
       ],
     );
   }
@@ -160,13 +203,17 @@ class LegalComplianceScreen extends StatelessWidget {
           padding: const EdgeInsets.all(AppDimens.space16),
           decoration: BoxDecoration(
             color: AppColors.tealSurface,
-            borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.teal.withValues(alpha: 0.3)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.info_outline_rounded, color: AppColors.teal, size: 30),
+              const Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.teal,
+                size: 28,
+              ),
               const SizedBox(width: AppDimens.space12),
               Expanded(
                 child: Column(
@@ -176,12 +223,15 @@ class LegalComplianceScreen extends StatelessWidget {
                       isAr
                           ? 'الإفصاح التنظيمي وحدود المرحلة التجريبية'
                           : 'Regulatory Disclosure & Pilot Scope Boundaries',
-                      style: AppTypography.title(color: AppColors.teal).copyWith(fontSize: 16),
+                      style: AppTypography.title(color: AppColors.teal)
+                          .copyWith(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       AppEnvironment.pilotScopeDisclaimer(isArabic: isAr),
-                      style: AppTypography.bodySecondary(color: AppColors.textPrimary),
+                      style: AppTypography.bodySecondary(
+                        color: AppColors.textPrimary,
+                      ).copyWith(height: 1.5),
                     ),
                   ],
                 ),
@@ -196,8 +246,8 @@ class LegalComplianceScreen extends StatelessWidget {
               ? 'الخدمات المؤجلة لحين استكمال التراخيص (MoT / QCB)'
               : 'Deferred Modules Pending Licensing (MoT / QCB)',
           subtitle: isAr
-              ? 'معطّلة برمجياً بالكامل في إصدار المرحلة الأولى'
-              : 'Hard-disabled in Phase 1 software configuration',
+              ? 'ضوابط النطاق التشغيلي والتراخيص التنظيمية'
+              : 'Operational scope & regulatory licensing boundaries',
           points: isAr
               ? [
                   AppEnvironment.passengerTransportNoticeAr,
@@ -240,6 +290,8 @@ class LegalComplianceScreen extends StatelessWidget {
     return MashwarFadeSlideIn(
       offsetY: 10,
       child: MashwarSectionCard(
+        borderRadius: 16,
+        borderColor: AppColors.slateBorder,
         padding: const EdgeInsets.all(AppDimens.space16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +302,7 @@ class LegalComplianceScreen extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: AppColors.teal.withValues(alpha: 0.1),
+                    color: AppColors.tealSurface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: AppColors.teal, size: 22),
@@ -262,18 +314,26 @@ class LegalComplianceScreen extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: AppTypography.title().copyWith(fontSize: 16),
+                        style: AppTypography.title().copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: AppTypography.label(color: AppColors.textSecondary),
+                        style:
+                            AppTypography.label(color: AppColors.textSecondary),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            const Divider(height: AppDimens.space24, color: AppColors.borderDisabled),
+            const Divider(
+              height: AppDimens.space24,
+              color: AppColors.slateBorder,
+            ),
             ...points.map(
               (point) => Padding(
                 padding: const EdgeInsets.only(bottom: AppDimens.space12),
@@ -282,13 +342,19 @@ class LegalComplianceScreen extends StatelessWidget {
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(top: 6),
-                      child: Icon(Icons.check_circle, size: 16, color: AppColors.teal),
+                      child: Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: AppColors.teal,
+                      ),
                     ),
                     const SizedBox(width: AppDimens.space8),
                     Expanded(
                       child: Text(
                         point,
-                        style: AppTypography.bodySecondary(color: AppColors.textPrimary).copyWith(height: 1.5),
+                        style: AppTypography.bodySecondary(
+                          color: AppColors.textPrimary,
+                        ).copyWith(height: 1.5),
                       ),
                     ),
                   ],
@@ -302,7 +368,7 @@ class LegalComplianceScreen extends StatelessWidget {
   }
 }
 
-/// 2. Backend API Readiness & Data Contracts Inspector Screen
+/// 2. Backend API Readiness, Google Maps Platform Config & Data Contracts Inspector Screen
 class BackendReadinessScreen extends StatefulWidget {
   const BackendReadinessScreen({super.key});
 
@@ -314,12 +380,60 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
   final TextEditingController _baseUrlController = TextEditingController(
     text: ApiEndpoints.baseUrl,
   );
+  final TextEditingController _mapsApiKeyController = TextEditingController();
+
   String _selectedModelPreview = 'UserModel';
   bool _isTestingEndpoint = false;
+  bool _obscureMapsKey = true;
+  bool _isTestingMapsRoute = false;
+  int _selectedCorridorIndex = 0;
+  RouteDetails? _testedRouteDetails;
+
+  static const List<({String from, String to, String labelAr, String labelEn})>
+      _corridorPresets = [
+    (
+      from: 'الدوحة',
+      to: 'الخور',
+      labelAr: 'الدوحة ← الخور',
+      labelEn: 'Doha → Al Khor',
+    ),
+    (
+      from: 'الدوحة',
+      to: 'دخان',
+      labelAr: 'الدوحة ← دخان',
+      labelEn: 'Doha → Dukhan',
+    ),
+    (
+      from: 'لوسيل',
+      to: 'مسيعيد',
+      labelAr: 'لوسيل ← مسيعيد',
+      labelEn: 'Lusail → Mesaieed',
+    ),
+    (
+      from: 'المنطقة الصناعية',
+      to: 'رأس لفان',
+      labelAr: 'الصناعية ← رأس لفان',
+      labelEn: 'Industrial → Ras Laffan',
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final preset = _corridorPresets[_selectedCorridorIndex];
+    _testedRouteDetails = GoogleMapsService.estimateRouteSync(
+      preset.from,
+      preset.to,
+    );
+    GoogleMapsService.loadRuntimeApiKey().then((_) {
+      if (mounted) setState(() {});
+    });
+  }
 
   @override
   void dispose() {
     _baseUrlController.dispose();
+    _mapsApiKeyController.dispose();
     super.dispose();
   }
 
@@ -350,28 +464,107 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
     );
     if (!mounted) return;
     setState(() => _isTestingEndpoint = false);
+    final isAr = context.read<SettingsProvider?>()?.isArabic ?? true;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('تم تسجيل طلب $method $path بنجاح في سجل API'),
+        content: Text(
+          isAr
+              ? 'تم تسجيل طلب $method $path بنجاح في سجل API'
+              : 'Recorded $method $path in live API log',
+        ),
         backgroundColor: AppColors.teal,
       ),
     );
   }
 
+  Future<void> _saveRuntimeMapsKey(bool isAr) async {
+    final candidate = _mapsApiKeyController.text.trim();
+    if (candidate.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isAr
+                ? 'أدخل مفتاح GOOGLE_MAPS_API_KEY أولاً للحفظ.'
+                : 'Enter a GOOGLE_MAPS_API_KEY value first.',
+          ),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+    await GoogleMapsService.setRuntimeApiKey(candidate);
+    _mapsApiKeyController.clear();
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isAr
+              ? 'تم حفظ مفتاح Google Maps محلياً وتفعيل Places API (New) و Routes API.'
+              : 'Runtime Google Maps API key saved locally and activated.',
+        ),
+        backgroundColor: AppColors.teal,
+      ),
+    );
+    await _runLiveRouteTest();
+  }
+
+  Future<void> _clearRuntimeMapsKey(bool isAr) async {
+    await GoogleMapsService.clearRuntimeApiKey();
+    _mapsApiKeyController.clear();
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isAr
+              ? 'تم مسح مفتاح Google Maps المحلي والعودة لمحرك الخرائط المدمج.'
+              : 'Cleared runtime Google Maps key; using built-in Geo Engine.',
+        ),
+        backgroundColor: AppColors.navy,
+      ),
+    );
+  }
+
+  Future<void> _runLiveRouteTest() async {
+    setState(() => _isTestingMapsRoute = true);
+    final preset = _corridorPresets[_selectedCorridorIndex];
+    try {
+      final result = await AppRepositories.instance.maps.getRouteDetails(
+        preset.from,
+        preset.to,
+      );
+      if (!mounted) return;
+      setState(() {
+        _testedRouteDetails = result;
+        _isTestingMapsRoute = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isTestingMapsRoute = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider?>()?.isArabic ?? true;
-    final prettyJson = const JsonEncoder.withIndent('  ').convert(_getSampleJson(context));
+    final prettyJson =
+        const JsonEncoder.withIndent('  ').convert(_getSampleJson(context));
     final logs = MashwarApiClient.instance.recentLogs;
 
     return Directionality(
       textDirection: isAr ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: const Color(0xFFFCFCFD),
+        backgroundColor: AppColors.slateBg,
         appBar: AppBar(
           title: Text(
-            isAr ? 'جاهزية الباك إند وواجهات API' : 'Backend API & JSON Contracts',
-            style: AppTypography.title(),
+            isAr
+                ? 'جاهزية الباك إند وواجهات API'
+                : 'Backend API & JSON Contracts',
+            style: AppTypography.title().copyWith(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           backgroundColor: Colors.white,
           elevation: 0,
@@ -380,326 +573,923 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
             icon: const Icon(
               Icons.arrow_back_ios_new_rounded,
               color: AppColors.navy,
+              size: 19,
             ),
             onPressed: () => Navigator.pop(context),
           ),
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(AppDimens.space16),
-          children: [
-            // Banner
-            Container(
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 860),
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppDimens.space16),
-              decoration: BoxDecoration(
-                color: AppColors.tealSurface,
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                border: Border.all(color: AppColors.teal),
-              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
+                // 1. Architecture Readiness Banner
+                Container(
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  decoration: BoxDecoration(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: AppColors.teal.withValues(alpha: 0.4)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.cloud_done_outlined, color: AppColors.teal),
-                      const SizedBox(width: AppDimens.space8),
-                      Expanded(
-                        child: Text(
-                          'التطبيق جاهز للربط المباشر مع الباك إند (REST / JSON)',
-                          style: AppTypography.title(color: AppColors.teal).copyWith(fontSize: 16),
-                        ),
-                      ),
-                      const MashwarBadge(customLabel: 'Ready v1', type: BadgeType.verified),
-                    ],
-                  ),
-                  const SizedBox(height: AppDimens.space8),
-                  Text(
-                    'جميع الـ Models مزودة بـ fromJson / toJson / copyWith، مع طبقة MashwarApiClient و ApiEndpoints الموحدة وحفظ التوكن JWT.',
-                    style: AppTypography.bodySecondary(color: AppColors.textPrimary),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.space16),
-
-            // Base URL Config
-            Container(
-              padding: const EdgeInsets.all(AppDimens.space16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                border: Border.all(color: AppColors.borderDisabled),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('عنوان الخادم الأساسي (API Base URL)', style: AppTypography.title().copyWith(fontSize: 16)),
-                  const SizedBox(height: AppDimens.space8),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: TextField(
-                      controller: _baseUrlController,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: AppColors.surfaceLight,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppDimens.radiusField),
-                        ),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.copy, size: 18),
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: _baseUrlController.text));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('تم نسخ رابط الـ API الأساسي')),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.space16),
-
-            // JSON Model Contract Inspector
-            Container(
-              padding: const EdgeInsets.all(AppDimens.space16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                border: Border.all(color: AppColors.borderDisabled),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('معاينة عقود البيانات (JSON Schema)', style: AppTypography.title().copyWith(fontSize: 16)),
-                      IconButton(
-                        icon: const Icon(Icons.copy_all_outlined, color: AppColors.teal),
-                        tooltip: 'نسخ JSON',
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: prettyJson));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('تم نسخ JSON الخاص بـ $_selectedModelPreview')),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppDimens.space8),
-                  Wrap(
-                    spacing: AppDimens.space8,
-                    children: ['UserModel', 'RideModel', 'ParcelModel', 'BoardAdModel'].map((model) {
-                      final selected = _selectedModelPreview == model;
-                      return ChoiceChip(
-                        label: Text(model),
-                        selected: selected,
-                        selectedColor: AppColors.tealSurface,
-                        labelStyle: TextStyle(
-                          color: selected ? AppColors.teal : AppColors.textSecondary,
-                          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                        onSelected: (_) => setState(() => _selectedModelPreview = model),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: AppDimens.space12),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(AppDimens.space12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0F172A),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: SelectableText(
-                        prettyJson,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          color: Color(0xFF38BDF8),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.space16),
-
-            // Endpoints List & Quick Test
-            Container(
-              padding: const EdgeInsets.all(AppDimens.space16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                border: Border.all(color: AppColors.borderDisabled),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('نقاط الاتصال الجاهزة (REST Endpoints)', style: AppTypography.title().copyWith(fontSize: 16)),
-                  const SizedBox(height: AppDimens.space12),
-                  _buildEndpointRow('POST', ApiEndpoints.sendPhoneOtp, 'إرسال رمز التحقق OTP'),
-                  _buildEndpointRow('POST', ApiEndpoints.verifyOtp, 'تأكيد OTP وإصدار JWT'),
-                  _buildEndpointRow('GET', ApiEndpoints.userProfile, 'جلب وتحديث ملف المستخدم'),
-                  _buildEndpointRow('GET', ApiEndpoints.searchRides, 'البحث عن الرحلات المتاحة'),
-                  _buildEndpointRow('POST', ApiEndpoints.publishRide, 'نشر رحلة سائق جديدة'),
-                  _buildEndpointRow('POST', ApiEndpoints.bookings, 'إنشاء حجز مقعد وتأكيد الدفع'),
-                  _buildEndpointRow('POST', ApiEndpoints.parcels, 'إنشاء طلب إرسال طرد مع كود استلام'),
-                  _buildEndpointRow('GET', ApiEndpoints.boardAds, 'جلب ونشر إعلانات لوحة المشاوير'),
-                  _buildEndpointRow('POST', ApiEndpoints.walletDeposit, 'شحن وسحب رصيد المحفظة'),
-                  _buildEndpointRow('GET', ApiEndpoints.adminKpiStats, 'إحصائيات وتقارير لوحة الإدارة'),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.space16),
-
-            // Live API Request Log
-            Container(
-              padding: const EdgeInsets.all(AppDimens.space16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                border: Border.all(color: AppColors.borderDisabled),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('سجل طلبات الشبكة الحية (${logs.length})', style: AppTypography.title().copyWith(fontSize: 16)),
-                  const SizedBox(height: AppDimens.space8),
-                  MashwarButton(
-                    text: 'اختبار طلب حي (GET /rides/search)',
-                    variant: MashwarButtonVariant.secondary,
-                    isLoading: _isTestingEndpoint,
-                    onPressed: () => _simulateEndpointCall('GET', ApiEndpoints.searchRides),
-                  ),
-                  const SizedBox(height: AppDimens.space12),
-                  if (logs.isEmpty)
-                    Text(
-                      'اضغط "اختبار طلب حي" أو أي نقطة اتصال بالأعلى لمعاينة سجل الطلبات.',
-                      style: AppTypography.bodySecondary(),
-                    )
-                  else
-                    ...logs.take(5).map(
-                          (log) => Padding(
-                            padding: const EdgeInsets.only(bottom: AppDimens.space8),
-                            child: Directionality(
-                              textDirection: TextDirection.ltr,
-                              child: Container(
-                                padding: const EdgeInsets.all(AppDimens.space8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceLight,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.teal,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        log.method,
-                                        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        log.path,
-                                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-                                      ),
-                                    ),
-                                    Text(
-                                      '${log.statusCode}',
-                                      style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.bold, fontSize: 12),
-                                    ),
-                                  ],
-                                ),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.cloud_done_outlined,
+                            color: AppColors.teal,
+                          ),
+                          const SizedBox(width: AppDimens.space8),
+                          Expanded(
+                            child: Text(
+                              isAr
+                                  ? 'التطبيق جاهز للربط المباشر مع الباك إند (Firebase / REST / Google Maps)'
+                                  : 'Production-Ready Backend, Firebase & Google Maps Layer',
+                              style: AppTypography.title(color: AppColors.teal)
+                                  .copyWith(
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                           ),
-                        ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppDimens.space16),
-
-            // System State Screens Inspector (معاينة حالات النظام والاستجابة)
-            Container(
-              padding: const EdgeInsets.all(AppDimens.space16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-                border: Border.all(color: AppColors.borderDisabled),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isAr ? 'معاينة شاشات وحالات النظام (System States)' : 'System State Screens Preview',
-                    style: AppTypography.title().copyWith(fontSize: 16),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isAr
-                        ? 'تتيح هذه اللوحة فحص استجابة الواجهة لكل الحالات الاستثنائية كالتحديث والصيانة وانقطاع الاتصال.'
-                        : 'Inspect how the application behaves under force updates, maintenance, offline mode, and expired sessions.',
-                    style: AppTypography.bodySecondary(),
-                  ),
-                  const SizedBox(height: AppDimens.space16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      ActionChip(
-                        avatar: const Icon(Icons.arrow_upward_rounded, size: 16, color: AppColors.navy),
-                        label: Text(isAr ? 'تحديث إجباري' : 'Force Update'),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const ForceUpdateScreen()),
-                        ),
+                          const MashwarBadge(
+                            customLabel: 'Ready v1',
+                            type: BadgeType.verified,
+                          ),
+                        ],
                       ),
-                      ActionChip(
-                        avatar: const Icon(Icons.build_circle_outlined, size: 16, color: AppColors.navy),
-                        label: Text(isAr ? 'شاشة الصيانة' : 'Maintenance'),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const MaintenanceScreen()),
-                        ),
-                      ),
-                      ActionChip(
-                        avatar: const Icon(Icons.wifi_off_rounded, size: 16, color: AppColors.navy),
-                        label: Text(isAr ? 'انقطاع الاتصال' : 'Offline Mode'),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const OfflineScreen()),
-                        ),
-                      ),
-                      ActionChip(
-                        avatar: const Icon(Icons.error_outline_rounded, size: 16, color: AppColors.coral),
-                        label: Text(isAr ? 'خطأ عام' : 'General Error'),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const GeneralErrorScreen()),
-                        ),
-                      ),
-                      ActionChip(
-                        avatar: const Icon(Icons.lock_clock_rounded, size: 16, color: AppColors.navy),
-                        label: Text(isAr ? 'انتهاء الجلسة' : 'Session Expired'),
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const SessionExpiredScreen()),
+                      const SizedBox(height: AppDimens.space8),
+                      Text(
+                        isAr
+                            ? 'جميع الـ Models مزودة بـ fromJson / toJson / copyWith، مع طبقة MashwarApiClient و GoogleMapsService الموحدة.'
+                            : 'All models expose strict JSON contracts alongside MashwarApiClient, Firebase repositories, and GoogleMapsService.',
+                        style: AppTypography.bodySecondary(
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
+                const SizedBox(height: AppDimens.space16),
+
+                // 2. Base URL Config
+                MashwarSectionCard(
+                  borderRadius: 16,
+                  borderColor: AppColors.slateBorder,
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isAr
+                            ? 'عنوان الخادم الأساسي (API Base URL)'
+                            : 'Primary REST API Base URL',
+                        style: AppTypography.title().copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.space8),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: TextField(
+                          controller: _baseUrlController,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 13,
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: AppColors.slateBg,
+                            border: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppDimens.radiusField),
+                              borderSide:
+                                  const BorderSide(color: AppColors.slateBorder),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppDimens.radiusField),
+                              borderSide:
+                                  const BorderSide(color: AppColors.slateBorder),
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.copy, size: 18),
+                              onPressed: () {
+                                Clipboard.setData(
+                                  ClipboardData(text: _baseUrlController.text),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      isAr
+                                          ? 'تم نسخ رابط الـ API الأساسي'
+                                          : 'API Base URL copied',
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space16),
+
+                // 3. JSON Model Contract Inspector (kept above-the-fold for instant inspection)
+                MashwarSectionCard(
+                  borderRadius: 16,
+                  borderColor: AppColors.slateBorder,
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              isAr
+                                  ? 'معاينة عقود البيانات (JSON Schema)'
+                                  : 'Data Contract Inspector (JSON Schema)',
+                              style: AppTypography.title().copyWith(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.copy_all_outlined,
+                              color: AppColors.teal,
+                            ),
+                            tooltip: isAr ? 'نسخ JSON' : 'Copy JSON',
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: prettyJson));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isAr
+                                        ? 'تم نسخ JSON الخاص بـ $_selectedModelPreview'
+                                        : 'Copied $_selectedModelPreview JSON',
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppDimens.space8),
+                      Wrap(
+                        spacing: AppDimens.space8,
+                        runSpacing: 6,
+                        children: [
+                          'UserModel',
+                          'RideModel',
+                          'ParcelModel',
+                          'BoardAdModel',
+                        ].map((model) {
+                          final selected = _selectedModelPreview == model;
+                          return ChoiceChip(
+                            label: Text(model),
+                            selected: selected,
+                            selectedColor: AppColors.tealSurface,
+                            labelStyle: TextStyle(
+                              color: selected
+                                  ? AppColors.teal
+                                  : AppColors.textSecondary,
+                              fontWeight:
+                                  selected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            onSelected: (_) =>
+                                setState(() => _selectedModelPreview = model),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: AppDimens.space12),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(AppDimens.space12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F172A),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: SelectableText(
+                            prettyJson,
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              color: Color(0xFF38BDF8),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space16),
+
+                // 4. Interactive Google Maps Platform Configuration & Live Route Test Card
+                _buildGoogleMapsConfigCard(context, isAr),
+                const SizedBox(height: AppDimens.space16),
+
+                // 5. Endpoints List & Quick Test
+                MashwarSectionCard(
+                  borderRadius: 16,
+                  borderColor: AppColors.slateBorder,
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isAr
+                            ? 'نقاط الاتصال الجاهزة (REST Endpoints)'
+                            : 'Ready REST Endpoints',
+                        style: AppTypography.title().copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.space12),
+                      _buildEndpointRow(
+                        'POST',
+                        ApiEndpoints.sendPhoneOtp,
+                        isAr ? 'إرسال رمز التحقق OTP' : 'Send Phone OTP',
+                      ),
+                      _buildEndpointRow(
+                        'POST',
+                        ApiEndpoints.verifyOtp,
+                        isAr
+                            ? 'تأكيد OTP وإصدار JWT'
+                            : 'Verify OTP & Mint JWT',
+                      ),
+                      _buildEndpointRow(
+                        'GET',
+                        ApiEndpoints.userProfile,
+                        isAr
+                            ? 'جلب وتحديث ملف المستخدم'
+                            : 'Fetch & Update User Profile',
+                      ),
+                      _buildEndpointRow(
+                        'GET',
+                        ApiEndpoints.searchRides,
+                        isAr
+                            ? 'البحث عن الرحلات المتاحة'
+                            : 'Search Available Trips',
+                      ),
+                      _buildEndpointRow(
+                        'POST',
+                        ApiEndpoints.publishRide,
+                        isAr
+                            ? 'نشر رحلة سائق جديدة'
+                            : 'Publish Traveler Trip',
+                      ),
+                      _buildEndpointRow(
+                        'POST',
+                        ApiEndpoints.bookings,
+                        isAr
+                            ? 'إنشاء حجز مقعد وتأكيد الدفع'
+                            : 'Create Seat Booking',
+                      ),
+                      _buildEndpointRow(
+                        'POST',
+                        ApiEndpoints.parcels,
+                        isAr
+                            ? 'إنشاء طلب إرسال طرد مع كود استلام'
+                            : 'Create Parcel Request with OTP',
+                      ),
+                      _buildEndpointRow(
+                        'GET',
+                        ApiEndpoints.boardAds,
+                        isAr
+                            ? 'جلب ونشر إعلانات لوحة المشاوير'
+                            : 'List & Publish Route Ads',
+                      ),
+                      _buildEndpointRow(
+                        'POST',
+                        ApiEndpoints.walletDeposit,
+                        isAr
+                            ? 'شحن وسحب رصيد المحفظة'
+                            : 'Wallet Ledger Operations',
+                      ),
+                      _buildEndpointRow(
+                        'GET',
+                        ApiEndpoints.adminKpiStats,
+                        isAr
+                            ? 'إحصائيات وتقارير لوحة الإدارة'
+                            : 'Admin KPI & Operations Metrics',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space16),
+
+                // 6. Live API Request Log
+                MashwarSectionCard(
+                  borderRadius: 16,
+                  borderColor: AppColors.slateBorder,
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isAr
+                            ? 'سجل طلبات الشبكة الحية (${logs.length})'
+                            : 'Live Network Request Log (${logs.length})',
+                        style: AppTypography.title().copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.space8),
+                      MashwarButton(
+                        text: isAr
+                            ? 'اختبار طلب حي (GET /rides/search)'
+                            : 'Simulate Request (GET /rides/search)',
+                        variant: MashwarButtonVariant.secondary,
+                        isLoading: _isTestingEndpoint,
+                        onPressed: () => _simulateEndpointCall(
+                          'GET',
+                          ApiEndpoints.searchRides,
+                        ),
+                      ),
+                      const SizedBox(height: AppDimens.space12),
+                      if (logs.isEmpty)
+                        Text(
+                          isAr
+                              ? 'اضغط "اختبار طلب حي" أو أي نقطة اتصال بالأعلى لمعاينة سجل الطلبات.'
+                              : 'Tap "Simulate Request" or any endpoint above to inspect live logs.',
+                          style: AppTypography.bodySecondary(),
+                        )
+                      else
+                        ...logs.take(5).map(
+                              (log) => Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: AppDimens.space8,
+                                ),
+                                child: Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: Container(
+                                    padding:
+                                        const EdgeInsets.all(AppDimens.space8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.slateBg,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: AppColors.slateBorder,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.teal,
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            log.method,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            log.path,
+                                            style: const TextStyle(
+                                              fontFamily: 'monospace',
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                        Text(
+                                          '${log.statusCode}',
+                                          style: const TextStyle(
+                                            color: AppColors.success,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppDimens.space16),
+
+                // 7. System State Screens Inspector
+                MashwarSectionCard(
+                  borderRadius: 16,
+                  borderColor: AppColors.slateBorder,
+                  padding: const EdgeInsets.all(AppDimens.space16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isAr
+                            ? 'معاينة شاشات وحالات النظام (System States)'
+                            : 'System State Screens Preview',
+                        style: AppTypography.title().copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        isAr
+                            ? 'تتيح هذه اللوحة فحص استجابة الواجهة لكل الحالات الاستثنائية كالتحديث والصيانة وانقطاع الاتصال.'
+                            : 'Inspect how the application behaves under force updates, maintenance, offline mode, and expired sessions.',
+                        style: AppTypography.bodySecondary(),
+                      ),
+                      const SizedBox(height: AppDimens.space16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ActionChip(
+                            avatar: const Icon(
+                              Icons.arrow_upward_rounded,
+                              size: 16,
+                              color: AppColors.navy,
+                            ),
+                            label:
+                                Text(isAr ? 'تحديث إجباري' : 'Force Update'),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ForceUpdateScreen(),
+                              ),
+                            ),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(
+                              Icons.build_circle_outlined,
+                              size: 16,
+                              color: AppColors.navy,
+                            ),
+                            label: Text(isAr ? 'شاشة الصيانة' : 'Maintenance'),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const MaintenanceScreen(),
+                              ),
+                            ),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(
+                              Icons.wifi_off_rounded,
+                              size: 16,
+                              color: AppColors.navy,
+                            ),
+                            label:
+                                Text(isAr ? 'انقطاع الاتصال' : 'Offline Mode'),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const OfflineScreen(),
+                              ),
+                            ),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(
+                              Icons.error_outline_rounded,
+                              size: 16,
+                              color: AppColors.coral,
+                            ),
+                            label: Text(isAr ? 'خطأ عام' : 'General Error'),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const GeneralErrorScreen(),
+                              ),
+                            ),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(
+                              Icons.lock_clock_rounded,
+                              size: 16,
+                              color: AppColors.navy,
+                            ),
+                            label: Text(
+                              isAr ? 'انتهاء الجلسة' : 'Session Expired',
+                            ),
+                            onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const SessionExpiredScreen(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
               ),
             ),
-          ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleMapsConfigCard(BuildContext context, bool isAr) {
+    final hasKey = GoogleMapsService.hasActiveApiKey;
+    final hasRuntime = GoogleMapsService.hasRuntimeApiKey;
+    final hasCompileTime = GoogleMapsService.hasCompileTimeApiKey;
+    final maskedKey = GoogleMapsService.maskedActiveApiKey;
+    final preset = _corridorPresets[_selectedCorridorIndex];
+    final route = _testedRouteDetails ??
+        GoogleMapsService.estimateRouteSync(preset.from, preset.to);
+    final directionsUrl =
+        GoogleMapsService.buildDirectionsUrl(preset.from, preset.to);
+
+    final statusLabel = hasRuntime
+        ? (isAr ? 'مفتاح تشغيلي مفعّل' : 'Runtime Key Active')
+        : (hasCompileTime
+            ? (isAr ? 'مفتاح بناء مفعّل' : 'Compile-Time Key Active')
+            : (isAr ? 'المحرك الجغرافي المدمج' : 'Built-in Geo Engine'));
+
+    return Container(
+      key: const ValueKey('backend_gmaps_config_card'),
+      padding: const EdgeInsets.all(AppDimens.space16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: hasKey
+              ? AppColors.teal.withValues(alpha: 0.45)
+              : AppColors.slateBorder,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: hasKey ? AppColors.tealSurface : AppColors.sand,
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(
+                      Icons.map_rounded,
+                      color: hasKey ? AppColors.teal : AppColors.navy,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isAr
+                              ? 'إعدادات Google Maps Platform واختبار المسارات'
+                              : 'Google Maps Platform Config & Live Route Tester',
+                          style: AppTypography.title().copyWith(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Places API (New) v1 · Routes API v2 · Maps URLs',
+                          style: AppTypography.label(
+                            color: AppColors.textSecondary,
+                          ).copyWith(fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              MashwarBadge(
+                type: hasKey ? BadgeType.verified : BadgeType.confirmed,
+                customLabel: statusLabel,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            hasKey
+                ? (isAr
+                    ? 'المفتاح النشط ($maskedKey) جاهز لطلبات Places API (New) عبر POST و Routes API v2 مع تراجع آمن تلقائي.'
+                    : 'Active key ($maskedKey) is wired to Places API (New) POST & Routes API v2 with automatic resilient fallback.')
+                : (isAr
+                    ? 'يعمل التطبيق حالياً بمحرك قطر والخليج المدمج (Haversine + المحاور السريعة) وروابط الملاحة الرسمية. يمكنك لصق مفتاح GOOGLE_MAPS_API_KEY أدناه للتفعيل الفوري وقت التشغيل دون إعادة بناء.'
+                    : 'Currently running on the built-in Qatar & GCC Geo Engine + official Maps URLs. Paste a GOOGLE_MAPS_API_KEY below to enable live Places API (New) & Routes API at runtime.'),
+            style: AppTypography.bodySmall(color: AppColors.textSecondary)
+                .copyWith(height: 1.45),
+          ),
+          const SizedBox(height: 12),
+
+          // Runtime API Key Input (Never hardcodes secrets; obscured by default)
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: TextField(
+              key: const ValueKey('backend_gmaps_api_key_input'),
+              controller: _mapsApiKeyController,
+              obscureText: _obscureMapsKey,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12.5),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.slateBg,
+                hintText: 'AIza... (GOOGLE_MAPS_API_KEY)',
+                prefixIcon: const Icon(
+                  Icons.vpn_key_outlined,
+                  size: 18,
+                  color: AppColors.navy,
+                ),
+                suffixIcon: IconButton(
+                  tooltip: _obscureMapsKey ? 'Show' : 'Hide',
+                  icon: Icon(
+                    _obscureMapsKey
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    size: 18,
+                  ),
+                  onPressed: () =>
+                      setState(() => _obscureMapsKey = !_obscureMapsKey),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.slateBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: AppColors.slateBorder),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ElevatedButton.icon(
+                key: const ValueKey('backend_gmaps_save_key_btn'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.navy,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () => _saveRuntimeMapsKey(isAr),
+                icon: const Icon(Icons.save_outlined, size: 16),
+                label: Text(
+                  isAr ? 'حفظ وتفعيل المفتاح' : 'Save Runtime Key',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Cairo',
+                  ),
+                ),
+              ),
+              if (hasRuntime)
+                OutlinedButton.icon(
+                  key: const ValueKey('backend_gmaps_clear_key_btn'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.danger,
+                    side: const BorderSide(color: AppColors.slateBorder),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () => _clearRuntimeMapsKey(isAr),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 16),
+                  label: Text(
+                    isAr ? 'مسح المفتاح المحلي' : 'Clear Saved Key',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      fontFamily: 'Cairo',
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isAr
+                ? 'تنبيه أمان وتكلفة: قيّد مفتاح الإنتاج بنطاق HTTP Referrer أو حزمة qa.mashwar.app وواجهات Places API (New) و Routes API. قد يترتب على الاستخدام الفعلي رسوم فوترة على حساب Google Cloud.'
+                : 'Security & Billing Notice: Restrict production keys by HTTP referrer / qa.mashwar.app bundle ID and limit to Places API (New) & Routes API. Google Maps Platform usage may incur Google Cloud billing costs.',
+            style: AppTypography.label(color: AppColors.textSecondary)
+                .copyWith(fontSize: 10.5, height: 1.4),
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: AppColors.slateBorder),
+          ),
+
+          // Live Corridor Tester
+          Text(
+            isAr
+                ? 'اختبار حساب المسار والمحور السريع المباشر'
+                : 'Live Corridor & Highway Route Tester',
+            style: AppTypography.body(color: AppColors.navy)
+                .copyWith(fontWeight: FontWeight.w700, fontSize: 13.5),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: List.generate(_corridorPresets.length, (idx) {
+              final item = _corridorPresets[idx];
+              final selected = _selectedCorridorIndex == idx;
+              return ChoiceChip(
+                key: ValueKey('backend_gmaps_preset_$idx'),
+                label: Text(isAr ? item.labelAr : item.labelEn),
+                selected: selected,
+                selectedColor: AppColors.tealSurface,
+                labelStyle: TextStyle(
+                  fontSize: 11.5,
+                  color: selected ? AppColors.tealDark : AppColors.navy,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+                onSelected: (_) {
+                  setState(() {
+                    _selectedCorridorIndex = idx;
+                    _testedRouteDetails = GoogleMapsService.estimateRouteSync(
+                      item.from,
+                      item.to,
+                    );
+                  });
+                  _runLiveRouteTest();
+                },
+              );
+            }),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.sand,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.slateBorder),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 6,
+                  children: [
+                    Text(
+                      isAr
+                          ? 'المسافة: ${route.distanceKm.round()} كم'
+                          : 'Distance: ${route.distanceKm.round()} km',
+                      style: AppTypography.body(color: AppColors.navy)
+                          .copyWith(fontWeight: FontWeight.w800, fontSize: 13),
+                    ),
+                    Text(
+                      isAr
+                          ? 'الزمن التقديري: ${route.durationMinutes} دقيقة'
+                          : 'Est. Time: ${route.durationMinutes} min',
+                      style: AppTypography.body(color: AppColors.teal)
+                          .copyWith(fontWeight: FontWeight.w800, fontSize: 13),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  route.corridorHighway(isArabic: isAr),
+                  style: AppTypography.label(color: AppColors.navy)
+                      .copyWith(fontWeight: FontWeight.w700, fontSize: 12),
+                ),
+                if (route.originLat != null && route.destLat != null) ...[
+                  const SizedBox(height: 3),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      '(${route.originLat!.toStringAsFixed(4)}, ${route.originLng!.toStringAsFixed(4)}) → (${route.destLat!.toStringAsFixed(4)}, ${route.destLng!.toStringAsFixed(4)})',
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      key: const ValueKey('backend_gmaps_test_route_btn'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: AppColors.slateBorder),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: _isTestingMapsRoute ? null : _runLiveRouteTest,
+                      icon: _isTestingMapsRoute
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.teal,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.refresh_rounded,
+                              size: 15,
+                              color: AppColors.teal,
+                            ),
+                      label: Text(
+                        isAr ? 'اختبار حساب المسار الحي' : 'Test Live Route',
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      key: const ValueKey('backend_gmaps_open_route_btn'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.navy,
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: AppColors.slateBorder),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () => launchMashwarGoogleMapsUrl(
+                        context,
+                        directionsUrl,
+                        isAr: isAr,
+                      ),
+                      icon: const Icon(
+                        Icons.navigation_rounded,
+                        size: 15,
+                        color: AppColors.teal,
+                      ),
+                      label: Text(
+                        isAr ? 'فتح في Google Maps' : 'Open in Google Maps',
+                        style: AppTypography.label(color: AppColors.navy)
+                            .copyWith(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -707,6 +1497,7 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
   Widget _buildEndpointRow(String method, String path, String description) {
     final isPost = method == 'POST';
     return InkWell(
+      borderRadius: BorderRadius.circular(8),
       onTap: () => _simulateEndpointCall(method, path),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppDimens.space8),
@@ -736,7 +1527,11 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
                     textDirection: TextDirection.ltr,
                     child: Text(
                       path,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   Text(
@@ -746,7 +1541,11 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
                 ],
               ),
             ),
-            const Icon(Icons.play_circle_outline, size: 20, color: AppColors.teal),
+            const Icon(
+              Icons.play_circle_outline,
+              size: 20,
+              color: AppColors.teal,
+            ),
           ],
         ),
       ),

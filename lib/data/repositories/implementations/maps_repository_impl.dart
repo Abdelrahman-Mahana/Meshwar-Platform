@@ -7,6 +7,10 @@ class MapsRepositoryImpl implements IMapsRepository {
   MapsRepositoryImpl({GoogleMapsService? googleMapsService})
       : _googleMapsService = googleMapsService ?? GoogleMapsService();
 
+  GoogleMapsService get service => _googleMapsService;
+
+  bool get hasConfiguredApiKey => _googleMapsService.hasConfiguredApiKey;
+
   @override
   Future<List<LocationSearchResult>> searchLocations(String query) {
     return _googleMapsService.searchPlaces(query);
