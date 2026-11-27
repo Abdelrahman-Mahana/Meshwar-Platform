@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -9,8 +8,9 @@ import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_handover_qr_panel.dart';
-import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../state/settings_provider.dart';
@@ -19,6 +19,9 @@ import '../safety/safety_screens.dart';
 
 /// Bilateral Anti-Fraud & Smart Service Escrow Screen ("نظام ضمان مشوار لحفظ حق الطرفين").
 class ServiceEscrowScreen extends StatefulWidget {
+  @visibleForTesting
+  static Future<bool> Function(Uri uri)? debugUrlLauncher;
+
   const ServiceEscrowScreen({
     super.key,
     this.ad,
@@ -55,40 +58,50 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
     BoardAdModel ad,
     bool isAr,
   ) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final origin = '${ad.fromCity.trim()}, Qatar';
-    final dest = '${ad.toCity.trim()}, Qatar';
-    final buffer = StringBuffer(
-      'https://www.google.com/maps/dir/?api=1'
-      '&origin=${Uri.encodeComponent(origin)}'
-      '&destination=${Uri.encodeComponent(dest)}',
-    );
-    if (ad.stopoverCity != null && ad.stopoverCity!.trim().isNotEmpty) {
-      buffer.write(
-        '&waypoints=${Uri.encodeComponent('${ad.stopoverCity!.trim()}, Qatar')}',
+    final override = ServiceEscrowScreen.debugUrlLauncher ??
+        EmergencySosSheet.debugUrlLauncher;
+    if (override != null) {
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      final origin = '${ad.fromCity.trim()}, Qatar';
+      final dest = '${ad.toCity.trim()}, Qatar';
+      final buffer = StringBuffer(
+        'https://www.google.com/maps/dir/?api=1'
+        '&origin=${Uri.encodeComponent(origin)}'
+        '&destination=${Uri.encodeComponent(dest)}',
       );
-    }
-    buffer.write('&travelmode=driving');
-    final url = buffer.toString();
+      if (ad.stopoverCity != null && ad.stopoverCity!.trim().isNotEmpty) {
+        buffer.write(
+          '&waypoints=${Uri.encodeComponent('${ad.stopoverCity!.trim()}, Qatar')}',
+        );
+      }
+      buffer.write('&travelmode=driving');
+      final url = buffer.toString();
 
-    final launched = await launchMashwarExternalUri(
-      Uri.parse(url),
-      mode: LaunchMode.externalApplication,
-    );
-
-    if (!launched) {
-      await Clipboard.setData(ClipboardData(text: url));
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text(
-            isAr
-                ? 'تم نسخ رابط المسار في Google Maps إلى الحافظة'
-                : 'Google Maps route link copied to clipboard',
+      final launched = await override(Uri.parse(url));
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: url));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              isAr
+                  ? 'تم نسخ رابط المسار في Google Maps إلى الحافظة'
+                  : 'Google Maps route link copied to clipboard',
+            ),
+            backgroundColor: AppColors.navy,
           ),
-          backgroundColor: AppColors.navy,
-        ),
-      );
+        );
+      }
+      return;
     }
+
+    await openMashwarInAppMap(
+      context,
+      origin: ad.fromCity,
+      destination: ad.toCity,
+      stopover: ad.stopoverCity,
+      titleAr: 'مسار الضمان · ${ad.fromCity} ← ${ad.toCity}',
+      titleEn: 'Escrow Route · ${ad.fromCity} → ${ad.toCity}',
+    );
   }
 
   void _releaseEscrowWithOtp(bool isAr) {
@@ -1030,86 +1043,75 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(
-                  height: 152,
-                  child: Stack(
-                    fit: StackFit.expand,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 6,
                     children: [
-                      QatarLiveMapCanvas(
-                        style: QatarMapStyle.routeFocused,
-                        activeFromCity: ad.fromCity,
-                        activeToCity: ad.toCity,
-                        borderRadius: 13,
-                      ),
-                      PositionedDirectional(
-                        top: 8,
-                        start: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.teal.withValues(alpha: 0.3),
                           ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.94),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AppColors.teal.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Text(
-                            isAr ? 'الوصول المتوقع ~22 د' : 'ETA ~22 min',
-                            style: AppTypography.label(color: AppColors.navy)
-                                .copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        ),
+                        child: Text(
+                          isAr ? 'الوصول المتوقع ~22 د' : 'ETA ~22 min',
+                          style: AppTypography.label(color: AppColors.navy)
+                              .copyWith(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      PositionedDirectional(
-                        top: 8,
-                        end: 8,
-                        child: Material(
-                          color: AppColors.navy,
-                          borderRadius: BorderRadius.circular(10),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MashwarPageRoute(
-                                  builder: (_) => ChatScreen(
-                                    driverName: ad.authorName,
-                                    driverCar: ad.timeText,
-                                    tripRoute: context.trRoute(ad.route),
+                      Material(
+                        color: AppColors.navy,
+                        borderRadius: BorderRadius.circular(10),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MashwarPageRoute(
+                                builder: (_) => ChatScreen(
+                                  driverName: ad.authorName,
+                                  driverCar: ad.timeText,
+                                  tripRoute: context.trRoute(ad.route),
+                                ),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 9,
+                              vertical: 5,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isAr ? 'محادثة' : 'Chat',
+                                  style: AppTypography.label(
+                                    color: Colors.white,
+                                  ).copyWith(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              );
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.chat_bubble_outline_rounded,
-                                    size: 12,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    isAr ? 'محادثة' : 'Chat',
-                                    style: AppTypography.label(
-                                      color: Colors.white,
-                                    ).copyWith(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              ],
                             ),
                           ),
                         ),
@@ -1118,10 +1120,21 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                   ),
                 ),
                 Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: MashwarEmbeddedGoogleMap(
+                    key: const ValueKey('escrow_embedded_gmap'),
+                    origin: ad.fromCity,
+                    destination: ad.toCity,
+                    stopover: ad.stopoverCity,
+                    height: 175,
+                    borderRadius: 12,
+                  ),
+                ),
+                Padding(
                   padding: const EdgeInsets.all(8),
                   child: SizedBox(
                     height: 36,
-                    child: OutlinedButton.icon(
+                    child: OutlinedButton(
                       key: const ValueKey('escrow_open_gmaps_btn'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
@@ -1134,19 +1147,27 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                       ),
                       onPressed: () =>
                           _openEscrowRouteInGoogleMaps(context, ad, isAr),
-                      icon: const Icon(
-                        Icons.map_outlined,
-                        size: 15,
-                        color: AppColors.teal,
-                      ),
-                      label: Text(
-                        isAr
-                            ? 'فتح المسار في Google Maps'
-                            : 'Open Route in Google Maps',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTypography.label(color: AppColors.navy)
-                            .copyWith(fontWeight: FontWeight.w700),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.map_outlined,
+                            size: 15,
+                            color: AppColors.teal,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              isAr
+                                  ? 'تكبير الخريطة داخل التطبيق'
+                                  : 'View Route Map In-App',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

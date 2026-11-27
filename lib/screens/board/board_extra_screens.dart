@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -10,6 +9,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/board_ad_model.dart';
 import '../../data/models/ride_model.dart';
@@ -29,40 +29,51 @@ Future<void> _openBoardRouteInGoogleMaps(
   String? stopoverCity,
   required bool isAr,
 }) async {
-  final messenger = ScaffoldMessenger.maybeOf(context);
-  final origin = '${fromCity.trim().isNotEmpty ? fromCity.trim() : 'الدوحة'}, Qatar';
-  final dest = '${toCity.trim().isNotEmpty ? toCity.trim() : 'الخور'}, Qatar';
-  final buffer = StringBuffer(
-    'https://www.google.com/maps/dir/?api=1'
-    '&origin=${Uri.encodeComponent(origin)}'
-    '&destination=${Uri.encodeComponent(dest)}',
-  );
-  if (stopoverCity != null && stopoverCity.trim().isNotEmpty) {
-    buffer.write(
-      '&waypoints=${Uri.encodeComponent('${stopoverCity.trim()}, Qatar')}',
+  final cleanFrom = fromCity.trim().isNotEmpty ? fromCity.trim() : 'الدوحة';
+  final cleanTo = toCity.trim().isNotEmpty ? toCity.trim() : 'الخور';
+  final override = EmergencySosSheet.debugUrlLauncher;
+  if (override != null) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    final origin = '$cleanFrom, Qatar';
+    final dest = '$cleanTo, Qatar';
+    final buffer = StringBuffer(
+      'https://www.google.com/maps/dir/?api=1'
+      '&origin=${Uri.encodeComponent(origin)}'
+      '&destination=${Uri.encodeComponent(dest)}',
     );
-  }
-  buffer.write('&travelmode=driving');
-  final url = buffer.toString();
+    if (stopoverCity != null && stopoverCity.trim().isNotEmpty) {
+      buffer.write(
+        '&waypoints=${Uri.encodeComponent('${stopoverCity.trim()}, Qatar')}',
+      );
+    }
+    buffer.write('&travelmode=driving');
+    final url = buffer.toString();
 
-  final launched = await launchMashwarExternalUri(
-    Uri.parse(url),
-    mode: LaunchMode.externalApplication,
-  );
-
-  if (!launched) {
-    await Clipboard.setData(ClipboardData(text: url));
-    messenger?.showSnackBar(
-      SnackBar(
-        content: Text(
-          isAr
-              ? 'تم نسخ رابط المسار في Google Maps'
-              : 'Google Maps route link copied',
+    final launched = await override(Uri.parse(url));
+    if (!launched) {
+      await Clipboard.setData(ClipboardData(text: url));
+      messenger?.showSnackBar(
+        SnackBar(
+          content: Text(
+            isAr
+                ? 'تم نسخ رابط المسار في Google Maps'
+                : 'Google Maps route link copied',
+          ),
+          backgroundColor: AppColors.navy,
         ),
-        backgroundColor: AppColors.navy,
-      ),
-    );
+      );
+    }
+    return;
   }
+
+  await openMashwarInAppMap(
+    context,
+    origin: cleanFrom,
+    destination: cleanTo,
+    stopover: stopoverCity,
+    titleAr: 'مسار الإعلان · $cleanFrom ← $cleanTo',
+    titleEn: 'Listing Route · $cleanFrom → $cleanTo',
+  );
 }
 
 Future<void> _dialBoardContactPhone(
@@ -934,8 +945,8 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                       const SizedBox(height: 10),
                       MashwarButton(
                         text: isAr
-                            ? 'فتح المسار في Google Maps'
-                            : 'Open Route in Google Maps',
+                            ? 'عرض المسار على الخريطة داخل التطبيق'
+                            : 'View Route Map In-App',
                         variant: MashwarButtonVariant.secondary,
                         icon: const Icon(
                           Icons.map_outlined,
@@ -1125,8 +1136,8 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                                 ),
                                 label: Text(
                                   isAr
-                                      ? 'فتح المسار في Google Maps'
-                                      : 'Open in Google Maps',
+                                      ? 'عرض المسار داخل التطبيق'
+                                      : 'View Map In-App',
                                   style: AppTypography.label(
                                     color: AppColors.navy,
                                   ).copyWith(fontWeight: FontWeight.w700),

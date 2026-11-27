@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -10,6 +9,8 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_text_field.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/board_ad_model.dart';
@@ -81,41 +82,49 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
     BoardAdModel ad,
     bool isAr,
   ) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final origin = '${ad.fromCity.trim()}, Qatar';
-    final dest = '${ad.toCity.trim()}, Qatar';
-    final buffer = StringBuffer(
-      'https://www.google.com/maps/dir/?api=1'
-      '&origin=${Uri.encodeComponent(origin)}'
-      '&destination=${Uri.encodeComponent(dest)}',
-    );
-    if (ad.stopoverCity != null && ad.stopoverCity!.trim().isNotEmpty) {
-      buffer.write(
-        '&waypoints=${Uri.encodeComponent('${ad.stopoverCity!.trim()}, Qatar')}',
+    final override = EmergencySosSheet.debugUrlLauncher;
+    if (override != null) {
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      final origin = '${ad.fromCity.trim()}, Qatar';
+      final dest = '${ad.toCity.trim()}, Qatar';
+      final buffer = StringBuffer(
+        'https://www.google.com/maps/dir/?api=1'
+        '&origin=${Uri.encodeComponent(origin)}'
+        '&destination=${Uri.encodeComponent(dest)}',
       );
-    }
-    buffer.write('&travelmode=driving');
-    final url = buffer.toString();
-    final uri = Uri.parse(url);
+      if (ad.stopoverCity != null && ad.stopoverCity!.trim().isNotEmpty) {
+        buffer.write(
+          '&waypoints=${Uri.encodeComponent('${ad.stopoverCity!.trim()}, Qatar')}',
+        );
+      }
+      buffer.write('&travelmode=driving');
+      final url = buffer.toString();
+      final launched = await override(Uri.parse(url));
 
-    final launched = await launchMashwarExternalUri(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-
-    if (!launched) {
-      await Clipboard.setData(ClipboardData(text: url));
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text(
-            isAr
-                ? 'تم نسخ رابط المسار في Google Maps'
-                : 'Google Maps route link copied',
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: url));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              isAr
+                  ? 'تم نسخ رابط المسار في Google Maps'
+                  : 'Google Maps route link copied',
+            ),
+            backgroundColor: AppColors.navy,
           ),
-          backgroundColor: AppColors.navy,
-        ),
-      );
+        );
+      }
+      return;
     }
+
+    await openMashwarInAppMap(
+      context,
+      origin: ad.fromCity,
+      destination: ad.toCity,
+      stopover: ad.stopoverCity,
+      titleAr: 'مسار الطلب · ${ad.fromCity} ← ${ad.toCity}',
+      titleEn: 'Listing Route · ${ad.fromCity} → ${ad.toCity}',
+    );
   }
 
   @override
@@ -692,7 +701,16 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          MashwarEmbeddedGoogleMap(
+            key: const ValueKey('make_offer_embedded_gmap'),
+            origin: ad.fromCity,
+            destination: ad.toCity,
+            stopover: ad.stopoverCity,
+            height: 150,
+            borderRadius: 12,
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
               const Icon(

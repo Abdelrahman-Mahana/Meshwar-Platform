@@ -9,6 +9,7 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/parcel_model.dart';
 import '../../data/models/ride_model.dart';
@@ -36,29 +37,24 @@ Future<void> _launchExternalRouteMap(
   required String destination,
   required bool isAr,
 }) async {
-  final url = _buildGoogleMapsDirectionsUrl(
-    origin: origin,
-    destination: destination,
-  );
-  final uri = Uri.parse(url);
-  bool launched = false;
-  try {
-    launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } catch (_) {
-    launched = false;
-  }
-  if (!launched && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isAr
-              ? 'رابط الملاحة عبر Google Maps جاهز ($origin ← $destination)'
-              : 'Google Maps route ready ($origin → $destination)',
-        ),
-        backgroundColor: AppColors.navy,
-      ),
+  final cleanOrigin = origin.trim().isNotEmpty ? origin.trim() : 'الدوحة';
+  final cleanDest = destination.trim().isNotEmpty ? destination.trim() : 'الخور';
+  final override = EmergencySosSheet.debugUrlLauncher;
+  if (override != null) {
+    final url = _buildGoogleMapsDirectionsUrl(
+      origin: cleanOrigin,
+      destination: cleanDest,
     );
+    await override(Uri.parse(url));
+    return;
   }
+  await openMashwarInAppMap(
+    context,
+    origin: cleanOrigin,
+    destination: cleanDest,
+    titleAr: 'مسار السائق · $cleanOrigin ← $cleanDest',
+    titleEn: 'Driver Route · $cleanOrigin → $cleanDest',
+  );
 }
 
 Future<void> _launchDialerCall(

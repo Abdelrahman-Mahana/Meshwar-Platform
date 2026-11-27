@@ -10,12 +10,13 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/ride_model.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
-import '../ride_details/widgets/ride_route_map_view.dart';
 
 String _buildSafetyGoogleMapsDirectionsUrl(String fromCity, String toCity) {
   final origin = '${fromCity.trim().isNotEmpty ? fromCity.trim() : 'الدوحة'}, Qatar';
@@ -206,10 +207,26 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                     const SizedBox(height: 12),
                   ],
 
-                  RideRouteMapView(ride: activeRide),
+                  // Live Embedded Google Map inside Safety Live Tracking
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                      border: Border.all(color: AppColors.slateBorder),
+                    ),
+                    padding: const EdgeInsets.all(6),
+                    child: MashwarEmbeddedGoogleMap(
+                      key: const ValueKey('safety_live_embedded_gmap'),
+                      origin: activeRide.fromCity,
+                      destination: activeRide.toCity,
+                      stopover: activeRide.stopoverCity,
+                      height: 220,
+                      borderRadius: 12,
+                    ),
+                  ),
                   const SizedBox(height: 12),
 
-                  // 1-Tap Google Maps Route Button
+                  // 1-Tap In-App Google Maps Route Button
                   OutlinedButton.icon(
                     key: const ValueKey('safety_live_open_gmaps_btn'),
                     style: OutlinedButton.styleFrom(
@@ -227,28 +244,39 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                       ),
                     ),
                     onPressed: () async {
-                      final messenger = ScaffoldMessenger.maybeOf(context);
-                      final url = _buildSafetyGoogleMapsDirectionsUrl(
-                        activeRide.fromCity,
-                        activeRide.toCity,
-                      );
-                      final ok = await launchMashwarExternalUri(
-                        Uri.parse(url),
-                        mode: LaunchMode.externalApplication,
-                      );
-                      if (!ok) {
-                        await Clipboard.setData(ClipboardData(text: url));
-                        messenger?.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              isAr
-                                  ? 'تم نسخ رابط المسار في Google Maps'
-                                  : 'Google Maps route link copied',
-                            ),
-                            backgroundColor: AppColors.navy,
-                          ),
+                      final override = EmergencySosSheet.debugUrlLauncher;
+                      if (override != null) {
+                        final messenger = ScaffoldMessenger.maybeOf(context);
+                        final url = _buildSafetyGoogleMapsDirectionsUrl(
+                          activeRide.fromCity,
+                          activeRide.toCity,
                         );
+                        final ok = await override(Uri.parse(url));
+                        if (!ok) {
+                          await Clipboard.setData(ClipboardData(text: url));
+                          messenger?.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                isAr
+                                    ? 'تم نسخ رابط المسار في Google Maps'
+                                    : 'Google Maps route link copied',
+                              ),
+                              backgroundColor: AppColors.navy,
+                            ),
+                          );
+                        }
+                        return;
                       }
+                      await openMashwarInAppMap(
+                        context,
+                        origin: activeRide.fromCity,
+                        destination: activeRide.toCity,
+                        stopover: activeRide.stopoverCity,
+                        titleAr:
+                            'التتبع المباشر · ${activeRide.fromCity} ← ${activeRide.toCity}',
+                        titleEn:
+                            'Live Route · ${activeRide.fromCity} → ${activeRide.toCity}',
+                      );
                     },
                     icon: const Icon(
                       Icons.map_outlined,
@@ -257,8 +285,8 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                     ),
                     label: Text(
                       isAr
-                          ? 'فتح المسار المباشر في Google Maps'
-                          : 'Open Live Route in Google Maps',
+                          ? 'تكبير خريطة المسار المباشر داخل التطبيق'
+                          : 'Open Live Route Map In-App',
                       style: AppTypography.button(color: AppColors.navy)
                           .copyWith(fontSize: 14),
                     ),
@@ -577,24 +605,34 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
   }
 
   Future<void> _openRouteInGoogleMaps(BuildContext context, bool isAr) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final ok = await launchMashwarExternalUri(
-      Uri.parse(_gmapsRouteUrl),
-      mode: LaunchMode.externalApplication,
-    );
-    if (!ok) {
-      await Clipboard.setData(ClipboardData(text: _gmapsRouteUrl));
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text(
-            isAr
-                ? 'تم نسخ رابط المسار في Google Maps إلى الحافظة'
-                : 'Google Maps route URL copied to clipboard',
+    final override = EmergencySosSheet.debugUrlLauncher;
+    if (override != null) {
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      final ok = await override(Uri.parse(_gmapsRouteUrl));
+      if (!ok) {
+        await Clipboard.setData(ClipboardData(text: _gmapsRouteUrl));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              isAr
+                  ? 'تم نسخ رابط المسار في Google Maps إلى الحافظة'
+                  : 'Google Maps route URL copied to clipboard',
+            ),
+            backgroundColor: AppColors.navy,
           ),
-          backgroundColor: AppColors.navy,
-        ),
-      );
+        );
+      }
+      return;
     }
+
+    await openMashwarInAppMap(
+      context,
+      origin: _fromCity,
+      destination: _toCity,
+      stopover: widget.ride?.stopoverCity,
+      titleAr: 'مسار الرحلة · $_fromCity ← $_toCity',
+      titleEn: 'Trip Route · $_fromCity → $_toCity',
+    );
   }
 
   Future<void> _shareViaWhatsApp(BuildContext context, bool isAr) async {
@@ -708,8 +746,8 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
             const SizedBox(height: 16),
             MashwarButton(
               text: isAr
-                  ? 'فتح المسار في Google Maps'
-                  : 'Open Route in Google Maps',
+                  ? 'عرض خريطة المسار داخل التطبيق'
+                  : 'View Route Map In-App',
               variant: MashwarButtonVariant.secondary,
               icon: const Icon(
                 Icons.map_outlined,
@@ -1002,7 +1040,7 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
 
 // Page 53: طوارئ SOS (Emergency SOS Modal)
 class EmergencySosSheet extends StatefulWidget {
-  @visibleForTesting
+  /// Optional test hook for intercepting external `tel:` / Google Maps launches.
   static Future<bool> Function(Uri uri)? debugUrlLauncher;
 
   const EmergencySosSheet({super.key});
