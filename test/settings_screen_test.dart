@@ -58,11 +58,11 @@ void main() {
     expect(find.text('محفظة مشوار وطرق الدفع'), findsOneWidget);
     expect(find.text('جهات الاتصال في حالات الطوارئ'), findsOneWidget);
     expect(find.text('لغة التطبيق'), findsOneWidget);
-    expect(find.text('الترخيص والامتثال لوزارة المواصلات (قطر)'), findsOneWidget);
+    expect(find.text('الامتثال التنظيمي وحماية البيانات (قطر)'), findsOneWidget);
     expect(find.text('حذف الحساب نهائياً'), findsOneWidget);
 
     // Verify Version Info & Logout Button
-    expect(find.text('مشوار MASHWAR v1.2.0 (Build 42)'), findsOneWidget);
+    expect(find.text('مشوار MASHWAR v2.5.0'), findsOneWidget);
     expect(find.byType(MashwarButton), findsOneWidget);
   });
 
