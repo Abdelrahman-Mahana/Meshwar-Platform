@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../constants/app_colors.dart';
+import '../constants/app_dimens.dart';
 import '../constants/app_typography.dart';
 import '../localization/app_strings.dart';
 import '../../state/settings_provider.dart';
@@ -31,15 +32,17 @@ class MashwarBadge extends StatelessWidget {
     final settings = Provider.of<SettingsProvider?>(context);
     final isAr = settings?.isArabic ?? true;
 
-    Color textColor;
-    Color bgColor;
-    String defaultLabelAr;
-    String defaultLabelEn;
+    late final Color textColor;
+    late final Color bgColor;
+    late final Color borderColor;
+    late final String defaultLabelAr;
+    late final String defaultLabelEn;
 
     switch (type) {
       case BadgeType.verified:
         textColor = AppColors.teal;
         bgColor = AppColors.badgeVerifiedBg;
+        borderColor = AppColors.teal.withValues(alpha: 0.20);
         defaultLabelAr = 'موثق';
         defaultLabelEn = 'Verified';
         break;
@@ -47,36 +50,42 @@ class MashwarBadge extends StatelessWidget {
       case BadgeType.pending:
         textColor = AppColors.warning;
         bgColor = AppColors.badgeReviewBg;
+        borderColor = AppColors.warning.withValues(alpha: 0.22);
         defaultLabelAr = 'قيد المراجعة';
         defaultLabelEn = 'Under Review';
         break;
       case BadgeType.rejected:
         textColor = AppColors.danger;
         bgColor = AppColors.badgeRejectedBg;
+        borderColor = AppColors.danger.withValues(alpha: 0.22);
         defaultLabelAr = 'مرفوض';
         defaultLabelEn = 'Rejected';
         break;
       case BadgeType.newBadge:
         textColor = AppColors.info;
         bgColor = AppColors.badgeNewBg;
+        borderColor = AppColors.info.withValues(alpha: 0.20);
         defaultLabelAr = 'جديد';
         defaultLabelEn = 'New';
         break;
       case BadgeType.suspended:
         textColor = AppColors.textSecondary;
-        bgColor = AppColors.badgeSuspendedBg;
+        bgColor = AppColors.slateBg;
+        borderColor = AppColors.slateBorder;
         defaultLabelAr = 'موقوف';
         defaultLabelEn = 'Suspended';
         break;
       case BadgeType.confirmed:
         textColor = AppColors.teal;
         bgColor = AppColors.badgeVerifiedBg;
+        borderColor = AppColors.teal.withValues(alpha: 0.20);
         defaultLabelAr = 'مؤكد';
         defaultLabelEn = 'Confirmed';
         break;
       case BadgeType.ladiesOnly:
         textColor = AppColors.ladiesPink;
         bgColor = AppColors.badgeLadiesBg;
+        borderColor = AppColors.ladiesPink.withValues(alpha: 0.20);
         defaultLabelAr = 'سيدات فقط';
         defaultLabelEn = 'Ladies Only';
         break;
@@ -86,22 +95,22 @@ class MashwarBadge extends StatelessWidget {
     final displayLabel = AppStrings.translateStatus(rawLabel, isArabic: isAr);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: textColor.withValues(alpha: 0.3), width: 1),
+        borderRadius: BorderRadius.circular(AppDimens.radiusBadge),
+        border: Border.all(color: borderColor, width: AppDimens.borderWidth),
       ),
       child: Text(
         displayLabel,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: AppTypography.label(color: textColor).copyWith(
-          fontWeight: FontWeight.w700,
-          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          fontSize: 11.5,
+          height: 1.2,
         ),
       ),
     );
   }
 }
-

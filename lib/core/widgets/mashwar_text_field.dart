@@ -4,9 +4,8 @@ import '../constants/app_colors.dart';
 import '../constants/app_dimens.dart';
 import '../constants/app_typography.dart';
 
-/// Clean, state-aware input field following Uber/inDrive minimal standard.
-/// Features dynamic focus borders, subtle neutral fill, zero inner outline artifacts,
-/// and high-contrast Cairo typography.
+/// Clean, state-aware input primitive engineered for calm hierarchy,
+/// crisp 1px slate borders, subtle focus ring, and high-legibility Cairo copy.
 class MashwarTextField extends StatefulWidget {
   const MashwarTextField({
     super.key,
@@ -53,6 +52,7 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
   late FocusNode _focusNode;
   bool _isInternalFocusNode = false;
   bool _isFocused = false;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -63,6 +63,7 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
       _focusNode = FocusNode();
       _isInternalFocusNode = true;
     }
+    _isFocused = _focusNode.hasFocus;
     _focusNode.addListener(_handleFocusChange);
   }
 
@@ -81,6 +82,7 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
         _focusNode = FocusNode();
         _isInternalFocusNode = true;
       }
+      _isFocused = _focusNode.hasFocus;
       _focusNode.addListener(_handleFocusChange);
     }
   }
@@ -104,29 +106,39 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
+    final bool hasError =
+        widget.errorText != null && widget.errorText!.isNotEmpty;
 
-    Color bgColor;
-    Color borderColor;
-    double borderWidth;
+    late final Color bgColor;
+    late final Color borderColor;
+    late final double borderWidth;
 
-    if (hasError) {
-      bgColor = AppColors.dangerBg;
+    if (!widget.enabled) {
+      bgColor = AppColors.slateBg;
+      borderColor = AppColors.slateBorder.withValues(alpha: 0.75);
+      borderWidth = AppDimens.borderWidth;
+    } else if (hasError) {
+      bgColor = Colors.white;
       borderColor = AppColors.danger;
-      borderWidth = 1.4;
-    } else if (_isFocused && widget.enabled) {
+      borderWidth =
+          _isFocused ? AppDimens.borderWidthFocused : AppDimens.borderWidthError;
+    } else if (_isFocused) {
       bgColor = Colors.white;
       borderColor = AppColors.navy;
-      borderWidth = 1.8;
-    } else if (widget.enabled) {
-      bgColor = AppColors.surfaceLight;
-      borderColor = AppColors.borderDisabled;
-      borderWidth = 1.0;
+      borderWidth = AppDimens.borderWidthFocused;
     } else {
-      bgColor = AppColors.chipInactiveBg;
-      borderColor = AppColors.borderDisabled.withValues(alpha: 0.6);
-      borderWidth = 1.0;
+      bgColor = Colors.white;
+      borderColor = _isHovered
+          ? AppColors.navy.withValues(alpha: 0.32)
+          : AppColors.slateBorder;
+      borderWidth = AppDimens.borderWidth;
     }
+
+    final Color iconColor = !widget.enabled
+        ? AppColors.textSecondary.withValues(alpha: 0.6)
+        : (hasError
+            ? AppColors.danger
+            : (_isFocused ? AppColors.navy : AppColors.textSecondary));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,82 +149,118 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
             widget.label!,
             style: AppTypography.label(
               color: widget.enabled ? AppColors.navy : AppColors.textSecondary,
-            ).copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-        ],
-        GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.enabled ? widget.onTap : null,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            constraints: const BoxConstraints(minHeight: 52),
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(AppDimens.radiusField),
-              border: Border.all(color: borderColor, width: borderWidth),
-              boxShadow: _isFocused && widget.enabled && !hasError
-                  ? [
-                      BoxShadow(
-                        color: AppColors.navy.withValues(alpha: 0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ]
-                  : null,
+            ).copyWith(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
             ),
-            child: Row(
-              children: [
-                if (widget.prefixIcon != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: widget.prefixIcon,
-                  ),
-                ],
-                Expanded(
-                  child: TextField(
-                    controller: widget.controller,
-                    focusNode: _focusNode,
-                    enabled: widget.enabled,
-                    readOnly: widget.readOnly,
-                    onTap: widget.enabled ? widget.onTap : null,
-                    keyboardType: widget.keyboardType,
-                    inputFormatters: widget.inputFormatters,
-                    onChanged: widget.onChanged,
-                    maxLines: widget.maxLines,
-                    textAlign: widget.textAlign,
-                    style: AppTypography.body(
-                      color: widget.enabled ? AppColors.textPrimary : AppColors.textSecondary,
-                    ).copyWith(fontWeight: FontWeight.w600, fontSize: 15),
-                    decoration: InputDecoration(
-                      hintText: widget.hint,
-                      hintStyle: AppTypography.bodySecondary(
-                        color: AppColors.textSecondary.withValues(alpha: 0.72),
+          ),
+          const SizedBox(height: AppDimens.space6),
+        ],
+        MouseRegion(
+          onEnter: widget.enabled
+              ? (_) {
+                  if (!_isHovered) setState(() => _isHovered = true);
+                }
+              : null,
+          onExit: widget.enabled
+              ? (_) {
+                  if (_isHovered) setState(() => _isHovered = false);
+                }
+              : null,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: widget.enabled ? widget.onTap : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              constraints: BoxConstraints(
+                minHeight: widget.maxLines > 1 ? 84 : AppDimens.minTouchTarget,
+              ),
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(AppDimens.radiusField),
+                border: Border.all(color: borderColor, width: borderWidth),
+                boxShadow: _isFocused && widget.enabled
+                    ? [
+                        BoxShadow(
+                          color: (hasError ? AppColors.danger : AppColors.navy)
+                              .withValues(alpha: 0.07),
+                          blurRadius: 0,
+                          spreadRadius: 2.5,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                crossAxisAlignment: widget.maxLines > 1
+                    ? CrossAxisAlignment.start
+                    : CrossAxisAlignment.center,
+                children: [
+                  if (widget.prefixIcon != null)
+                    Padding(
+                      padding: EdgeInsetsDirectional.only(
+                        start: 12,
+                        end: 8,
+                        top: widget.maxLines > 1 ? 13 : 0,
                       ),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      errorBorder: InputBorder.none,
-                      disabledBorder: InputBorder.none,
-                      focusedErrorBorder: InputBorder.none,
-                      filled: false,
-                      contentPadding: EdgeInsetsDirectional.only(
-                        start: widget.prefixIcon == null ? 14 : 0,
-                        end: widget.suffixIcon == null ? 14 : 0,
-                        top: 14,
-                        bottom: 14,
+                      child: IconTheme.merge(
+                        data: IconThemeData(size: 20, color: iconColor),
+                        child: widget.prefixIcon!,
                       ),
-                      isDense: true,
+                    ),
+                  Expanded(
+                    child: TextField(
+                      controller: widget.controller,
+                      focusNode: _focusNode,
+                      enabled: widget.enabled,
+                      readOnly: widget.readOnly,
+                      onTap: widget.enabled ? widget.onTap : null,
+                      keyboardType: widget.keyboardType,
+                      inputFormatters: widget.inputFormatters,
+                      onChanged: widget.onChanged,
+                      maxLines: widget.maxLines,
+                      textAlign: widget.textAlign,
+                      style: AppTypography.body(
+                        color: widget.enabled
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: widget.hint,
+                        hintStyle: AppTypography.bodySecondary(
+                          color: AppColors.textSecondary.withValues(alpha: 0.72),
+                        ),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        errorBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        focusedErrorBorder: InputBorder.none,
+                        filled: false,
+                        contentPadding: EdgeInsetsDirectional.only(
+                          start: widget.prefixIcon == null ? 14 : 2,
+                          end: widget.suffixIcon == null ? 14 : 2,
+                          top: 13,
+                          bottom: 13,
+                        ),
+                        isDense: true,
+                      ),
                     ),
                   ),
-                ),
-                if (widget.suffixIcon != null) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: widget.suffixIcon,
-                  ),
+                  if (widget.suffixIcon != null)
+                    Padding(
+                      padding: EdgeInsetsDirectional.only(
+                        start: 8,
+                        end: 12,
+                        top: widget.maxLines > 1 ? 13 : 0,
+                      ),
+                      child: IconTheme.merge(
+                        data: IconThemeData(size: 20, color: iconColor),
+                        child: widget.suffixIcon!,
+                      ),
+                    ),
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -222,11 +270,12 @@ class _MashwarTextFieldState extends State<MashwarTextField> {
             widget.errorText!,
             style: AppTypography.label(color: AppColors.danger),
           ),
-        ] else if (widget.helperText != null && widget.helperText!.isNotEmpty) ...[
+        ] else if (widget.helperText != null &&
+            widget.helperText!.isNotEmpty) ...[
           const SizedBox(height: AppDimens.space4),
           Text(
             widget.helperText!,
-            style: AppTypography.label(color: AppColors.textSecondary),
+            style: AppTypography.bodySmall(color: AppColors.textSecondary),
           ),
         ],
       ],
