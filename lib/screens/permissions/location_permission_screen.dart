@@ -115,8 +115,8 @@ class LocationPermissionScreen extends StatelessWidget {
                                             const SizedBox(width: 6),
                                             Text(
                                               isAr
-                                                  ? 'نقطة الالتقاء المقترحة'
-                                                  : 'Calibrated pickup spot',
+                                                  ? 'معاينة توضيحية · نقطة الالتقاء المقترحة'
+                                                  : 'Example Preview · Calibrated pickup spot',
                                               style: AppTypography.label(
                                                 color: AppColors.navy,
                                               ).copyWith(fontSize: 11),
@@ -177,11 +177,13 @@ class LocationPermissionScreen extends StatelessWidget {
                       children: [
                         const SizedBox(height: AppDimens.space24),
                         MashwarButton(
+                          key: const ValueKey('location_permission_enable_btn'),
                           text: isAr ? 'تفعيل الموقع' : 'Enable Location',
                           onPressed: () => _proceedNext(context),
                         ),
                         const SizedBox(height: 10),
                         MashwarButton(
+                          key: const ValueKey('location_permission_skip_btn'),
                           variant: MashwarButtonVariant.secondary,
                           text: isAr ? 'تخطي الآن' : 'Not now',
                           onPressed: () => _proceedNext(context),

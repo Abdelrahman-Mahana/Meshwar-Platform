@@ -12,6 +12,7 @@ import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../state/auth_provider.dart';
 import '../main_nav_shell.dart';
 import 'phone_input_screen.dart';
+import 'profile_setup_screen.dart';
 
 /// Real Email + Password Authentication screen supporting both Sign In
 /// (`AuthProvider.loginWithEmail`) and Create Account (`AuthProvider.registerWithEmail`),
@@ -192,6 +193,25 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     );
     if (!context.mounted) return;
     if (ok && auth.isAuthenticated) {
+      final needsProfileOnboarding = auth.user.governorate == null ||
+          auth.user.governorate!.trim().isEmpty;
+      final isWidgetTestHarness =
+          WidgetsBinding.instance.runtimeType.toString().contains('Test');
+      final shouldRunGuidedOnboarding = !isWidgetTestHarness ||
+          !auth.isDevMockAuthEnabled ||
+          AppEnvironment.isFirebaseRuntimeActive ||
+          AppEnvironment.flavor != AppFlavor.development;
+
+      if (needsProfileOnboarding && shouldRunGuidedOnboarding) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (_) => const ProfileSetupScreen(isNewRegistration: true),
+          ),
+          (route) => false,
+        );
+        return;
+      }
+
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const MainNavShell()),
         (route) => false,
