@@ -16,10 +16,7 @@ import '../main_nav_shell.dart';
 import 'email_input_screen.dart';
 import 'profile_setup_screen.dart';
 
-/// Clean, bulletproof, minimalist OTP Verification Screen (Uber/inDrive standard).
-/// Responsive layout:
-/// - Wide / Desktop (>= 840px): 2-column split canvas (Left: Security & OTP advisory, Right: Verification form)
-/// - Mobile (< 840px): Full-height balanced vertical distribution with Step Progress, 6 clean cells & Safety card
+/// Executive 6-digit OTP Verification Screen.
 class OtpVerificationScreen extends StatefulWidget {
   final String? email;
 
@@ -36,7 +33,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   bool _isFocused = false;
 
   /// Normalizes Arabic-Indic numerals (٠-٩) and Eastern Arabic numerals to standard 0-9 digits.
-  /// Also strictly strips non-digit characters (punctuation, letters, spaces).
   static String normalizeDigits(String input) {
     const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
     const easternDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
@@ -57,7 +53,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       }
     });
 
-    // Auto-focus after mounting
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _focusNode.requestFocus();
@@ -90,16 +85,20 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
-  void _verify(bool isAr) async {
+  Future<void> _verify(bool isAr) async {
+    final auth = context.read<AuthProvider>();
+    if (auth.isLoading || auth.isLocked) return;
+
     final code = _otpController.text.trim();
     if (code.length < 6) {
       setState(() {
-        _errorMessage = isAr ? 'الرجاء إدخال الكود كاملاً (6 أرقام)' : 'Please enter full 6-digit code';
+        _errorMessage = isAr
+            ? 'الرجاء إدخال الكود كاملاً (6 أرقام)'
+            : 'Please enter full 6-digit code';
       });
       return;
     }
 
-    final auth = context.read<AuthProvider>();
     final isEmailMode = widget.email != null && widget.email!.isNotEmpty;
     final success = isEmailMode
         ? await auth.verifyEmailOtp(code)
@@ -131,6 +130,28 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
   }
 
+  Future<void> _handleResend(
+    AuthProvider auth,
+    bool isEmailMode,
+    bool isAr,
+  ) async {
+    if (auth.isLoading) return;
+    setState(() => _errorMessage = null);
+
+    final ok = isEmailMode
+        ? await auth.sendEmailOtp(widget.email!)
+        : await auth.sendOtp(auth.phoneNumber);
+    if (!mounted) return;
+    if (!ok) {
+      setState(() {
+        _errorMessage = auth.localizedError(isArabic: isAr) ??
+            (isAr
+                ? 'تعذّر إعادة إرسال الرمز حالياً.'
+                : 'Unable to resend verification code right now.');
+      });
+    }
+  }
+
   String _formatMaskedPhone(String? raw) {
     if (raw == null || raw.isEmpty) return '+974 5512 ****';
     final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
@@ -151,16 +172,21 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final auth = context.watch<AuthProvider>();
     final isAr = context.isArabic;
     final isEmailMode = widget.email != null && widget.email!.isNotEmpty;
-    final targetDestination = isEmailMode ? widget.email! : _formatMaskedPhone(auth.phoneNumber);
+    final targetDestination =
+        isEmailMode ? widget.email! : _formatMaskedPhone(auth.phoneNumber);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.navy,
+            size: 20,
+          ),
           onPressed: () {
             context.read<AuthProvider>().clearError();
             Navigator.of(context).maybePop();
@@ -175,11 +201,18 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ? 'خطوة أمان أولى في منظومة مشوار الخالية من الاحتيال'
               : 'Zero-fraud authentication for every MASHWAR user',
           showcaseSubtitle: isAr
-              ? 'كل حساب في قطر مربوط بالتحقق اللحظي ثم البطاقة القطرية QID لضمان الأمان.'
-              : 'Every account pairs instant OTP verification with Qatar ID protection.',
+              ? 'كل حساب مربوط بالتحقق اللحظي وتوثيق الهوية لضمان أمان الطرفين.'
+              : 'Every account pairs instant OTP verification with identity protection.',
           child: LayoutBuilder(
             builder: (context, constraints) {
-              return _buildSingleLayout(context, auth, isAr, targetDestination, isEmailMode, constraints);
+              return _buildSingleLayout(
+                context,
+                auth,
+                isAr,
+                targetDestination,
+                isEmailMode,
+                constraints,
+              );
             },
           ),
         ),
@@ -202,7 +235,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
+          minHeight: (constraints.maxHeight - (AppDimens.space16 * 2))
+              .clamp(0.0, double.infinity),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -212,41 +246,36 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top: Step Progress + Brand Identity Header with Step Indicator
                   MashwarOnboardingStepBar(
                     currentStep: 1,
                     totalSteps: 4,
                     isAr: isAr,
                     stepTitle: isAr ? 'رمز التحقق الآمن' : 'Security Code',
                   ),
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const BrandLogo(fontSize: 26),
-                      _buildStepBadge(isAr: isAr, currentStep: 2, totalSteps: 2),
-                    ],
+                  const SizedBox(height: AppDimens.space16),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: BrandLogo(fontSize: 26),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppDimens.space14),
 
-                  // Title
                   Text(
                     isAr ? 'أدخل رمز التحقق' : 'Enter Code',
-                    style: AppTypography.largeTitle().copyWith(fontSize: 26),
+                    style: AppTypography.largeTitle(),
                   ),
                   const SizedBox(height: 6),
 
-                  // Subtitle with destination
                   _buildDestinationSubtitle(targetDestination, isAr),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppDimens.space20),
 
-                  // Error Banner
                   if (_errorMessage != null) ...[
-                    AlertBanner(message: _errorMessage!, type: AlertBannerType.danger),
-                    const SizedBox(height: 14),
+                    AlertBanner(
+                      message: _errorMessage!,
+                      type: AlertBannerType.danger,
+                    ),
+                    const SizedBox(height: AppDimens.space14),
                   ],
 
-                  // Locked Warning
                   if (auth.isLocked) ...[
                     AlertBanner(
                       message: isAr
@@ -254,36 +283,36 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                           : 'Attempts temporarily locked. Try after 15 mins',
                       type: AlertBannerType.danger,
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppDimens.space14),
                   ],
 
-                  // OTP Cells Stack
                   _buildOtpInputStack(isAr),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDimens.space16),
 
-                  // Resend Section
                   _buildResendSection(auth, isEmailMode, isAr),
                 ],
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: AppDimens.space20),
 
-            // Confirm CTA + Email+Password Fallback
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 MashwarButton(
                   text: isAr ? 'تأكيد' : 'Confirm',
                   isLoading: auth.isLoading,
-                  onPressed: () => _verify(isAr),
+                  onPressed: auth.isLocked ? null : () => _verify(isAr),
                 ),
                 const SizedBox(height: 8),
                 Center(
                   child: TextButton.icon(
                     key: const ValueKey('otp_switch_to_email_btn'),
-                    icon: const Icon(Icons.mail_outline_rounded,
-                        size: 17, color: AppColors.navy),
+                    icon: const Icon(
+                      Icons.mail_outline_rounded,
+                      size: 17,
+                      color: AppColors.navy,
+                    ),
                     onPressed: () {
                       auth.clearError();
                       Navigator.of(context).pushReplacement(
@@ -297,33 +326,14 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                       isAr
                           ? 'المتابعة بالبريد الإلكتروني وكلمة المرور'
                           : 'Sign in with Email & Password instead',
-                      style: AppTypography.label(color: AppColors.navy).copyWith(
-                        fontWeight: FontWeight.w700,
-                        decoration: TextDecoration.underline,
-                      ),
+                      style: AppTypography.label(color: AppColors.navy)
+                          .copyWith(decoration: TextDecoration.underline),
                     ),
                   ),
                 ),
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStepBadge({required bool isAr, required int currentStep, required int totalSteps}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.teal.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
-        style: AppTypography.label(color: AppColors.teal).copyWith(
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
         ),
       ),
     );
@@ -341,26 +351,23 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           textDirection: TextDirection.ltr,
           child: Text(
             targetDestination,
-            style: AppTypography.bodySecondary().copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.navy,
-            ),
+            style: AppTypography.bodySecondary(color: AppColors.navy)
+                .copyWith(fontWeight: FontWeight.w700),
           ),
         ),
         const SizedBox(width: 8),
         InkWell(
+          borderRadius: BorderRadius.circular(6),
           onTap: () {
             context.read<AuthProvider>().clearError();
-            Navigator.of(context).pop();
+            Navigator.of(context).maybePop();
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             child: Text(
               isAr ? 'تغيير' : 'Edit',
-              style: AppTypography.label(color: AppColors.teal).copyWith(
-                fontWeight: FontWeight.w700,
-                decoration: TextDecoration.underline,
-              ),
+              style: AppTypography.label(color: AppColors.navy)
+                  .copyWith(decoration: TextDecoration.underline),
             ),
           ),
         ),
@@ -372,7 +379,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        // 6 Pure Visual Display Cells (Responsive width so never overflows on <= 360px)
         IgnorePointer(
           child: ExcludeSemantics(
             child: Directionality(
@@ -390,8 +396,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             ),
           ),
         ),
-
-        // Native input capturing taps, accessibility focus, keyboard, paste, and backspace events directly
         Positioned.fill(
           child: Opacity(
             opacity: 0.01,
@@ -432,7 +436,11 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           ? Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.timer_outlined, size: 16, color: AppColors.textSecondary),
+                const Icon(
+                  Icons.timer_outlined,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   isAr
@@ -443,17 +451,16 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
               ],
             )
           : TextButton.icon(
-              icon: const Icon(Icons.refresh_rounded, size: 18, color: AppColors.teal),
-              onPressed: () {
-                if (isEmailMode) {
-                  auth.sendEmailOtp(widget.email!);
-                } else {
-                  auth.sendOtp(auth.phoneNumber);
-                }
-              },
+              icon: const Icon(
+                Icons.refresh_rounded,
+                size: 18,
+                color: AppColors.navy,
+              ),
+              onPressed: () => _handleResend(auth, isEmailMode, isAr),
               label: Text(
                 isAr ? 'إعادة إرسال الرمز' : 'Resend Code',
-                style: AppTypography.body(color: AppColors.teal).copyWith(fontWeight: FontWeight.w700),
+                style: AppTypography.body(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700),
               ),
             ),
     );
@@ -463,7 +470,8 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     final code = _otpController.text;
     final hasChar = index < code.length;
     final char = hasChar ? code[index] : '';
-    final isCurrentActive = _isFocused && (index == code.length || (index == 5 && code.length == 6));
+    final isCurrentActive =
+        _isFocused && (index == code.length || (index == 5 && code.length == 6));
     final hasError = _errorMessage != null;
 
     Color borderColor;
@@ -472,38 +480,29 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
     if (hasError) {
       borderColor = AppColors.danger;
-      borderWidth = 1.4;
-      bgColor = const Color(0xFFFEF2F2);
+      borderWidth = AppDimens.borderWidthError;
+      bgColor = AppColors.dangerBg;
     } else if (isCurrentActive) {
       borderColor = AppColors.navy;
-      borderWidth = 1.8;
+      borderWidth = AppDimens.borderWidthFocused;
       bgColor = Colors.white;
     } else if (hasChar) {
       borderColor = AppColors.navy;
-      borderWidth = 1.2;
+      borderWidth = AppDimens.borderWidth;
       bgColor = Colors.white;
     } else {
-      borderColor = const Color(0xFFE5E5EA);
-      borderWidth = 0.8;
-      bgColor = const Color(0xFFF8F9FA);
+      borderColor = AppColors.slateBorder;
+      borderWidth = AppDimens.borderWidth;
+      bgColor = AppColors.slateBg;
     }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 140),
-      constraints: const BoxConstraints(minHeight: 56, maxWidth: 48),
+      constraints: const BoxConstraints(minHeight: 54, maxWidth: 48),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(AppDimens.radiusField),
         border: Border.all(color: borderColor, width: borderWidth),
-        boxShadow: isCurrentActive && !hasError
-            ? [
-                BoxShadow(
-                  color: AppColors.navy.withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
       ),
       alignment: Alignment.center,
       child: Text(
@@ -511,7 +510,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         textAlign: TextAlign.center,
         style: AppTypography.title(
           color: hasError ? AppColors.danger : AppColors.navy,
-        ).copyWith(fontSize: 22),
+        ).copyWith(fontSize: 21),
       ),
     );
   }

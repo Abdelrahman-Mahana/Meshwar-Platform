@@ -46,7 +46,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.microtask(_resolveAuthState);
   }
 
-  void _resolveAuthState() async {
+  Future<void> _resolveAuthState() async {
     if (!mounted) return;
     final auth = context.read<AuthProvider>();
 
@@ -117,10 +117,9 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Ambient corridor network in deep international navy
           const Positioned.fill(
             child: Opacity(
-              opacity: 0.28,
+              opacity: 0.20,
               child: QatarLiveMapCanvas(
                 style: QatarMapStyle.darkExecutive,
                 activeFromCity: 'الدوحة',
@@ -131,14 +130,13 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
           ),
-          // Radial vignette with Teal & Navy depth
           Container(
             decoration: BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment.center,
-                radius: 1.0,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.teal.withValues(alpha: 0.24),
+                  AppColors.navy.withValues(alpha: 0.88),
                   AppColors.navy.withValues(alpha: 0.96),
                 ],
               ),
@@ -149,54 +147,46 @@ class _SplashScreenState extends State<SplashScreen> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 460),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: AppDimens.space24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.space24,
+                  ),
                   child: MashwarFadeSlideIn(
-                    duration: const Duration(milliseconds: 420),
-                    offsetY: 16,
+                    duration: const Duration(milliseconds: 380),
+                    offsetY: 14,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Spacer(),
-                        // Official MASHWAR Brand Halo + Logo
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 22),
+                            horizontal: 30,
+                            vertical: 22,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(28),
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: AppColors.gold.withValues(alpha: 0.45),
-                              width: 1.2,
+                              color: Colors.white.withValues(alpha: 0.16),
+                              width: AppDimens.borderWidth,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.teal.withValues(alpha: 0.22),
-                                blurRadius: 36,
-                                spreadRadius: 2,
-                              ),
-                            ],
                           ),
                           child: const BrandLogo(fontSize: 44, isLight: true),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: AppDimens.space20),
                         Text(
                           isAr
                               ? 'رحلات تشاركية · طرود على الطريق · توريد ومهام'
                               : 'Shared Trips · Route Parcels · Smart Supply',
                           textAlign: TextAlign.center,
                           style: AppTypography.title(color: Colors.white)
-                              .copyWith(
-                            fontSize: 16.5,
-                            fontWeight: FontWeight.w800,
-                          ),
+                              .copyWith(fontSize: 16.5),
                         ),
-                        const SizedBox(height: 14),
-                        Wrap(
+                        const SizedBox(height: AppDimens.space14),
+                        const Wrap(
                           spacing: 10,
                           runSpacing: 8,
                           alignment: WrapAlignment.center,
-                          children: const [
+                          children: [
                             MashwarServicePillarIcon(
                               pillar: MashwarServicePillar.sharedTrips,
                               size: 36,
@@ -211,35 +201,40 @@ class _SplashScreenState extends State<SplashScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: AppDimens.space14),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.white.withValues(alpha: 0.07),
+                            borderRadius:
+                                BorderRadius.circular(AppDimens.radiusChip),
                             border: Border.all(
-                                color:
-                                    AppColors.gold.withValues(alpha: 0.45)),
+                              color: AppColors.teal.withValues(alpha: 0.45),
+                              width: AppDimens.borderWidth,
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const MashwarLivePulseDot(
-                                  color: AppColors.gold, size: 7),
+                              const Icon(
+                                Icons.verified_user_rounded,
+                                color: AppColors.teal,
+                                size: 15,
+                              ),
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
                                   isAr
-                                      ? 'توصيل موثّق بكود الأمان OTP · تواصل مباشر'
-                                      : 'OTP-Verified Handover · Direct Connection',
+                                      ? 'توصيل موثّق بكود الأمان OTP و QR · تواصل مباشر'
+                                      : 'OTP & QR Verified Handover · Direct Connection',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: AppTypography.label(color: Colors.white)
-                                      .copyWith(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  style: AppTypography.label(
+                                    color: Colors.white,
+                                  ).copyWith(fontSize: 11),
                                 ),
                               ),
                             ],
@@ -250,11 +245,22 @@ class _SplashScreenState extends State<SplashScreen> {
                           width: 148,
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(6),
-                            child: const LinearProgressIndicator(
-                              minHeight: 4,
-                              backgroundColor: Color(0xFF1E3A5F),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppColors.gold),
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween<double>(begin: 0.18, end: 1.0),
+                              duration: widget.splashDuration,
+                              curve: Curves.easeOutCubic,
+                              builder: (context, progress, _) {
+                                return LinearProgressIndicator(
+                                  value: progress,
+                                  minHeight: 3.5,
+                                  backgroundColor:
+                                      Colors.white.withValues(alpha: 0.14),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                    AppColors.gold,
+                                  ),
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -264,9 +270,7 @@ class _SplashScreenState extends State<SplashScreen> {
                               ? 'جاري تجهيز تجربة مشوار...'
                               : 'Preparing your MASHWAR workspace...',
                           style: AppTypography.bodySmall(
-                                  color: AppColors.sand)
-                              .copyWith(
-                            fontWeight: FontWeight.w700,
+                            color: Colors.white.withValues(alpha: 0.78),
                           ),
                         ),
                         const SizedBox(height: AppDimens.space32),
