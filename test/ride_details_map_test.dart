@@ -117,10 +117,17 @@ void main() {
     await tester.tap(expandBtn);
     await tester.pumpAndSettle();
 
-    // Verify fullscreen modal title & InteractiveViewer
+    // Verify fullscreen modal title, live embedded Google Map, and in-app satellite button
     expect(find.text('الخريطة الكاملة للمسار'), findsOneWidget);
+    expect(find.byKey(const ValueKey('mashwar_embedded_gmap_view')), findsWidgets);
+    expect(find.byKey(const ValueKey('ride_fullscreen_open_gmaps_btn')), findsOneWidget);
+
+    // Switch to zoomable schematic mode and verify InteractiveViewer
+    final schematicToggle = find.byIcon(Icons.timeline_rounded);
+    expect(schematicToggle, findsOneWidget);
+    await tester.tap(schematicToggle);
+    await tester.pumpAndSettle();
     expect(find.byType(InteractiveViewer), findsOneWidget);
-    expect(find.text('فتح الملاحة'), findsOneWidget);
 
     // Close the modal
     final closeBtn = find.byIcon(Icons.close_rounded);
