@@ -209,12 +209,14 @@ class FirebaseBoardRepository implements IBoardRepository {
   Future<List<BoardAdModel>> getMyAds() async {
     try {
       final user = _currentUser;
-      Query<Map<String, dynamic>> query =
-          _firestore.collection(FirestoreCollections.boardAds);
-      if (user != null && user.uid.isNotEmpty) {
-        query = query.where('authorId', isEqualTo: user.uid);
+      if (user == null || user.uid.isEmpty) {
+        return const [];
       }
-      final snapshot = await query.limit(20).get();
+      final snapshot = await _firestore
+          .collection(FirestoreCollections.boardAds)
+          .where('authorId', isEqualTo: user.uid)
+          .limit(20)
+          .get();
       return snapshot.docs
           .map((doc) => BoardAdModel.fromJson(doc.data()))
           .toList();

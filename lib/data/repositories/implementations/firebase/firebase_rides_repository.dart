@@ -222,29 +222,24 @@ class FirebaseRidesRepository implements IRidesRepository {
   Future<List<RideModel>> getMyBookedRides() async {
     try {
       final user = _currentUser;
-      if (user != null && user.uid.isNotEmpty) {
-        final bookingsSnap = await _firestore
-            .collection(FirestoreCollections.bookings)
-            .where('passengerId', isEqualTo: user.uid)
-            .limit(20)
-            .get();
-        final rideIds = bookingsSnap.docs
-            .map((d) => d.data()['rideId']?.toString() ?? '')
-            .where((id) => id.isNotEmpty)
-            .toSet();
-        final results = <RideModel>[];
-        for (final id in rideIds) {
-          final ride = await getRideDetails(id);
-          if (ride != null) results.add(ride);
-        }
-        if (results.isNotEmpty) return results;
+      if (user == null || user.uid.isEmpty) {
+        return const [];
       }
-
-      final snapshot = await _firestore
-          .collection(FirestoreCollections.rides)
-          .limit(10)
+      final bookingsSnap = await _firestore
+          .collection(FirestoreCollections.bookings)
+          .where('passengerId', isEqualTo: user.uid)
+          .limit(20)
           .get();
-      return snapshot.docs.map((doc) => RideModel.fromJson(doc.data())).toList();
+      final rideIds = bookingsSnap.docs
+          .map((d) => d.data()['rideId']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
+          .toSet();
+      final results = <RideModel>[];
+      for (final id in rideIds) {
+        final ride = await getRideDetails(id);
+        if (ride != null) results.add(ride);
+      }
+      return results;
     } catch (_) {
       return const [];
     }
@@ -254,12 +249,14 @@ class FirebaseRidesRepository implements IRidesRepository {
   Future<List<RideModel>> getMyDriverRides() async {
     try {
       final user = _currentUser;
-      Query<Map<String, dynamic>> query =
-          _firestore.collection(FirestoreCollections.rides);
-      if (user != null && user.uid.isNotEmpty) {
-        query = query.where('driverId', isEqualTo: user.uid);
+      if (user == null || user.uid.isEmpty) {
+        return const [];
       }
-      final snapshot = await query.limit(20).get();
+      final snapshot = await _firestore
+          .collection(FirestoreCollections.rides)
+          .where('driverId', isEqualTo: user.uid)
+          .limit(20)
+          .get();
       return snapshot.docs.map((doc) => RideModel.fromJson(doc.data())).toList();
     } catch (_) {
       return const [];

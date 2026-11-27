@@ -22,6 +22,10 @@ enum AuthStatus {
 class AuthProvider extends ChangeNotifier {
   static final RegExp _qatarQidRegex = RegExp(r'^[0-9]{11}$');
 
+  static bool get _isLiveBackendMode =>
+      AppEnvironment.isFirebaseRuntimeActive ||
+      AppEnvironment.flavor != AppFlavor.development;
+
   final IAuthRepository? _injectedAuthRepository;
   final bool _requestedDevMockAuth;
   final String _devOtpCode;
@@ -39,6 +43,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isLocked = false;
   bool _isLoading = false;
   bool _disposed = false;
+  bool _justRegistered = false;
   String? _lastError;
   AuthException? _lastAuthException;
 
@@ -56,7 +61,11 @@ class AuthProvider extends ChangeNotifier {
         _user = UserModel.empty,
         _phoneNumber = '',
         _email = null,
-        _walletTransactions = <Map<String, dynamic>>[];
+        _walletTransactions = <Map<String, dynamic>>[],
+        _driverCarModel = _isLiveBackendMode ? '' : 'تويوتا كامري 2024',
+        _driverCarColor = _isLiveBackendMode ? '' : 'أبيض لؤلؤي',
+        _driverPlateLetters = 'قطر',
+        _driverPlateNumbers = _isLiveBackendMode ? '' : '482910';
 
   @visibleForTesting
   AuthProvider.forTesting({
@@ -75,7 +84,11 @@ class AuthProvider extends ChangeNotifier {
         _phoneNumber = user?.phone ?? '',
         _email = user?.email,
         _walletTransactions =
-            List<Map<String, dynamic>>.from(walletTransactions);
+            List<Map<String, dynamic>>.from(walletTransactions),
+        _driverCarModel = _isLiveBackendMode ? '' : 'تويوتا كامري 2024',
+        _driverCarColor = _isLiveBackendMode ? '' : 'أبيض لؤلؤي',
+        _driverPlateLetters = 'قطر',
+        _driverPlateNumbers = _isLiveBackendMode ? '' : '482910';
 
   IAuthRepository get _repo =>
       _injectedAuthRepository ?? AppRepositories.instance.auth;
@@ -103,6 +116,19 @@ class AuthProvider extends ChangeNotifier {
   /// Whether Phone SMS OTP (+974) can be initiated via Firebase Auth or explicit dev-mock mode.
   bool get isPhoneAuthAvailable =>
       isDevMockAuthEnabled || _repo.isPhoneOtpSupported;
+
+  /// True when a newly registered or incomplete user still needs to complete
+  /// profile setup (governorate/municipality or phone missing).
+  bool get needsProfileSetup {
+    if (_status == AuthStatus.unauthenticated ||
+        _status == AuthStatus.phoneEntered) {
+      return false;
+    }
+    if (_justRegistered) return true;
+    final hasGov = _user.governorate?.trim().isNotEmpty ?? false;
+    final hasPhone = _user.phone.trim().isNotEmpty;
+    return !hasGov || !hasPhone;
+  }
 
   AuthStatus get status => _status;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
@@ -201,9 +227,14 @@ class AuthProvider extends ChangeNotifier {
 
       final currentUser = await _repo.getCurrentUser();
       if (currentUser != null && currentUser.id.isNotEmpty) {
+        final previousUid = _user.id.trim();
         _user = currentUser;
         _phoneNumber = currentUser.phone;
         _email = currentUser.email;
+        _justRegistered = false;
+        if (previousUid != currentUser.id.trim()) {
+          _resetDriverVehicleState();
+        }
         await _hydrateSavedAvatarForCurrentUser();
         _status = AuthStatus.authenticated;
         _isLoading = false;
@@ -212,6 +243,7 @@ class AuthProvider extends ChangeNotifier {
       }
 
       _user = UserModel.empty;
+      _justRegistered = false;
       _status = AuthStatus.unauthenticated;
       _isLoading = false;
       _safeNotify();
@@ -219,6 +251,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _recordException(e);
       _user = UserModel.empty;
+      _justRegistered = false;
       _status = AuthStatus.unauthenticated;
       _isLoading = false;
       _safeNotify();
@@ -249,6 +282,7 @@ class AuthProvider extends ChangeNotifier {
     _safeNotify();
 
     try {
+      final previousUid = _user.id.trim();
       final authenticatedUser = await _repo.loginWithEmail(
         trimmedEmail,
         password,
@@ -257,6 +291,10 @@ class AuthProvider extends ChangeNotifier {
       _email = authenticatedUser.email ?? trimmedEmail;
       _phoneNumber = authenticatedUser.phone;
       _authMethod = 'email';
+      _justRegistered = false;
+      if (previousUid != authenticatedUser.id.trim()) {
+        _resetDriverVehicleState();
+      }
       await _hydrateSavedAvatarForCurrentUser();
       _status = AuthStatus.authenticated;
       _isLoading = false;
@@ -308,6 +346,8 @@ class AuthProvider extends ChangeNotifier {
       _email = registeredUser.email ?? trimmedEmail;
       _phoneNumber = registeredUser.phone;
       _authMethod = 'email';
+      _justRegistered = true;
+      _resetDriverVehicleState();
       await _hydrateSavedAvatarForCurrentUser();
       _status = AuthStatus.authenticated;
       _isLoading = false;
@@ -589,9 +629,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  void saveProfile({
+  bool _applyProfileDraft({
     required String fullName,
     required UserGender gender,
+    String? phone,
     String? governorate,
     String? city,
     String? birthDate,
@@ -611,7 +652,7 @@ class AuthProvider extends ChangeNotifier {
     if (!canCompleteAuth) {
       _lastError = 'Authenticate before saving profile';
       _safeNotify();
-      return;
+      return false;
     }
 
     final resolvedId = _user.id.isNotEmpty
@@ -620,15 +661,26 @@ class AuthProvider extends ChangeNotifier {
             ? 'dev_usr_${DateTime.now().millisecondsSinceEpoch}'
             : '');
 
+    final cleanPhone = phone?.trim();
+    if (cleanPhone != null && cleanPhone.isNotEmpty) {
+      _phoneNumber = cleanPhone;
+    }
+    final resolvedPhone =
+        (cleanPhone != null && cleanPhone.isNotEmpty) ? cleanPhone : _phoneNumber;
+    final cleanEmail = email?.trim();
+    if (cleanEmail != null && cleanEmail.isNotEmpty) {
+      _email = cleanEmail;
+    }
+
     _user = UserModel(
       id: resolvedId,
       fullName: fullName,
-      phone: _phoneNumber,
+      phone: resolvedPhone,
       gender: gender,
       governorate: governorate,
       city: city,
       birthDate: birthDate,
-      email: email ?? _email,
+      email: (cleanEmail != null && cleanEmail.isNotEmpty) ? cleanEmail : _email,
       emergencyContactName: emergencyContactName,
       emergencyContactPhone: emergencyContactPhone,
       occupation: occupation,
@@ -646,12 +698,119 @@ class AuthProvider extends ChangeNotifier {
       hasActiveAlerts: false,
       hasUpcomingBooking: false,
     );
+    _justRegistered = false;
     _status = AuthStatus.authenticated;
+    _safeNotify();
+    return true;
+  }
+
+  void saveProfile({
+    required String fullName,
+    required UserGender gender,
+    String? phone,
+    String? governorate,
+    String? city,
+    String? birthDate,
+    String? email,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
+    String? occupation,
+    String? smokingPreference,
+    String? tripVibe,
+    bool ladiesOnlyPreference = false,
+    String? avatarUrl,
+  }) {
+    final applied = _applyProfileDraft(
+      fullName: fullName,
+      gender: gender,
+      phone: phone,
+      governorate: governorate,
+      city: city,
+      birthDate: birthDate,
+      email: email,
+      emergencyContactName: emergencyContactName,
+      emergencyContactPhone: emergencyContactPhone,
+      occupation: occupation,
+      smokingPreference: smokingPreference,
+      tripVibe: tripVibe,
+      ladiesOnlyPreference: ladiesOnlyPreference,
+      avatarUrl: avatarUrl,
+    );
+    if (!applied) return;
     if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
       unawaited(_saveAvatarPreference(avatarUrl.trim()));
     }
-    _safeNotify();
     _persistProfileIfSignedIn();
+  }
+
+  /// Applies profile changes optimistically and awaits persistence via
+  /// [_repo.updateProfile]. Returns `true` when persistence succeeds (or when
+  /// running an unsigned local dev profile), or `false` with [lastError] set
+  /// if persistence fails while keeping the optimistic UI state intact.
+  Future<bool> saveProfileAndPersist({
+    required String fullName,
+    required UserGender gender,
+    String? phone,
+    String? governorate,
+    String? city,
+    String? birthDate,
+    String? email,
+    String? emergencyContactName,
+    String? emergencyContactPhone,
+    String? occupation,
+    String? smokingPreference,
+    String? tripVibe,
+    bool ladiesOnlyPreference = false,
+    String? avatarUrl,
+  }) async {
+    final applied = _applyProfileDraft(
+      fullName: fullName,
+      gender: gender,
+      phone: phone,
+      governorate: governorate,
+      city: city,
+      birthDate: birthDate,
+      email: email,
+      emergencyContactName: emergencyContactName,
+      emergencyContactPhone: emergencyContactPhone,
+      occupation: occupation,
+      smokingPreference: smokingPreference,
+      tripVibe: tripVibe,
+      ladiesOnlyPreference: ladiesOnlyPreference,
+      avatarUrl: avatarUrl,
+    );
+    if (!applied) return false;
+    if (avatarUrl != null && avatarUrl.trim().isNotEmpty) {
+      await _saveAvatarPreference(avatarUrl.trim());
+    }
+    return persistProfileNow();
+  }
+
+  /// Awaits persistence of the current [_user] profile to [_repo], recording
+  /// [lastError] cleanly on failure while keeping optimistic UI state safe.
+  Future<bool> persistProfileNow() async {
+    try {
+      if (await _repo.isSignedIn()) {
+        final persisted = await _repo.updateProfile(_user);
+        if (persisted.id.isNotEmpty) {
+          _user = persisted;
+          if (persisted.phone.isNotEmpty) {
+            _phoneNumber = persisted.phone;
+          }
+          if (persisted.email != null && persisted.email!.isNotEmpty) {
+            _email = persisted.email;
+          }
+        }
+        _lastError = null;
+        _lastAuthException = null;
+        _safeNotify();
+      }
+      return true;
+    } catch (e) {
+      _recordException(e);
+      _safeNotify();
+      return false;
+    }
   }
 
   Future<bool> submitIdVerification({
@@ -711,6 +870,7 @@ class AuthProvider extends ChangeNotifier {
   void updateProfile({
     String? fullName,
     UserGender? gender,
+    String? phone,
     String? email,
     String? governorate,
     String? city,
@@ -723,9 +883,16 @@ class AuthProvider extends ChangeNotifier {
     String? avatarUrl,
     bool clearAvatar = false,
   }) {
+    final cleanPhone = phone?.trim();
+    if (cleanPhone != null && cleanPhone.isNotEmpty) {
+      _phoneNumber = cleanPhone;
+    }
     _user = _user.copyWith(
       fullName: fullName ?? _user.fullName,
       gender: gender ?? _user.gender,
+      phone: (cleanPhone != null && cleanPhone.isNotEmpty)
+          ? cleanPhone
+          : _user.phone,
       email: email ?? _user.email,
       governorate: governorate ?? _user.governorate,
       city: city ?? _user.city,
@@ -769,8 +936,9 @@ class AuthProvider extends ChangeNotifier {
       String? saved;
       if (uid.isNotEmpty) {
         saved = prefs.getString('mashwar_avatar_uid_$uid');
+      } else if (!_isLiveBackendMode) {
+        saved = prefs.getString('mashwar_avatar_active');
       }
-      saved ??= prefs.getString('mashwar_avatar_active');
       if (saved != null && saved.trim().isNotEmpty) {
         final existing = _user.avatarUrl?.trim() ?? '';
         if (existing.isEmpty || saved.startsWith('data:image/')) {
@@ -794,11 +962,25 @@ class AuthProvider extends ChangeNotifier {
           await prefs.remove('mashwar_avatar_uid_$uid');
         }
       } else {
-        await prefs.setString('mashwar_avatar_active', clean);
         if (uid.isNotEmpty) {
           await prefs.setString('mashwar_avatar_uid_$uid', clean);
         }
+        if (!_isLiveBackendMode) {
+          await prefs.setString('mashwar_avatar_active', clean);
+        } else {
+          await prefs.remove('mashwar_avatar_active');
+        }
       }
+    } catch (_) {
+      // Ignore persistence errors in headless environments.
+    }
+  }
+
+  Future<void> _clearActiveAvatarPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance()
+          .timeout(const Duration(milliseconds: 120));
+      await prefs.remove('mashwar_avatar_active');
     } catch (_) {
       // Ignore persistence errors in headless environments.
     }
@@ -1127,13 +1309,23 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Driver Vehicle State
-  String _driverCarModel = 'تويوتا كامري 2024';
-  String _driverCarColor = 'أبيض لؤلؤي';
-  String _driverPlateLetters = 'قطر';
-  String _driverPlateNumbers = '482910';
+  String _driverCarModel;
+  String _driverCarColor;
+  String _driverPlateLetters;
+  String _driverPlateNumbers;
   int _driverSeatsCount = 3;
   bool _driverHasAC = true;
   bool _driverLargeTrunk = true;
+
+  void _resetDriverVehicleState() {
+    _driverCarModel = _isLiveBackendMode ? '' : 'تويوتا كامري 2024';
+    _driverCarColor = _isLiveBackendMode ? '' : 'أبيض لؤلؤي';
+    _driverPlateLetters = 'قطر';
+    _driverPlateNumbers = _isLiveBackendMode ? '' : '482910';
+    _driverSeatsCount = 3;
+    _driverHasAC = true;
+    _driverLargeTrunk = true;
+  }
 
   String get driverCarModel => _driverCarModel;
   String get driverCarColor => _driverCarColor;
@@ -1142,8 +1334,22 @@ class AuthProvider extends ChangeNotifier {
   int get driverSeatsCount => _driverSeatsCount;
   bool get driverHasAC => _driverHasAC;
   bool get driverLargeTrunk => _driverLargeTrunk;
-  String get driverFormattedCar =>
-      '$_driverCarModel، $_driverCarColor ($_driverPlateLetters $_driverPlateNumbers)';
+  String get driverFormattedCar {
+    final model = _driverCarModel.trim();
+    final color = _driverCarColor.trim();
+    final plateLetters = _driverPlateLetters.trim();
+    final plateNumbers = _driverPlateNumbers.trim();
+    if (model.isEmpty && color.isEmpty && plateNumbers.isEmpty) {
+      return '';
+    }
+    final base = [model, color].where((s) => s.isNotEmpty).join('، ');
+    final plate = plateNumbers.isNotEmpty
+        ? [plateLetters, plateNumbers].where((s) => s.isNotEmpty).join(' ')
+        : '';
+    if (plate.isEmpty) return base;
+    if (base.isEmpty) return '($plate)';
+    return '$base ($plate)';
+  }
 
   void updateDriverVehicle({
     String? model,
@@ -1206,16 +1412,19 @@ class AuthProvider extends ChangeNotifier {
       if (repoSignedIn || !isDevMockAuthEnabled) {
         await _repo.deleteAccount(reason: reason);
       }
+      await _clearActiveAvatarPreference();
       _resendTimer?.cancel();
       _user = UserModel.empty;
       _phoneNumber = '';
       _email = null;
+      _justRegistered = false;
       _status = AuthStatus.unauthenticated;
       _otpAttemptsLeft = 3;
       _isLocked = false;
       _lastError = null;
       _lastAuthException = null;
       _walletTransactions.clear();
+      _resetDriverVehicleState();
       _isLoading = false;
       _safeNotify();
       return true;
@@ -1233,16 +1442,19 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _repo.signOut();
     } finally {
+      await _clearActiveAvatarPreference();
       _resendTimer?.cancel();
       _user = UserModel.empty;
       _phoneNumber = '';
       _email = null;
+      _justRegistered = false;
       _status = AuthStatus.unauthenticated;
       _otpAttemptsLeft = 3;
       _isLocked = false;
       _lastError = null;
       _lastAuthException = null;
       _walletTransactions.clear();
+      _resetDriverVehicleState();
       _isLoading = false;
       _safeNotify();
     }

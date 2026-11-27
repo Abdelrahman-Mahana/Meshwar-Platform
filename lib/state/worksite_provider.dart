@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/config/app_environment.dart';
 import '../data/demo/demo_cases_catalog.dart';
 import '../data/models/worksite_models.dart';
 import '../data/repositories/app_repositories.dart';
@@ -318,11 +319,18 @@ class WorksiteProvider extends ChangeNotifier {
   IProviderRepository get _providerRepo =>
       _injectedProviderRepo ?? AppRepositories.instance.providers;
 
-  /// True in normal live-app runtime (where no mock/stub repository was injected
-  /// by unit tests), enabling seamless personalized demo baseline hydration so
-  /// every tab, saved location, and notification center feels richly populated.
+  bool get _isLiveBackendMode =>
+      AppEnvironment.isFirebaseRuntimeActive ||
+      AppEnvironment.flavor != AppFlavor.development;
+
+  /// True ONLY in local development without Firebase active (and when no
+  /// stub/mock repository was injected by unit tests). NEVER true when
+  /// Firebase runtime is active or in staging/production builds.
   bool get _shouldHydrateRichDemoBaseline =>
-      _injectedWorksiteRepo == null && _injectedProviderRepo == null;
+      _injectedWorksiteRepo == null &&
+      _injectedProviderRepo == null &&
+      !_isLiveBackendMode &&
+      _worksiteRepo is! FirebaseWorksiteRepository;
 
   MashwarDemoCasesBundle _buildPersonalizedDemoBundle([String? explicitUid]) {
     final uid = (explicitUid != null && explicitUid.trim().isNotEmpty)
@@ -502,19 +510,49 @@ class WorksiteProvider extends ChangeNotifier {
     _boundUserId = normalizedNext;
     _boundUserName = fullName?.trim();
 
-    if (previousUid != normalizedNext) {
+    final uidChanged = previousUid != normalizedNext;
+    final hasLiveStaleOnNull = _isLiveBackendMode &&
+        normalizedNext == null &&
+        (_allLoadedRequests.isNotEmpty ||
+            _filteredRequests.isNotEmpty ||
+            _selectedRequest != null ||
+            _notifications.isNotEmpty ||
+            _savedWorksites.isNotEmpty ||
+            _providerProfile != null);
+
+    if (uidChanged || hasLiveStaleOnNull) {
       _activeHandoverCode = null;
       _isDemoShowcaseMode = false;
       _showcaseBundle = null;
       _demoOffersByRequest = {};
       _demoEventsByRequest = {};
       _locallyReadNotificationIds.clear();
-      if (normalizedNext == null) {
+      if (_isLiveBackendMode) {
+        _allLoadedRequests = const [];
+        _filteredRequests = const [];
+        _selectedRequest = null;
+        _selectedOffers = const [];
+        _selectedEvents = const [];
         _providerProfile = null;
         _savedWorksites = const [];
         _notifications = const [];
       } else {
-        _notifications = _deriveLiveNotifications(normalizedNext);
+        _allLoadedRequests = _allLoadedRequests
+            .where((r) => !r.id.startsWith('demo_wr_'))
+            .toList();
+        if (_selectedRequest != null &&
+            _selectedRequest!.id.startsWith('demo_wr_')) {
+          _selectedRequest = null;
+          _selectedOffers = const [];
+          _selectedEvents = const [];
+        }
+        if (normalizedNext == null) {
+          _providerProfile = null;
+          _savedWorksites = const [];
+          _notifications = const [];
+        } else {
+          _notifications = _deriveLiveNotifications(normalizedNext);
+        }
       }
       _recomputeFilteredRequests();
       notifyListeners();
@@ -1827,38 +1865,25 @@ class WorksiteProvider extends ChangeNotifier {
     }
 
     final repo = _worksiteRepo;
-    if (repo is FirebaseWorksiteRepository) {
-      try {
-        final rawDocs = await repo.listNotifications(userId: uid);
-        if (rawDocs.isNotEmpty) {
-          final parsed = rawDocs.map((doc) {
+    if (repo is FirebaseWorksiteRepository || _isLiveBackendMode) {
+      final byId = <String, WorksiteNotificationItem>{};
+      if (repo is FirebaseWorksiteRepository) {
+        try {
+          final rawDocs = await repo.listNotifications(userId: uid);
+          for (final doc in rawDocs) {
             final item = WorksiteNotificationItem.fromJson(doc);
-            return _locallyReadNotificationIds.contains(item.id)
+            if (item.id.isEmpty) continue;
+            byId[item.id] = _locallyReadNotificationIds.contains(item.id)
                 ? item.copyWith(isRead: true)
                 : item;
-          }).toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-          _notifications = parsed;
-          if (notify) notifyListeners();
-          return;
-        }
-      } catch (_) {}
-      if (_shouldHydrateRichDemoBaseline) {
-        final demoBundle = _buildPersonalizedDemoBundle(uid);
-        final derived = _deriveLiveNotifications(uid);
-        final showcase = _buildShowcaseNotifications(demoBundle);
-        final byId = <String, WorksiteNotificationItem>{
-          for (final n in derived) n.id: n,
-        };
-        for (final s in showcase) {
-          byId.putIfAbsent(s.id, () => s);
-        }
-        _notifications = byId.values.toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        if (notify) notifyListeners();
-        return;
+          }
+        } catch (_) {}
       }
-      _notifications = _deriveLiveNotifications(uid);
+      for (final derived in _deriveLiveNotifications(uid)) {
+        byId.putIfAbsent(derived.id, () => derived);
+      }
+      _notifications = byId.values.toList()
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
       if (notify) notifyListeners();
       return;
     }
@@ -1885,6 +1910,11 @@ class WorksiteProvider extends ChangeNotifier {
   List<WorksiteNotificationItem> _deriveLiveNotifications(String uid) {
     final items = <WorksiteNotificationItem>[];
     for (final req in _allLoadedRequests) {
+      if (_isLiveBackendMode &&
+          !_isDemoShowcaseMode &&
+          req.id.startsWith('demo_wr_')) {
+        continue;
+      }
       final isRequester = req.requesterId == uid;
       final isAssignedProvider = req.assignedProviderId == uid;
       if (!isRequester && !isAssignedProvider) continue;

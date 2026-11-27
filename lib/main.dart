@@ -95,6 +95,10 @@ class MashwarApp extends StatefulWidget {
   final Future<String?> Function()? onRetryStartup;
   final AuthProvider? authProvider;
   final WorksiteProvider? worksiteProvider;
+  final RidesProvider? ridesProvider;
+  final ParcelsProvider? parcelsProvider;
+  final BoardProvider? boardProvider;
+  final AlertsProvider? alertsProvider;
 
   const MashwarApp({
     super.key,
@@ -102,6 +106,10 @@ class MashwarApp extends StatefulWidget {
     this.onRetryStartup,
     this.authProvider,
     this.worksiteProvider,
+    this.ridesProvider,
+    this.parcelsProvider,
+    this.boardProvider,
+    this.alertsProvider,
   });
 
   @override
@@ -111,12 +119,24 @@ class MashwarApp extends StatefulWidget {
 class _MashwarAppState extends State<MashwarApp> {
   AuthProvider? _ownedAuthProvider;
   WorksiteProvider? _ownedWorksiteProvider;
+  RidesProvider? _ownedRidesProvider;
+  ParcelsProvider? _ownedParcelsProvider;
+  BoardProvider? _ownedBoardProvider;
+  AlertsProvider? _ownedAlertsProvider;
   String? _startupError;
   bool _isRetrying = false;
 
   AuthProvider get _effectiveAuth => widget.authProvider ?? _ownedAuthProvider!;
   WorksiteProvider get _effectiveWorksite =>
       widget.worksiteProvider ?? _ownedWorksiteProvider!;
+  RidesProvider get _effectiveRides =>
+      widget.ridesProvider ?? _ownedRidesProvider!;
+  ParcelsProvider get _effectiveParcels =>
+      widget.parcelsProvider ?? _ownedParcelsProvider!;
+  BoardProvider get _effectiveBoard =>
+      widget.boardProvider ?? _ownedBoardProvider!;
+  AlertsProvider get _effectiveAlerts =>
+      widget.alertsProvider ?? _ownedAlertsProvider!;
 
   @override
   void initState() {
@@ -127,18 +147,31 @@ class _MashwarAppState extends State<MashwarApp> {
       _ownedAuthProvider = AuthProvider();
     }
     final initialUser = _effectiveAuth.user;
+    final initialUid = initialUser.id.isNotEmpty ? initialUser.id : null;
     if (widget.worksiteProvider == null) {
       _ownedWorksiteProvider = WorksiteProvider(
-        initialUserId: initialUser.id.isNotEmpty ? initialUser.id : null,
+        initialUserId: initialUid,
         initialUserName:
             initialUser.fullName.isNotEmpty ? initialUser.fullName : null,
       );
-    } else {
-      _effectiveWorksite.syncAuthSession(
-        uid: initialUser.id,
-        fullName: initialUser.fullName,
-      );
     }
+    if (widget.ridesProvider == null) {
+      _ownedRidesProvider = RidesProvider(initialUserId: initialUid);
+    }
+    if (widget.parcelsProvider == null) {
+      _ownedParcelsProvider = ParcelsProvider(initialUserId: initialUid);
+    }
+    if (widget.boardProvider == null) {
+      _ownedBoardProvider = BoardProvider(initialUserId: initialUid);
+    }
+    if (widget.alertsProvider == null) {
+      _ownedAlertsProvider = AlertsProvider(initialUserId: initialUid);
+    }
+
+    _syncSessionProviders(
+      uid: initialUser.id,
+      fullName: initialUser.fullName,
+    );
 
     _effectiveAuth.addListener(_onAuthChanged);
 
@@ -151,9 +184,23 @@ class _MashwarAppState extends State<MashwarApp> {
     }
   }
 
+  void _syncSessionProviders({
+    required String uid,
+    required String fullName,
+  }) {
+    _effectiveWorksite.syncAuthSession(
+      uid: uid,
+      fullName: fullName,
+    );
+    _effectiveRides.syncAuthSession(uid: uid);
+    _effectiveParcels.syncAuthSession(uid: uid);
+    _effectiveBoard.syncAuthSession(uid: uid);
+    _effectiveAlerts.syncAuthSession(uid: uid);
+  }
+
   void _onAuthChanged() {
     final user = _effectiveAuth.user;
-    _effectiveWorksite.syncAuthSession(
+    _syncSessionProviders(
       uid: user.id,
       fullName: user.fullName,
     );
@@ -164,6 +211,10 @@ class _MashwarAppState extends State<MashwarApp> {
     _effectiveAuth.removeListener(_onAuthChanged);
     _ownedAuthProvider?.dispose();
     _ownedWorksiteProvider?.dispose();
+    _ownedRidesProvider?.dispose();
+    _ownedParcelsProvider?.dispose();
+    _ownedBoardProvider?.dispose();
+    _ownedAlertsProvider?.dispose();
     super.dispose();
   }
 
@@ -218,10 +269,10 @@ class _MashwarAppState extends State<MashwarApp> {
         ChangeNotifierProvider<WorksiteProvider>.value(
           value: _effectiveWorksite,
         ),
-        ChangeNotifierProvider(create: (_) => RidesProvider()),
-        ChangeNotifierProvider(create: (_) => ParcelsProvider()),
-        ChangeNotifierProvider(create: (_) => BoardProvider()),
-        ChangeNotifierProvider(create: (_) => AlertsProvider()),
+        ChangeNotifierProvider<RidesProvider>.value(value: _effectiveRides),
+        ChangeNotifierProvider<ParcelsProvider>.value(value: _effectiveParcels),
+        ChangeNotifierProvider<BoardProvider>.value(value: _effectiveBoard),
+        ChangeNotifierProvider<AlertsProvider>.value(value: _effectiveAlerts),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: Consumer2<SettingsProvider, AdminProvider>(

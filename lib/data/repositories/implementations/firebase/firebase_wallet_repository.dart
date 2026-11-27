@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:firebase_core/firebase_core.dart';
 
+import '../../../../core/config/app_environment.dart';
 import '../../../models/wallet_transaction_model.dart';
 import '../../../services/firebase_firestore_service.dart';
 import '../../contracts/i_wallet_repository.dart';
@@ -13,6 +14,10 @@ class FirebaseWalletRepository implements IWalletRepository {
 
   FirebaseWalletRepository({FirebaseFirestore? firestore})
       : _injectedFirestore = firestore;
+
+  bool get _isLiveBackendMode =>
+      AppEnvironment.isFirebaseRuntimeActive ||
+      AppEnvironment.flavor != AppFlavor.development;
 
   bool get _canUseFirestore {
     if (_injectedFirestore != null) return true;
@@ -33,6 +38,10 @@ class FirebaseWalletRepository implements IWalletRepository {
     }
   }
 
+  bool get _isFirestoreSessionActive =>
+      _canUseFirestore &&
+      (_injectedFirestore != null || _currentAuthUid != null);
+
   FirebaseFirestore get _firestore =>
       _injectedFirestore ?? FirebaseFirestore.instance;
 
@@ -42,7 +51,8 @@ class FirebaseWalletRepository implements IWalletRepository {
         ? _currentAuthUid!
         : (userId.trim().isEmpty ? 'usr_me_01' : userId.trim());
 
-    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+    if (!_isFirestoreSessionActive) {
+      if (_isLiveBackendMode) return 0.0;
       return _localFallback.getBalance(effectiveUserId);
     }
 
@@ -58,14 +68,12 @@ class FirebaseWalletRepository implements IWalletRepository {
         final piastres = (data['walletBalancePiastres'] as num?)?.toInt();
         final resolved = piastres != null
             ? piastres / 100.0
-            : ((data['walletBalance'] as num?)?.toDouble() ??
-                await _localFallback.getBalance(effectiveUserId));
-        _localFallback.syncRemoteSnapshot(balance: resolved);
+            : ((data['walletBalance'] as num?)?.toDouble() ?? 0.0);
         return resolved;
       }
-      return await _localFallback.getBalance(effectiveUserId);
+      return 0.0;
     } catch (_) {
-      return _localFallback.getBalance(effectiveUserId);
+      return 0.0;
     }
   }
 
@@ -75,7 +83,8 @@ class FirebaseWalletRepository implements IWalletRepository {
         ? _currentAuthUid!
         : (userId.trim().isEmpty ? 'usr_me_01' : userId.trim());
 
-    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+    if (!_isFirestoreSessionActive) {
+      if (_isLiveBackendMode) return const [];
       return _localFallback.getTransactions(effectiveUserId);
     }
 
@@ -96,12 +105,9 @@ class FirebaseWalletRepository implements IWalletRepository {
           )
           .toList();
 
-      if (remoteTxs.isNotEmpty) {
-        _localFallback.syncRemoteSnapshot(remoteTransactions: remoteTxs);
-      }
-      return await _localFallback.getTransactions(effectiveUserId);
+      return remoteTxs;
     } catch (_) {
-      return _localFallback.getTransactions(effectiveUserId);
+      return const [];
     }
   }
 
@@ -117,16 +123,14 @@ class FirebaseWalletRepository implements IWalletRepository {
         ? _currentAuthUid!
         : (userId.trim().isEmpty ? 'usr_me_01' : userId.trim());
 
-    final localOk = await _localFallback.deposit(
-      userId: effectiveUserId,
-      amount: amount,
-      method: method,
-      referenceNumber: referenceNumber,
-    );
-    if (!localOk) return false;
-
-    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
-      return true;
+    if (!_isFirestoreSessionActive) {
+      if (_isLiveBackendMode) return false;
+      return _localFallback.deposit(
+        userId: effectiveUserId,
+        amount: amount,
+        method: method,
+        referenceNumber: referenceNumber,
+      );
     }
 
     try {
@@ -149,7 +153,7 @@ class FirebaseWalletRepository implements IWalletRepository {
 
       await txRef.set(tx.toJson()).timeout(const Duration(seconds: 4));
     } catch (_) {
-      // Keep optimistic local deposit state when Firestore rules or offline block client ledger writes.
+      // Keep UI responsive if Firestore rules or offline block client ledger writes.
     }
     return true;
   }
@@ -166,17 +170,18 @@ class FirebaseWalletRepository implements IWalletRepository {
         ? _currentAuthUid!
         : (userId.trim().isEmpty ? 'usr_me_01' : userId.trim());
 
-    final localOk = await _localFallback.withdraw(
-      userId: effectiveUserId,
-      amount: amount,
-      method: method,
-      destinationAccount: destinationAccount,
-    );
-    if (!localOk) return false;
-
-    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
-      return true;
+    if (!_isFirestoreSessionActive) {
+      if (_isLiveBackendMode) return false;
+      return _localFallback.withdraw(
+        userId: effectiveUserId,
+        amount: amount,
+        method: method,
+        destinationAccount: destinationAccount,
+      );
     }
+
+    final currentBalance = await getBalance(effectiveUserId);
+    if (currentBalance < amount) return false;
 
     try {
       final txRef =
@@ -196,7 +201,7 @@ class FirebaseWalletRepository implements IWalletRepository {
 
       await txRef.set(tx.toJson()).timeout(const Duration(seconds: 4));
     } catch (_) {
-      // Keep optimistic local withdrawal state when Firestore rules or offline block client ledger writes.
+      // Keep UI responsive if Firestore rules or offline block client ledger writes.
     }
     return true;
   }

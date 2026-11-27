@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import '../core/config/app_environment.dart';
 import '../data/mock_data.dart';
 import '../data/models/parcel_model.dart';
 import '../data/models/ride_model.dart';
@@ -31,9 +32,45 @@ class ParcelDisputeRecord {
 }
 
 class ParcelsProvider extends ChangeNotifier {
-  final List<ParcelModel> _parcels = List.from(MockData.initialParcels);
+  static bool get _isLiveBackendMode =>
+      AppEnvironment.isFirebaseRuntimeActive ||
+      AppEnvironment.flavor != AppFlavor.development;
+
+  String? _boundUserId;
+  final List<ParcelModel> _parcels = [];
   final Map<String, ParcelDisputeRecord> _disputes = {};
   bool _isLoading = false;
+
+  ParcelsProvider({String? initialUserId})
+      : _boundUserId =
+            (initialUserId != null && initialUserId.trim().isNotEmpty)
+                ? initialUserId.trim()
+                : null {
+    if (!_isLiveBackendMode) {
+      _parcels.addAll(MockData.initialParcels);
+    }
+  }
+
+  /// Syncs active auth user identity from [AuthProvider], clearing any previous
+  /// account's parcels and disputes on sign-out or user switch.
+  void syncAuthSession({required String? uid}) {
+    final clean = uid?.trim();
+    final normalizedNext =
+        (clean != null && clean.isNotEmpty) ? clean : null;
+    final previousUid = _boundUserId;
+    _boundUserId = normalizedNext;
+
+    final uidChanged = previousUid != normalizedNext;
+    final shouldClearOnNull = normalizedNext == null &&
+        (_isLiveBackendMode || uidChanged) &&
+        (_parcels.isNotEmpty || _disputes.isNotEmpty);
+
+    if (uidChanged || shouldClearOnNull) {
+      _parcels.clear();
+      _disputes.clear();
+      notifyListeners();
+    }
+  }
 
   List<ParcelModel> get parcels => List.unmodifiable(_parcels);
   bool get isLoading => _isLoading;
@@ -65,8 +102,8 @@ class ParcelsProvider extends ChangeNotifier {
     }
   }
 
-  /// Loads parcels from [AppRepositories.instance.parcels] and merges with
-  /// curated seed parcels so tracking & route-parcel examples are ready immediately.
+  /// Loads parcels from [AppRepositories.instance.parcels].
+  /// In live Firebase/production mode, never merges [MockData.initialParcels].
   Future<void> loadParcels() async {
     _isLoading = true;
     notifyListeners();
@@ -79,16 +116,20 @@ class ParcelsProvider extends ChangeNotifier {
         }
       }
       for (final local in _parcels) {
-        mergedById.putIfAbsent(local.id, () => local);
+        if (local.id.isNotEmpty) {
+          mergedById.putIfAbsent(local.id, () => local);
+        }
       }
-      for (final seed in MockData.initialParcels) {
-        mergedById.putIfAbsent(seed.id, () => seed);
+      if (!_isLiveBackendMode) {
+        for (final seed in MockData.initialParcels) {
+          mergedById.putIfAbsent(seed.id, () => seed);
+        }
       }
       _parcels
         ..clear()
         ..addAll(mergedById.values);
     } catch (_) {
-      if (_parcels.isEmpty) {
+      if (!_isLiveBackendMode && _parcels.isEmpty) {
         _parcels.addAll(MockData.initialParcels);
       }
     } finally {
@@ -125,20 +166,21 @@ class ParcelsProvider extends ChangeNotifier {
         ? senderId.trim()
         : ((authUser != null && authUser.uid.isNotEmpty)
             ? authUser.uid
-            : MockData.currentUser.id);
+            : (_boundUserId ??
+                (_isLiveBackendMode ? '' : MockData.currentUser.id)));
     final resolvedSenderName =
         (senderName != null && senderName.trim().length >= 2)
             ? senderName.trim()
             : ((authUser?.displayName != null &&
                     authUser!.displayName!.trim().length >= 2)
                 ? authUser.displayName!.trim()
-                : MockData.currentUser.fullName);
+                : (_isLiveBackendMode ? '' : MockData.currentUser.fullName));
     final resolvedSenderPhone =
         (senderPhone != null && senderPhone.trim().isNotEmpty)
             ? senderPhone.trim()
             : (authUser?.phoneNumber?.trim().isNotEmpty == true
                 ? authUser!.phoneNumber!.trim()
-                : MockData.currentUser.phone);
+                : (_isLiveBackendMode ? '' : MockData.currentUser.phone));
 
     final resolvedDriverName = driverName.trim().isNotEmpty
         ? driverName.trim()

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import '../core/config/app_environment.dart';
 import '../data/mock_data.dart';
 import '../data/models/ride_model.dart';
 import '../data/repositories/app_repositories.dart';
@@ -39,6 +40,11 @@ class RideRatingRecord {
 }
 
 class RidesProvider extends ChangeNotifier {
+  static bool get _isLiveBackendMode =>
+      AppEnvironment.isFirebaseRuntimeActive ||
+      AppEnvironment.flavor != AppFlavor.development;
+
+  String? _boundUserId;
   RideMode _rideMode = RideMode.seats;
   String _fromCity = '';
   String _toCity = '';
@@ -53,19 +59,58 @@ class RidesProvider extends ChangeNotifier {
   bool _filterLadiesOnly = false;
   bool _filterInstantBooking = false;
 
-  final List<RideModel> _allRides = List.from(MockData.initialRides);
-  final List<RideModel> _myPublishedRides = [
-    MockData.initialRides.first,
-    if (MockData.initialRides.length > 4) MockData.initialRides[4],
-  ];
-  final List<RideModel> _bookedRides = [
-    MockData.initialRides.first,
-    if (MockData.initialRides.length > 1) MockData.initialRides[1],
-    if (MockData.initialRides.last.status == 'completed')
-      MockData.initialRides.last,
-  ];
-  RideModel? _activeBooking = MockData.initialRides.first;
+  final List<RideModel> _allRides = [];
+  final List<RideModel> _myPublishedRides = [];
+  final List<RideModel> _bookedRides = [];
+  RideModel? _activeBooking;
   final Map<String, RideRatingRecord> _rideRatings = {};
+
+  RidesProvider({String? initialUserId})
+      : _boundUserId =
+            (initialUserId != null && initialUserId.trim().isNotEmpty)
+                ? initialUserId.trim()
+                : null {
+    if (!_isLiveBackendMode) {
+      _allRides.addAll(MockData.initialRides);
+      _myPublishedRides.addAll([
+        MockData.initialRides.first,
+        if (MockData.initialRides.length > 4) MockData.initialRides[4],
+      ]);
+      _bookedRides.addAll([
+        MockData.initialRides.first,
+        if (MockData.initialRides.length > 1) MockData.initialRides[1],
+        if (MockData.initialRides.last.status == 'completed')
+          MockData.initialRides.last,
+      ]);
+      _activeBooking = MockData.initialRides.first;
+    }
+  }
+
+  /// Syncs active auth user identity from [AuthProvider], clearing any previous
+  /// account's personal rides, bookings, and ratings on sign-out or user switch.
+  void syncAuthSession({required String? uid}) {
+    final clean = uid?.trim();
+    final normalizedNext =
+        (clean != null && clean.isNotEmpty) ? clean : null;
+    final previousUid = _boundUserId;
+    _boundUserId = normalizedNext;
+
+    final uidChanged = previousUid != normalizedNext;
+    final shouldClearOnNull = normalizedNext == null &&
+        (_isLiveBackendMode || uidChanged) &&
+        (_myPublishedRides.isNotEmpty ||
+            _bookedRides.isNotEmpty ||
+            _activeBooking != null ||
+            _rideRatings.isNotEmpty);
+
+    if (uidChanged || shouldClearOnNull) {
+      _myPublishedRides.clear();
+      _bookedRides.clear();
+      _activeBooking = null;
+      _rideRatings.clear();
+      notifyListeners();
+    }
+  }
 
   RideMode get rideMode => _rideMode;
   String get fromCity => _fromCity;
@@ -149,13 +194,78 @@ class RidesProvider extends ChangeNotifier {
     return false;
   }
 
-  /// Fetches live rides from [AppRepositories.instance.rides] and merges them
-  /// with curated seed trips so the feed is never empty.
+  /// Fetches live rides from [AppRepositories.instance.rides].
+  /// In live Firebase/production mode, never merges [MockData.initialRides].
   Future<void> loadRides() async {
     _isLoading = true;
     notifyListeners();
     try {
-      final remoteRides = await AppRepositories.instance.rides.searchRides(
+      final repo = AppRepositories.instance.rides;
+      if (_isLiveBackendMode) {
+        final results = await Future.wait<List<RideModel>>([
+          repo.searchRides(fromCity: '', toCity: ''),
+          repo.getMyBookedRides(),
+          repo.getMyDriverRides(),
+        ]);
+        final remotePublic = results[0];
+        final remoteBooked = results[1];
+        final remoteDriver = results[2];
+
+        final driverById = <String, RideModel>{
+          for (final ride in remoteDriver)
+            if (ride.id.isNotEmpty) ride.id: ride,
+        };
+        for (final local in _myPublishedRides) {
+          if (local.id.isNotEmpty) {
+            driverById.putIfAbsent(local.id, () => local);
+          }
+        }
+        _myPublishedRides
+          ..clear()
+          ..addAll(driverById.values);
+
+        final bookedById = <String, RideModel>{
+          for (final ride in remoteBooked)
+            if (ride.id.isNotEmpty) ride.id: ride,
+        };
+        for (final local in _bookedRides) {
+          if (local.id.isNotEmpty) {
+            bookedById.putIfAbsent(local.id, () => local);
+          }
+        }
+        _bookedRides
+          ..clear()
+          ..addAll(bookedById.values);
+
+        if (_activeBooking != null &&
+            !_bookedRides.any((r) => r.id == _activeBooking!.id)) {
+          _activeBooking = null;
+        }
+        if (_activeBooking == null) {
+          for (final r in _bookedRides) {
+            if (r.status != 'cancelled' && r.status != 'completed') {
+              _activeBooking = r;
+              break;
+            }
+          }
+        }
+
+        final publicById = <String, RideModel>{
+          for (final ride in remotePublic)
+            if (ride.id.isNotEmpty) ride.id: ride,
+        };
+        for (final own in _myPublishedRides) {
+          if (own.id.isNotEmpty) {
+            publicById.putIfAbsent(own.id, () => own);
+          }
+        }
+        _allRides
+          ..clear()
+          ..addAll(publicById.values);
+        return;
+      }
+
+      final remoteRides = await repo.searchRides(
         fromCity: '',
         toCity: '',
       );
@@ -175,7 +285,7 @@ class RidesProvider extends ChangeNotifier {
         ..clear()
         ..addAll(mergedById.values);
     } catch (_) {
-      if (_allRides.isEmpty) {
+      if (!_isLiveBackendMode && _allRides.isEmpty) {
         _allRides.addAll(MockData.initialRides);
       }
     } finally {
@@ -559,18 +669,20 @@ class RidesProvider extends ChangeNotifier {
                 : null);
     final resolvedDriverId = (driverId != null && driverId.trim().isNotEmpty)
         ? driverId.trim()
-        : (_resolveCurrentAuthUid() ?? MockData.currentUser.id);
+        : (_resolveCurrentAuthUid() ??
+            _boundUserId ??
+            (_isLiveBackendMode ? '' : MockData.currentUser.id));
 
     final newRide = RideModel(
       id: 'ride_${DateTime.now().millisecondsSinceEpoch}',
       driverId: resolvedDriverId,
       driverName: driverName.trim().isNotEmpty
           ? driverName.trim()
-          : MockData.currentUser.fullName,
+          : (_isLiveBackendMode ? '' : MockData.currentUser.fullName),
       driverCar: driverCar.trim().isNotEmpty ? driverCar.trim() : 'Sedan',
       driverPhone: driverPhone.trim().isNotEmpty
           ? driverPhone.trim()
-          : MockData.currentUser.phone,
+          : (_isLiveBackendMode ? '' : MockData.currentUser.phone),
       fromCity: fromCity.trim(),
       toCity: toCity.trim(),
       stopoverCity: resolvedStopover,

@@ -1,22 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import '../core/config/app_environment.dart';
 import '../data/mock_data.dart';
 import '../data/models/board_ad_model.dart';
 import '../data/repositories/app_repositories.dart';
 import '../data/repositories/implementations/firebase/firebase_board_repository.dart';
 
 class BoardProvider extends ChangeNotifier {
-  BoardAdType _selectedType = BoardAdType.all;
-  int _radiusKm = 50;
-  String _searchQuery = '';
-  String _fromFilter = '';
-  String _toFilter = '';
-  bool _isLoading = false;
+  static bool get _isLiveBackendMode =>
+      AppEnvironment.isFirebaseRuntimeActive ||
+      AppEnvironment.flavor != AppFlavor.development;
 
-  final List<BoardAdModel> _ads = List.from(MockData.initialBoardAds);
-  final List<BoardAdModel> _myAds = [
-    const BoardAdModel(
+  static const List<BoardAdModel> _devSeedMyAds = [
+    BoardAdModel(
       id: 'my_ad_1',
       authorId: 'user_01',
       type: BoardAdType.rideRequest,
@@ -32,7 +29,7 @@ class BoardProvider extends ChangeNotifier {
       priceOrBudget: 35,
       status: BoardAdStatus.active,
     ),
-    const BoardAdModel(
+    BoardAdModel(
       id: 'my_ad_2',
       authorId: 'user_01',
       type: BoardAdType.parcelRequest,
@@ -48,7 +45,7 @@ class BoardProvider extends ChangeNotifier {
       priceOrBudget: 25,
       status: BoardAdStatus.completed,
     ),
-    const BoardAdModel(
+    BoardAdModel(
       id: 'my_ad_3',
       authorId: 'user_01',
       type: BoardAdType.parcelRequest,
@@ -68,6 +65,51 @@ class BoardProvider extends ChangeNotifier {
       status: BoardAdStatus.active,
     ),
   ];
+
+  String? _boundUserId;
+  BoardAdType _selectedType = BoardAdType.all;
+  int _radiusKm = 50;
+  String _searchQuery = '';
+  String _fromFilter = '';
+  String _toFilter = '';
+  bool _isLoading = false;
+
+  final List<BoardAdModel> _ads = [];
+  final List<BoardAdModel> _myAds = [];
+
+  BoardProvider({String? initialUserId})
+      : _boundUserId =
+            (initialUserId != null && initialUserId.trim().isNotEmpty)
+                ? initialUserId.trim()
+                : null {
+    if (!_isLiveBackendMode) {
+      _ads.addAll(MockData.initialBoardAds);
+      _myAds.addAll(_devSeedMyAds);
+    }
+  }
+
+  /// Syncs active auth user identity from [AuthProvider], clearing previous
+  /// account ads/offers on sign-out or user switch.
+  void syncAuthSession({required String? uid}) {
+    final clean = uid?.trim();
+    final normalizedNext =
+        (clean != null && clean.isNotEmpty) ? clean : null;
+    final previousUid = _boundUserId;
+    _boundUserId = normalizedNext;
+
+    final uidChanged = previousUid != normalizedNext;
+    final shouldClearOnNull = normalizedNext == null &&
+        (_isLiveBackendMode || uidChanged) &&
+        (_myAds.isNotEmpty || (_isLiveBackendMode && _ads.isNotEmpty));
+
+    if (uidChanged || shouldClearOnNull) {
+      _myAds.clear();
+      if (_isLiveBackendMode) {
+        _ads.clear();
+      }
+      notifyListeners();
+    }
+  }
 
   BoardAdType get selectedType => _selectedType;
   int get radiusKm => _radiusKm;
@@ -125,13 +167,51 @@ class BoardProvider extends ChangeNotifier {
     return false;
   }
 
-  /// Fetches live `board_ads` and merges them with curated seed requests/offers
-  /// covering `rideOffer`, `rideRequest`, `parcelRequest`, and `errandService`.
+  /// Fetches live `board_ads` and user-owned ads from [AppRepositories.instance.board].
+  /// In live Firebase/production mode, never merges [MockData.initialBoardAds].
   Future<void> loadBoardAds() async {
     _isLoading = true;
     notifyListeners();
     try {
-      final remoteAds = await AppRepositories.instance.board.getBoardAds();
+      final repo = AppRepositories.instance.board;
+      if (_isLiveBackendMode) {
+        final results = await Future.wait<List<BoardAdModel>>([
+          repo.getBoardAds(),
+          repo.getMyAds(),
+        ]);
+        final remoteAds = results[0];
+        final remoteMyAds = results[1];
+
+        final myById = <String, BoardAdModel>{
+          for (final ad in remoteMyAds)
+            if (ad.id.isNotEmpty) ad.id: ad,
+        };
+        for (final localOwn in _myAds) {
+          if (localOwn.id.isNotEmpty) {
+            myById.putIfAbsent(localOwn.id, () => localOwn);
+          }
+        }
+        _myAds
+          ..clear()
+          ..addAll(myById.values);
+
+        final mergedById = <String, BoardAdModel>{
+          for (final ad in remoteAds)
+            if (ad.id.isNotEmpty) ad.id: ad,
+        };
+        for (final own in _myAds) {
+          if (own.status == BoardAdStatus.active ||
+              own.status == BoardAdStatus.offerSent) {
+            mergedById.putIfAbsent(own.id, () => own);
+          }
+        }
+        _ads
+          ..clear()
+          ..addAll(mergedById.values);
+        return;
+      }
+
+      final remoteAds = await repo.getBoardAds();
       final mergedById = <String, BoardAdModel>{};
       for (final ad in remoteAds) {
         if (ad.id.isNotEmpty) {
@@ -151,7 +231,7 @@ class BoardProvider extends ChangeNotifier {
         ..clear()
         ..addAll(mergedById.values);
     } catch (_) {
-      if (_ads.isEmpty) {
+      if (!_isLiveBackendMode && _ads.isEmpty) {
         _ads.addAll(MockData.initialBoardAds);
       }
     } finally {
@@ -257,28 +337,31 @@ class BoardProvider extends ChangeNotifier {
     bool requiresReceiptProof = false,
     int? estimatedItemCost,
     bool isProviderOffer = false,
+    bool isVerified = false,
+    int tripCount = 0,
   }) {
     final authUser = _resolveCurrentAuthUser();
     final resolvedAuthorId = (authorId != null && authorId.trim().isNotEmpty)
         ? authorId.trim()
         : ((authUser != null && authUser.uid.isNotEmpty)
             ? authUser.uid
-            : MockData.currentUser.id);
+            : (_boundUserId ??
+                (_isLiveBackendMode ? '' : MockData.currentUser.id)));
     final resolvedAuthorName =
         (authorName != null && authorName.trim().length >= 2)
             ? authorName.trim()
             : ((authUser?.displayName != null &&
                     authUser!.displayName!.trim().length >= 2)
                 ? authUser.displayName!.trim()
-                : MockData.currentUser.fullName);
+                : (_isLiveBackendMode ? 'عضو مشوار' : MockData.currentUser.fullName));
 
     final newAd = BoardAdModel(
       id: 'my_ad_${DateTime.now().millisecondsSinceEpoch}',
       authorId: resolvedAuthorId,
       type: type,
       authorName: resolvedAuthorName,
-      isVerified: true,
-      tripCount: 14,
+      isVerified: isVerified,
+      tripCount: tripCount,
       postedAgo: 'الآن',
       fromCity: fromCity.trim(),
       toCity: toCity.trim(),
@@ -325,7 +408,9 @@ class BoardProvider extends ChangeNotifier {
               : ((authUser?.displayName != null &&
                       authUser!.displayName!.trim().length >= 2)
                   ? authUser.displayName!.trim()
-                  : MockData.currentUser.fullName);
+                  : (_isLiveBackendMode
+                      ? 'مسافر مشوار'
+                      : MockData.currentUser.fullName));
       final cleanNote =
           (note != null && note.trim().isNotEmpty) ? note.trim() : null;
 

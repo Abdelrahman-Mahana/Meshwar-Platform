@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:firebase_core/firebase_core.dart';
 
+import '../../../../core/config/app_environment.dart';
 import '../../../models/chat_message_model.dart';
 import '../../../services/firebase_firestore_service.dart';
 import '../../contracts/i_chat_repository.dart';
@@ -11,9 +12,17 @@ import '../chat_repository_impl.dart';
 class FirebaseChatRepository implements IChatRepository {
   final FirebaseFirestore? _injectedFirestore;
   final ChatRepositoryImpl _localFallback = ChatRepositoryImpl();
+  final Map<String, List<ChatMessageModel>> _sessionSentByConversation = {};
+  final Map<String, StreamController<List<ChatMessageModel>>>
+      _liveStreamControllers = {};
+  int _liveMsgSeq = 0;
 
   FirebaseChatRepository({FirebaseFirestore? firestore})
       : _injectedFirestore = firestore;
+
+  bool get _isLiveBackendMode =>
+      AppEnvironment.isFirebaseRuntimeActive ||
+      AppEnvironment.flavor != AppFlavor.development;
 
   bool get _canUseFirestore {
     if (_injectedFirestore != null) return true;
@@ -34,8 +43,56 @@ class FirebaseChatRepository implements IChatRepository {
     }
   }
 
+  bool get _isFirestoreSessionActive =>
+      _canUseFirestore &&
+      (_injectedFirestore != null || _currentAuthUid != null);
+
   FirebaseFirestore get _firestore =>
       _injectedFirestore ?? FirebaseFirestore.instance;
+
+  List<ChatMessageModel> _mergeSessionMessages(
+    String conversationId,
+    List<ChatMessageModel> remoteMessages,
+  ) {
+    final sessionSent =
+        _sessionSentByConversation[conversationId] ?? const <ChatMessageModel>[];
+    if (remoteMessages.isEmpty && sessionSent.isEmpty) {
+      return const <ChatMessageModel>[];
+    }
+    final byId = <String, ChatMessageModel>{};
+    for (final m in sessionSent) {
+      if (m.id.isNotEmpty) {
+        byId[m.id] = m;
+      }
+    }
+    for (final m in remoteMessages) {
+      if (m.id.isNotEmpty) {
+        byId[m.id] = m;
+      }
+    }
+    final merged = byId.values.toList()
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    return List<ChatMessageModel>.unmodifiable(merged);
+  }
+
+  Stream<List<ChatMessageModel>> _streamSessionMessages(String cleanId) {
+    _liveStreamControllers.putIfAbsent(
+      cleanId,
+      () => StreamController<List<ChatMessageModel>>.broadcast(),
+    );
+    return Stream<List<ChatMessageModel>>.multi((subscriber) {
+      final initial = List<ChatMessageModel>.unmodifiable(
+        _sessionSentByConversation[cleanId] ?? const <ChatMessageModel>[],
+      );
+      subscriber.add(initial);
+      final sub = _liveStreamControllers[cleanId]!.stream.listen(
+        subscriber.add,
+        onError: subscriber.addError,
+        onDone: subscriber.close,
+      );
+      subscriber.onCancel = sub.cancel;
+    });
+  }
 
   @override
   Future<List<ChatMessageModel>> getMessages(
@@ -46,7 +103,12 @@ class FirebaseChatRepository implements IChatRepository {
     final cleanId =
         conversationId.trim().isEmpty ? 'chat_default' : conversationId.trim();
 
-    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+    if (!_isFirestoreSessionActive) {
+      if (_isLiveBackendMode) {
+        return List<ChatMessageModel>.unmodifiable(
+          _sessionSentByConversation[cleanId] ?? const <ChatMessageModel>[],
+        );
+      }
       return _localFallback.getMessages(
         cleanId,
         peerName: peerName,
@@ -71,20 +133,10 @@ class FirebaseChatRepository implements IChatRepository {
           )
           .toList();
 
-      if (remoteMessages.isNotEmpty) {
-        _localFallback.mergeRemoteMessages(cleanId, remoteMessages);
-      }
-
-      return await _localFallback.getMessages(
-        cleanId,
-        peerName: peerName,
-        routeContext: routeContext,
-      );
+      return _mergeSessionMessages(cleanId, remoteMessages);
     } catch (_) {
-      return _localFallback.getMessages(
-        cleanId,
-        peerName: peerName,
-        routeContext: routeContext,
+      return List<ChatMessageModel>.unmodifiable(
+        _sessionSentByConversation[cleanId] ?? const <ChatMessageModel>[],
       );
     }
   }
@@ -106,17 +158,42 @@ class FirebaseChatRepository implements IChatRepository {
     final effectiveSenderName =
         senderName.trim().length >= 2 ? senderName.trim() : 'مستخدم مشوار';
 
-    // Always persist locally first so re-opening ChatScreen preserves history
-    // even if offline, unauthenticated, or Firestore rules restrict writes.
-    final localMessage = await _localFallback.sendMessage(
+    if (!_isFirestoreSessionActive && !_isLiveBackendMode) {
+      return _localFallback.sendMessage(
+        conversationId: cleanId,
+        senderId: effectiveSenderId,
+        senderName: effectiveSenderName,
+        text: text,
+        attachmentUrl: attachmentUrl,
+      );
+    }
+
+    final localMessage = ChatMessageModel(
+      id: 'msg_${DateTime.now().millisecondsSinceEpoch}_${++_liveMsgSeq}',
       conversationId: cleanId,
       senderId: effectiveSenderId,
       senderName: effectiveSenderName,
-      text: text,
-      attachmentUrl: attachmentUrl,
+      text: text.trim(),
+      timestamp: DateTime.now(),
+      isRead: true,
+      attachmentUrl:
+          (attachmentUrl != null && attachmentUrl.trim().isNotEmpty)
+              ? attachmentUrl.trim()
+              : null,
     );
 
-    if (!_canUseFirestore || (_injectedFirestore == null && authUid == null)) {
+    final sessionList = _sessionSentByConversation.putIfAbsent(
+      cleanId,
+      () => <ChatMessageModel>[],
+    );
+    sessionList.add(localMessage);
+
+    final controller = _liveStreamControllers[cleanId];
+    if (controller != null && !controller.isClosed) {
+      controller.add(List<ChatMessageModel>.unmodifiable(sessionList));
+    }
+
+    if (!_isFirestoreSessionActive) {
       return localMessage;
     }
 
@@ -157,7 +234,7 @@ class FirebaseChatRepository implements IChatRepository {
 
       await msgRef.set(payload).timeout(const Duration(seconds: 4));
     } catch (_) {
-      // Keep local fallback message intact if network or rules reject Firestore write.
+      // Keep session message intact if network or rules reject Firestore write.
     }
 
     return localMessage;
@@ -168,20 +245,23 @@ class FirebaseChatRepository implements IChatRepository {
     final cleanId =
         conversationId.trim().isEmpty ? 'chat_default' : conversationId.trim();
 
-    if (!_canUseFirestore || (_injectedFirestore == null && _currentAuthUid == null)) {
+    if (!_isFirestoreSessionActive) {
+      if (_isLiveBackendMode) {
+        return _streamSessionMessages(cleanId);
+      }
       return _localFallback.streamMessages(cleanId);
     }
 
     return Stream<List<ChatMessageModel>>.multi((subscriber) {
-      StreamSubscription<List<ChatMessageModel>>? fallbackSub;
+      StreamSubscription<List<ChatMessageModel>>? sessionSub;
       StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? firestoreSub;
 
-      void switchToFallback() {
-        if (fallbackSub != null) return;
-        fallbackSub = _localFallback.streamMessages(cleanId).listen(
-              subscriber.add,
-              onError: subscriber.addError,
-            );
+      void switchToSessionFallback() {
+        if (sessionSub != null) return;
+        sessionSub = _streamSessionMessages(cleanId).listen(
+          subscriber.add,
+          onError: subscriber.addError,
+        );
       }
 
       try {
@@ -192,7 +272,7 @@ class FirebaseChatRepository implements IChatRepository {
             .orderBy('timestamp', descending: false)
             .snapshots()
             .listen(
-          (snapshot) async {
+          (snapshot) {
             final remote = snapshot.docs
                 .map(
                   (doc) => ChatMessageModel.fromJson(
@@ -200,25 +280,22 @@ class FirebaseChatRepository implements IChatRepository {
                   ),
                 )
                 .toList();
-            if (remote.isNotEmpty) {
-              _localFallback.mergeRemoteMessages(cleanId, remote);
-            }
-            final current = await _localFallback.getMessages(cleanId);
+            final merged = _mergeSessionMessages(cleanId, remote);
             if (!subscriber.isClosed) {
-              subscriber.add(current);
+              subscriber.add(merged);
             }
           },
           onError: (_) {
-            switchToFallback();
+            switchToSessionFallback();
           },
         );
       } catch (_) {
-        switchToFallback();
+        switchToSessionFallback();
       }
 
       subscriber.onCancel = () async {
         await firestoreSub?.cancel();
-        await fallbackSub?.cancel();
+        await sessionSub?.cancel();
       };
     });
   }

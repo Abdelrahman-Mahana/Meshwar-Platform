@@ -33,35 +33,28 @@ class FirebaseParcelsRepository implements IParcelsRepository {
   Future<List<ParcelModel>> getParcels() async {
     try {
       final user = _currentUser;
-      if (user != null && user.uid.isNotEmpty) {
-        final senderSnap = await _firestore
-            .collection(FirestoreCollections.parcels)
-            .where('senderId', isEqualTo: user.uid)
-            .limit(20)
-            .get();
-        final driverSnap = await _firestore
-            .collection(FirestoreCollections.parcels)
-            .where('driverId', isEqualTo: user.uid)
-            .limit(20)
-            .get();
-
-        final byId = <String, ParcelModel>{};
-        for (final doc in [...senderSnap.docs, ...driverSnap.docs]) {
-          final model = ParcelModel.fromJson(doc.data());
-          if (model.id.isNotEmpty) {
-            byId[model.id] = model;
-          }
-        }
-        return byId.values.toList();
+      if (user == null || user.uid.isEmpty) {
+        return const [];
       }
-
-      final snapshot = await _firestore
+      final senderSnap = await _firestore
           .collection(FirestoreCollections.parcels)
+          .where('senderId', isEqualTo: user.uid)
           .limit(20)
           .get();
-      return snapshot.docs
-          .map((doc) => ParcelModel.fromJson(doc.data()))
-          .toList();
+      final driverSnap = await _firestore
+          .collection(FirestoreCollections.parcels)
+          .where('driverId', isEqualTo: user.uid)
+          .limit(20)
+          .get();
+
+      final byId = <String, ParcelModel>{};
+      for (final doc in [...senderSnap.docs, ...driverSnap.docs]) {
+        final model = ParcelModel.fromJson(doc.data());
+        if (model.id.isNotEmpty) {
+          byId[model.id] = model;
+        }
+      }
+      return byId.values.toList();
     } catch (_) {
       return const [];
     }

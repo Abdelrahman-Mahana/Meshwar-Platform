@@ -16,7 +16,12 @@ import 'rides_provider.dart';
 
 class AlertsProvider extends ChangeNotifier {
   static const String _storageKey = 'mashwar_route_alerts_v1';
-  static List<Map<String, dynamic>>? _sessionPersistedAlerts;
+  static final Map<String, List<Map<String, dynamic>>> _sessionPersistedByKey =
+      <String, List<Map<String, dynamic>>>{};
+
+  static bool get _isLiveBackendMode =>
+      AppEnvironment.isFirebaseRuntimeActive ||
+      AppEnvironment.flavor != AppFlavor.development;
 
   static Future<SharedPreferences?> _getPrefsSafely() async {
     try {
@@ -49,17 +54,69 @@ class AlertsProvider extends ChangeNotifier {
     'مطار حمد الدولي': ['hamad international airport', 'hia', 'airport', 'مطار حمد الدولي', 'المطار'],
   };
 
-  final List<RouteAlertModel> _alerts = _sessionPersistedAlerts != null
-      ? _sessionPersistedAlerts!
-          .map((m) => RouteAlertModel.fromJson(m))
-          .toList()
-      : List<RouteAlertModel>.from(MockData.initialAlerts);
+  String? _boundUserId;
+  final List<RouteAlertModel> _alerts = <RouteAlertModel>[];
   bool _hasLocalMutations = false;
   bool _disposed = false;
   int _seq = 0;
 
-  AlertsProvider() {
+  AlertsProvider({String? initialUserId})
+      : _boundUserId =
+            (initialUserId != null && initialUserId.trim().isNotEmpty)
+                ? initialUserId.trim()
+                : null {
+    if (!_isLiveBackendMode) {
+      final cached = _sessionPersistedByKey[_effectiveStorageKey];
+      if (cached != null) {
+        _alerts.addAll(cached.map(RouteAlertModel.fromJson));
+      } else {
+        _alerts.addAll(MockData.initialAlerts);
+      }
+    }
     unawaited(loadAlerts());
+  }
+
+  String? get _effectiveUid {
+    final bound = _boundUserId?.trim();
+    if (bound != null && bound.isNotEmpty) return bound;
+    return _resolveCurrentAuthUid();
+  }
+
+  String get _effectiveStorageKey {
+    final uid = _effectiveUid;
+    return (uid != null && uid.isNotEmpty) ? '${_storageKey}_$uid' : _storageKey;
+  }
+
+  /// Syncs active user identity from [AuthProvider], clearing any previous
+  /// account's alerts and reloading user-scoped alerts when signed in.
+  void syncAuthSession({required String? uid}) {
+    final clean = uid?.trim();
+    final normalizedNext =
+        (clean != null && clean.isNotEmpty) ? clean : null;
+    final previousUid = _boundUserId;
+    _boundUserId = normalizedNext;
+
+    final uidChanged = previousUid != normalizedNext;
+    final shouldClearOnNull = normalizedNext == null &&
+        (_isLiveBackendMode || uidChanged) &&
+        _alerts.isNotEmpty;
+
+    if (uidChanged || shouldClearOnNull) {
+      _hasLocalMutations = false;
+      _alerts.clear();
+      if (!_isLiveBackendMode) {
+        final cached = _sessionPersistedByKey[_effectiveStorageKey];
+        if (cached != null) {
+          _alerts.addAll(cached.map(RouteAlertModel.fromJson));
+        } else if (normalizedNext != null) {
+          _alerts.addAll(MockData.initialAlerts);
+        }
+      }
+      _safeNotify();
+      if (normalizedNext != null) {
+        unawaited(loadAlerts());
+      }
+    }
   }
 
   List<RouteAlertModel> get alerts => List<RouteAlertModel>.unmodifiable(_alerts);
@@ -166,13 +223,24 @@ class AlertsProvider extends ChangeNotifier {
     return matchingRidesForAlert(alert, ridesProvider).length;
   }
 
-  /// Loads persisted alerts from `SharedPreferences` (with 120ms timeout)
+  /// Loads persisted alerts from user-scoped `SharedPreferences` (with 120ms timeout)
   /// and merges any remote `route_alerts` documents when Firebase is active.
   Future<void> loadAlerts() async {
+    final expectedUid = _effectiveUid;
+    final storageKey = _effectiveStorageKey;
+
+    if (_isLiveBackendMode && (expectedUid == null || expectedUid.isEmpty)) {
+      if (_alerts.isNotEmpty) {
+        _alerts.clear();
+        _safeNotify();
+      }
+      return;
+    }
+
     List<RouteAlertModel>? storedAlerts;
     try {
       final prefs = await _getPrefsSafely();
-      final rawJson = prefs?.getString(_storageKey);
+      final rawJson = prefs?.getString(storageKey);
       if (rawJson != null && rawJson.trim().isNotEmpty) {
         final decoded = jsonDecode(rawJson);
         if (decoded is List) {
@@ -191,7 +259,9 @@ class AlertsProvider extends ChangeNotifier {
       // Unmocked or unavailable SharedPreferences; keep in-memory alerts.
     }
 
-    if (storedAlerts != null && !_disposed) {
+    if (_disposed || _effectiveUid != expectedUid) return;
+
+    if (storedAlerts != null) {
       if (!_hasLocalMutations) {
         _alerts
           ..clear()
@@ -205,10 +275,19 @@ class AlertsProvider extends ChangeNotifier {
         }
       }
       _safeNotify();
+    } else if (_isLiveBackendMode && !_hasLocalMutations) {
+      final cached = _sessionPersistedByKey[storageKey];
+      if (cached != null) {
+        _alerts
+          ..clear()
+          ..addAll(cached.map(RouteAlertModel.fromJson));
+        _safeNotify();
+      }
     }
 
     final uid = _resolveCurrentAuthUid();
     if (uid == null || _disposed) return;
+    if (expectedUid != null && expectedUid != uid) return;
 
     try {
       final snapshot = await FirebaseFirestore.instance
@@ -217,7 +296,9 @@ class AlertsProvider extends ChangeNotifier {
           .get()
           .timeout(const Duration(seconds: 4));
 
-      if (snapshot.docs.isNotEmpty && !_disposed) {
+      if (_disposed || _effectiveUid != expectedUid) return;
+
+      if (snapshot.docs.isNotEmpty) {
         final byId = <String, RouteAlertModel>{
           for (final a in _alerts) a.id: a,
         };
@@ -241,13 +322,18 @@ class AlertsProvider extends ChangeNotifier {
   }
 
   Future<void> _saveToPrefs() async {
+    final uid = _effectiveUid;
+    if (_isLiveBackendMode && (uid == null || uid.isEmpty)) {
+      return;
+    }
+    final storageKey = _effectiveStorageKey;
     final serialized = _alerts.map((a) => a.toJson()).toList();
-    _sessionPersistedAlerts = serialized;
+    _sessionPersistedByKey[storageKey] = serialized;
     try {
       final prefs = await _getPrefsSafely();
       if (prefs != null) {
         final encoded = jsonEncode(serialized);
-        await prefs.setString(_storageKey, encoded);
+        await prefs.setString(storageKey, encoded);
       }
     } catch (_) {
       // Ignore persistence failures in unmocked test isolates.
