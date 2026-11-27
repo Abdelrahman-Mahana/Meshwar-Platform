@@ -9,6 +9,8 @@ import '../../core/constants/app_typography.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/ride_model.dart';
@@ -95,24 +97,41 @@ class BookingConfirmationScreen extends StatelessWidget {
   }
 
   Future<void> _openGoogleMapsPickup(BuildContext context, bool isAr) async {
-    final mapsUri = buildPickupDirectionsUri(ride);
-    final launched = await _launchExternalUri(mapsUri);
-    if (!context.mounted) return;
-    if (!launched) {
-      try {
-        await Clipboard.setData(ClipboardData(text: mapsUri.toString()));
-      } catch (_) {}
+    final override = debugUrlLauncher;
+    if (override != null) {
+      final mapsUri = buildPickupDirectionsUri(ride);
+      final launched = await override(mapsUri);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isAr
-                ? 'تم نسخ رابط اتجاهات نقطة الالتقاء على Google Maps'
-                : 'Google Maps pickup directions link copied to clipboard',
+      if (!launched) {
+        try {
+          await Clipboard.setData(ClipboardData(text: mapsUri.toString()));
+        } catch (_) {}
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isAr
+                  ? 'تم نسخ رابط اتجاهات نقطة الالتقاء على Google Maps'
+                  : 'Google Maps pickup directions link copied to clipboard',
+            ),
           ),
-        ),
-      );
+        );
+      }
+      return;
     }
+
+    final effectiveOrigin =
+        ride.pickupPoint.trim().isNotEmpty ? ride.pickupPoint : ride.fromCity;
+    final effectiveDest =
+        ride.dropoffPoint.trim().isNotEmpty ? ride.dropoffPoint : ride.toCity;
+    await openMashwarInAppMap(
+      context,
+      origin: effectiveOrigin,
+      destination: effectiveDest,
+      stopover: ride.stopoverCity,
+      titleAr: 'خريطة الالتقاء · ${ride.fromCity} ← ${ride.toCity}',
+      titleEn: 'Pickup Map · ${ride.fromCity} → ${ride.toCity}',
+    );
   }
 
   Future<void> _shareTripSummary(BuildContext context, bool isAr) async {
@@ -342,13 +361,26 @@ class BookingConfirmationScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 10),
+                          MashwarEmbeddedGoogleMap(
+                            key: const ValueKey('booking_embedded_gmap'),
+                            origin: ride.pickupPoint.trim().isNotEmpty
+                                ? ride.pickupPoint
+                                : ride.fromCity,
+                            destination: ride.dropoffPoint.trim().isNotEmpty
+                                ? ride.dropoffPoint
+                                : ride.toCity,
+                            stopover: ride.stopoverCity,
+                            height: 185,
+                            borderRadius: 12,
+                          ),
+                          const SizedBox(height: 10),
                           MashwarButton(
                             key: const ValueKey('booking_open_gmaps_btn'),
                             height: 44,
                             variant: MashwarButtonVariant.secondary,
                             text: isAr
-                                ? 'اتجاهات نقطة الالتقاء في Google Maps'
-                                : 'Pickup Directions in Google Maps',
+                                ? 'تكبير خريطة الالتقاء داخل التطبيق'
+                                : 'View Pickup Map In-App',
                             icon: const Icon(
                               Icons.directions_rounded,
                               size: 18,

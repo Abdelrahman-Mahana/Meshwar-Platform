@@ -7,6 +7,7 @@ import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/chat_message_model.dart';
 import '../../data/repositories/app_repositories.dart';
@@ -250,9 +251,54 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  bool _isGoogleMapsUri(Uri uri) {
+    final host = uri.host.toLowerCase();
+    final path = uri.path.toLowerCase();
+    return (host.contains('google.com') && path.contains('/maps')) ||
+        host.contains('maps.google.') ||
+        host == 'maps.app.goo.gl';
+  }
+
   Future<void> _openMessageUrl(String url, bool isAr) async {
     final uri = Uri.tryParse(url);
     if (uri == null) return;
+
+    if (_isGoogleMapsUri(uri)) {
+      final qp = uri.queryParameters;
+      final origin = (qp['origin'] ?? qp['saddr'])?.trim();
+      final destination = (qp['destination'] ?? qp['daddr'])?.trim();
+      final stopover = qp['waypoints']?.trim();
+      final rawQuery = (qp['query'] ?? qp['q'])?.trim();
+
+      double? lat;
+      double? lng;
+      if (rawQuery != null && rawQuery.isNotEmpty) {
+        final coordMatch = RegExp(
+          r'^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$',
+        ).firstMatch(rawQuery);
+        if (coordMatch != null) {
+          lat = double.tryParse(coordMatch.group(1)!);
+          lng = double.tryParse(coordMatch.group(2)!);
+        }
+      }
+
+      final fallbackOrigin = _extractOriginLocation(isAr);
+      await openMashwarInAppMap(
+        context,
+        origin: origin,
+        destination: destination,
+        stopover: stopover,
+        placeQuery: (rawQuery != null && rawQuery.isNotEmpty)
+            ? rawQuery
+            : (origin == null && destination == null ? fallbackOrigin : null),
+        lat: lat,
+        lng: lng,
+        titleAr: 'الموقع المشترك في المحادثة',
+        titleEn: 'Shared Chat Location',
+      );
+      return;
+    }
+
     bool launched = false;
     try {
       launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -642,8 +688,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                                     Flexible(
                                                       child: Text(
                                                         isAr
-                                                            ? 'فتح الموقع في Google Maps'
-                                                            : 'Open in Google Maps',
+                                                            ? 'عرض الموقع على الخريطة داخل التطبيق'
+                                                            : 'View Location In-App',
                                                         maxLines: 1,
                                                         overflow: TextOverflow.ellipsis,
                                                         style: AppTypography.label(

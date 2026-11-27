@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
@@ -10,6 +9,8 @@ import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/ride_model.dart';
 import '../../state/rides_provider.dart';
@@ -138,35 +139,46 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
     RideModel ride,
     bool isAr,
   ) async {
-    final messenger = ScaffoldMessenger.maybeOf(context);
-    final url = _buildGoogleMapsDirectionsUrl(ride);
-    final uri = Uri.parse(url);
-    bool launched = false;
-    try {
-      final override = ActiveTripScreen.debugUrlLauncher;
-      launched = override != null
-          ? await override(uri)
-          : await launchMashwarExternalUri(
-              uri,
-              mode: LaunchMode.externalApplication,
-            );
-    } catch (_) {
-      launched = false;
+    final override = ActiveTripScreen.debugUrlLauncher;
+    if (override != null) {
+      final messenger = ScaffoldMessenger.maybeOf(context);
+      final url = _buildGoogleMapsDirectionsUrl(ride);
+      final uri = Uri.parse(url);
+      bool launched = false;
+      try {
+        launched = await override(uri);
+      } catch (_) {
+        launched = false;
+      }
+
+      if (!launched) {
+        await Clipboard.setData(ClipboardData(text: url));
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(
+              isAr
+                  ? 'تم نسخ رابط الملاحة في Google Maps إلى الحافظة'
+                  : 'Google Maps navigation link copied to clipboard',
+            ),
+            backgroundColor: AppColors.navy,
+          ),
+        );
+      }
+      return;
     }
 
-    if (!launched) {
-      await Clipboard.setData(ClipboardData(text: url));
-      messenger?.showSnackBar(
-        SnackBar(
-          content: Text(
-            isAr
-                ? 'تم نسخ رابط الملاحة في Google Maps إلى الحافظة'
-                : 'Google Maps navigation link copied to clipboard',
-          ),
-          backgroundColor: AppColors.navy,
-        ),
-      );
-    }
+    final effectiveOrigin =
+        ride.pickupPoint.trim().isNotEmpty ? ride.pickupPoint : ride.fromCity;
+    final effectiveDest =
+        ride.dropoffPoint.trim().isNotEmpty ? ride.dropoffPoint : ride.toCity;
+    await openMashwarInAppMap(
+      context,
+      origin: effectiveOrigin,
+      destination: effectiveDest,
+      stopover: ride.stopoverCity,
+      titleAr: 'مسار الرحلة · ${ride.fromCity} ← ${ride.toCity}',
+      titleEn: 'Trip Route · ${ride.fromCity} → ${ride.toCity}',
+    );
   }
 
   void _completeTrip(BuildContext context, RideModel ride) {
@@ -298,7 +310,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
         onPressed: () => _openGoogleMapsNavigation(context, ride, isAr),
         icon: const Icon(Icons.map_outlined, size: 18, color: AppColors.teal),
         label: Text(
-          isAr ? 'فتح الملاحة في Google Maps' : 'Navigate in Google Maps',
+          isAr ? 'تكبير خريطة الملاحة داخل التطبيق' : 'Open Live Map In-App',
           style: AppTypography.button(color: AppColors.navy).copyWith(
             fontSize: 14,
             fontWeight: FontWeight.w700,
@@ -473,7 +485,30 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // 1-Tap Google Maps Navigation Button
+                    // Live Embedded Google Map Preview (Pre-Trip)
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                        border: Border.all(color: AppColors.slateBorder),
+                      ),
+                      child: MashwarEmbeddedGoogleMap(
+                        key: const ValueKey('active_trip_pretrip_embedded_gmap'),
+                        origin: ride.pickupPoint.trim().isNotEmpty
+                            ? ride.pickupPoint
+                            : ride.fromCity,
+                        destination: ride.dropoffPoint.trim().isNotEmpty
+                            ? ride.dropoffPoint
+                            : ride.toCity,
+                        stopover: ride.stopoverCity,
+                        height: 195,
+                        borderRadius: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // 1-Tap In-App Google Maps Navigation Button
                     _buildGoogleMapsButton(context, ride, isAr),
                     const SizedBox(height: 12),
 
