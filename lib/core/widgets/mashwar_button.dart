@@ -11,6 +11,7 @@ enum MashwarButtonVariant {
   secondary,
   text,
   danger,
+  subtleDanger,
 }
 
 class MashwarButton extends StatelessWidget {
@@ -42,44 +43,83 @@ class MashwarButton extends StatelessWidget {
     final bool isDisabled = onPressed == null;
     final bool isNonInteractive = isDisabled || isLoading;
 
-    Color bgColor;
-    Color fgColor;
+    late final Color bgColor;
+    late final Color fgColor;
     BorderSide? borderSide;
+    FontWeight labelWeight = FontWeight.w700;
+    double labelSize = 15;
 
     switch (variant) {
       case MashwarButtonVariant.primary:
         bgColor = isLoading
-            ? AppColors.navy.withValues(alpha: 0.85)
+            ? AppColors.navy.withValues(alpha: 0.88)
             : isDisabled
-                ? AppColors.borderDisabled
+                ? AppColors.slateBorder
                 : AppColors.navy;
-        fgColor = isDisabled && !isLoading ? AppColors.textSecondary : Colors.white;
+        fgColor =
+            isDisabled && !isLoading ? AppColors.textSecondary : Colors.white;
         break;
+
       case MashwarButtonVariant.secondary:
-        bgColor = Colors.transparent;
+        bgColor = isDisabled && !isLoading ? AppColors.slateBg : Colors.white;
         fgColor = isDisabled && !isLoading
             ? AppColors.textSecondary.withValues(alpha: 0.65)
             : AppColors.navy;
         borderSide = BorderSide(
-          color: isDisabled && !isLoading ? AppColors.borderDisabled : AppColors.navy,
-          width: 1.5,
+          color: isDisabled && !isLoading
+              ? AppColors.slateBorder.withValues(alpha: 0.75)
+              : AppColors.slateBorder,
+          width: AppDimens.borderWidth,
         );
+        labelWeight = FontWeight.w600;
+        labelSize = 14.5;
         break;
+
       case MashwarButtonVariant.text:
         bgColor = Colors.transparent;
         fgColor = isDisabled && !isLoading
             ? AppColors.textSecondary.withValues(alpha: 0.65)
             : AppColors.navy;
+        labelWeight = FontWeight.w600;
+        labelSize = 14;
         break;
+
       case MashwarButtonVariant.danger:
         bgColor = isLoading
-            ? AppColors.danger.withValues(alpha: 0.85)
+            ? AppColors.danger.withValues(alpha: 0.88)
             : isDisabled
-                ? AppColors.borderDisabled
+                ? AppColors.slateBorder
                 : AppColors.danger;
-        fgColor = isDisabled && !isLoading ? AppColors.textSecondary : Colors.white;
+        fgColor =
+            isDisabled && !isLoading ? AppColors.textSecondary : Colors.white;
+        break;
+
+      case MashwarButtonVariant.subtleDanger:
+        bgColor = isDisabled && !isLoading
+            ? AppColors.slateBg
+            : AppColors.dangerBg;
+        fgColor = isDisabled && !isLoading
+            ? AppColors.textSecondary.withValues(alpha: 0.65)
+            : AppColors.danger;
+        borderSide = BorderSide(
+          color: isDisabled && !isLoading
+              ? AppColors.slateBorder.withValues(alpha: 0.75)
+              : AppColors.danger.withValues(alpha: 0.28),
+          width: AppDimens.borderWidth,
+        );
+        labelWeight = FontWeight.w600;
+        labelSize = 14.5;
         break;
     }
+
+    final borderRadius = BorderRadius.circular(AppDimens.radiusButton);
+    final bool isLightSurface = variant == MashwarButtonVariant.secondary ||
+        variant == MashwarButtonVariant.text ||
+        variant == MashwarButtonVariant.subtleDanger;
+
+    final Color overlayBase = variant == MashwarButtonVariant.subtleDanger
+        ? AppColors.danger
+        : (isLightSurface ? AppColors.navy : Colors.white);
 
     final buttonChild = Row(
       mainAxisSize: MainAxisSize.min,
@@ -87,8 +127,8 @@ class MashwarButton extends StatelessWidget {
       children: [
         if (isLoading)
           SizedBox(
-            width: 20,
-            height: 20,
+            width: 18,
+            height: 18,
             child: CircularProgressIndicator(
               strokeWidth: 2,
               valueColor: AlwaysStoppedAnimation<Color>(fgColor),
@@ -96,7 +136,10 @@ class MashwarButton extends StatelessWidget {
           )
         else ...[
           if (icon != null) ...[
-            icon!,
+            IconTheme.merge(
+              data: IconThemeData(size: 18, color: fgColor),
+              child: icon!,
+            ),
             const SizedBox(width: AppDimens.space8),
           ],
           Flexible(
@@ -106,7 +149,10 @@ class MashwarButton extends StatelessWidget {
                 displayLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.button(color: fgColor),
+                style: AppTypography.button(color: fgColor).copyWith(
+                  fontSize: labelSize,
+                  fontWeight: labelWeight,
+                ),
               ),
             ),
           ),
@@ -122,16 +168,23 @@ class MashwarButton extends StatelessWidget {
       ),
       child: Material(
         color: bgColor,
-        borderRadius: BorderRadius.circular(AppDimens.radiusButton),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: borderRadius,
+          side: borderSide ?? BorderSide.none,
+        ),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: isNonInteractive ? null : onPressed,
-          borderRadius: BorderRadius.circular(AppDimens.radiusButton),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppDimens.radiusButton),
-              border: borderSide != null ? Border.fromBorderSide(borderSide) : null,
-            ),
+          borderRadius: borderRadius,
+          mouseCursor: isNonInteractive
+              ? SystemMouseCursors.basic
+              : SystemMouseCursors.click,
+          hoverColor: overlayBase.withValues(alpha: 0.05),
+          splashColor: overlayBase.withValues(alpha: 0.08),
+          highlightColor: overlayBase.withValues(alpha: 0.04),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Center(
               heightFactor: 1.0,
               child: buttonChild,
@@ -142,4 +195,3 @@ class MashwarButton extends StatelessWidget {
     );
   }
 }
-

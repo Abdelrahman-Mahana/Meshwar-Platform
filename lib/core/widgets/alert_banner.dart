@@ -35,40 +35,47 @@ class AlertBanner extends StatelessWidget {
     final settings = Provider.of<SettingsProvider?>(context);
     final isAr = settings?.isArabic ?? true;
 
-    Color borderColor;
-    Color bgColor;
-    IconData iconData;
+    late final Color accentColor;
+    late final Color bgColor;
+    late final Color borderColor;
+    late final IconData iconData;
 
     switch (type) {
       case AlertBannerType.success:
-        borderColor = AppColors.teal;
+        accentColor = AppColors.teal;
         bgColor = AppColors.successBg;
+        borderColor = AppColors.teal.withValues(alpha: 0.24);
         iconData = Icons.check_circle_outline_rounded;
         break;
       case AlertBannerType.warning:
-        borderColor = AppColors.warning;
+        accentColor = AppColors.warning;
         bgColor = AppColors.warningBg;
+        borderColor = AppColors.warning.withValues(alpha: 0.26);
         iconData = Icons.schedule_rounded;
         break;
       case AlertBannerType.danger:
-        borderColor = AppColors.danger;
+        accentColor = AppColors.danger;
         bgColor = AppColors.dangerBg;
+        borderColor = AppColors.danger.withValues(alpha: 0.26);
         iconData = Icons.error_outline_rounded;
         break;
       case AlertBannerType.offline:
-        borderColor = AppColors.textSecondary;
-        bgColor = AppColors.offlineBg;
+        accentColor = AppColors.textSecondary;
+        bgColor = AppColors.slateBg;
+        borderColor = AppColors.slateBorder;
         iconData = Icons.wifi_off_rounded;
         break;
       case AlertBannerType.info:
-        borderColor = AppColors.info;
+        accentColor = AppColors.info;
         bgColor = AppColors.infoBg;
+        borderColor = AppColors.info.withValues(alpha: 0.22);
         iconData = Icons.info_outline_rounded;
         break;
     }
 
     String displayMessage = message;
-    if (displayMessage.contains('لقينا رحلة مطابقة لتنبيهك') || displayMessage.contains('توفرت رحلة مطابقة لتنبيهك')) {
+    if (displayMessage.contains('لقينا رحلة مطابقة لتنبيهك') ||
+        displayMessage.contains('توفرت رحلة مطابقة لتنبيهك')) {
       displayMessage = isAr
           ? 'توفرت رحلة مطابقة لتنبيهك: الدوحة ← الخور\n7:30 ص'
           : 'Found a matching ride for your alert: Doha → Al Khor\n7:30 AM';
@@ -80,41 +87,66 @@ class AlertBanner extends StatelessWidget {
       displayMessage = AppStrings.translate(message, isArabic: isAr);
     }
 
+    final borderRadius = BorderRadius.circular(AppDimens.radiusAlert);
+    final bool interactive = onTap != null;
+
     return Material(
-      color: Colors.transparent,
+      color: bgColor,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: borderRadius,
+        side: BorderSide(color: borderColor, width: AppDimens.borderWidth),
+      ),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(AppDimens.radiusCard),
-            border: Border.all(color: borderColor, width: 1.2),
-          ),
+        borderRadius: borderRadius,
+        mouseCursor:
+            interactive ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        hoverColor: accentColor.withValues(alpha: 0.04),
+        splashColor: accentColor.withValues(alpha: 0.07),
+        highlightColor: accentColor.withValues(alpha: 0.03),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(
             children: [
-              Icon(iconData, color: borderColor, size: 22),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+                ),
+                alignment: Alignment.center,
+                child: Icon(iconData, color: accentColor, size: 17),
+              ),
               const SizedBox(width: AppDimens.space12),
               Expanded(
                 child: Text(
                   displayMessage,
-                  style: AppTypography.body(color: AppColors.navy).copyWith(
-                    fontSize: 13,
-                    height: 1.4,
+                  style: AppTypography.bodySecondary(color: AppColors.navy)
+                      .copyWith(
+                    height: 1.42,
                   ),
                 ),
               ),
-              if (onTap != null) ...[
+              if (interactive) ...[
                 const SizedBox(width: AppDimens.space8),
-                Icon(Icons.chevron_right_rounded, size: 20, color: borderColor),
+                Icon(
+                  isAr
+                      ? Icons.chevron_left_rounded
+                      : Icons.chevron_right_rounded,
+                  size: 18,
+                  color: accentColor,
+                ),
               ],
               if (showClose) ...[
                 const SizedBox(width: AppDimens.space4),
                 IconButton(
                   onPressed: onClose,
-                  icon: Icon(Icons.close_rounded, size: 18, color: borderColor),
-                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                  icon: Icon(Icons.close_rounded, size: 17, color: accentColor),
+                  constraints:
+                      const BoxConstraints(minWidth: 36, minHeight: 36),
                   padding: EdgeInsets.zero,
                   visualDensity: VisualDensity.compact,
                 ),

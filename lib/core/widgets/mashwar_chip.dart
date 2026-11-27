@@ -6,7 +6,7 @@ import '../constants/app_typography.dart';
 import '../localization/app_strings.dart';
 import '../../state/settings_provider.dart';
 
-class MashwarChip extends StatelessWidget {
+class MashwarChip extends StatefulWidget {
   const MashwarChip({
     super.key,
     required this.label,
@@ -23,44 +23,80 @@ class MashwarChip extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
 
   @override
+  State<MashwarChip> createState() => _MashwarChipState();
+}
+
+class _MashwarChipState extends State<MashwarChip> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider?>(context);
     final isAr = settings?.isArabic ?? true;
-    final displayLabel = AppStrings.translate(label, isArabic: isAr);
+    final displayLabel = AppStrings.translate(widget.label, isArabic: isAr);
+
+    final bool selected = widget.isSelected;
+    final bool interactive = widget.onTap != null;
+
+    final Color bgColor = selected
+        ? AppColors.navy
+        : (_isHovered && interactive ? AppColors.slateBg : Colors.white);
+
+    final Color borderColor = selected
+        ? AppColors.navy
+        : (_isHovered && interactive
+            ? AppColors.navy.withValues(alpha: 0.28)
+            : AppColors.slateBorder);
+
+    final Color contentColor =
+        selected ? Colors.white : AppColors.textPrimary;
+
+    final borderRadius = BorderRadius.circular(AppDimens.radiusChip);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppDimens.radiusChip),
+        onTap: widget.onTap,
+        onHover: interactive
+            ? (hovered) {
+                if (_isHovered != hovered) {
+                  setState(() => _isHovered = hovered);
+                }
+              }
+            : null,
+        borderRadius: borderRadius,
+        mouseCursor:
+            interactive ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        splashColor: AppColors.navy.withValues(alpha: 0.06),
+        highlightColor: AppColors.navy.withValues(alpha: 0.03),
+        hoverColor: Colors.transparent,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          constraints: const BoxConstraints(minHeight: 40),
-          padding: padding ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          constraints: const BoxConstraints(minHeight: 38),
+          padding: widget.padding ??
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.navy : Colors.white,
-            borderRadius: BorderRadius.circular(AppDimens.radiusChip),
+            color: bgColor,
+            borderRadius: borderRadius,
             border: Border.all(
-              color: isSelected ? AppColors.navy : AppColors.chipInactiveBorder,
-              width: isSelected ? 1.0 : 0.9,
+              color: borderColor,
+              width: AppDimens.borderWidth,
             ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: AppColors.navy.withValues(alpha: 0.14),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[
-                icon!,
-                const SizedBox(width: AppDimens.space8),
+              if (widget.icon != null) ...[
+                IconTheme.merge(
+                  data: IconThemeData(
+                    size: 16,
+                    color: selected ? Colors.white : AppColors.textSecondary,
+                  ),
+                  child: widget.icon!,
+                ),
+                const SizedBox(width: AppDimens.space6),
               ],
               Flexible(
                 child: Text(
@@ -68,10 +104,11 @@ class MashwarChip extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
-                  style: AppTypography.bodySecondary(
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
-                  ).copyWith(
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  style: AppTypography.bodySecondary(color: contentColor)
+                      .copyWith(
+                    fontSize: 13,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    height: 1.25,
                   ),
                 ),
               ),
