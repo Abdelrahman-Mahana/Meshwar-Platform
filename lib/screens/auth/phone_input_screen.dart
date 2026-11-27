@@ -14,11 +14,7 @@ import '../../state/auth_provider.dart';
 import 'email_input_screen.dart';
 import 'otp_verification_screen.dart';
 
-/// Market-leading, minimalist Phone Number input screen (Uber / inDrive standard).
-/// Fully distributed responsive layout styled after WelcomeScreen:
-/// - Wide / Desktop (>= 840px): 2-column split canvas (Left: Brand & Trust showcase, Right: Phone entry form)
-/// - Mobile (< 840px): Full-height balanced distribution with Brand Header, Step Progress, Operator Chips,
-///   Safety Benefit Cards, Metrics Strip, and Bottom CTA Actions.
+/// Executive Phone Number input screen for +974 SMS OTP verification.
 class PhoneInputScreen extends StatefulWidget {
   const PhoneInputScreen({super.key});
 
@@ -27,7 +23,8 @@ class PhoneInputScreen extends StatefulWidget {
 }
 
 class _PhoneInputScreenState extends State<PhoneInputScreen> {
-  final TextEditingController _phoneController = TextEditingController(text: '55123456');
+  final TextEditingController _phoneController =
+      TextEditingController(text: '55123456');
   final FocusNode _focusNode = FocusNode();
   String? _errorText;
   bool _isFocused = false;
@@ -58,12 +55,24 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     super.dispose();
   }
 
-  void _handleSubmit(bool isAr) async {
-    final phone = _phoneController.text.trim();
+  Future<void> _handleSubmit(bool isAr) async {
+    final auth = context.read<AuthProvider>();
+    if (auth.isLoading) return;
+
+    final phone = normalizeDigits(_phoneController.text.trim());
+    if (phone != _phoneController.text) {
+      _phoneController.value = TextEditingValue(
+        text: phone,
+        selection: TextSelection.collapsed(offset: phone.length),
+      );
+    }
+
     final validationError = AuthProvider.validateQatarPhone(phone);
     if (validationError != null) {
       setState(() {
-        _errorText = isAr ? validationError : 'Phone must be 8 digits starting with 3, 5, 6, or 7';
+        _errorText = isAr
+            ? validationError
+            : 'Phone must be 8 digits starting with 3, 5, 6, or 7';
       });
       return;
     }
@@ -72,7 +81,6 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       _errorText = null;
     });
 
-    final auth = context.read<AuthProvider>();
     final success = await auth.sendOtp(phone);
     if (!mounted) return;
     if (success) {
@@ -96,14 +104,21 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     final hasError = _errorText != null && _errorText!.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.navy),
-          onPressed: () => Navigator.of(context).maybePop(),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.navy,
+            size: 20,
+          ),
+          onPressed: () {
+            context.read<AuthProvider>().clearError();
+            Navigator.of(context).maybePop();
+          },
         ),
       ),
       body: SafeArea(
@@ -118,7 +133,13 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
               : 'Instant OTP across Ooredoo & Vodafone Qatar protecting every transaction.',
           child: LayoutBuilder(
             builder: (context, constraints) {
-              return _buildSingleLayout(context, auth, isAr, hasError, constraints);
+              return _buildSingleLayout(
+                context,
+                auth,
+                isAr,
+                hasError,
+                constraints,
+              );
             },
           ),
         ),
@@ -140,7 +161,8 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          minHeight: (constraints.maxHeight - (AppDimens.space16 * 2)).clamp(0.0, double.infinity),
+          minHeight: (constraints.maxHeight - (AppDimens.space16 * 2))
+              .clamp(0.0, double.infinity),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -150,47 +172,41 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Top: Onboarding Progress + Brand Identity Header with Step Indicator
                   MashwarOnboardingStepBar(
                     currentStep: 1,
                     totalSteps: 4,
                     isAr: isAr,
                     stepTitle: isAr ? 'تأكيد الجوال' : 'Phone Verification',
                   ),
-                  const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const BrandLogo(fontSize: 26),
-                      _buildStepBadge(isAr: isAr, currentStep: 1, totalSteps: 2),
-                    ],
+                  const SizedBox(height: AppDimens.space16),
+                  const Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: BrandLogo(fontSize: 26),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppDimens.space14),
 
-                  // Title & Subtitle
                   Text(
                     isAr ? 'أدخل رقم جوالك' : 'Enter your mobile number',
-                    style: AppTypography.largeTitle().copyWith(fontSize: 24),
+                    style: AppTypography.largeTitle(),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
-                    isAr ? 'سنرسل لك رمز تحقق عبر رسالة SMS' : 'We will send you a verification code via SMS',
-                    style: AppTypography.bodySecondary().copyWith(fontSize: 13),
+                    isAr
+                        ? 'سنرسل لك رمز تحقق عبر رسالة SMS'
+                        : 'We will send you a verification code via SMS',
+                    style: AppTypography.bodySecondary(),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppDimens.space20),
 
-                  // Input Label
                   Text(
                     isAr ? 'رقم الجوال' : 'Mobile Phone Number',
-                    style: AppTypography.label(color: AppColors.navy).copyWith(fontWeight: FontWeight.w700),
+                    style: AppTypography.label(color: AppColors.navy),
                   ),
                   const SizedBox(height: 8),
 
-                  // Phone Input Card
                   _buildPhoneInputField(hasError: hasError, isAr: isAr),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
-                  // Helper text / Error text
                   _buildHelperOrError(
                     context: context,
                     auth: auth,
@@ -201,13 +217,11 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: AppDimens.space24),
 
-            // Bottom Actions Group
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Bottom Actions: Submit Button
                 MashwarButton(
                   text: isAr ? 'إرسال الرمز' : 'Send Code',
                   isLoading: auth.isLoading,
@@ -215,19 +229,27 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Switch to Email
                 Center(
                   child: TextButton.icon(
-                    icon: const Icon(Icons.mail_outline_rounded, size: 18, color: AppColors.navy),
+                    icon: const Icon(
+                      Icons.mail_outline_rounded,
+                      size: 18,
+                      color: AppColors.navy,
+                    ),
                     onPressed: () {
                       context.read<AuthProvider>().clearError();
                       Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const EmailInputScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const EmailInputScreen(),
+                        ),
                       );
                     },
                     label: Text(
-                      isAr ? 'المتابعة بالبريد الإلكتروني بدلاً من ذلك' : 'Continue with email instead',
-                      style: AppTypography.body(color: AppColors.navy).copyWith(
+                      isAr
+                          ? 'المتابعة بالبريد الإلكتروني بدلاً من ذلك'
+                          : 'Continue with email instead',
+                      style: AppTypography.bodySecondary(color: AppColors.navy)
+                          .copyWith(
                         fontWeight: FontWeight.w700,
                         decoration: TextDecoration.underline,
                       ),
@@ -242,98 +264,75 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     );
   }
 
-  Widget _buildStepBadge({required bool isAr, required int currentStep, required int totalSteps}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.navy.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Text(
-        isAr ? 'الخطوة $currentStep من $totalSteps' : 'Step $currentStep of $totalSteps',
-        style: AppTypography.label(color: AppColors.navy).copyWith(
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
-        ),
-      ),
-    );
-  }
-
   Widget _buildPhoneInputField({required bool hasError, required bool isAr}) {
+    final borderColor = hasError
+        ? AppColors.danger
+        : (_isFocused ? AppColors.navy : AppColors.slateBorder);
+    final borderWidth = hasError
+        ? AppDimens.borderWidthError
+        : (_isFocused ? AppDimens.borderWidthFocused : AppDimens.borderWidth);
+
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      constraints: const BoxConstraints(minHeight: 56),
+      duration: const Duration(milliseconds: 150),
+      constraints: const BoxConstraints(minHeight: 54),
       decoration: BoxDecoration(
-        color: _isFocused ? Colors.white : AppColors.surfaceLight,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(AppDimens.radiusField),
         border: Border.all(
-          color: hasError
-              ? AppColors.danger
-              : (_isFocused ? AppColors.navy : AppColors.borderDisabled),
-          width: hasError ? 1.4 : (_isFocused ? 1.8 : 1.0),
+          color: borderColor,
+          width: borderWidth,
         ),
-        boxShadow: _isFocused && !hasError
-            ? [
-                BoxShadow(
-                  color: AppColors.navy.withValues(alpha: 0.08),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ]
-            : null,
       ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Directionality(
         textDirection: TextDirection.ltr,
         child: Row(
           children: [
-            // Clean Qatari Country Code Badge (+974 QA) always on left in LTR phone format
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.chipInactiveBg,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.borderDisabled, width: 0.8),
+                color: AppColors.slateBg,
+                borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+                border: Border.all(
+                  color: AppColors.slateBorder,
+                  width: AppDimens.borderWidth,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'QA',
-                    style: AppTypography.label(color: AppColors.teal).copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
+                    style: AppTypography.label(color: AppColors.teal)
+                        .copyWith(fontWeight: FontWeight.w800),
                   ),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: 6),
                   Text(
                     '+974',
-                    style: AppTypography.body(color: AppColors.navy).copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                    ),
+                    style: AppTypography.body(color: AppColors.navy)
+                        .copyWith(fontWeight: FontWeight.w700, fontSize: 14),
                   ),
                 ],
               ),
             ),
 
-            // Vertical Divider
             Container(
               height: 22,
               width: 1,
               margin: const EdgeInsets.symmetric(horizontal: 10),
-              color: AppColors.borderDisabled,
+              color: AppColors.slateBorder,
             ),
 
-            // Phone input field
             Expanded(
               child: TextField(
                 controller: _phoneController,
                 focusNode: _focusNode,
                 keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.done,
                 maxLength: 8,
+                onSubmitted: (_) => _handleSubmit(isAr),
                 style: AppTypography.body(color: AppColors.navy).copyWith(
-                  fontSize: 17,
+                  fontSize: 16.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
                 ),
@@ -341,8 +340,8 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   counterText: '',
                   hintText: '55XXXXXX',
                   hintStyle: AppTypography.bodySecondary(
-                    color: AppColors.textSecondary.withValues(alpha: 0.7),
-                  ).copyWith(fontSize: 15, letterSpacing: 1.0),
+                    color: AppColors.textSecondary.withValues(alpha: 0.65),
+                  ).copyWith(letterSpacing: 1.0),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -361,7 +360,9 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
                   if (normalized != val) {
                     _phoneController.value = TextEditingValue(
                       text: normalized,
-                      selection: TextSelection.collapsed(offset: normalized.length),
+                      selection: TextSelection.collapsed(
+                        offset: normalized.length,
+                      ),
                     );
                   }
                   final authProvider = context.read<AuthProvider>();
@@ -373,10 +374,13 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
               ),
             ),
 
-            // Clear button if text exists
             if (_phoneController.text.isNotEmpty)
               IconButton(
-                icon: const Icon(Icons.cancel_rounded, color: AppColors.textSecondary, size: 20),
+                icon: const Icon(
+                  Icons.cancel_rounded,
+                  color: AppColors.textSecondary,
+                  size: 20,
+                ),
                 onPressed: () {
                   final authProvider = context.read<AuthProvider>();
                   if (authProvider.lastError != null) {
@@ -403,11 +407,14 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     if (hasError) {
       return Container(
         key: const ValueKey('phone_auth_error_banner'),
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.dangerBg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
+          borderRadius: BorderRadius.circular(AppDimens.radiusAlert),
+          border: Border.all(
+            color: AppColors.danger.withValues(alpha: 0.35),
+            width: AppDimens.borderWidth,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -415,45 +422,43 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    color: AppColors.danger, size: 16),
-                const SizedBox(width: 6),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  color: AppColors.danger,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     _errorText!,
-                    style: AppTypography.label(color: AppColors.danger)
-                        .copyWith(fontSize: 12, fontWeight: FontWeight.w700),
+                    style: AppTypography.label(color: AppColors.navy),
                   ),
                 ),
               ],
             ),
             if (auth.shouldSuggestEmailFallback) ...[
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
+              const SizedBox(height: 10),
+              MashwarButton(
                 key: const ValueKey('phone_fallback_email_btn'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.navy,
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: AppColors.navy, width: 1),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                height: 42,
+                variant: MashwarButtonVariant.secondary,
+                text: isAr
+                    ? 'الدخول بالبريد الإلكتروني وكلمة المرور'
+                    : 'Sign In with Email & Password',
+                icon: const Icon(
+                  Icons.mail_outline_rounded,
+                  size: 16,
+                  color: AppColors.navy,
                 ),
                 onPressed: () {
                   context.read<AuthProvider>().clearError();
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                        builder: (_) =>
-                            const EmailInputScreen(initialIsRegister: false)),
+                      builder: (_) =>
+                          const EmailInputScreen(initialIsRegister: false),
+                    ),
                   );
                 },
-                icon: const Icon(Icons.mail_outline_rounded, size: 16),
-                label: Text(
-                  isAr
-                      ? 'الدخول بالبريد الإلكتروني وكلمة المرور'
-                      : 'Sign In with Email & Password',
-                  style: AppTypography.label(color: AppColors.navy)
-                      .copyWith(fontWeight: FontWeight.w800),
-                ),
               ),
             ],
           ],
@@ -462,14 +467,18 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
     }
     return Row(
       children: [
-        const Icon(Icons.info_outline_rounded, color: Color(0xFF64748B), size: 14),
+        const Icon(
+          Icons.info_outline_rounded,
+          color: AppColors.textSecondary,
+          size: 15,
+        ),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             isAr
                 ? 'رقم جوال قطري (Ooredoo / Vodafone) يبدأ بـ 3 أو 5 أو 6 أو 7'
                 : 'Qatar mobile (Ooredoo / Vodafone) starting with 3, 5, 6, or 7',
-            style: AppTypography.label(color: const Color(0xFF64748B)).copyWith(fontSize: 12),
+            style: AppTypography.bodySmall(),
           ),
         ),
       ],

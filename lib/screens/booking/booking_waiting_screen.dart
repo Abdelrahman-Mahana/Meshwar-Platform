@@ -1,12 +1,16 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
-import '../../core/localization/app_strings.dart';
 import '../../data/models/ride_model.dart';
+import '../../state/rides_provider.dart';
 import 'booking_result_screen.dart';
 
 class BookingWaitingScreen extends StatefulWidget {
@@ -26,42 +30,68 @@ class BookingWaitingScreen extends StatefulWidget {
 }
 
 class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
-  int _secondsLeft = 28 * 60 + 40; // 28:40 from Page 26
-  Timer? _timer;
+  int _secondsLeft = 28 * 60 + 40;
+  Timer? _countdownTimer;
+  Timer? _autoResponseTimer;
   bool _isTimedOut = false;
+
+  void _cancelTimers() {
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+    _autoResponseTimer?.cancel();
+    _autoResponseTimer = null;
+  }
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_secondsLeft > 0) {
-        if (mounted) setState(() => _secondsLeft--);
-      } else {
-        if (mounted) setState(() => _isTimedOut = true);
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
         timer.cancel();
+        return;
+      }
+      if (_secondsLeft > 0) {
+        setState(() => _secondsLeft--);
+      } else {
+        setState(() => _isTimedOut = true);
+        _cancelTimers();
       }
     });
 
-    // Realistic driver response simulation for interactive prototype
-    Future.delayed(const Duration(milliseconds: 4500), () {
-      if (mounted && !_isTimedOut) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => BookingResultScreen(
-              ride: widget.ride,
-              isConfirmed: true,
-              totalPrice: widget.totalPrice,
-            ),
+    // Cancellable Timer so widget tests never fail with pending-timer assertions
+    _autoResponseTimer = Timer(const Duration(milliseconds: 4500), () {
+      if (!mounted || _isTimedOut) return;
+      _cancelTimers();
+      Navigator.of(context).pushReplacement(
+        MashwarPageRoute(
+          builder: (_) => BookingResultScreen(
+            ride: widget.ride,
+            isConfirmed: true,
+            totalPrice: widget.totalPrice,
           ),
-        );
-      }
+        ),
+      );
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _cancelTimers();
     super.dispose();
+  }
+
+  void _handleCancelRequest(bool isAr) {
+    _cancelTimers();
+    context.read<RidesProvider?>()?.cancelBooking();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    messenger?.showSnackBar(
+      SnackBar(
+        content: Text(
+          isAr ? 'تم إلغاء طلب الحجز بنجاح' : 'Booking request cancelled',
+        ),
+      ),
+    );
   }
 
   String get _formattedTime {
@@ -78,19 +108,28 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
       return _buildTimedOutView(isAr);
     }
 
+    final driverFirstName = widget.ride.driverName.trim().isNotEmpty
+        ? widget.ride.driverName.trim().split(' ').first
+        : (isAr ? 'المسافر' : 'Driver');
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.slateBorder),
+        ),
         title: Text(
-          isAr ? 'طلب حجز معلق' : 'Booking Pending',
+          isAr ? 'طلب حجز قيد التأكيد' : 'Booking Pending',
           style: AppTypography.title(),
         ),
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, color: AppColors.navy),
           onPressed: () {
+            _cancelTimers();
             Navigator.of(context).popUntil((route) => route.isFirst);
           },
         ),
@@ -100,20 +139,25 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: AppDimens.space16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimens.space24,
+                vertical: AppDimens.space16,
+              ),
               child: MashwarFadeSlideIn(
-                duration: const Duration(milliseconds: 280),
+                duration: const Duration(milliseconds: 260),
                 child: Column(
                   children: [
-                    // Deep Navy countdown hero + 3D car badge
+                    // Executive Countdown Card
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(AppDimens.space24),
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [AppColors.navy, Color(0xFF173D61)],
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: AppColors.slateBorder,
+                          width: AppDimens.borderWidth,
                         ),
-                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Column(
                         children: [
@@ -121,45 +165,71 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
                             width: 96,
                             height: 96,
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppColors.slateBg,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.gold, width: 3.5),
+                              border: Border.all(
+                                color: AppColors.navy,
+                                width: 2.0,
+                              ),
                             ),
                             child: Center(
-                              child: Text(
-                                _formattedTime,
-                                style: AppTypography.title().copyWith(fontSize: 22, color: AppColors.navy),
+                              child: Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Text(
+                                  _formattedTime,
+                                  style: AppTypography.title(
+                                    color: AppColors.navy,
+                                  ).copyWith(fontSize: 22),
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: AppDimens.space16),
                           Text(
-                            isAr ? 'بانتظار رد ${widget.ride.driverName.split(' ').first}' : 'Waiting for ${widget.ride.driverName.split(' ').first}\'s response',
+                            isAr
+                                ? 'بانتظار رد $driverFirstName'
+                                : "Waiting for $driverFirstName's response",
                             textAlign: TextAlign.center,
-                            style: AppTypography.largeTitle(color: Colors.white),
+                            style: AppTypography.largeTitle().copyWith(
+                              fontSize: 22,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             isAr
-                                ? 'هنبلغك أول ما يرد. لو ما ردّش في الوقت ده هيتلغي الطلب.'
-                                : 'We will notify you once they reply. If no response in time, the request will expire.',
+                                ? 'سنبلغك فور قبول الطلب وإصدار رمز الصعود QR و OTP. في حال انتهاء المهلة يُلغى الطلب تلقائياً.'
+                                : 'We will notify you as soon as they confirm and issue your QR & OTP pass. Request expires automatically if unanswered.',
                             textAlign: TextAlign.center,
-                            style: AppTypography.bodySecondary(color: Colors.white.withValues(alpha: 0.85)),
+                            style: AppTypography.bodySecondary(),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimens.space20),
+                    const SizedBox(height: AppDimens.space16),
 
-                    // Ride info summary card
-                    MashwarSectionCard(
+                    // Ride Info Summary Card
+                    Container(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(AppDimens.radiusCard),
+                        border: Border.all(
+                          color: AppColors.slateBorder,
+                          width: AppDimens.borderWidth,
+                        ),
+                      ),
                       child: Column(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: AppColors.slateBg,
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: AppColors.slateBorder,
+                                width: AppDimens.borderWidth,
+                              ),
                             ),
                             child: MashwarRouteTimeline(
                               from: context.trCity(widget.ride.fromCity),
@@ -168,23 +238,35 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          _buildRow(isAr ? 'الموعد' : 'Schedule', '${context.trDate(widget.ride.departureDate)} ${widget.ride.departureTime}'),
-                          const Divider(height: 20, color: AppColors.borderDisabled),
-                          _buildRow(isAr ? 'السائق' : 'Driver', widget.ride.driverName),
+                          _buildRow(
+                            isAr ? 'الموعد' : 'Schedule',
+                            '${context.trDate(widget.ride.departureDate)} · ${widget.ride.departureTime}',
+                          ),
+                          const Divider(
+                            height: 20,
+                            color: AppColors.slateBorder,
+                          ),
+                          _buildRow(
+                            isAr ? 'المسافر' : 'Driver',
+                            widget.ride.driverName,
+                          ),
+                          const Divider(
+                            height: 20,
+                            color: AppColors.slateBorder,
+                          ),
+                          _buildRow(
+                            isAr ? 'المقاعد والإجمالي' : 'Seats & Total',
+                            '${widget.seatsCount} · ${widget.totalPrice} ${isAr ? "ر.ق" : "QAR"}',
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(height: AppDimens.space24),
                     MashwarButton(
+                      key: const ValueKey('booking_waiting_cancel_btn'),
                       text: isAr ? 'إلغاء الطلب' : 'Cancel Request',
                       variant: MashwarButtonVariant.secondary,
-                      onPressed: () {
-                        final messenger = ScaffoldMessenger.of(context);
-                        Navigator.of(context).popUntil((route) => route.isFirst);
-                        messenger.showSnackBar(
-                          SnackBar(content: Text(isAr ? 'تم إلغاء طلب الحجز' : 'Booking request cancelled')),
-                        );
-                      },
+                      onPressed: () => _handleCancelRequest(isAr),
                     ),
                   ],
                 ),
@@ -196,7 +278,6 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
     );
   }
 
-  // Timeout view (Page 26)
   Widget _buildTimedOutView(bool isAr) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -206,19 +287,39 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
           child: Column(
             children: [
               const Spacer(flex: 3),
-              const Icon(Icons.timer_off_outlined, size: 72, color: AppColors.warning),
+              Container(
+                width: 72,
+                height: 72,
+                decoration: const BoxDecoration(
+                  color: AppColors.warningBg,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.timer_off_outlined,
+                  size: 38,
+                  color: AppColors.warning,
+                ),
+              ),
               const SizedBox(height: AppDimens.space16),
-              Text(isAr ? 'الوقت خلص' : 'Time Expired', style: AppTypography.largeTitle()),
+              Text(
+                isAr ? 'انتهت مهلة الانتظار' : 'Time Expired',
+                style: AppTypography.largeTitle(),
+              ),
               const SizedBox(height: 8),
               Text(
-                isAr ? 'السائق ما ردّش في الوقت المحدد. حاول تبحث عن رحلة تانية' : 'Driver didn\'t respond in time. Try finding another ride',
+                isAr
+                    ? 'لم يتمكن المسافر من الرد خلال المهلة المحددة. يمكنك اختيار رحلة أخرى متاحة فوراً.'
+                    : "Driver didn't respond in time. Try finding another available ride.",
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySecondary(),
               ),
               const Spacer(flex: 4),
               MashwarButton(
-                text: isAr ? 'ابحث عن رحلة تانية' : 'Search other rides',
-                onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                text: isAr ? 'البحث عن رحلة أخرى' : 'Search other rides',
+                onPressed: () {
+                  context.read<RidesProvider?>()?.cancelBooking();
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
               ),
               const SizedBox(height: AppDimens.space24),
             ],

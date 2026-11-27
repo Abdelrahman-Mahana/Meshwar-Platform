@@ -1,26 +1,19 @@
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
-import '../../core/widgets/alert_banner.dart';
+import '../../core/localization/app_strings.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_onboarding_shell.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
-import '../../core/localization/app_strings.dart';
 import 'notification_permission_screen.dart';
 
-class LocationPermissionScreen extends StatefulWidget {
+class LocationPermissionScreen extends StatelessWidget {
   const LocationPermissionScreen({super.key});
 
-  @override
-  State<LocationPermissionScreen> createState() => _LocationPermissionScreenState();
-}
-
-class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
-  bool _isDenied = false;
-
-  void _proceedNext() {
+  void _proceedNext(BuildContext context) {
     Navigator.of(context).pushReplacement(
       MashwarPageRoute(builder: (_) => const NotificationPermissionScreen()),
     );
@@ -31,14 +24,14 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
     final isAr = context.isArabic;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: MashwarOnboardingShell(
           isAr: isAr,
           showcaseBadge: isAr ? 'التقاط وتوصيل دقيق' : 'Precision Matching',
           showcaseTitle: isAr
-              ? 'نقاط التقاء ومواقع عمل دقيقة في جميع بلديات قطر'
-              : 'Exact pickup spots & worksites across all Qatar',
+              ? 'نقاط التقاء ومواقع عمل دقيقة على مسارك'
+              : 'Exact pickup spots & worksites along your route',
           showcaseSubtitle: isAr
               ? 'من لوسيل والخور والوكرة إلى المنطقة الصناعية — نصل طالب الخدمة بأقرب منفّذ أو مسافر بدقة.'
               : 'From Lusail, Al Khor & Al Wakrah to Industrial Area — accurate peer-to-peer matching.',
@@ -50,7 +43,8 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
               ),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: (constraints.maxHeight - AppDimens.space32).clamp(0.0, double.infinity),
+                  minHeight: (constraints.maxHeight - AppDimens.space32)
+                      .clamp(0.0, double.infinity),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -63,39 +57,25 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                           currentStep: 3,
                           totalSteps: 4,
                           isAr: isAr,
-                          stepTitle: isAr ? 'تحديد الموقع الذكي' : 'Smart Location',
+                          stepTitle:
+                              isAr ? 'تحديد الموقع الذكي' : 'Smart Location',
                         ),
-                        const SizedBox(height: 16),
-                        if (_isDenied) ...[
-                          AlertBanner(
-                            message: isAr
-                                ? 'بدون تفعيل الموقع، ستحدد نقطة الالتقاء يدوياً'
-                                : 'Without location, you will pick pickup spots manually',
-                            type: AlertBannerType.warning,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                        const SizedBox(height: AppDimens.space16),
                         MashwarFadeSlideIn(
-                          duration: const Duration(milliseconds: 300),
+                          duration: const Duration(milliseconds: 280),
                           child: Column(
                             children: [
-                              // Interactive Qatar Live Map Preview Card
+                              // Crisp Live Map Preview Card (1px slate border, zero heavy shadow)
                               Container(
-                                height: 170,
+                                height: 168,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(18),
                                   border: Border.all(
-                                    color: AppColors.teal.withValues(alpha: 0.35),
-                                    width: 1.2,
+                                    color: AppColors.slateBorder,
+                                    width: AppDimens.borderWidth,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.navy.withValues(alpha: 0.08),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 6),
-                                    ),
-                                  ],
                                 ),
+                                clipBehavior: Clip.antiAlias,
                                 child: Stack(
                                   children: [
                                     const Positioned.fill(
@@ -103,30 +83,43 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                                         style: QatarMapStyle.light,
                                         activeFromCity: 'الدوحة',
                                         activeToCity: 'لوسيل',
-                                        borderRadius: 19,
+                                        borderRadius: 17,
                                       ),
                                     ),
                                     PositionedDirectional(
                                       top: 10,
                                       start: 10,
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: Colors.white.withValues(alpha: 0.94),
-                                          borderRadius: BorderRadius.circular(14),
-                                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.96),
+                                          borderRadius: BorderRadius.circular(
+                                            AppDimens.radiusChip,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.slateBorder,
+                                            width: AppDimens.borderWidth,
+                                          ),
                                         ),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const MashwarLivePulseDot(color: AppColors.teal, size: 8),
+                                            const MashwarLivePulseDot(
+                                              color: AppColors.teal,
+                                              size: 8,
+                                            ),
                                             const SizedBox(width: 6),
                                             Text(
-                                              isAr ? 'نقطة الالتقاء المقترحة' : 'Calibrated pickup spot',
-                                              style: AppTypography.label(color: AppColors.navy).copyWith(
-                                                fontSize: 10.5,
-                                                fontWeight: FontWeight.w800,
-                                              ),
+                                              isAr
+                                                  ? 'نقطة الالتقاء المقترحة'
+                                                  : 'Calibrated pickup spot',
+                                              style: AppTypography.label(
+                                                color: AppColors.navy,
+                                              ).copyWith(fontSize: 11),
                                             ),
                                           ],
                                         ),
@@ -137,29 +130,42 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                               ),
                               const SizedBox(height: AppDimens.space20),
                               Text(
-                                _isDenied
-                                    ? (isAr ? 'إذن الموقع مغلق' : 'Location Permission Denied')
-                                    : (isAr ? 'اكتشف خدمات ومشاوير قريبة منك' : 'Find Nearby Services & Rides'),
+                                isAr
+                                    ? 'اكتشف خدمات ومشاوير قريبة منك'
+                                    : 'Find Nearby Services & Rides',
                                 textAlign: TextAlign.center,
-                                style: AppTypography.largeTitle().copyWith(fontSize: 23),
+                                style: AppTypography.largeTitle().copyWith(
+                                  fontSize: 23,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 isAr
-                                    ? 'لمطابقة طلبات الشراء والتوريد والمشاوير في نطاقك بدقة داخل قطر.'
-                                    : 'To match nearby errands, site deliveries & rides accurately in Qatar.',
+                                    ? 'لمطابقة الرحلات المشتركة والطرود وطلبات التوريد القريبة منك بدقة وسلاسة.'
+                                    : 'To match nearby shared trips, route parcels & supply errands accurately.',
                                 textAlign: TextAlign.center,
                                 style: AppTypography.bodySecondary(),
                               ),
-                              const SizedBox(height: 16),
-                              _buildBenefitTile(
+                              const SizedBox(height: AppDimens.space16),
+                              _buildBenefitCard(
                                 icon: Icons.my_location_rounded,
-                                title: isAr ? 'التقاط دقيق عند أقرب بوابة أو محطة WOQOD' : 'Exact pickup at metro gates or WOQOD',
+                                title: isAr
+                                    ? 'اقتراح أقرب نقطة التقاء أو بوابة موقع تلقائياً'
+                                    : 'Auto-suggest nearest pickup gate or landmark',
+                                subtitle: isAr
+                                    ? 'يوفر وقت التنسيق الهاتفي مع المسافر أو المنفّذ'
+                                    : 'Saves back-and-forth coordination calls',
                               ),
-                              const SizedBox(height: 8),
-                              _buildBenefitTile(
-                                icon: Icons.shield_outlined,
-                                title: isAr ? 'مشاركة خط السير المباشر مع العائلة لطمأنتهم' : 'Share live route safety link with family',
+                              const SizedBox(height: 10),
+                              _buildBenefitCard(
+                                icon: Icons.verified_user_outlined,
+                                isSecurity: true,
+                                title: isAr
+                                    ? 'مشاركة المسار المباشر لطمأنة العائلة وفريق العمل'
+                                    : 'Share live trip & delivery link with family or team',
+                                subtitle: isAr
+                                    ? 'يُستخدم الموقع أثناء النشاط فقط ويمكن اختيار المدن يدوياً دائماً'
+                                    : 'Used only while active — manual city selection is always available',
                               ),
                             ],
                           ),
@@ -167,31 +173,18 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
                       ],
                     ),
                     Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SizedBox(height: AppDimens.space24),
                         MashwarButton(
-                          text: _isDenied
-                              ? (isAr ? 'المتابعة واختيار الموقع يدوياً' : 'Continue with Manual Location')
-                              : (isAr ? 'تفعيل الموقع' : 'Enable Location'),
-                          onPressed: _proceedNext,
+                          text: isAr ? 'تفعيل الموقع' : 'Enable Location',
+                          onPressed: () => _proceedNext(context),
                         ),
                         const SizedBox(height: 10),
-                        SizedBox(
-                          width: double.infinity,
-                          height: AppDimens.minTouchTarget,
-                          child: TextButton(
-                            onPressed: () {
-                              if (!_isDenied) {
-                                setState(() => _isDenied = true);
-                              } else {
-                                _proceedNext();
-                              }
-                            },
-                            child: Text(
-                              isAr ? 'تخطي الآن' : 'Not now',
-                              style: AppTypography.bodySecondary(color: AppColors.textSecondary),
-                            ),
-                          ),
+                        MashwarButton(
+                          variant: MashwarButtonVariant.secondary,
+                          text: isAr ? 'تخطي الآن' : 'Not now',
+                          onPressed: () => _proceedNext(context),
                         ),
                       ],
                     ),
@@ -205,31 +198,55 @@ class _LocationPermissionScreenState extends State<LocationPermissionScreen> {
     );
   }
 
-  Widget _buildBenefitTile({required IconData icon, required String title}) {
+  Widget _buildBenefitCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    bool isSecurity = false,
+  }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(
+          color: AppColors.slateBorder,
+          width: AppDimens.borderWidth,
+        ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.tealSurface,
-              borderRadius: BorderRadius.circular(8),
+              color: isSecurity ? AppColors.tealSurface : AppColors.slateBg,
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 16, color: AppColors.teal),
+            child: Icon(
+              icon,
+              size: 18,
+              color: isSecurity ? AppColors.teal : AppColors.navy,
+            ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              title,
-              style: AppTypography.bodySmall(color: AppColors.navy).copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.body(color: AppColors.navy).copyWith(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: AppTypography.bodySmall(),
+                ),
+              ],
             ),
           ),
         ],

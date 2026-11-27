@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
+import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_animations.dart';
+import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_onboarding_shell.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/user_model.dart';
@@ -10,8 +13,7 @@ import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 import '../permissions/location_permission_screen.dart';
 
-/// Clean, minimalist, Uber/inDrive-style Profile Setup screen.
-/// Focuses on essential rider data without visual clutter, excessive lines, or emojis.
+/// Executive Profile Setup screen with clean typography and zero clutter.
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});
 
@@ -20,9 +22,12 @@ class ProfileSetupScreen extends StatefulWidget {
 }
 
 class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
-  final TextEditingController _firstNameController = TextEditingController(text: 'عبدالرحمن');
-  final TextEditingController _lastNameController = TextEditingController(text: 'المهنا');
-  final TextEditingController _emailController = TextEditingController(text: 'abdelrahman@mashwar.qa');
+  final TextEditingController _firstNameController =
+      TextEditingController(text: 'عبدالرحمن');
+  final TextEditingController _lastNameController =
+      TextEditingController(text: 'المهنا');
+  final TextEditingController _emailController =
+      TextEditingController(text: 'abdelrahman@mashwar.qa');
 
   static const String _otherGovValue = '__other_gov__';
 
@@ -35,6 +40,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
   String? _firstNameError;
   String? _lastNameError;
   String? _emailError;
+  String? _submitError;
   bool _isSaving = false;
 
   final List<String> _governoratesAr = const [
@@ -87,76 +93,85 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     super.dispose();
   }
 
-  void _handleSave(bool isAr) async {
+  Future<void> _handleSave(bool isAr) async {
+    if (_isSaving) return;
+
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
     final email = _emailController.text.trim();
 
     bool hasError = false;
 
-    if (firstName.isEmpty || firstName.length < 2) {
-      setState(() {
-        _firstNameError = isAr ? 'أدخل الاسم الأول بشكل صحيح' : 'Please enter your first name';
-      });
+    if (firstName.length < 2) {
+      _firstNameError =
+          isAr ? 'أدخل الاسم الأول بشكل صحيح' : 'Please enter your first name';
       hasError = true;
     } else {
-      setState(() => _firstNameError = null);
+      _firstNameError = null;
     }
 
-    if (lastName.isEmpty || lastName.length < 2) {
-      setState(() {
-        _lastNameError = isAr ? 'أدخل اسم العائلة بشكل صحيح' : 'Please enter your last name';
-      });
+    if (lastName.length < 2) {
+      _lastNameError =
+          isAr ? 'أدخل اسم العائلة بشكل صحيح' : 'Please enter your last name';
       hasError = true;
     } else {
-      setState(() => _lastNameError = null);
+      _lastNameError = null;
     }
 
-    if (email.isNotEmpty && !email.contains('@')) {
-      setState(() {
-        _emailError = isAr ? 'أدخل بريد إلكتروني صحيح' : 'Please enter a valid email address';
-      });
+    if (email.isNotEmpty && AuthProvider.validateEmail(email) != null) {
+      _emailError = isAr
+          ? 'أدخل بريد إلكتروني صحيح'
+          : 'Please enter a valid email address';
       hasError = true;
     } else {
-      setState(() => _emailError = null);
+      _emailError = null;
     }
 
     if (_selectedGovernorate == _otherGovValue &&
         _customGovController.text.trim().length < 2) {
-      setState(() {
-        _customGovError = isAr
-            ? 'أدخل اسم المنطقة أو البلدية المخصصة'
-            : 'Please enter your custom municipality or area';
-      });
+      _customGovError = isAr
+          ? 'أدخل اسم المنطقة أو البلدية المخصصة'
+          : 'Please enter your custom municipality or area';
       hasError = true;
     } else {
-      setState(() => _customGovError = null);
+      _customGovError = null;
     }
 
+    setState(() => _submitError = null);
     if (hasError) return;
 
     setState(() => _isSaving = true);
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future<void>.delayed(const Duration(milliseconds: 120));
+    if (!mounted) return;
 
-    if (mounted) {
-      final fullName = '$firstName $lastName'.trim();
-      final resolvedGov = _selectedGovernorate == _otherGovValue &&
-              _customGovController.text.trim().isNotEmpty
-          ? _customGovController.text.trim()
-          : _selectedGovernorate;
-      context.read<AuthProvider>().saveProfile(
-            fullName: fullName,
-            gender: _selectedGender,
-            governorate: resolvedGov,
-            email: email.isNotEmpty ? email : null,
-            avatarUrl: _selectedAvatarUrl,
-          );
+    final fullName = '$firstName $lastName'.trim();
+    final resolvedGov = _selectedGovernorate == _otherGovValue &&
+            _customGovController.text.trim().isNotEmpty
+        ? _customGovController.text.trim()
+        : _selectedGovernorate;
 
-      Navigator.of(context).pushAndRemoveUntil(
-        MashwarPageRoute(builder: (_) => const LocationPermissionScreen()),
-        (route) => false,
-      );
+    final auth = context.read<AuthProvider>();
+    auth.clearError();
+    auth.saveProfile(
+      fullName: fullName,
+      gender: _selectedGender,
+      governorate: resolvedGov,
+      email: email.isNotEmpty ? email : null,
+      avatarUrl: _selectedAvatarUrl,
+    );
+
+    setState(() => _isSaving = false);
+    if (auth.lastError != null && !auth.isAuthenticated) {
+      setState(() {
+        _submitError = auth.localizedError(isArabic: isAr);
+      });
+      return;
     }
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MashwarPageRoute(builder: (_) => const LocationPermissionScreen()),
+      (route) => false,
+    );
   }
 
   @override
@@ -170,7 +185,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
             .trim();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -207,342 +222,349 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
                                 currentStep: 2,
                                 totalSteps: 4,
                                 isAr: isAr,
-                                stepTitle: isAr ? 'إعداد الملف الشخصي' : 'Profile Setup',
+                                stepTitle: isAr
+                                    ? 'إعداد الملف الشخصي'
+                                    : 'Profile Setup',
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: AppDimens.space14),
 
-                                  // Title
-                                  Text(
-                                    isAr ? 'ما اسمك؟' : "What's your name?",
-                                    style: const TextStyle(
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
+                              Text(
+                                isAr ? 'ما اسمك؟' : "What's your name?",
+                                style: AppTypography.largeTitle(),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isAr
+                                    ? 'أدخل بياناتك كما تظهر في بطاقتك القطرية لتسهيل طلب الخدمات والمشاوير وتوثيق الضمان بين الطرفين.'
+                                    : 'Enter your name as shown on your QID so service providers and requesters can verify you safely.',
+                                style: AppTypography.bodySecondary(),
+                              ),
+
+                              if (_submitError != null) ...[
+                                const SizedBox(height: 14),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.dangerBg,
+                                    borderRadius: BorderRadius.circular(
+                                      AppDimens.radiusAlert,
+                                    ),
+                                    border: Border.all(
+                                      color: AppColors.danger
+                                          .withValues(alpha: 0.35),
+                                      width: AppDimens.borderWidth,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _submitError!,
+                                    style: AppTypography.label(
                                       color: AppColors.navy,
-                                      fontFamily: 'Cairo',
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    isAr
-                                        ? 'أدخل بياناتك كما تظهر في بطاقتك القطرية لتسهيل طلب الخدمات والمشاوير وتوثيق الضمان بين الطرفين.'
-                                        : 'Enter your name as shown on your QID so service providers and requesters can verify you safely.',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: AppColors.textSecondary,
-                                      height: 1.45,
-                                      fontFamily: 'Cairo',
-                                    ),
-                                  ),
+                                ),
+                              ],
 
-                                  const SizedBox(height: 28),
+                              const SizedBox(height: AppDimens.space24),
 
-                                  // Interactive Profile Photo Picker
-                                  Center(
-                                    child: Column(
-                                      children: [
-                                        MashwarUserAvatar(
-                                          key: const ValueKey('profile_setup_avatar_btn'),
-                                          avatarUrl: _selectedAvatarUrl,
-                                          fullName: previewFullName.isNotEmpty
-                                              ? previewFullName
-                                              : (isAr ? 'عضو مشوار' : 'Member'),
-                                          size: 88,
-                                          borderWidth: 2.6,
-                                          borderColor: AppColors.gold,
-                                          showCameraBadge: true,
-                                          onTap: () {
-                                            showMashwarAvatarPickerSheet(
-                                              context,
-                                              currentAvatarUrl: _selectedAvatarUrl,
-                                              fullName: previewFullName,
-                                              onAvatarSelected: (picked) {
-                                                setState(() => _selectedAvatarUrl = picked);
-                                              },
+                              Center(
+                                child: Column(
+                                  children: [
+                                    MashwarUserAvatar(
+                                      key: const ValueKey(
+                                        'profile_setup_avatar_btn',
+                                      ),
+                                      avatarUrl: _selectedAvatarUrl,
+                                      fullName: previewFullName.isNotEmpty
+                                          ? previewFullName
+                                          : (isAr ? 'عضو مشوار' : 'Member'),
+                                      size: 84,
+                                      borderWidth: 1.5,
+                                      borderColor: AppColors.slateBorder,
+                                      showCameraBadge: true,
+                                      onTap: () {
+                                        showMashwarAvatarPickerSheet(
+                                          context,
+                                          currentAvatarUrl: _selectedAvatarUrl,
+                                          fullName: previewFullName,
+                                          onAvatarSelected: (picked) {
+                                            setState(
+                                              () => _selectedAvatarUrl = picked,
                                             );
                                           },
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          isAr
-                                              ? 'اضغط لإضافة صورتك الشخصية (اختياري)'
-                                              : 'Tap to add your profile photo (optional)',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.teal,
-                                            fontFamily: 'Cairo',
-                                          ),
-                                        ),
-                                      ],
+                                        );
+                                      },
                                     ),
-                                  ),
-
-                                const SizedBox(height: 28),
-
-                                // First Name & Last Name (Side by side on wider / clean on mobile)
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Expanded(
-                                      child: _buildUberInputField(
-                                        label: isAr ? 'الاسم الأول' : 'First name',
-                                        controller: _firstNameController,
-                                        hint: isAr ? 'مثال: حمد' : 'e.g. Hamad',
-                                        errorText: _firstNameError,
-                                        onChanged: (val) {
-                                          setState(() {
-                                            if (_firstNameError != null) _firstNameError = null;
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: _buildUberInputField(
-                                        label: isAr ? 'اسم العائلة' : 'Last name',
-                                        controller: _lastNameController,
-                                        hint: isAr ? 'مثال: الكواري' : 'e.g. Al-Kuwari',
-                                        errorText: _lastNameError,
-                                        onChanged: (val) {
-                                          setState(() {
-                                            if (_lastNameError != null) _lastNameError = null;
-                                          });
-                                        },
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      isAr
+                                          ? 'اضغط لإضافة صورتك الشخصية (اختياري)'
+                                          : 'Tap to add your profile photo (optional)',
+                                      style: AppTypography.label(
+                                        color: AppColors.textSecondary,
                                       ),
                                     ),
                                   ],
                                 ),
+                              ),
 
-                                const SizedBox(height: 20),
+                              const SizedBox(height: AppDimens.space24),
 
-                                // Email Address
-                                _buildUberInputField(
-                                  label: isAr ? 'البريد الإلكتروني' : 'Email address',
-                                  controller: _emailController,
-                                  hint: 'name@example.com',
-                                  keyboardType: TextInputType.emailAddress,
-                                  errorText: _emailError,
-                                  helperText: isAr
-                                      ? 'لإرسال إيصالات وفواتير المشاوير'
-                                      : 'For sending ride receipts and trip updates',
-                                  onChanged: (val) {
-                                    if (_emailError != null) setState(() => _emailError = null);
-                                  },
-                                ),
-
-                                const SizedBox(height: 20),
-
-                                // Municipality Selector
-                                Text(
-                                  isAr ? 'البلدية / المنطقة' : 'Municipality / Area',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.navy,
-                                    fontFamily: 'Cairo',
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF3F3F4),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      key: const ValueKey('profile_setup_gov_dropdown'),
-                                      value: _selectedGovernorate == _otherGovValue
-                                          ? _otherGovValue
-                                          : (govList.contains(_selectedGovernorate)
-                                              ? _selectedGovernorate
-                                              : govList.first),
-                                      isExpanded: true,
-                                      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.navy),
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.navy,
-                                        fontFamily: 'Cairo',
-                                      ),
-                                      dropdownColor: Colors.white,
-                                      items: [
-                                        ...govList.map((gov) {
-                                          return DropdownMenuItem(value: gov, child: Text(gov));
-                                        }),
-                                        DropdownMenuItem(
-                                          value: _otherGovValue,
-                                          child: Text(
-                                            isAr
-                                                ? 'أخرى (حدد منطقتك بنفسك)'
-                                                : 'Other (Specify Area)',
-                                            style: const TextStyle(
-                                              color: AppColors.cobalt,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                      onChanged: (val) {
-                                        if (val != null) {
-                                          setState(() {
-                                            _selectedGovernorate = val;
-                                            _customGovError = null;
-                                          });
-                                        }
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: _buildExecutiveInputField(
+                                      label:
+                                          isAr ? 'الاسم الأول' : 'First name',
+                                      controller: _firstNameController,
+                                      hint: isAr ? 'مثال: حمد' : 'e.g. Hamad',
+                                      errorText: _firstNameError,
+                                      onChanged: (_) {
+                                        setState(() {
+                                          _firstNameError = null;
+                                        });
                                       },
                                     ),
                                   ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildExecutiveInputField(
+                                      label:
+                                          isAr ? 'اسم العائلة' : 'Last name',
+                                      controller: _lastNameController,
+                                      hint: isAr
+                                          ? 'مثال: الكواري'
+                                          : 'e.g. Al-Kuwari',
+                                      errorText: _lastNameError,
+                                      onChanged: (_) {
+                                        setState(() {
+                                          _lastNameError = null;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: AppDimens.space20),
+
+                              _buildExecutiveInputField(
+                                label: isAr
+                                    ? 'البريد الإلكتروني'
+                                    : 'Email address',
+                                controller: _emailController,
+                                hint: 'name@example.com',
+                                keyboardType: TextInputType.emailAddress,
+                                errorText: _emailError,
+                                helperText: isAr
+                                    ? 'لإرسال إيصالات وفواتير المشاوير'
+                                    : 'For sending ride receipts and trip updates',
+                                onChanged: (_) {
+                                  if (_emailError != null) {
+                                    setState(() => _emailError = null);
+                                  }
+                                },
+                              ),
+
+                              const SizedBox(height: AppDimens.space20),
+
+                              Text(
+                                isAr
+                                    ? 'البلدية / المنطقة'
+                                    : 'Municipality / Area',
+                                style: AppTypography.label(
+                                  color: AppColors.navy,
                                 ),
-                                if (_selectedGovernorate == _otherGovValue) ...[
-                                  const SizedBox(height: 12),
-                                  _buildUberInputField(
-                                    label: isAr
-                                        ? 'اكتب اسم المنطقة أو المدينة *'
-                                        : 'Specify Custom Area / City *',
-                                    controller: _customGovController,
-                                    hint: isAr
-                                        ? 'مثال: اللؤلؤة، مشيرب، سيلين...'
-                                        : 'e.g. The Pearl, Msheireb, Sealine...',
-                                    errorText: _customGovError,
-                                    onChanged: (_) {
-                                      if (_customGovError != null) {
-                                        setState(() => _customGovError = null);
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.radiusField,
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.slateBorder,
+                                    width: AppDimens.borderWidth,
+                                  ),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    key: const ValueKey(
+                                      'profile_setup_gov_dropdown',
+                                    ),
+                                    value: _selectedGovernorate ==
+                                            _otherGovValue
+                                        ? _otherGovValue
+                                        : (govList
+                                                .contains(_selectedGovernorate)
+                                            ? _selectedGovernorate
+                                            : govList.first),
+                                    isExpanded: true,
+                                    icon: const Icon(
+                                      Icons.keyboard_arrow_down_rounded,
+                                      color: AppColors.navy,
+                                    ),
+                                    style: AppTypography.body(
+                                      color: AppColors.navy,
+                                    ),
+                                    dropdownColor: Colors.white,
+                                    items: [
+                                      ...govList.map((gov) {
+                                        return DropdownMenuItem(
+                                          value: gov,
+                                          child: Text(gov),
+                                        );
+                                      }),
+                                      DropdownMenuItem(
+                                        value: _otherGovValue,
+                                        child: Text(
+                                          isAr
+                                              ? 'أخرى (حدد منطقتك بنفسك)'
+                                              : 'Other (Specify Area)',
+                                          style: AppTypography.body(
+                                            color: AppColors.navy,
+                                          ).copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(() {
+                                          _selectedGovernorate = val;
+                                          _customGovError = null;
+                                        });
                                       }
                                     },
                                   ),
-                                ],
-
-                                const SizedBox(height: 20),
-
-                                // Gender Selector (Pills, clean, NO EMOJIS)
-                                Text(
-                                  isAr ? 'النوع' : 'Gender',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.navy,
-                                    fontFamily: 'Cairo',
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildGenderPill(
-                                        label: isAr ? 'ذكر' : 'Male',
-                                        isSelected: _selectedGender == UserGender.male,
-                                        onTap: () => setState(() => _selectedGender = UserGender.male),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildGenderPill(
-                                        label: isAr ? 'أنثى' : 'Female',
-                                        isSelected: _selectedGender == UserGender.female,
-                                        onTap: () => setState(() => _selectedGender = UserGender.female),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildGenderPill(
-                                        label: isAr ? 'أفضّل عدم الذكر' : 'Other',
-                                        isSelected: _selectedGender == UserGender.preferNotToSay,
-                                        onTap: () => setState(() => _selectedGender = UserGender.preferNotToSay),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 24),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Bottom CTA Area (Uber style, constrained cleanly on wide viewports)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.space24, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, -4),
-                        ),
-                      ],
-                    ),
-                    child: SafeArea(
-                      top: false,
-                      child: Center(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 640),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.navy,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  onPressed: _isSaving ? null : () => _handleSave(isAr),
-                                  child: _isSaving
-                                      ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                        )
-                                      : Row(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              isAr ? 'متابعة' : 'Continue',
-                                              style: const TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily: 'Cairo',
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            const Icon(
-                                              Icons.arrow_forward_rounded,
-                                              size: 18,
-                                              color: Colors.white,
-                                            ),
-                                          ],
-                                        ),
                                 ),
                               ),
+                              if (_selectedGovernorate == _otherGovValue) ...[
+                                const SizedBox(height: 12),
+                                _buildExecutiveInputField(
+                                  label: isAr
+                                      ? 'اكتب اسم المنطقة أو المدينة *'
+                                      : 'Specify Custom Area / City *',
+                                  controller: _customGovController,
+                                  hint: isAr
+                                      ? 'مثال: اللؤلؤة، مشيرب، سيلين...'
+                                      : 'e.g. The Pearl, Msheireb, Sealine...',
+                                  errorText: _customGovError,
+                                  onChanged: (_) {
+                                    if (_customGovError != null) {
+                                      setState(() => _customGovError = null);
+                                    }
+                                  },
+                                ),
+                              ],
+
+                              const SizedBox(height: AppDimens.space20),
+
+                              Text(
+                                isAr ? 'النوع' : 'Gender',
+                                style: AppTypography.label(
+                                  color: AppColors.navy,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildGenderPill(
+                                      label: isAr ? 'ذكر' : 'Male',
+                                      isSelected:
+                                          _selectedGender == UserGender.male,
+                                      onTap: () => setState(
+                                        () => _selectedGender = UserGender.male,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildGenderPill(
+                                      label: isAr ? 'أنثى' : 'Female',
+                                      isSelected:
+                                          _selectedGender == UserGender.female,
+                                      onTap: () => setState(
+                                        () =>
+                                            _selectedGender = UserGender.female,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: _buildGenderPill(
+                                      label:
+                                          isAr ? 'أفضّل عدم الذكر' : 'Other',
+                                      isSelected: _selectedGender ==
+                                          UserGender.preferNotToSay,
+                                      onTap: () => setState(
+                                        () => _selectedGender =
+                                            UserGender.preferNotToSay,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: AppDimens.space24),
                             ],
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
-              );
+                ),
+
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimens.space24,
+                    vertical: 14,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: AppColors.slateBorder,
+                        width: AppDimens.borderWidth,
+                      ),
+                    ),
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 640),
+                        child: MashwarButton(
+                          text: isAr ? 'متابعة' : 'Continue',
+                          isLoading: _isSaving,
+                          onPressed: () => _handleSave(isAr),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
 
             return MashwarOnboardingShell(
               isAr: isAr,
               maxFormWidth: 640,
               scrollable: false,
               showcaseBadge: isAr ? 'ملفك الشخصي' : 'Your Profile',
-              showcaseTitle: isAr ? 'هوية موثوقة ومصممة للرحلات في قطر' : 'Verified profile tailored for Qatar travel',
+              showcaseTitle: isAr
+                  ? 'هوية موثوقة ومصممة للرحلات والخدمات'
+                  : 'Verified profile tailored for seamless journeys',
               showcaseSubtitle: isAr
-                  ? 'اختر بلديتك واسمك ليظهر لك أقرب الكباتن والخدمات في الدوحة والخور والوكرة.'
-                  : 'Select your municipality so captains & services match you faster.',
+                  ? 'اختر بلديتك واسمك ليظهر لك أقرب المسافرين والخدمات في الدوحة ولوسيل والخور والوكرة.'
+                  : 'Select your municipality so travelers & services match you faster.',
               child: formBody,
             );
           },
@@ -551,7 +573,7 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
     );
   }
 
-  Widget _buildUberInputField({
+  Widget _buildExecutiveInputField({
     required String label,
     required TextEditingController controller,
     String? hint,
@@ -567,41 +589,50 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: AppColors.navy,
-            fontFamily: 'Cairo',
-          ),
+          style: AppTypography.label(color: AppColors.navy),
         ),
         const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F3F4),
-            borderRadius: BorderRadius.circular(10),
-            border: hasError ? Border.all(color: AppColors.danger, width: 1.2) : null,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-          child: TextField(
-            controller: controller,
-            keyboardType: keyboardType,
-            onChanged: onChanged,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: AppColors.navy,
-              fontFamily: 'Cairo',
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          onChanged: onChanged,
+          style: AppTypography.body(color: AppColors.navy),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTypography.bodySecondary(
+              color: AppColors.textSecondary.withValues(alpha: 0.65),
             ),
-            decoration: InputDecoration(
-              hintText: hint,
-              hintStyle: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF9E9E9E),
-                fontFamily: 'Cairo',
+            filled: true,
+            fillColor: Colors.white,
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 13,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radiusField),
+              borderSide: BorderSide(
+                color: hasError ? AppColors.danger : AppColors.slateBorder,
+                width: hasError
+                    ? AppDimens.borderWidthError
+                    : AppDimens.borderWidth,
               ),
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radiusField),
+              borderSide: BorderSide(
+                color: hasError ? AppColors.danger : AppColors.slateBorder,
+                width: hasError
+                    ? AppDimens.borderWidthError
+                    : AppDimens.borderWidth,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppDimens.radiusField),
+              borderSide: BorderSide(
+                color: hasError ? AppColors.danger : AppColors.navy,
+                width: AppDimens.borderWidthFocused,
+              ),
             ),
           ),
         ),
@@ -609,21 +640,13 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
           const SizedBox(height: 4),
           Text(
             errorText,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.danger,
-              fontFamily: 'Cairo',
-            ),
+            style: AppTypography.bodySmall(color: AppColors.danger),
           ),
         ] else if (helperText != null) ...[
           const SizedBox(height: 4),
           Text(
             helperText,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF8E8E93),
-              fontFamily: 'Cairo',
-            ),
+            style: AppTypography.bodySmall(),
           ),
         ],
       ],
@@ -641,14 +664,16 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppDimens.radiusField),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          constraints: const BoxConstraints(minHeight: AppDimens.minTouchTarget),
+          duration: const Duration(milliseconds: 160),
+          constraints:
+              const BoxConstraints(minHeight: AppDimens.minTouchTarget),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.navy : AppColors.chipInactiveBg,
+            color: isSelected ? AppColors.navy : Colors.white,
             borderRadius: BorderRadius.circular(AppDimens.radiusField),
             border: Border.all(
-              color: isSelected ? AppColors.navy : AppColors.borderDisabled,
+              color: isSelected ? AppColors.navy : AppColors.slateBorder,
+              width: AppDimens.borderWidth,
             ),
           ),
           child: Center(
@@ -657,11 +682,9 @@ class _ProfileSetupScreenState extends State<ProfileSetupScreen> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
+              style: AppTypography.label(
+                color: isSelected ? Colors.white : AppColors.navy,
+              ).copyWith(fontSize: 13),
             ),
           ),
         ),

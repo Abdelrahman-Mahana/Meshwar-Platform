@@ -29,18 +29,45 @@ class IdVerificationScreen extends StatefulWidget {
 
 class _IdVerificationScreenState extends State<IdVerificationScreen> {
   late final TextEditingController _idController;
+  final TextEditingController _frontUrlFallbackController =
+      TextEditingController();
+  final TextEditingController _backUrlFallbackController =
+      TextEditingController();
+  final TextEditingController _selfieUrlFallbackController =
+      TextEditingController();
 
   MediaUploadResult? _frontUpload;
   MediaUploadResult? _backUpload;
   MediaUploadResult? _selfieUpload;
   String? _uploadingDocSlot;
   String? _uploadError;
+  bool _showUrlFallback = false;
 
   bool _isSubmitting = false;
   String? _idError;
   String? _detectedBirthDate;
   String? _detectedGovNameAr;
   String? _detectedGovNameEn;
+
+  static String _normalizeDigits(String input) {
+    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    const easternDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    var result = input;
+    for (int i = 0; i < 10; i++) {
+      result = result.replaceAll(arabicDigits[i], '$i');
+      result = result.replaceAll(easternDigits[i], '$i');
+    }
+    return result.replaceAll(RegExp(r'[^0-9]'), '');
+  }
+
+  static bool _isValidHttpsOrStorageUrl(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return false;
+    final uri = Uri.tryParse(trimmed);
+    return uri != null &&
+        (uri.scheme == 'https' || uri.scheme == 'http') &&
+        uri.host.isNotEmpty;
+  }
 
   @override
   void initState() {
@@ -56,10 +83,21 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
   @override
   void dispose() {
     _idController.dispose();
+    _frontUrlFallbackController.dispose();
+    _backUrlFallbackController.dispose();
+    _selfieUrlFallbackController.dispose();
     super.dispose();
   }
 
-  void _analyzeNationalId(String id) {
+  void _analyzeNationalId(String rawInput) {
+    final id = _normalizeDigits(rawInput);
+    if (id != rawInput) {
+      _idController.value = TextEditingValue(
+        text: id,
+        selection: TextSelection.collapsed(offset: id.length),
+      );
+    }
+
     if (id.length != 11 || !RegExp(r'^[0-9]{11}$').hasMatch(id)) {
       setState(() {
         _detectedBirthDate = null;
@@ -110,7 +148,8 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
 
   Future<void> _handleUploadDoc(String docType, bool isAr) async {
     final auth = context.read<AuthProvider>();
-    final uid = auth.user.id.trim().isNotEmpty ? auth.user.id.trim() : 'pending_user';
+    final uid =
+        auth.user.id.trim().isNotEmpty ? auth.user.id.trim() : 'pending_user';
 
     setState(() {
       _uploadingDocSlot = docType;
@@ -118,8 +157,8 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
     });
 
     try {
-      final res =
-          await MediaUploadService.instance.pickAndUploadProviderVerificationDoc(
+      final res = await MediaUploadService.instance
+          .pickAndUploadProviderVerificationDoc(
         uid: uid,
         docType: docType,
         source: ImageSource.gallery,
@@ -143,6 +182,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
       setState(() {
         _uploadingDocSlot = null;
         _uploadError = e.localizedMessage(isArabic: isAr);
+        _showUrlFallback = true;
       });
     } catch (e) {
       if (!mounted) return;
@@ -151,14 +191,37 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
         _uploadError = isAr
             ? 'تعذّر رفع صورة الهوية: $e'
             : 'Failed to upload ID image: $e';
+        _showUrlFallback = true;
       });
     }
   }
 
+  String _resolveFrontUrl(UserModel user) {
+    if (_frontUpload != null) return _frontUpload!.downloadUrl;
+    final manual = _frontUrlFallbackController.text.trim();
+    if (manual.isNotEmpty) return manual;
+    return user.idFrontImage ?? '';
+  }
+
+  String _resolveBackUrl(UserModel user) {
+    if (_backUpload != null) return _backUpload!.downloadUrl;
+    final manual = _backUrlFallbackController.text.trim();
+    if (manual.isNotEmpty) return manual;
+    return user.idBackImage ?? '';
+  }
+
+  String? _resolveSelfieUrl(UserModel user) {
+    if (_selfieUpload != null) return _selfieUpload!.downloadUrl;
+    final manual = _selfieUrlFallbackController.text.trim();
+    if (manual.isNotEmpty) return manual;
+    return user.selfieImage;
+  }
+
   Future<void> _handleSubmit() async {
+    if (_isSubmitting) return;
     final isAr = context.read<SettingsProvider>().isArabic;
     final auth = context.read<AuthProvider>();
-    final idText = _idController.text.trim();
+    final idText = _normalizeDigits(_idController.text.trim());
     if (idText.length != 11 || !RegExp(r'^[23][0-9]{10}$').hasMatch(idText)) {
       setState(() {
         _idError = isAr
@@ -168,15 +231,28 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
       return;
     }
 
-    final frontUrl = _frontUpload?.downloadUrl ?? auth.user.idFrontImage ?? '';
-    final backUrl = _backUpload?.downloadUrl ?? auth.user.idBackImage ?? '';
-    final selfieUrl = _selfieUpload?.downloadUrl ?? auth.user.selfieImage;
+    final frontUrl = _resolveFrontUrl(auth.user);
+    final backUrl = _resolveBackUrl(auth.user);
+    final selfieUrl = _resolveSelfieUrl(auth.user);
 
     if (frontUrl.isEmpty || backUrl.isEmpty) {
       setState(() {
         _uploadError = isAr
             ? 'يرجى رفع صورة واضحة لوجه وظهر البطاقة الشخصية القطرية (QID) قبل الإرسال.'
             : 'Please upload clear photos of the front and back of your Qatar ID (QID) before submitting.';
+      });
+      return;
+    }
+
+    if (!_isValidHttpsOrStorageUrl(frontUrl) ||
+        !_isValidHttpsOrStorageUrl(backUrl) ||
+        (selfieUrl != null &&
+            selfieUrl.isNotEmpty &&
+            !_isValidHttpsOrStorageUrl(selfieUrl))) {
+      setState(() {
+        _uploadError = isAr
+            ? 'يرجى التأكد من صحة رابط صورة الوثيقة (يبدأ بـ https://).'
+            : 'Please provide a valid document image URL starting with https://.';
       });
       return;
     }
@@ -213,12 +289,19 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
 
   void _showSuccessDialog() {
     final isArabic = context.read<SettingsProvider>().isArabic;
-    showDialog(
+    showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppDimens.radiusCard)),
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(
+            color: AppColors.slateBorder,
+            width: AppDimens.borderWidth,
+          ),
+        ),
         title: Row(
           children: [
             Container(
@@ -227,8 +310,11 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                 color: AppColors.tealSurface,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check_circle_rounded,
-                  color: AppColors.teal, size: 28),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.teal,
+                size: 26,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -247,16 +333,34 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
         ),
         actions: [
           MashwarButton(
-            text: isArabic ? 'متابعة إلى مشوار' : 'Continue to MASHWAR',
+            key: const ValueKey('id_verif_success_continue_btn'),
+            text: widget.isOnboarding
+                ? (isArabic ? 'متابعة إلى مشوار' : 'Continue to MASHWAR')
+                : (isArabic ? 'العودة إلى حسابي' : 'Back to Account'),
             onPressed: () {
               Navigator.of(ctx).pop();
+              if (!mounted) return;
               if (widget.isOnboarding) {
                 Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                      builder: (_) => const LocationPermissionScreen()),
+                  MashwarPageRoute(
+                    builder: (_) => const LocationPermissionScreen(),
+                  ),
                 );
               } else {
-                Navigator.of(context).pop();
+                final messenger = ScaffoldMessenger.maybeOf(context);
+                if (Navigator.of(context).canPop()) {
+                  Navigator.of(context).pop(true);
+                }
+                messenger?.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isArabic
+                          ? 'تم تحديث حالة التوثيق إلى قيد المراجعة بنجاح'
+                          : 'Verification status updated to Under Review',
+                    ),
+                    backgroundColor: AppColors.teal,
+                  ),
+                );
               }
             },
           ),
@@ -271,34 +375,96 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
     final settings = context.watch<SettingsProvider>();
     final isAr = settings.isArabic;
     final user = auth.user;
+    final status = user.idVerificationStatus;
 
-    final isAlreadyVerified =
-        user.idVerificationStatus == IdVerificationStatus.verified;
-    final hasFront =
-        _frontUpload != null || (user.idFrontImage?.isNotEmpty ?? false);
-    final hasBack =
-        _backUpload != null || (user.idBackImage?.isNotEmpty ?? false);
-    final hasSelfie =
-        _selfieUpload != null || (user.selfieImage?.isNotEmpty ?? false);
+    final isVerified = status == IdVerificationStatus.verified;
+    final isUnderReview = status == IdVerificationStatus.underReview;
+    final isRejected = status == IdVerificationStatus.rejected;
+
+    final hasFront = _frontUpload != null ||
+        _frontUrlFallbackController.text.trim().isNotEmpty ||
+        (user.idFrontImage?.isNotEmpty ?? false);
+    final hasBack = _backUpload != null ||
+        _backUrlFallbackController.text.trim().isNotEmpty ||
+        (user.idBackImage?.isNotEmpty ?? false);
+    final hasSelfie = _selfieUpload != null ||
+        _selfieUrlFallbackController.text.trim().isNotEmpty ||
+        (user.selfieImage?.isNotEmpty ?? false);
+
+    Color statusCardBg = Colors.white;
+    Color statusCardBorder = AppColors.slateBorder;
+    Color statusIconBg = AppColors.slateBg;
+    Color statusIconFg = AppColors.navy;
+    IconData statusIcon = Icons.shield_outlined;
+    String statusTitle = isAr
+        ? 'توثيق الهوية القطرية (QID)'
+        : 'Qatar ID (QID) Identity Verification';
+    String statusSubtitle = isAr
+        ? 'ارفع صور البطاقة الشخصية القطرية (QID) بصيغة صورة صالحة (حتى 10 ميجابايت).'
+        : 'Upload clear Qatar ID (QID) photos (valid image up to 10 MB).';
+
+    if (isVerified) {
+      statusCardBg = AppColors.tealSurface;
+      statusCardBorder = AppColors.teal.withValues(alpha: 0.35);
+      statusIconBg = AppColors.teal;
+      statusIconFg = Colors.white;
+      statusIcon = Icons.verified_user_rounded;
+      statusTitle =
+          isAr ? 'حساب موثق بالبطاقة القطرية' : 'QID Verified Account';
+      statusSubtitle = isAr
+          ? 'تم التحقق من بياناتك وبطاقتك القطرية ومطابقتها.'
+          : 'Your Qatar ID has been verified.';
+    } else if (isUnderReview) {
+      statusCardBg = AppColors.goldSurface;
+      statusCardBorder = AppColors.gold.withValues(alpha: 0.45);
+      statusIconBg = AppColors.navy;
+      statusIconFg = Colors.white;
+      statusIcon = Icons.hourglass_top_rounded;
+      statusTitle = isAr
+          ? 'وثائق الهوية قيد المراجعة'
+          : 'ID Documents Under Review';
+      statusSubtitle = isAr
+          ? 'استلم فريق الأمان وثائقك وسيتم تأكيد التوثيق خلال 24 ساعة. يمكنك تحديث الصور أدناه عند الحاجة.'
+          : 'Our safety team received your QID documents. You may update photos below if needed.';
+    } else if (isRejected) {
+      statusCardBg = AppColors.dangerBg;
+      statusCardBorder = AppColors.danger.withValues(alpha: 0.35);
+      statusIconBg = AppColors.danger;
+      statusIconFg = Colors.white;
+      statusIcon = Icons.error_outline_rounded;
+      statusTitle = isAr
+          ? 'يرجى إعادة رفع صور أوضح للهوية'
+          : 'Please Re-upload Clearer ID Photos';
+      statusSubtitle = isAr
+          ? 'تعذرت قراءة البيانات في النسخة السابقة. يرجى رفع صور واضحة بدون انعكاس ضوئي.'
+          : 'Previous photos were unclear. Please upload sharp photos without glare.';
+    }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFCFCFD),
+      backgroundColor: AppColors.slateBg,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(height: 1, color: AppColors.slateBorder),
+        ),
         title: Text(
           isAr
               ? 'توثيق البطاقة الشخصية القطرية (QID)'
               : 'Qatar ID (QID) Verification',
-          style: AppTypography.title(),
+          style: AppTypography.title().copyWith(fontSize: 17),
         ),
         leading: widget.isOnboarding
             ? null
             : IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                    color: AppColors.navy),
-                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: AppColors.navy,
+                  size: 20,
+                ),
+                onPressed: () => Navigator.of(context).maybePop(),
               ),
       ),
       body: SafeArea(
@@ -307,38 +473,37 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
             constraints: const BoxConstraints(maxWidth: 640),
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimens.space16, vertical: 12),
+                horizontal: AppDimens.space16,
+                vertical: AppDimens.space16,
+              ),
               child: MashwarFadeSlideIn(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    MashwarSectionCard(
-                      backgroundColor: isAlreadyVerified
-                          ? const Color(0xFFF0FDF4)
-                          : Colors.white,
-                      borderColor: isAlreadyVerified
-                          ? const Color(0xFFBBF7D0)
-                          : const Color(0xFFE5E5EA),
+                    Container(
                       padding: const EdgeInsets.all(AppDimens.space16),
+                      decoration: BoxDecoration(
+                        color: statusCardBg,
+                        borderRadius:
+                            BorderRadius.circular(AppDimens.radiusCard),
+                        border: Border.all(
+                          color: statusCardBorder,
+                          width: AppDimens.borderWidth,
+                        ),
+                      ),
                       child: Row(
                         children: [
                           Container(
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: isAlreadyVerified
-                                  ? AppColors.teal
-                                  : const Color(0xFFF3F3F4),
+                              color: statusIconBg,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
-                              isAlreadyVerified
-                                  ? Icons.verified_user_rounded
-                                  : Icons.shield_outlined,
-                              color: isAlreadyVerified
-                                  ? Colors.white
-                                  : AppColors.navy,
-                              size: 24,
+                              statusIcon,
+                              color: statusIconFg,
+                              size: 22,
                             ),
                           ),
                           const SizedBox(width: AppDimens.space12),
@@ -347,30 +512,15 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isAlreadyVerified
-                                      ? (isAr
-                                          ? 'حساب موثق بالبطاقة القطرية'
-                                          : 'QID Verified Account')
-                                      : (isAr
-                                          ? 'توثيق الهوية القطرية (QID)'
-                                          : 'Qatar ID (QID) Identity Verification'),
-                                  style: AppTypography.title(
-                                    color: isAlreadyVerified
-                                        ? const Color(0xFF15803D)
-                                        : AppColors.navy,
-                                  ).copyWith(fontSize: 15),
+                                  statusTitle,
+                                  style: AppTypography.title().copyWith(
+                                    fontSize: 15.5,
+                                  ),
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  isAlreadyVerified
-                                      ? (isAr
-                                          ? 'تم التحقق من بياناتك وبطاقتك القطرية ومطابقتها.'
-                                          : 'Your Qatar ID has been verified.')
-                                      : (isAr
-                                          ? 'ارفع صور البطاقة الشخصية القطرية (QID) بصيغة صورة صالحة (حتى 10 ميجابايت).'
-                                          : 'Upload clear Qatar ID (QID) photos (valid image up to 10 MB).'),
-                                  style: AppTypography.bodySecondary()
-                                      .copyWith(fontSize: 12),
+                                  statusSubtitle,
+                                  style: AppTypography.bodySmall(),
                                 ),
                               ],
                             ),
@@ -378,110 +528,211 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimens.space24),
-                    Text(
-                      isAr
-                          ? 'الرقم الشخصي القطري - QID (11 رقم)'
-                          : 'Qatar Personal ID - QID (11 digits)',
-                      style: AppTypography.label()
-                          .copyWith(fontWeight: FontWeight.bold),
+                    const SizedBox(height: AppDimens.space20),
+
+                    // QID Input Section Card
+                    Container(
+                      padding: const EdgeInsets.all(AppDimens.space16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(AppDimens.radiusCard),
+                        border: Border.all(
+                          color: AppColors.slateBorder,
+                          width: AppDimens.borderWidth,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isAr
+                                ? 'الرقم الشخصي القطري - QID (11 رقم)'
+                                : 'Qatar Personal ID - QID (11 digits)',
+                            style: AppTypography.label(color: AppColors.navy),
+                          ),
+                          const SizedBox(height: 8),
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: TextField(
+                              key: const ValueKey('id_verif_qid_input'),
+                              controller: _idController,
+                              keyboardType: TextInputType.number,
+                              maxLength: 11,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[0-9٠-٩۰-۹]'),
+                                ),
+                                LengthLimitingTextInputFormatter(11),
+                              ],
+                              onChanged: _analyzeNationalId,
+                              style: AppTypography.body().copyWith(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 2.0,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: '29663401842',
+                                filled: true,
+                                fillColor: Colors.white,
+                                counterText: '',
+                                prefixIcon: const Icon(
+                                  Icons.badge_outlined,
+                                  color: AppColors.navy,
+                                  size: 20,
+                                ),
+                                errorText: _idError,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.radiusField,
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.slateBorder,
+                                    width: AppDimens.borderWidth,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.radiusField,
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.slateBorder,
+                                    width: AppDimens.borderWidth,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.radiusField,
+                                  ),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.navy,
+                                    width: AppDimens.borderWidthFocused,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (_detectedBirthDate != null) ...[
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.slateBg,
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.radiusSmall,
+                                ),
+                                border: Border.all(
+                                  color: AppColors.slateBorder,
+                                  width: AppDimens.borderWidth,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.verified_outlined,
+                                    color: AppColors.teal,
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      isAr
+                                          ? 'سنة الميلاد: $_detectedBirthDate · الجنسية: $_detectedGovNameAr'
+                                          : 'Birth Year: $_detectedBirthDate · Nationality: $_detectedGovNameEn',
+                                      style: AppTypography.label(
+                                        color: AppColors.navy,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      key: const ValueKey('id_verif_qid_input'),
-                      controller: _idController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 11,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(11),
+                    const SizedBox(height: AppDimens.space20),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            isAr
+                                ? 'صور البطاقة الشخصية القطرية (QID)'
+                                : 'Qatar ID (QID) Card Photos',
+                            style: AppTypography.title().copyWith(fontSize: 16),
+                          ),
+                        ),
+                        TextButton.icon(
+                          key: const ValueKey('id_verif_toggle_url_fallback_btn'),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          onPressed: () {
+                            setState(
+                              () => _showUrlFallback = !_showUrlFallback,
+                            );
+                          },
+                          icon: Icon(
+                            _showUrlFallback
+                                ? Icons.expand_less_rounded
+                                : Icons.link_rounded,
+                            size: 16,
+                            color: AppColors.navy,
+                          ),
+                          label: Text(
+                            isAr ? 'رابط بديل' : 'URL Fallback',
+                            style: AppTypography.label(color: AppColors.navy),
+                          ),
+                        ),
                       ],
-                      onChanged: _analyzeNationalId,
-                      style: AppTypography.body().copyWith(
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 2.0,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: '29663401842',
-                        filled: true,
-                        fillColor: const Color(0xFFF3F3F4),
-                        counterText: '',
-                        prefixIcon: const Icon(Icons.badge_outlined,
-                            color: AppColors.navy, size: 20),
-                        errorText: _idError,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFE5E5EA), width: 0.8),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              color: Color(0xFFE5E5EA), width: 0.8),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(
-                              color: AppColors.teal, width: 1.5),
-                        ),
-                      ),
                     ),
-                    if (_detectedBirthDate != null) ...[
-                      const SizedBox(height: 8),
+                    const SizedBox(height: AppDimens.space10),
+
+                    if (_uploadError != null) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                        key: const ValueKey('id_verif_upload_error'),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FA),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.dangerBg,
+                          borderRadius:
+                              BorderRadius.circular(AppDimens.radiusAlert),
                           border: Border.all(
-                              color: const Color(0xFFE5E5EA), width: 0.8),
+                            color: AppColors.danger.withValues(alpha: 0.35),
+                            width: AppDimens.borderWidth,
+                          ),
                         ),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.info_outline_rounded,
-                                color: AppColors.navy, size: 16),
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: AppColors.danger,
+                              size: 18,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                isAr
-                                    ? 'سنة الميلاد: $_detectedBirthDate · الجنسية: $_detectedGovNameAr'
-                                    : 'Birth Year: $_detectedBirthDate · Nationality: $_detectedGovNameEn',
-                                style: AppTypography.label(color: AppColors.navy)
-                                    .copyWith(fontSize: 12),
+                                _uploadError!,
+                                style: AppTypography.label(
+                                  color: AppColors.navy,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ],
-                    const SizedBox(height: AppDimens.space24),
-                    Text(
-                      isAr
-                          ? 'صور البطاقة الشخصية القطرية (QID)'
-                          : 'Qatar ID (QID) Card Photos',
-                      style: AppTypography.body()
-                          .copyWith(fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(height: AppDimens.space12),
-                    if (_uploadError != null) ...[
-                      Container(
-                        key: const ValueKey('id_verif_upload_error'),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.dangerBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                              color: AppColors.danger.withValues(alpha: 0.35)),
-                        ),
-                        child: Text(
-                          _uploadError!,
-                          style: AppTypography.label(color: AppColors.danger)
-                              .copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
+
                     _buildDocumentCard(
                       uploadBtnKey: 'id_verif_upload_qid_front_btn',
                       pillKey: 'id_verif_pill_qid_front',
@@ -531,35 +782,91 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                       onTap: () => _handleUploadDoc('selfie', isAr),
                       isArabic: isAr,
                     ),
-                    const SizedBox(height: AppDimens.space24),
+
+                    if (_showUrlFallback) ...[
+                      const SizedBox(height: AppDimens.space14),
+                      Container(
+                        padding: const EdgeInsets.all(AppDimens.space14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.circular(AppDimens.radiusCard),
+                          border: Border.all(
+                            color: AppColors.slateBorder,
+                            width: AppDimens.borderWidth,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isAr
+                                  ? 'إدخال روابط الصور يدوياً (عند تعذر الرفع المباشر)'
+                                  : 'Manual Document Image URLs (Upload Fallback)',
+                              style: AppTypography.label(color: AppColors.navy),
+                            ),
+                            const SizedBox(height: 10),
+                            _buildUrlFallbackField(
+                              fieldKey: 'id_verif_front_url_input',
+                              controller: _frontUrlFallbackController,
+                              label: isAr
+                                  ? 'رابط صورة وجه البطاقة (https://...)'
+                                  : 'Front ID image URL (https://...)',
+                            ),
+                            const SizedBox(height: 8),
+                            _buildUrlFallbackField(
+                              fieldKey: 'id_verif_back_url_input',
+                              controller: _backUrlFallbackController,
+                              label: isAr
+                                  ? 'رابط صورة ظهر البطاقة (https://...)'
+                                  : 'Back ID image URL (https://...)',
+                            ),
+                            const SizedBox(height: 8),
+                            _buildUrlFallbackField(
+                              fieldKey: 'id_verif_selfie_url_input',
+                              controller: _selfieUrlFallbackController,
+                              label: isAr
+                                  ? 'رابط صورة السيلفي (اختياري)'
+                                  : 'Selfie image URL (optional)',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: AppDimens.space20),
                     Container(
                       padding: const EdgeInsets.all(AppDimens.space12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FA),
-                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(AppDimens.radiusAlert),
                         border: Border.all(
-                            color: const Color(0xFFE5E5EA), width: 0.8),
+                          color: AppColors.slateBorder,
+                          width: AppDimens.borderWidth,
+                        ),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.lock_outline_rounded,
-                              color: AppColors.teal, size: 18),
+                          const Icon(
+                            Icons.lock_outline_rounded,
+                            color: AppColors.teal,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               isAr
                                   ? 'بياناتك مشفرة ومحمية بالكامل بموجب قانون حماية خصوصية البيانات الشخصية القطري رقم 13 لسنة 2016. لا يتم مشاركة بطاقتك مع أي طرف ثالث.'
                                   : 'Your data is strictly encrypted and protected under Qatar Personal Data Privacy Protection Law No. 13 of 2016. Never shared with third parties.',
-                              style:
-                                  AppTypography.label(color: AppColors.textSecondary)
-                                      .copyWith(fontSize: 11),
+                              style: AppTypography.bodySmall(),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppDimens.space32),
+                    const SizedBox(height: AppDimens.space24),
                     MashwarButton(
                       key: const ValueKey('id_verif_submit_btn'),
                       text: _isSubmitting
@@ -571,32 +878,63 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                       onPressed: _handleSubmit,
                     ),
                     if (widget.isOnboarding) ...[
-                      const SizedBox(height: AppDimens.space12),
-                      Center(
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      const LocationPermissionScreen()),
-                            );
-                          },
-                          child: Text(
-                            isAr
-                                ? 'تخطي التوثيق الآن والإكمال لاحقاً'
-                                : 'Skip for now, complete later',
-                            style: AppTypography.bodySecondary().copyWith(
-                              color: AppColors.textSecondary,
-                              decoration: TextDecoration.underline,
+                      const SizedBox(height: AppDimens.space10),
+                      MashwarButton(
+                        variant: MashwarButtonVariant.secondary,
+                        text: isAr
+                            ? 'تخطي التوثيق الآن والإكمال لاحقاً'
+                            : 'Skip for now, complete later',
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(
+                            MashwarPageRoute(
+                              builder: (_) => const LocationPermissionScreen(),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ],
                     const SizedBox(height: AppDimens.space24),
                   ],
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUrlFallbackField({
+    required String fieldKey,
+    required TextEditingController controller,
+    required String label,
+  }) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: TextField(
+        key: ValueKey(fieldKey),
+        controller: controller,
+        keyboardType: TextInputType.url,
+        style: AppTypography.bodySmall(color: AppColors.navy),
+        onChanged: (_) => setState(() => _uploadError = null),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: AppTypography.bodySmall(),
+          isDense: true,
+          filled: true,
+          fillColor: AppColors.slateBg,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+            borderSide: const BorderSide(
+              color: AppColors.slateBorder,
+              width: AppDimens.borderWidth,
+            ),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
+            borderSide: const BorderSide(
+              color: AppColors.slateBorder,
+              width: AppDimens.borderWidth,
             ),
           ),
         ),
@@ -616,11 +954,18 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
     required VoidCallback onTap,
     required bool isArabic,
   }) {
-    return MashwarSectionCard(
-      backgroundColor: Colors.white,
-      borderColor: hasPhoto ? const Color(0xFFBBF7D0) : const Color(0xFFE5E5EA),
+    return Container(
       padding: const EdgeInsets.all(AppDimens.space12),
-      borderRadius: 12,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+        border: Border.all(
+          color: hasPhoto
+              ? AppColors.teal.withValues(alpha: 0.4)
+              : AppColors.slateBorder,
+          width: AppDimens.borderWidth,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -630,9 +975,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: hasPhoto
-                      ? const Color(0xFFF0FDF4)
-                      : const Color(0xFFF3F3F4),
+                  color: hasPhoto ? AppColors.tealSurface : AppColors.slateBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: uploadResult != null
@@ -667,7 +1010,9 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                           child: Text(
                             title,
                             style: AppTypography.body().copyWith(
-                                fontWeight: FontWeight.w700, fontSize: 14),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                         if (hasPhoto)
@@ -680,8 +1025,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: AppTypography.label(color: AppColors.textSecondary)
-                          .copyWith(fontSize: 11),
+                      style: AppTypography.bodySmall(),
                     ),
                   ],
                 ),
@@ -695,15 +1039,26 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                         height: 18,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.teal,
+                          color: AppColors.navy,
                         ),
                       )
-                    : Icon(
-                        hasPhoto
-                            ? Icons.refresh_rounded
-                            : Icons.cloud_upload_outlined,
-                        color: AppColors.teal,
-                        size: 20,
+                    : Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: AppColors.slateBg,
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(
+                            color: AppColors.slateBorder,
+                            width: AppDimens.borderWidth,
+                          ),
+                        ),
+                        child: Icon(
+                          hasPhoto
+                              ? Icons.refresh_rounded
+                              : Icons.cloud_upload_outlined,
+                          color: AppColors.navy,
+                          size: 18,
+                        ),
                       ),
                 tooltip: hasPhoto
                     ? (isArabic ? 'استبدال الصورة' : 'Replace image')
@@ -719,14 +1074,13 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: AppColors.tealSurface,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
               ),
               child: Text(
                 '${uploadResult.fileName} · ${uploadResult.formattedSize}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTypography.label(color: AppColors.navy)
-                    .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
+                style: AppTypography.label(color: AppColors.navy),
               ),
             ),
           ],

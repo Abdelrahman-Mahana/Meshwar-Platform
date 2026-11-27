@@ -10,6 +10,7 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
+import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/models/ride_model.dart';
@@ -60,6 +61,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
+            size: 20,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -162,11 +164,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.cobaltSurface,
+                                color: AppColors.slateBg,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color:
-                                      AppColors.cobalt.withValues(alpha: 0.25),
+                                  color: AppColors.slateBorder,
+                                  width: AppDimens.borderWidth,
                                 ),
                               ),
                               child: Text(
@@ -174,8 +176,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                     ? '${results.length} رحلة متاحة'
                                     : '${results.length} trips found',
                                 style: AppTypography.label(
-                                  color: AppColors.cobalt,
-                                ).copyWith(fontWeight: FontWeight.w800),
+                                  color: AppColors.navy,
+                                ),
                               ),
                             ),
                           ],
@@ -192,7 +194,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                           height: 136,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.slateBorder),
+                            border: Border.all(
+                              color: AppColors.slateBorder,
+                              width: AppDimens.borderWidth,
+                            ),
                           ),
                           child: Stack(
                             fit: StackFit.expand,
@@ -235,11 +240,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: Colors.white
-                                            .withValues(alpha: 0.94),
+                                            .withValues(alpha: 0.96),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: AppColors.cobalt
-                                              .withValues(alpha: 0.25),
+                                          color: AppColors.slateBorder,
+                                          width: AppDimens.borderWidth,
                                         ),
                                       ),
                                       child: Row(
@@ -247,18 +252,15 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                         children: [
                                           const Icon(
                                             Icons.alt_route_rounded,
-                                            color: AppColors.cobalt,
+                                            color: AppColors.navy,
                                             size: 14,
                                           ),
                                           const SizedBox(width: 5),
                                           Text(
                                             '$distLabel · ~$timeStr',
-                                            style: const TextStyle(
-                                              fontSize: 11,
+                                            style: AppTypography.label(
                                               color: AppColors.navy,
-                                              fontWeight: FontWeight.w800,
-                                              fontFamily: 'Cairo',
-                                            ),
+                                            ).copyWith(fontSize: 11),
                                           ),
                                         ],
                                       ),
@@ -287,15 +289,19 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
                     Expanded(
                       child: _hasError
-                          ? _buildErrorState(isAr)
+                          ? _buildErrorState(rides, isAr)
                           : results.isEmpty
                               ? _buildEmptyState(context, rides, alerts, isAr)
-                              : _buildResultsList(
-                                  context,
-                                  results,
-                                  isAr,
-                                  isWide: isWide,
-                                  hPad: hPad,
+                              : RefreshIndicator(
+                                  color: AppColors.navy,
+                                  onRefresh: rides.loadRides,
+                                  child: _buildResultsList(
+                                    context,
+                                    results,
+                                    isAr,
+                                    isWide: isWide,
+                                    hPad: hPad,
+                                  ),
                                 ),
                     ),
                   ],
@@ -358,11 +364,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
 
   Widget _buildDriverCard(BuildContext context, RideModel ride, bool isAr) {
     return MashwarFadeSlideIn(
-      duration: const Duration(milliseconds: 240),
-      offsetY: 10,
+      duration: const Duration(milliseconds: 220),
+      offsetY: 8,
       child: MashwarHoverCard(
         borderColor: AppColors.slateBorder,
-        hoverBorderColor: AppColors.cobalt,
+        hoverBorderColor: AppColors.navy,
         padding: const EdgeInsets.all(16),
         onTap: () {
           Navigator.of(context).push(
@@ -385,16 +391,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.navy,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius:
+                              BorderRadius.circular(AppDimens.radiusSmall),
                         ),
                         child: Text(
                           ride.departureTime,
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            fontFamily: 'Cairo',
-                          ),
+                          style: AppTypography.label(color: Colors.white)
+                              .copyWith(fontSize: 12),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -404,7 +407,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.body()
-                              .copyWith(fontWeight: FontWeight.w800),
+                              .copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
                     ],
@@ -417,10 +420,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.cobaltSurface,
+                    color: AppColors.slateBg,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: AppColors.cobalt.withValues(alpha: 0.25),
+                      color: AppColors.slateBorder,
+                      width: AppDimens.borderWidth,
                     ),
                   ),
                   child: Row(
@@ -430,14 +434,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     children: [
                       Text(
                         '${ride.pricePerSeat}',
-                        style: AppTypography.title(color: AppColors.cobalt)
-                            .copyWith(fontSize: 18, fontWeight: FontWeight.w900),
+                        style: AppTypography.title(color: AppColors.navy)
+                            .copyWith(fontSize: 17),
                       ),
-                      const SizedBox(width: 2),
+                      const SizedBox(width: 3),
                       Text(
                         isAr ? 'ر.ق' : 'QAR',
-                        style: AppTypography.label(color: AppColors.navy)
-                            .copyWith(fontWeight: FontWeight.w800),
+                        style: AppTypography.label(color: AppColors.navy),
                       ),
                     ],
                   ),
@@ -450,7 +453,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               decoration: BoxDecoration(
                 color: AppColors.slateBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.slateBorder),
+                border: Border.all(
+                  color: AppColors.slateBorder,
+                  width: AppDimens.borderWidth,
+                ),
               ),
               child: MashwarRouteTimeline(
                 from: ride.pickupPoint,
@@ -461,19 +467,13 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
             const SizedBox(height: 12),
             Row(
               children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: const BoxDecoration(
-                    color: AppColors.cobaltSurface,
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    ride.driverName.isNotEmpty ? ride.driverName[0] : 'M',
-                    style: AppTypography.title(color: AppColors.cobalt)
-                        .copyWith(fontSize: 15),
-                  ),
+                MashwarUserAvatar(
+                  avatarUrl: null,
+                  fullName: ride.driverName,
+                  size: 38,
+                  borderWidth: 1.0,
+                  borderColor: AppColors.slateBorder,
+                  autoCommunityPortrait: true,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -488,7 +488,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.body()
-                                  .copyWith(fontWeight: FontWeight.w800),
+                                  .copyWith(fontWeight: FontWeight.w700),
                             ),
                           ),
                           if (ride.isVerified) ...[
@@ -496,7 +496,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                             const Icon(
                               Icons.verified_rounded,
                               size: 14,
-                              color: AppColors.emerald,
+                              color: AppColors.teal,
                             ),
                           ],
                         ],
@@ -509,7 +509,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                             color: AppColors.gold,
                           ),
                           const SizedBox(width: 2),
-                          Text('${ride.driverRating}', style: AppTypography.label()),
+                          Text(
+                            '${ride.driverRating}',
+                            style: AppTypography.label(color: AppColors.navy),
+                          ),
                           const SizedBox(width: 5),
                           Flexible(
                             child: Text(
@@ -532,7 +535,11 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   icon: Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.slateBorder),
+                      color: Colors.white,
+                      border: Border.all(
+                        color: AppColors.slateBorder,
+                        width: AppDimens.borderWidth,
+                      ),
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: const Icon(
@@ -581,7 +588,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                   ),
                 if (ride.acceptsParcels)
                   InkWell(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppDimens.radiusSmall),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -592,13 +599,15 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 3.5,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.indigoSurface,
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.slateBg,
+                        borderRadius:
+                            BorderRadius.circular(AppDimens.radiusSmall),
                         border: Border.all(
-                          color: AppColors.indigo.withValues(alpha: 0.3),
+                          color: AppColors.slateBorder,
+                          width: AppDimens.borderWidth,
                         ),
                       ),
                       child: Row(
@@ -606,8 +615,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                         children: [
                           const Icon(
                             Icons.inventory_2_outlined,
-                            size: 12,
-                            color: AppColors.indigo,
+                            size: 13,
+                            color: AppColors.navy,
                           ),
                           const SizedBox(width: 4),
                           Flexible(
@@ -617,11 +626,8 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                                   : 'Parcels OK (${ride.parcelPrice} QAR)',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: AppTypography.label(color: AppColors.indigo)
-                                  .copyWith(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w800,
-                              ),
+                              style: AppTypography.label(color: AppColors.navy)
+                                  .copyWith(fontSize: 11),
                             ),
                           ),
                         ],
@@ -645,6 +651,10 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     final fromLabel =
         rides.fromCity.isNotEmpty ? context.trCity(rides.fromCity) : '';
     final toLabel = rides.toCity.isNotEmpty ? context.trCity(rides.toCity) : '';
+    final hasActiveFilters = rides.filterAcceptsParcels ||
+        rides.filterLadiesOnly ||
+        rides.filterInstantBooking ||
+        rides.timeSlot != 'أي وقت';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimens.space24),
@@ -699,11 +709,19 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
                             ? 'تم تفعيل تنبيه المسار بنجاح'
                             : 'Route alert activated',
                       ),
-                      backgroundColor: AppColors.emerald,
+                      backgroundColor: AppColors.teal,
                     ),
                   );
                 },
               ),
+              if (hasActiveFilters) ...[
+                const SizedBox(height: 10),
+                MashwarButton(
+                  variant: MashwarButtonVariant.secondary,
+                  text: isAr ? 'إعادة ضبط الفلاتر' : 'Reset Filters',
+                  onPressed: rides.resetFilters,
+                ),
+              ],
             ],
           ),
         ),
@@ -711,7 +729,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
     );
   }
 
-  Widget _buildErrorState(bool isAr) {
+  Widget _buildErrorState(RidesProvider rides, bool isAr) {
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
@@ -735,7 +753,7 @@ class _SearchResultsScreenState extends State<SearchResultsScreen> {
               const SizedBox(height: 16),
               MashwarButton(
                 text: isAr ? 'إعادة المحاولة' : 'Retry',
-                onPressed: () => setState(() {}),
+                onPressed: rides.loadRides,
               ),
             ],
           ),
