@@ -1,59 +1,61 @@
-# MASHWAR (مشوار): الدليل الشامل لملف التقديم الاستثماري لـ Startup Qatar (QDB / Invest Qatar)
+# MASHWAR (مشوار): Master Startup Qatar Submission Kit & Readiness Checklist
 
-> هذا الدليل محدّث بالكامل على آخر معمارية للتطبيق (**Qatar Universal Community Services & Bilateral Escrow Super-App**) ومتطابق حرفياً مع الملفات الثلاثة المولّدة في `STARTUP_QATAR_SUBMISSION_DOCS/` ومع إجابات F6S في [F6S_STARTUP_QATAR_EXACT_ANSWERS.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/F6S_STARTUP_QATAR_EXACT_ANSWERS.md).
+> **Program:** Startup Qatar Investment Program (Qatar Development Bank — QDB / Invest Qatar via [f6s.com/sqinvestmentprogram](https://www.f6s.com/sqinvestmentprogram))
+> **Track:** **START Track** (`$450,000` / `QAR 1,638,000` across 3 auditable milestone tranches)
+> **Codebase Reference:** Verified `main` at HEAD `6520fb6` | Financial Source of Truth: [financial-data.js](file:///landing_page/js/financial-data.js)
 
 ---
 
-## القسم الأول: المواءمة الاستراتيجية مع البرنامج
+## 1. Strategic Alignment with Startup Qatar (START Track)
 
-| البند | الاختيار المعتمد لمنصة **مشوار (MASHWAR)** | المبرر الهندسي والتجاري |
+| Dimension | MASHWAR Submission Position | Engineering & Commercial Ground Truth |
 | :--- | :--- | :--- |
-| **المسار (Track)** | **START Track** (تمويل مرحلي حتى $450K مطلوبة على 3 دفعات) | المنصة في مرحلة **Pre-Revenue MVP مكتمل البناء والاختبار (`78/78` اختباراً، `0` أخطاء ساكنة)**. |
-| **القطاعات (Sectors)** | **Marketplaces** + **Supply Chain Tech** | سوق مجتمعي ثنائي الاتجاه للخدمات الست والتوصيل على الطريق بنظام **Bilateral Escrow** وبدون أسطول مملوك. |
-| **التوطين في قطر** | تأسيس الشركة الأم في **الدوحة (QFC / QSTP)** | تفعيل الدفع المحلي (`Fawran` و`QPay / هميان` و`SkipCash`)، وتغطية بلديات قطر الـ 8 والـ 22 نقطة حيوية، وتوظيف الفريق التقني والتشغيلي محلياً. |
+| **Track & Ask** | **START Track** — `$450,000` (`QAR 1.64M`) across 3 tranches (`$135K` M1 / `$157.5K` M7 / `$157.5K` M13) | Pre-revenue tested MVP (`$0` commercial revenue to date), 100% in-house built with `0` external debt or equity. |
+| **Sectors** | **Marketplaces** + **Supply Chain / Logistics** + **Transportation / Mobility** | Asset-light P2P & B2B2C corridor marketplace uniting 3 core pillars across Qatar's 8 municipalities & 38 geo-hubs. |
+| **3 Core Pillars** | 1) Intercity Shared Rides<br>2) Route-Based Same-Hour Parcels<br>3) On-Demand Worksite Supply & Errands | Up to 70% commuter savings, 35-90 min Dual-OTP parcel delivery, and Industrial Area -> Lusail receipt-verified supply runs with salted SHA-256 6-char handover codes. |
+| **Settlement & QCB Posture** | **Direct Transparent Settlement** (MVP Launch) | Cash on delivery or verified direct bank transfer recorded in integer dirhams (`1 QAR = 100 dirhams`); **zero frozen third-party custody balances** during MVP launch. Licensed non-custodial PSP rails (QPay/Fawran/SkipCash) remain feature-flagged OFF until QCB clearance. |
+| **Verified Engineering Proof** | Single Flutter codebase (150 Dart files) + 14-module RBAC Admin Portal (`/admin/`) + Cloud Functions v2 | `0` `flutter analyze` issues · **212/212** Flutter tests · **13/13** Cloud Functions tests · **10/10** live Firestore/Storage Emulator rules tests · **0** Edge CDP browser console errors. |
+| **Qatar Localization** | Parent incorporation in **Doha (QFC / QSTP)** + 100% full-time founder relocation | 3 full-time Doha hires budgeted in Tranches 1-3 (Backend/Security Eng, QID Compliance Ops Lead, B2B Growth Lead) + Qatar Law No. 13 of 2016 (PDPPL) alignment. |
 
 ---
 
-## القسم الثاني: الملفات والمرفقات الجاهزة (`STARTUP_QATAR_SUBMISSION_DOCS` + `MASHWAR_MEDIA_KIT`)
+## 2. Complete Submission Package Inventory (All Files Strictly `< 30 MB`)
 
-| # | المستند / الحزمة | الحالة الحالية | المسار والخطوة المطلوبة |
+| # | Deliverable | Formats Included | Status & Founder Action |
 | :-: | :--- | :--- | :--- |
-| **1** | **نموذج F6S (الأسئلة 1-26)** | جاهز للنسخ واللصق مع فحص Humanizer | [F6S_STARTUP_QATAR_EXACT_ANSWERS.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/F6S_STARTUP_QATAR_EXACT_ANSWERS.md) |
-| **2** | **Pitch Deck (12 شريحة 16:9)** | جاهز ومحدّث بصور الـ 6 خدمات والـ Escrow | [01_MASHWAR_Pitch_Deck_Startup_Qatar.docx](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/01_MASHWAR_Pitch_Deck_Startup_Qatar.docx) -> صدّره `PDF` من Word |
-| **3** | **ملف المؤسس (Founder Profile)** | جاهز ومحدّث بـ `56` شاشة و`78` اختباراً | [02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx) -> أكمل `[VERIFY]` ثم صدّره `PDF` |
-| **4** | **الخطة المالية لـ 3 سنوات (Base + Stress)** | جاهزة برسوم Matplotlib المحدّثة | [03_MASHWAR_Historical_and_Projected_Financials_3Y.docx](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/03_MASHWAR_Historical_and_Projected_Financials_3Y.docx) -> صدّره `PDF` من Word |
-| **5** | **الدليل الحرفي كلمة بكلمة (`Word-for-Word`)** | لمراجعة كل كلمة في التقديم قبل المقابلة | [00_READ_EVERY_WORD_VERBATIM_GUIDE_AR_EN.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/00_READ_EVERY_WORD_VERBATIM_GUIDE_AR_EN.md) |
-| **6** | **حقيبة الهوية والصور (`116` ملفاً + ZIP)** | محدّثة بالكامل بالهوية العنابية والضمان | [MASHWAR_MEDIA_KIT/README.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/MASHWAR_MEDIA_KIT/README.md) & [MASHWAR_MEDIA_KIT.zip](file:///d:/My_Projects/Meshwar-v1/Meshwar/MASHWAR_MEDIA_KIT.zip) |
-| **7** | **التوثيق الهندسي الخلفي (`docs/backend/`)** | مرجع داعم لمرحلة الفحص التقني (Due Diligence) | [ARCHITECTURE.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/docs/backend/ARCHITECTURE.md), [SECURITY.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/docs/backend/SECURITY.md), [TESTING_REPORT.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/docs/backend/TESTING_REPORT.md) |
+| **1** | **Pitch Deck (14 Widescreen 16:9 Slides)** | [01_MASHWAR_Pitch_Deck_Startup_Qatar.pdf](file:///STARTUP_QATAR_SUBMISSION_DOCS/01_MASHWAR_Pitch_Deck_Startup_Qatar.pdf)<br>[01_MASHWAR_Pitch_Deck_Startup_Qatar.docx](file:///STARTUP_QATAR_SUBMISSION_DOCS/01_MASHWAR_Pitch_Deck_Startup_Qatar.docx) | **Upload-ready PDF + editable DOCX.** Visually QA'd page-by-page; embeds fresh 2x Retina captures (`app_home_hero`, `app_ride_details`, `app_parcel_otp`, `app_worksite_supply`, `app_live_map_picker`, `admin_command_live`) and 300 DPI Matplotlib charts. |
+| **2** | **Founder Profile (2-Page A4 Dossier)** | [02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.pdf](file:///STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.pdf)<br>[02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx](file:///STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx) | **1 Manual Founder Edit Required:** Open `.docx`, replace the `[VERIFY]` University Degree & Certifications block in Section 05 with your exact factual details, and save/export to PDF before uploading to F6S Q23. |
+| **3** | **3-Year Financials Memorandum (5-Page A4)** | [03_MASHWAR_Historical_and_Projected_Financials_3Y.pdf](file:///STARTUP_QATAR_SUBMISSION_DOCS/03_MASHWAR_Historical_and_Projected_Financials_3Y.pdf)<br>[03_MASHWAR_Historical_and_Projected_Financials_3Y.docx](file:///STARTUP_QATAR_SUBMISSION_DOCS/03_MASHWAR_Historical_and_Projected_Financials_3Y.docx) | **Upload-ready PDF + editable DOCX.** 100% reconciled with `landing_page/js/financial-data.js` (Historical `$0` disclosure, TAM/SAM/SOM, 3Y P&L, Q1-Q12 Cash Flow, Unit Economics, Tranches, -30% Stress Test). |
+| **4** | **F6S Form Exact Copy-Paste Answers** | [F6S_STARTUP_QATAR_EXACT_ANSWERS.md](file:///F6S_STARTUP_QATAR_EXACT_ANSWERS.md) | **Ready for copy-paste** (confirm exact start month/year in Q6 before pasting). |
+| **5** | **Bilingual Verbatim Reference Guide** | [00_READ_EVERY_WORD_VERBATIM_GUIDE_AR_EN.md](file:///STARTUP_QATAR_SUBMISSION_DOCS/00_READ_EVERY_WORD_VERBATIM_GUIDE_AR_EN.md) | Complete Arabic + English founder interview & verification guide covering every slide, table, and financial figure. |
+| **6** | **Supporting Technical Due Diligence Docs** | [PRODUCTION_READINESS.md](file:///PRODUCTION_READINESS.md) · [TESTING_REPORT.md](file:///TESTING_REPORT.md) · [README.md](file:///README.md) | Keep handy for QDB technical diligence interviews (includes transparent disclosure of the 6 external production gates funded by Tranche 1). |
 
 ---
 
-## القسم الثالث: ملخص الفكرة والأرقام المعتمدة (مرجع سريع للمقابلة)
+## 3. Unified Financial Summary (Interview Quick Reference — 1 USD = 3.64 QAR)
 
-* **المشكلة:** صعوبة وتكلفة توصيل مستلزمات مواقع المهندسين (مثلاً من الصناعية إلى لوسيل)، المشتريات بفاتورة من محلات محددة، نقل الأوراق والأمانات في نفس اليوم دون انتظار 48 ساعة، ومشاوير الحضانات والمناطق التي ينقصها النقل في قطر؛ مع مخاطر النصب وعدم حفظ الحقوق في مجموعات واتساب وفيسبوك.
-* **الحل (6 خدمات متساوية الأهمية):**
-  1. **شراء وتوصيل بفاتورة حية (`Store Buy & Deliver`)**
-  2. **توريد مستلزمات مواقع للمهندسين (`Engineer Site Supply`)**
-  3. **جلب أوراق وأمانات على الطريق (`On-Route Paperwork & Parcels`)**
-  4. **حضانات ومشاوير مناطق بعيدة (`Nurseries & Daily Commutes`)**
-  5. **مشاركة مقاعد بين المدن (`Shared Intercity Seats`)**
-  6. **شحن بضائع ونقل تجاري (`Commercial Cargo`)**
-* **آلية الحماية (Bilateral MASHWAR Escrow):**
-  * نشر الطلب مجاني بالكامل (`0 QAR` مقدماً).
-  * عند قبول العرض، يُحجز أتعاب المنفّذ + سقف فاتورة المشتريات في حساب الضمان عبر `Fawran` أو `QPay / هميان` أو `SkipCash` أو `محفظة مشوار`.
-  * يرفع المنفّذ صورة الفاتورة الفعلية (`#QA-...`) وصورة الغرض قبل الانطلاق ليعتمدها الطالب.
-  * لا تتحرر المستحقات لمحفظة المنفّذ إلا بإدخال **كود التسليم من 4 أرقام (`OTP`)** عند الاستلام، مع زر **تجميد فوري للنزاع المحايد** بمتابعة الإدارة خلال ساعتين.
-* **الأرقام المالية الموحدة (`Base Case`):**
-  * التمويل المطلوب: **`$450,000`** (`1,638,000 ر.ق`) على 3 دفعات: `$135,000` (الشهر 1)، `$157,500` (الشهر 7)، `$157,500` (الشهر 13).
-  * **السنة 1 (إطلاق تجريبي النصف الثاني):** `13,048` طلب | `GMV $119,186` | `صافي الإيراد $16,316`.
-  * **السنة 2:** `125,134` طلب | `GMV $1,143,005` | `صافي الإيراد $253,851` | بدء اشتراكات الشركات B2B (`$79/شهر`).
-  * **السنة 3:** `330,162` طلب | `GMV $3,015,799` | `صافي الإيراد $695,843` | أرباح تشغيلية `EBITDA +$243,854`.
-  * **نقطة التعادل الشهري (Breakeven):** **الشهر 21**، مع بقاء الرصيد النقدي موجباً في جميع الأشهر الـ 36 (`أدنى رصيد $72,000`) حتى تحت اختبار ضغط `-30%` في حجم الطلبات!
+| Metric | Year 1 (M1-12) | Year 2 (M13-24) | Year 3 (M25-36) | 3-Year Cumulative | Stress Case Y3 (-30% Vol) |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| **Active Corridors (End)** | 3 | 9 | 14 | 14 Corridors | 14 |
+| **Completed Orders** | 13,048 | 125,134 | 330,162 | 468,344 | 231,112 |
+| **B2B Accounts ($79/mo, End)** | 0 | 174 | 348 | 348 Accounts | 261 |
+| **Gross Merchandise Value (GMV)** | $119,186 | $1,143,005 | $3,015,799 | $4,277,990 | $2,111,048 |
+| **Net Platform Revenue** | $16,316 | $253,851 | $695,843 | $966,010 | $499,800 |
+| **Gross Profit (Margin %)** | $13,724 (84.1%) | $228,992 (90.2%) | $630,254 (90.6%) | $872,970 (90.4%) | $453,888 (90.8%) |
+| **Total Operating Expenses** | $150,000 | $300,000 | $386,400 | $836,400 | $303,600 |
+| **Operating EBITDA** | -$136,276 | -$71,008 | +$243,854 | +$36,570 | +$150,288 |
+| **QDB Tranches Received** | $292,500 | $157,500 | $0 | $450,000 | $0 (Y3) / $450K total |
+| **Period-End Cash (USD / QAR)** | $156,224 / QAR 568.7K | $242,716 / QAR 883.5K | $486,570 / QAR 1.77M | $486,570 | $382,969 / QAR 1.39M |
+
+- **Monthly EBITDA Breakeven:** **Month 21** (Base Case) | **Month 25** (Stress Case, +4 months)
+- **Minimum Ending Cash (M1-M36):** **`$72,000`** in Month 6 (strictly positive across all 36 months in both Base and Stress scenarios)
 
 ---
 
-## القسم الرابع: خطوات المراجعة السريعة قبل التقديم على F6S
+## 4. Final Pre-Submit Checklist for Abdelrahman Mahana
 
-- [ ] افتح `02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx` وأدخل بيانات الشهادة الجامعية مكان `[VERIFY]` ثم صدّر الملفات الثلاثة (`01`, `02`, `03`) إلى `PDF` من برنامج Word.
-- [ ] اقرأ الملف الحرفي الكامل [00_READ_EVERY_WORD_VERBATIM_GUIDE_AR_EN.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/00_READ_EVERY_WORD_VERBATIM_GUIDE_AR_EN.md) للتدرب على كل كلمة مكتوبة في العرض والملف المالي.
-- [ ] اربط حساب F6S باسم Startup `MASHWAR`، واضبط حقل `Sector` على `Marketplaces` / `Supply Chain / Logistics`، وانسخ الإجابات من [F6S_STARTUP_QATAR_EXACT_ANSWERS.md](file:///d:/My_Projects/Meshwar-v1/Meshwar/F6S_STARTUP_QATAR_EXACT_ANSWERS.md).
+- [ ] **Step 1 (Founder Profile Academic Line):** Open `STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx`, replace the `[VERIFY]` University Degree and Certifications lines with your exact factual academic credentials, and export/save as `02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.pdf`.
+- [ ] **Step 2 (F6S Startup Profile):** On [f6s.com/sqinvestmentprogram](https://www.f6s.com/sqinvestmentprogram), create and attach startup profile **`MASHWAR`**, set base city to `Cairo, Egypt`, and select sectors `Marketplaces` / `Supply Chain / Logistics`.
+- [ ] **Step 3 (Copy-Paste F6S Q1-Q21):** Copy verbatim answers from [F6S_STARTUP_QATAR_EXACT_ANSWERS.md](file:///F6S_STARTUP_QATAR_EXACT_ANSWERS.md), replacing `[Month Year]` in Q6 with your exact start month.
+- [ ] **Step 4 (Upload 3 PDFs for Q22-Q24):** Upload `01_MASHWAR_Pitch_Deck_Startup_Qatar.pdf`, your finalized `02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.pdf`, and `03_MASHWAR_Historical_and_Projected_Financials_3Y.pdf` (each verified well under the 30 MB F6S limit).
+- [ ] **Step 5 (Interview Prep):** Review [00_READ_EVERY_WORD_VERBATIM_GUIDE_AR_EN.md](file:///STARTUP_QATAR_SUBMISSION_DOCS/00_READ_EVERY_WORD_VERBATIM_GUIDE_AR_EN.md) and [PRODUCTION_READINESS.md](file:///PRODUCTION_READINESS.md) so you can speak cleanly to both verified code quality (`212/212` + `13/13` + `10/10` tests) and the 6 external production gates funded by Tranche 1.
