@@ -32,14 +32,13 @@ class BookingWaitingScreen extends StatefulWidget {
 class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
   int _secondsLeft = 28 * 60 + 40;
   Timer? _countdownTimer;
-  Timer? _autoResponseTimer;
   bool _isTimedOut = false;
+  bool _isRefreshing = false;
+  bool _hasNavigated = false;
 
   void _cancelTimers() {
     _countdownTimer?.cancel();
     _countdownTimer = null;
-    _autoResponseTimer?.cancel();
-    _autoResponseTimer = null;
   }
 
   @override
@@ -57,16 +56,46 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
         _cancelTimers();
       }
     });
+  }
 
-    // Cancellable Timer so widget tests never fail with pending-timer assertions
-    _autoResponseTimer = Timer(const Duration(milliseconds: 4500), () {
-      if (!mounted || _isTimedOut) return;
-      _cancelTimers();
+  @override
+  void dispose() {
+    _cancelTimers();
+    super.dispose();
+  }
+
+  RideModel? _findTrackedRide(RidesProvider? rides) {
+    if (rides == null) return null;
+    if (rides.activeBooking?.id == widget.ride.id) {
+      return rides.activeBooking;
+    }
+    for (final r in rides.bookedRides) {
+      if (r.id == widget.ride.id) return r;
+    }
+    for (final r in rides.allRides) {
+      if (r.id == widget.ride.id) return r;
+    }
+    return null;
+  }
+
+  void _checkBookingStatusAndTransition(RidesProvider? rides) {
+    if (_hasNavigated || _isTimedOut) return;
+    final tracked = _findTrackedRide(rides);
+    if (tracked == null) return;
+    final status = tracked.status.trim().toLowerCase();
+    final isConfirmed = status == 'confirmed' || status == 'accepted';
+    final isRejected = status == 'rejected' || status == 'cancelled';
+    if (!isConfirmed && !isRejected) return;
+
+    _hasNavigated = true;
+    _cancelTimers();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MashwarPageRoute(
           builder: (_) => BookingResultScreen(
-            ride: widget.ride,
-            isConfirmed: true,
+            ride: tracked,
+            isConfirmed: isConfirmed,
             totalPrice: widget.totalPrice,
           ),
         ),
@@ -74,10 +103,32 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
     });
   }
 
-  @override
-  void dispose() {
-    _cancelTimers();
-    super.dispose();
+  Future<void> _handleRefreshStatus(bool isAr) async {
+    if (_isRefreshing) return;
+    final rides = context.read<RidesProvider?>();
+    if (rides == null) return;
+    setState(() => _isRefreshing = true);
+    try {
+      await rides.loadRides();
+      if (!mounted) return;
+      _checkBookingStatusAndTransition(rides);
+      if (!_hasNavigated) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(
+              isAr
+                  ? 'لا يزال الطلب بانتظار رد السائق — تم تحديث الحالة'
+                  : 'Still waiting for driver response — status refreshed',
+            ),
+            backgroundColor: AppColors.navy,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
   }
 
   void _handleCancelRequest(bool isAr) {
@@ -103,6 +154,8 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
   @override
   Widget build(BuildContext context) {
     final isAr = context.isArabic;
+    final rides = Provider.of<RidesProvider?>(context);
+    _checkBookingStatusAndTransition(rides);
 
     if (_isTimedOut) {
       return _buildTimedOutView(isAr);
@@ -127,6 +180,7 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
           style: AppTypography.title(),
         ),
         leading: IconButton(
+          tooltip: isAr ? 'إغلاق' : 'Close',
           icon: const Icon(Icons.close_rounded, color: AppColors.navy),
           onPressed: () {
             _cancelTimers();
@@ -262,6 +316,18 @@ class _BookingWaitingScreenState extends State<BookingWaitingScreen> {
                       ),
                     ),
                     const SizedBox(height: AppDimens.space24),
+                    MashwarButton(
+                      key: const ValueKey('booking_waiting_refresh_btn'),
+                      text: isAr ? 'تحديث حالة الطلب' : 'Refresh Booking Status',
+                      isLoading: _isRefreshing,
+                      icon: const Icon(
+                        Icons.refresh_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      onPressed: () => _handleRefreshStatus(isAr),
+                    ),
+                    const SizedBox(height: 10),
                     MashwarButton(
                       key: const ValueKey('booking_waiting_cancel_btn'),
                       text: isAr ? 'إلغاء الطلب' : 'Cancel Request',

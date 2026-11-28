@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
@@ -289,12 +290,13 @@ class AdminAdaptiveDataView<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AdminThemeTokens.of(context);
     if (items.isEmpty) {
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
       return emptyState ??
           Padding(
             padding: const EdgeInsets.all(36),
             child: Center(
               child: Text(
-                'لا توجد بيانات مطابقة للعرض',
+                isAr ? 'لا توجد بيانات مطابقة للعرض' : 'No matching records found',
                 style: TextStyle(color: t.textSecondary, fontWeight: FontWeight.w600),
               ),
             ),
@@ -506,7 +508,13 @@ class _TelemetryChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _TelemetryChartPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _TelemetryChartPainter oldDelegate) {
+    return !listEquals(primarySeries, oldDelegate.primarySeries) ||
+        !listEquals(secondarySeries, oldDelegate.secondarySeries) ||
+        primaryColor != oldDelegate.primaryColor ||
+        secondaryColor != oldDelegate.secondaryColor ||
+        gridColor != oldDelegate.gridColor;
+  }
 }
 
 /// Spotlight Command Palette Dialog (`Ctrl+K` / `/`) for instant navigation across any section or record.

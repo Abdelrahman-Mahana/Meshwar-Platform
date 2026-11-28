@@ -64,7 +64,11 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        controller.dispose();
+      });
+    });
   }
 
   void _openAddSettingDialog(BuildContext context, bool isAr) {
@@ -128,7 +132,19 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
             onPressed: () {
               final k = keyCtrl.text.trim();
-              if (k.isEmpty || valCtrl.text.trim().isEmpty) return;
+              if (k.isEmpty || valCtrl.text.trim().isEmpty) {
+                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isAr
+                          ? 'يرجى إدخال المفتاح البرمجي والقيمة'
+                          : 'Please enter both key and value',
+                    ),
+                    backgroundColor: AppColors.coral,
+                  ),
+                );
+                return;
+              }
               admin.addSystemSetting(
                 AdminSystemSetting(
                   key: k,
@@ -147,7 +163,15 @@ class _AdminSettingsScreenState extends State<AdminSettingsScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        keyCtrl.dispose();
+        nameArCtrl.dispose();
+        nameEnCtrl.dispose();
+        valCtrl.dispose();
+        unitCtrl.dispose();
+      });
+    });
   }
 
   @override

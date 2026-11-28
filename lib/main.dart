@@ -29,7 +29,6 @@ import 'state/worksite_provider.dart';
 /// Returns `null` when startup succeeds, or an explicit diagnostic message when
 /// Firebase/configuration fails in `staging`/`production` or when `USE_FIREBASE=true`.
 /// Never silently falls back to local dev mocks when `useDevMocks == false`.
-@visibleForTesting
 Future<String?> initializeMashwarStartup({
   AppEnvironmentConfig? config,
   Future<void> Function()? firebaseInitializer,
@@ -275,8 +274,8 @@ class _MashwarAppState extends State<MashwarApp> {
         ChangeNotifierProvider<AlertsProvider>.value(value: _effectiveAlerts),
         ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
-      child: Consumer2<SettingsProvider, AdminProvider>(
-        builder: (context, settings, admin, child) {
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
           final Widget homeWidget;
           if (_startupError != null && !openAdminAtBoot) {
             homeWidget = ServiceUnavailableScreen(

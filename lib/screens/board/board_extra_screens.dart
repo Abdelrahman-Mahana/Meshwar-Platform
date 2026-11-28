@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -149,6 +150,7 @@ class _MyBoardAdsScreenState extends State<MyBoardAdsScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -1015,6 +1017,7 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -1151,69 +1154,164 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                   ),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: ListView(
-                      children: [
-                        _buildOfferCard(
-                          context: context,
-                          driverName: 'جاسم الكواري',
-                          driverPhone: '5523 4567',
-                          stats: isAr
-                              ? 'موثق · 14 رحلة · ★ 4.9'
-                              : 'Verified · 14 rides · ★ 4.9',
-                          price: (budgetPrice - 5).clamp(20, 9999),
-                          time: isAr ? 'الجمعة 1:15 م' : 'Fri 1:15 PM',
-                          routeText: routeText,
-                          onSelect: () => _confirmSelection(
-                            context,
-                            'جاسم الكواري',
-                            '5523 4567',
-                            (budgetPrice - 5).clamp(20, 9999),
-                            isAr ? 'الجمعة 1:15 م' : 'Fri 1:15 PM',
+                    child: (AppEnvironment.isFirebaseRuntimeActive &&
+                            !AppEnvironment.useDevMocks)
+                        ? Builder(
+                            builder: (context) {
+                              final boardProvider =
+                                  Provider.of<BoardProvider?>(context);
+                              final liveOffers = (boardProvider?.mySentOffers ??
+                                      const <BoardAdModel>[])
+                                  .where((o) =>
+                                      widget.ad == null ||
+                                      o.id == widget.ad!.id)
+                                  .toList();
+                              if (liveOffers.isEmpty) {
+                                return Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(24),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(
+                                        AppDimens.radiusCard,
+                                      ),
+                                      border: Border.all(
+                                        color: AppColors.slateBorder,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.local_offer_outlined,
+                                          size: 40,
+                                          color: AppColors.teal,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          isAr
+                                              ? 'لا توجد عروض واردة بعد'
+                                              : 'No offers received yet',
+                                          textAlign: TextAlign.center,
+                                          style: AppTypography.title()
+                                              .copyWith(fontSize: 16),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          isAr
+                                              ? 'ستظهر هنا عروض المسافرين والمنفّذين الموثّقين على هذا المسار فور وصولها.'
+                                              : 'Offers from verified travelers and providers on this corridor will appear here automatically.',
+                                          textAlign: TextAlign.center,
+                                          style: AppTypography.bodySecondary(),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        MashwarButton(
+                                          text: isAr
+                                              ? 'تحديث العروض'
+                                              : 'Refresh Offers',
+                                          variant:
+                                              MashwarButtonVariant.secondary,
+                                          onPressed: () {
+                                            boardProvider?.loadBoardAds();
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+                              return ListView.separated(
+                                itemCount: liveOffers.length,
+                                separatorBuilder: (_, __) =>
+                                    const SizedBox(height: 10),
+                                itemBuilder: (ctx, idx) {
+                                  final offerAd = liveOffers[idx];
+                                  return _buildOfferCard(
+                                    context: context,
+                                    driverName: offerAd.authorName,
+                                    driverPhone: '',
+                                    stats: isAr
+                                        ? '${offerAd.isVerified ? "موثق · " : ""}${offerAd.tripCount} رحلات'
+                                        : '${offerAd.isVerified ? "Verified · " : ""}${offerAd.tripCount} trips',
+                                    price: offerAd.priceOrBudget,
+                                    time: offerAd.timeText,
+                                    routeText: routeText,
+                                    onSelect: () => _confirmSelection(
+                                      context,
+                                      offerAd.authorName,
+                                      '',
+                                      offerAd.priceOrBudget,
+                                      offerAd.timeText,
+                                    ),
+                                    isAr: isAr,
+                                  );
+                                },
+                              );
+                            },
+                          )
+                        : ListView(
+                            children: [
+                              _buildOfferCard(
+                                context: context,
+                                driverName: 'جاسم الكواري',
+                                driverPhone: '5523 4567',
+                                stats: isAr
+                                    ? 'موثق · 14 رحلة · ★ 4.9'
+                                    : 'Verified · 14 rides · ★ 4.9',
+                                price: (budgetPrice - 5).clamp(20, 9999),
+                                time: isAr ? 'الجمعة 1:15 م' : 'Fri 1:15 PM',
+                                routeText: routeText,
+                                onSelect: () => _confirmSelection(
+                                  context,
+                                  'جاسم الكواري',
+                                  '5523 4567',
+                                  (budgetPrice - 5).clamp(20, 9999),
+                                  isAr ? 'الجمعة 1:15 م' : 'Fri 1:15 PM',
+                                ),
+                                isAr: isAr,
+                              ),
+                              const SizedBox(height: 10),
+                              _buildOfferCard(
+                                context: context,
+                                driverName: 'علي الهاجري',
+                                driverPhone: '6612 3456',
+                                stats: isAr
+                                    ? 'موثق · 6 رحلات · ★ 4.8'
+                                    : 'Verified · 6 rides · ★ 4.8',
+                                price: budgetPrice,
+                                time: isAr ? 'الجمعة 2:00 م' : 'Fri 2:00 PM',
+                                routeText: routeText,
+                                onSelect: () => _confirmSelection(
+                                  context,
+                                  'علي الهاجري',
+                                  '6612 3456',
+                                  budgetPrice,
+                                  isAr ? 'الجمعة 2:00 م' : 'Fri 2:00 PM',
+                                ),
+                                isAr: isAr,
+                              ),
+                              const SizedBox(height: 10),
+                              _buildOfferCard(
+                                context: context,
+                                driverName: 'آمنة السويدي',
+                                driverPhone: '7710 2345',
+                                stats: isAr
+                                    ? 'موثقة · 9 رحلات · ★ 4.9'
+                                    : 'Verified · 9 rides · ★ 4.9',
+                                price: budgetPrice + 5,
+                                time: isAr ? 'الجمعة 12:30 م' : 'Fri 12:30 PM',
+                                routeText: routeText,
+                                onSelect: () => _confirmSelection(
+                                  context,
+                                  'آمنة السويدي',
+                                  '7710 2345',
+                                  budgetPrice + 5,
+                                  isAr ? 'الجمعة 12:30 م' : 'Fri 12:30 PM',
+                                ),
+                                isAr: isAr,
+                              ),
+                            ],
                           ),
-                          isAr: isAr,
-                        ),
-                        const SizedBox(height: 10),
-                        _buildOfferCard(
-                          context: context,
-                          driverName: 'علي الهاجري',
-                          driverPhone: '6612 3456',
-                          stats: isAr
-                              ? 'موثق · 6 رحلات · ★ 4.8'
-                              : 'Verified · 6 rides · ★ 4.8',
-                          price: budgetPrice,
-                          time: isAr ? 'الجمعة 2:00 م' : 'Fri 2:00 PM',
-                          routeText: routeText,
-                          onSelect: () => _confirmSelection(
-                            context,
-                            'علي الهاجري',
-                            '6612 3456',
-                            budgetPrice,
-                            isAr ? 'الجمعة 2:00 م' : 'Fri 2:00 PM',
-                          ),
-                          isAr: isAr,
-                        ),
-                        const SizedBox(height: 10),
-                        _buildOfferCard(
-                          context: context,
-                          driverName: 'آمنة السويدي',
-                          driverPhone: '7710 2345',
-                          stats: isAr
-                              ? 'موثقة · 9 رحلات · ★ 4.9'
-                              : 'Verified · 9 rides · ★ 4.9',
-                          price: budgetPrice + 5,
-                          time: isAr ? 'الجمعة 12:30 م' : 'Fri 12:30 PM',
-                          routeText: routeText,
-                          onSelect: () => _confirmSelection(
-                            context,
-                            'آمنة السويدي',
-                            '7710 2345',
-                            budgetPrice + 5,
-                            isAr ? 'الجمعة 12:30 م' : 'Fri 12:30 PM',
-                          ),
-                          isAr: isAr,
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),
@@ -1479,6 +1577,7 @@ class _RescheduleRideScreenState extends State<RescheduleRideScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,

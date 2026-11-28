@@ -24,6 +24,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   bool _showTraffic = true;
   MashwarMapVehicleMode _previewMode = MashwarMapVehicleMode.supply;
 
+  String _localizePeriod(String raw, bool isAr) {
+    final lower = raw.trim().toLowerCase();
+    if (lower == 'اليوم' || lower == 'today') {
+      return isAr ? 'اليوم' : 'Today';
+    }
+    if (lower.contains('30')) {
+      return isAr ? '30 يوم' : '30 Days';
+    }
+    if (lower.contains('7')) {
+      return isAr ? '7 أيام' : '7 Days';
+    }
+    return raw;
+  }
+
+  String _localizeKpiSubtext(String raw, bool isAr) {
+    if (isAr) return raw;
+    return raw
+        .replaceAll('اليوم', 'Today')
+        .replaceAll('هذا الأسبوع', 'this week')
+        .replaceAll('آخر 30 يوم', 'last 30d')
+        .replaceAll('نسبة التحويل', 'Conversion')
+        .replaceAll('نجاح', 'Success');
+  }
+
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
@@ -78,7 +102,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   runSpacing: 6,
                   children: [
                     _bannerTag(
-                      isAr ? 'الفترة: ${admin.currentPeriod}' : 'Period: ${admin.currentPeriod}',
+                      isAr
+                          ? 'الفترة: ${_localizePeriod(admin.currentPeriod, true)}'
+                          : 'Period: ${_localizePeriod(admin.currentPeriod, false)}',
                       AppColors.gold,
                     ),
                     _bannerTag(
@@ -121,7 +147,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: AdminKpiCard(
                       title: isAr ? 'الرحلات المنشورة' : 'Published Rides',
                       value: '${admin.kpiPublishedRides}',
-                      deltaText: admin.kpiPublishedRidesSubtext,
+                      deltaText: _localizeKpiSubtext(admin.kpiPublishedRidesSubtext, isAr),
                       accentColor: t.accentPrimary,
                       icon: Icons.directions_car_filled_rounded,
                       onTap: () => widget.onJumpToModule?.call(3),
@@ -132,7 +158,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: AdminKpiCard(
                       title: isAr ? 'حجوزات مؤكدة' : 'Confirmed Bookings',
                       value: '${admin.kpiConfirmedBookings}',
-                      deltaText: admin.kpiConversionRate,
+                      deltaText: _localizeKpiSubtext(admin.kpiConversionRate, isAr),
                       accentColor: AppColors.gold,
                       icon: Icons.confirmation_number_rounded,
                       onTap: () => widget.onJumpToModule?.call(3),
@@ -143,7 +169,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: AdminKpiCard(
                       title: isAr ? 'طرود مسلّمة بـ OTP' : 'OTP Delivered Parcels',
                       value: '${admin.kpiDeliveredParcels}',
-                      deltaText: admin.kpiParcelSuccessRate,
+                      deltaText: _localizeKpiSubtext(admin.kpiParcelSuccessRate, isAr),
                       accentColor: t.accentTeal,
                       icon: Icons.inventory_2_rounded,
                       onTap: () => widget.onJumpToModule?.call(3),
@@ -245,7 +271,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     AdminTelemetryLineChart(
                       primarySeries: const [1850, 2240, 2680, 2510, 3190, 3840, 4420],
                       secondarySeries: const [1200, 1480, 1790, 1720, 2140, 2610, 3050],
-                      labels: const ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Today'],
+                      labels: isAr
+                          ? const ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'اليوم']
+                          : const ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Today'],
                       primaryColor: t.isDark ? AppColors.gold : AppColors.navy,
                       secondaryColor: AppColors.teal,
                     ),

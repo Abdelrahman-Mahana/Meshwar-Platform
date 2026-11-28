@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -46,26 +47,34 @@ class _SendParcelScreenState extends State<SendParcelScreen> {
   late final TextEditingController _proposedFeeController;
   String? _step1Error;
 
+  static bool get _isLiveMode =>
+      AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
+
   // Step 2: Parcel Details
   ParcelSize _selectedSize = ParcelSize.small;
   bool _isCustomSize = false;
   final TextEditingController _customSizeController = TextEditingController();
-  final TextEditingController _descController =
-      TextEditingController(text: 'أوراق ومستندات مغلفة');
-  final TextEditingController _weightController =
-      TextEditingController(text: '2.0');
-  final TextEditingController _valController =
-      TextEditingController(text: '250');
+  final TextEditingController _descController = TextEditingController(
+    text: _isLiveMode ? '' : 'أوراق ومستندات مغلفة',
+  );
+  final TextEditingController _weightController = TextEditingController(
+    text: _isLiveMode ? '' : '2.0',
+  );
+  final TextEditingController _valController = TextEditingController(
+    text: _isLiveMode ? '' : '250',
+  );
   String? _customSizeError;
   String? _descError;
   String? _weightError;
   String? _valueError;
 
   // Step 3: Recipient & OTP Security
-  final TextEditingController _receiverNameController =
-      TextEditingController(text: 'نورة الكواري');
-  final TextEditingController _receiverPhoneController =
-      TextEditingController(text: '+974 66123456');
+  final TextEditingController _receiverNameController = TextEditingController(
+    text: _isLiveMode ? '' : 'نورة الكواري',
+  );
+  final TextEditingController _receiverPhoneController = TextEditingController(
+    text: _isLiveMode ? '' : '+974 66123456',
+  );
   bool _agreedProhibited = true;
   String? _receiverNameError;
   String? _receiverPhoneError;

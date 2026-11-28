@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -23,8 +24,11 @@ class PhoneInputScreen extends StatefulWidget {
 }
 
 class _PhoneInputScreenState extends State<PhoneInputScreen> {
-  final TextEditingController _phoneController =
-      TextEditingController(text: '55123456');
+  final TextEditingController _phoneController = TextEditingController(
+    text: (AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks)
+        ? ''
+        : '55123456',
+  );
   final FocusNode _focusNode = FocusNode();
   String? _errorText;
   bool _isFocused = false;
@@ -110,6 +114,7 @@ class _PhoneInputScreenState extends State<PhoneInputScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,

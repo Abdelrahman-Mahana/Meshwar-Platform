@@ -655,7 +655,7 @@ class SettingsScreen extends StatelessWidget {
                       icon: Icons.admin_panel_settings_outlined,
                       iconColor: AppColors.navy,
                       title: isAr ? 'لوحة التحكم المركزية والـ DevOps' : 'Central Admin & DevOps Portal',
-                      subtitle: isAr ? 'إدارة الخدمات الست، الضمان المالي، المحاور وFeature Flags' : 'Services, Bilateral Escrow, Corridors & SRE Console',
+                      subtitle: isAr ? 'إدارة الخدمات الثلاث، التسوية المباشرة، المحاور وFeature Flags' : '3-Pillar Services, Direct Settlement, Corridors & SRE Console',
                       trailing: const Icon(
                         Icons.chevron_right_rounded,
                         color: Color(0xFF94A3B8),

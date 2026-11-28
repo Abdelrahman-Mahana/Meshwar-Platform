@@ -17,13 +17,27 @@ class AdminDisputesScreen extends StatefulWidget {
 }
 
 class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
-  String _selectedStatus = 'الكل';
+  String _selectedStatus = 'all';
 
   void _openDisputeDetails(BuildContext context, AdminDisputeItem dispute) {
     showDialog(
       context: context,
       builder: (_) => _DisputeDetailModal(dispute: dispute),
     );
+  }
+
+  String _localizeDisputeStatus(String raw, bool isAr) {
+    if (isAr) return raw;
+    switch (raw.trim()) {
+      case 'مفتوح':
+        return 'Open';
+      case 'قيد المراجعة':
+        return 'Under Review';
+      case 'محلول':
+        return 'Resolved';
+      default:
+        return raw;
+    }
   }
 
   @override
@@ -33,21 +47,27 @@ class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
     final t = AdminThemeTokens.of(context);
 
     final filteredDisputes = admin.disputes.where((d) {
-      if (_selectedStatus == 'الكل' || _selectedStatus == 'All') return true;
-      if (_selectedStatus == 'SOS 999') return d.isSosPriority;
-      if (isAr) {
-        return d.status == _selectedStatus;
-      } else {
-        if (_selectedStatus == 'Open') return d.status == 'مفتوح';
-        if (_selectedStatus == 'Under Review') return d.status == 'قيد المراجعة';
-        if (_selectedStatus == 'Resolved') return d.status == 'محلول';
-        return true;
+      if (_selectedStatus == 'all') return true;
+      if (_selectedStatus == 'sos') return d.isSosPriority;
+      if (_selectedStatus == 'open') {
+        return d.status == 'مفتوح' || d.status.toLowerCase() == 'open';
       }
+      if (_selectedStatus == 'under_review') {
+        return d.status == 'قيد المراجعة' || d.status.toLowerCase() == 'underreview';
+      }
+      if (_selectedStatus == 'resolved') {
+        return d.status == 'محلول' || d.status.toLowerCase() == 'resolved';
+      }
+      return true;
     }).toList();
 
-    final statusFilters = isAr
-        ? ['الكل', 'SOS 999', 'مفتوح', 'قيد المراجعة', 'محلول']
-        : ['All', 'SOS 999', 'Open', 'Under Review', 'Resolved'];
+    const statusFilters = [
+      ('all', 'الكل', 'All'),
+      ('sos', 'SOS 999', 'SOS 999'),
+      ('open', 'مفتوح', 'Open'),
+      ('under_review', 'قيد المراجعة', 'Under Review'),
+      ('resolved', 'محلول', 'Resolved'),
+    ];
 
     return AdminPageBody(
       child: Column(
@@ -64,9 +84,9 @@ class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
               ),
               for (final s in statusFilters)
                 ChoiceChip(
-                  label: Text(s),
-                  selected: _selectedStatus == s,
-                  onSelected: (_) => setState(() => _selectedStatus = s),
+                  label: Text(isAr ? s.$2 : s.$3),
+                  selected: _selectedStatus == s.$1,
+                  onSelected: (_) => setState(() => _selectedStatus = s.$1),
                 ),
             ],
           ),
@@ -114,7 +134,7 @@ class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
                     ),
                     DataCell(Text(d.category, style: const TextStyle(fontWeight: FontWeight.w600))),
                     DataCell(Text(d.complainantName)),
-                    DataCell(MashwarBadge(type: bType, customLabel: d.status)),
+                    DataCell(MashwarBadge(type: bType, customLabel: _localizeDisputeStatus(d.status, isAr))),
                     DataCell(Text(d.assignedTo ?? '—')),
                     DataCell(
                       ElevatedButton(
@@ -188,8 +208,15 @@ class _DisputeDetailModal extends StatefulWidget {
 }
 
 class _DisputeDetailModalState extends State<_DisputeDetailModal> {
+  static const List<(String ar, String en)> _decisions = [
+    ('تحذير السائق', 'Warn Driver'),
+    ('إيقاف مؤقت', 'Temporary Suspension'),
+    ('رفض البلاغ', 'Dismiss Report'),
+    ('حل وتعويض', 'Resolve & Compensate'),
+  ];
+
   String _selectedDecision = 'حل وتعويض';
-  final TextEditingController _noteController = TextEditingController(text: 'الصور تؤكد التلف الجزئي، تم تعويض القيمة.');
+  final TextEditingController _noteController = TextEditingController();
 
   @override
   void dispose() {
@@ -201,6 +228,7 @@ class _DisputeDetailModalState extends State<_DisputeDetailModal> {
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final admin = context.read<AdminProvider>();
+    final t = AdminThemeTokens.of(context);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -209,8 +237,9 @@ class _DisputeDetailModalState extends State<_DisputeDetailModal> {
         constraints: const BoxConstraints(maxWidth: 620),
         padding: const EdgeInsets.all(AppDimens.space20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: t.surface,
           borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+          border: Border.all(color: t.border),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20)],
         ),
         child: SingleChildScrollView(
@@ -223,28 +252,36 @@ class _DisputeDetailModalState extends State<_DisputeDetailModal> {
                   Expanded(
                     child: Text(
                       '${widget.dispute.id}: ${widget.dispute.category}',
-                      style: AppTypography.title().copyWith(fontSize: 18),
+                      style: AppTypography.title(color: t.textPrimary).copyWith(fontSize: 18),
                     ),
                   ),
-                  IconButton(icon: const Icon(Icons.close_rounded), onPressed: () => Navigator.of(context).pop()),
+                  IconButton(
+                    tooltip: isAr ? 'إغلاق' : 'Close',
+                    icon: Icon(Icons.close_rounded, color: t.textPrimary),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
                 ],
               ),
               const Divider(height: 18),
-              _row(isAr ? 'المُبلِّغ' : 'Complainant', widget.dispute.complainantName),
-              _row(isAr ? 'الطرف المشكو' : 'Against', widget.dispute.againstName),
-              _row(isAr ? 'التفاصيل' : 'Details', widget.dispute.parcelOrRideDetails),
+              _row(t, isAr ? 'المُبلِّغ' : 'Complainant', widget.dispute.complainantName),
+              _row(t, isAr ? 'الطرف المشكو' : 'Against', widget.dispute.againstName),
+              _row(t, isAr ? 'التفاصيل' : 'Details', widget.dispute.parcelOrRideDetails),
               if (widget.dispute.linkedEscrowId != null)
-                _row(isAr ? 'الضمان المالي المرتبط' : 'Linked Escrow', widget.dispute.linkedEscrowId!),
+                _row(t, isAr ? 'المرجع المرتبط' : 'Linked Reference', widget.dispute.linkedEscrowId!),
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.sand, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                  color: t.surfaceAlt,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: t.border),
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: widget.dispute.timeline
                       .map((step) => Padding(
                             padding: const EdgeInsets.symmetric(vertical: 3),
-                            child: Text('• $step', style: const TextStyle(fontSize: 12)),
+                            child: Text('• $step', style: TextStyle(fontSize: 12, color: t.textPrimary)),
                           ))
                       .toList(),
                 ),
@@ -253,12 +290,12 @@ class _DisputeDetailModalState extends State<_DisputeDetailModal> {
               Wrap(
                 spacing: 8,
                 runSpacing: 6,
-                children: ['تحذير السائق', 'إيقاف مؤقت', 'رفض البلاغ', 'حل وتعويض'].map((decision) {
-                  final isSel = _selectedDecision == decision;
+                children: _decisions.map((decision) {
+                  final isSel = _selectedDecision == decision.$1;
                   return ChoiceChip(
-                    label: Text(decision),
+                    label: Text(isAr ? decision.$1 : decision.$2),
                     selected: isSel,
-                    onSelected: (_) => setState(() => _selectedDecision = decision),
+                    onSelected: (_) => setState(() => _selectedDecision = decision.$1),
                   );
                 }).toList(),
               ),
@@ -268,6 +305,9 @@ class _DisputeDetailModalState extends State<_DisputeDetailModal> {
                 maxLines: 2,
                 decoration: InputDecoration(
                   labelText: isAr ? 'ملاحظة القرار' : 'Decision Note',
+                  hintText: isAr
+                      ? 'اكتب تفاصيل القرار والمراجعة الموثّقة...'
+                      : 'Enter documented arbitration notes...',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
@@ -286,7 +326,7 @@ class _DisputeDetailModalState extends State<_DisputeDetailModal> {
                   const SizedBox(width: 10),
                   OutlinedButton(
                     onPressed: () {
-                      final staffName = admin.staff.isNotEmpty ? admin.staff.first.name : 'مدير الدعم';
+                      final staffName = admin.staff.isNotEmpty ? admin.staff.first.name : (isAr ? 'مدير الدعم' : 'Support Lead');
                       admin.assignDispute(widget.dispute.id, staffName);
                       Navigator.of(context).pop();
                     },
@@ -301,14 +341,20 @@ class _DisputeDetailModalState extends State<_DisputeDetailModal> {
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(AdminThemeTokens t, String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.navy)),
+          Text(label, style: TextStyle(color: t.textSecondary, fontSize: 13)),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: t.textPrimary),
+            ),
+          ),
         ],
       ),
     );

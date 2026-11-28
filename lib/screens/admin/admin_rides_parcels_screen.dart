@@ -18,13 +18,59 @@ class AdminRidesParcelsScreen extends StatefulWidget {
 }
 
 class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
+  static const List<String> _validRideStatuses = [
+    'منشورة',
+    'مكتملة الحجز',
+    'ملغاة',
+    'جارية',
+  ];
+
   int _selectedSubTab = 0; // 0: رحلات, 1: حجوزات, 2: طرود, 3: لوحة الخدمات, 4: حسابات B2B
-  String _selectedGov = 'الكل';
-  String _selectedStatus = 'الكل';
+  String _selectedGov = 'all';
+  String _selectedStatus = 'all';
+
+  String _localizeRideStatus(String raw, bool isAr) {
+    if (isAr) return raw;
+    switch (raw.trim()) {
+      case 'منشورة':
+        return 'Published';
+      case 'مكتملة الحجز':
+        return 'Fully Booked';
+      case 'ملغاة':
+        return 'Cancelled';
+      case 'جارية':
+        return 'In Progress';
+      case 'مؤكد':
+        return 'Confirmed';
+      case 'تم التسليم':
+        return 'Delivered';
+      case 'متنازع عليه':
+        return 'Disputed';
+      default:
+        return raw;
+    }
+  }
+
+  String _localizeBoardStatus(BoardAdStatus status, bool isAr) {
+    switch (status) {
+      case BoardAdStatus.active:
+        return isAr ? 'نشط' : 'Active';
+      case BoardAdStatus.offerSent:
+        return isAr ? 'عرض مرسل' : 'Offer Sent';
+      case BoardAdStatus.completed:
+        return isAr ? 'مكتمل' : 'Completed';
+      case BoardAdStatus.expired:
+        return isAr ? 'منتهي' : 'Expired';
+      case BoardAdStatus.cancelled:
+        return isAr ? 'ملغي' : 'Cancelled';
+    }
+  }
 
   void _showRideDetail(BuildContext context, AdminRideItem item, bool isAr) {
     final admin = context.read<AdminProvider>();
-    String targetStatus = item.status;
+    String targetStatus = _validRideStatuses.contains(item.status)
+        ? item.status
+        : _validRideStatuses.first;
     final reasonController = TextEditingController(text: item.statusOverrideReason ?? '');
 
     showDialog(
@@ -48,8 +94,13 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                     labelText: isAr ? 'الحالة' : 'Status',
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  items: ['منشورة', 'مكتملة الحجز', 'ملغاة', 'جارية']
-                      .map((st) => DropdownMenuItem(value: st, child: Text(st)))
+                  items: _validRideStatuses
+                      .map(
+                        (st) => DropdownMenuItem(
+                          value: st,
+                          child: Text(_localizeRideStatus(st, isAr)),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) {
                     if (v != null) setModalState(() => targetStatus = v);
@@ -73,7 +124,17 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
               onPressed: () {
                 final reason = reasonController.text.trim();
-                if (reason.isEmpty) return;
+                if (reason.isEmpty) {
+                  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr ? 'يرجى إدخال سبب التعديل اليدوي' : 'Please enter an override reason',
+                      ),
+                      backgroundColor: AppColors.coral,
+                    ),
+                  );
+                  return;
+                }
                 admin.manualUpdateRideStatus(item.id, targetStatus, reason);
                 Navigator.of(ctx).pop();
               },
@@ -82,15 +143,19 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        reasonController.dispose();
+      });
+    });
   }
 
   void _showAddB2BDialog(BuildContext context, bool isAr) {
     final admin = context.read<AdminProvider>();
     final nameArCtrl = TextEditingController();
     final nameEnCtrl = TextEditingController();
-    final sectorCtrl = TextEditingController(text: 'مقاولات وتوريد');
-    final phoneCtrl = TextEditingController(text: '4450 9900');
+    final sectorCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
     final creditCtrl = TextEditingController(text: '10000');
 
     showDialog(
@@ -116,7 +181,11 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: sectorCtrl,
-                  decoration: InputDecoration(labelText: isAr ? 'القطاع' : 'Sector', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+                  decoration: InputDecoration(
+                    labelText: isAr ? 'القطاع' : 'Sector',
+                    hintText: isAr ? 'مقاولات وتوريد' : 'Contracting & Supply',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
@@ -124,7 +193,11 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                     Expanded(
                       child: TextField(
                         controller: phoneCtrl,
-                        decoration: InputDecoration(labelText: isAr ? 'الهاتف' : 'Phone', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+                        decoration: InputDecoration(
+                          labelText: isAr ? 'الهاتف' : 'Phone',
+                          hintText: '+974 44XX XXXX',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -132,7 +205,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                       child: TextField(
                         controller: creditCtrl,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: isAr ? 'الحد الائتماني ر.ق' : 'Credit Limit', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+                        decoration: InputDecoration(labelText: isAr ? 'الحد الائتماني ر.ق' : 'Credit Limit (QAR)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
                       ),
                     ),
                   ],
@@ -146,14 +219,27 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
             onPressed: () {
-              if (nameArCtrl.text.trim().isEmpty) return;
+              if (nameArCtrl.text.trim().isEmpty) {
+                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isAr ? 'يرجى إدخال اسم الشركة' : 'Please enter company name',
+                    ),
+                    backgroundColor: AppColors.coral,
+                  ),
+                );
+                return;
+              }
+              final sector = sectorCtrl.text.trim().isNotEmpty
+                  ? sectorCtrl.text.trim()
+                  : (isAr ? 'مقاولات وتوريد' : 'Contracting & Supply');
               admin.addB2BAccount(
                 AdminB2BAccountItem(
                   id: 'b2b_${DateTime.now().millisecondsSinceEpoch}',
                   companyAr: nameArCtrl.text.trim(),
                   companyEn: nameEnCtrl.text.trim().isEmpty ? nameArCtrl.text.trim() : nameEnCtrl.text.trim(),
-                  sectorAr: sectorCtrl.text.trim(),
-                  sectorEn: sectorCtrl.text.trim(),
+                  sectorAr: sector,
+                  sectorEn: sector,
                   municipalityAr: 'الدوحة ↔ لوسيل',
                   municipalityEn: 'Doha ↔ Lusail',
                   monthlyRuns: 20,
@@ -167,7 +253,15 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        nameArCtrl.dispose();
+        nameEnCtrl.dispose();
+        sectorCtrl.dispose();
+        phoneCtrl.dispose();
+        creditCtrl.dispose();
+      });
+    });
   }
 
   @override
@@ -223,7 +317,15 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                       _dropdownFilter(
                         label: isAr ? 'البلدية' : 'Gov',
                         value: _selectedGov,
-                        items: ['الكل', 'بلدية الدوحة', 'بلدية الوكرة', 'بلدية الريان', 'بلدية الخور والذخيرة', 'بلدية الشيحانية'],
+                        items: const [
+                          ('all', 'الكل', 'All'),
+                          ('بلدية الدوحة', 'بلدية الدوحة', 'Doha Municipality'),
+                          ('بلدية الوكرة', 'بلدية الوكرة', 'Al Wakrah'),
+                          ('بلدية الريان', 'بلدية الريان', 'Al Rayyan'),
+                          ('بلدية الخور والذخيرة', 'بلدية الخور والذخيرة', 'Al Khor & Al Thakhira'),
+                          ('بلدية الشيحانية', 'بلدية الشيحانية', 'Al Shahaniya'),
+                        ],
+                        isAr: isAr,
                         t: t,
                         onChanged: (v) => setState(() => _selectedGov = v),
                       ),
@@ -231,7 +333,14 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
                         _dropdownFilter(
                           label: isAr ? 'الحالة' : 'Status',
                           value: _selectedStatus,
-                          items: ['الكل', 'منشورة', 'مكتملة الحجز', 'ملغاة', 'جارية'],
+                          items: const [
+                            ('all', 'الكل', 'All'),
+                            ('منشورة', 'منشورة', 'Published'),
+                            ('مكتملة الحجز', 'مكتملة الحجز', 'Fully Booked'),
+                            ('ملغاة', 'ملغاة', 'Cancelled'),
+                            ('جارية', 'جارية', 'In Progress'),
+                          ],
+                          isAr: isAr,
                           t: t,
                           onChanged: (v) => setState(() => _selectedStatus = v),
                         ),
@@ -261,8 +370,8 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
 
   Widget _buildRidesView(BuildContext context, AdminProvider admin, bool isAr, AdminThemeTokens t) {
     final filtered = admin.rides.where((r) {
-      if (_selectedGov != 'الكل' && r.governorate != _selectedGov) return false;
-      if (_selectedStatus != 'الكل' && r.status != _selectedStatus) return false;
+      if (_selectedGov != 'all' && r.governorate != _selectedGov) return false;
+      if (_selectedStatus != 'all' && r.status != _selectedStatus) return false;
       return true;
     }).toList();
 
@@ -312,7 +421,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
   }
 
   Widget _buildBookingsView(BuildContext context, AdminProvider admin, bool isAr, AdminThemeTokens t) {
-    final filtered = admin.bookings.where((b) => _selectedGov == 'الكل' || b.governorate == _selectedGov).toList();
+    final filtered = admin.bookings.where((b) => _selectedGov == 'all' || b.governorate == _selectedGov).toList();
     return AdminAdaptiveDataView<AdminBookingItem>(
       items: filtered,
       minTableWidth: 820,
@@ -345,7 +454,7 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
   }
 
   Widget _buildParcelsView(BuildContext context, AdminProvider admin, bool isAr, AdminThemeTokens t) {
-    final filtered = admin.parcels.where((p) => _selectedGov == 'الكل' || p.governorate == _selectedGov).toList();
+    final filtered = admin.parcels.where((p) => _selectedGov == 'all' || p.governorate == _selectedGov).toList();
     return AdminAdaptiveDataView<AdminParcelItem>(
       items: filtered,
       minTableWidth: 860,
@@ -394,8 +503,8 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
           DataCell(Text(ad.typeTitle(isAr), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
           DataCell(Text(ad.authorName)),
           DataCell(Text(ad.route)),
-          DataCell(Text('${ad.priceOrBudget} QAR', style: const TextStyle(fontWeight: FontWeight.bold))),
-          DataCell(MashwarBadge(type: ad.status == BoardAdStatus.active ? BadgeType.verified : BadgeType.pending, customLabel: ad.status.name)),
+          DataCell(Text('${ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"}', style: const TextStyle(fontWeight: FontWeight.bold))),
+          DataCell(MashwarBadge(type: ad.status == BoardAdStatus.active ? BadgeType.verified : BadgeType.pending, customLabel: _localizeBoardStatus(ad.status, isAr))),
           DataCell(
             OutlinedButton(
               onPressed: () {
@@ -411,8 +520,8 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
         t: t,
         id: ad.typeTitle(isAr),
         title: ad.route,
-        subtitle: '${ad.authorName} · ${ad.priceOrBudget} QAR',
-        status: ad.status.name,
+        subtitle: '${ad.authorName} · ${ad.priceOrBudget} ${isAr ? "ر.ق" : "QAR"}',
+        status: _localizeBoardStatus(ad.status, isAr),
         actionLabel: ad.status == BoardAdStatus.active ? (isAr ? 'إيقاف الإعلان' : 'Pause') : (isAr ? 'تفعيل' : 'Activate'),
         onAction: () {
           final next = ad.status == BoardAdStatus.active ? BoardAdStatus.expired : BoardAdStatus.active;
@@ -506,10 +615,14 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
   Widget _dropdownFilter({
     required String label,
     required String value,
-    required List<String> items,
+    required List<(String key, String ar, String en)> items,
+    required bool isAr,
     required AdminThemeTokens t,
     required ValueChanged<String> onChanged,
   }) {
+    final safeValue = items.any((item) => item.$1 == value)
+        ? value
+        : items.first.$1;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
@@ -519,9 +632,16 @@ class _AdminRidesParcelsScreenState extends State<AdminRidesParcelsScreen> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: safeValue,
           style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: t.textPrimary),
-          items: items.map((item) => DropdownMenuItem(value: item, child: Text('$label: $item'))).toList(),
+          items: items
+              .map(
+                (item) => DropdownMenuItem(
+                  value: item.$1,
+                  child: Text('$label: ${isAr ? item.$2 : item.$3}'),
+                ),
+              )
+              .toList(),
           onChanged: (v) {
             if (v != null) onChanged(v);
           },

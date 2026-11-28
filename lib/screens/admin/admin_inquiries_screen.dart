@@ -232,7 +232,11 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        noteCtrl.dispose();
+      });
+    });
   }
 
   Widget _kv(String label, String value) {
@@ -309,8 +313,8 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                       const SizedBox(height: 4),
                       Text(
                         isAr
-                            ? 'المشروع: ${FirebaseConfig.projectId} · المجموعة: ${FirestoreCollections.investorInquiries} · تنبيه فوري إلى: abdelrahmanmahana01@gmail.com'
-                            : 'Project: ${FirebaseConfig.projectId} · Collection: ${FirestoreCollections.investorInquiries} · Email Alert: abdelrahmanmahana01@gmail.com',
+                            ? 'المشروع: ${FirebaseConfig.projectId} · المجموعة: ${FirestoreCollections.investorInquiries} · تنبيه فوري إلى: ops@mashwar.qa · +974 4400 9999'
+                            : 'Project: ${FirebaseConfig.projectId} · Collection: ${FirestoreCollections.investorInquiries} · Ops Alert: ops@mashwar.qa · +974 4400 9999',
                         style: TextStyle(color: t.textSecondary, fontSize: 12),
                       ),
                       if (admin.inquiriesSyncStatus != null) ...[
@@ -406,7 +410,7 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                     child: AdminKpiCard(
                       title: isAr ? 'إجمالي الطلبات' : 'Total Inquiries',
                       value: '${admin.inquiries.length}',
-                      deltaText: 'landing_page -> Firestore',
+                      deltaText: isAr ? 'مزامنة سحابية مباشرة' : 'Live Cloud Sync',
                       accentColor: t.accentPrimary,
                       icon: Icons.inbox_rounded,
                     ),
@@ -416,7 +420,7 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                     child: AdminKpiCard(
                       title: isAr ? 'بانتظار المتابعة' : 'New / Unread',
                       value: '${admin.newInquiriesCount}',
-                      deltaText: isAr ? 'تتطلب رداً مباشراً' : 'Requires Founder Reply',
+                      deltaText: isAr ? 'تتطلب رداً مباشراً' : 'Requires Ops Reply',
                       accentColor: AppColors.coral,
                       icon: Icons.mark_email_unread_rounded,
                     ),
@@ -434,9 +438,9 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                   SizedBox(
                     width: cardW,
                     child: AdminKpiCard(
-                      title: isAr ? 'بريد الاستقبال' : 'Alert Inbox',
-                      value: 'Gmail Live',
-                      deltaText: 'abdelrahmanmahana01@gmail.com',
+                      title: isAr ? 'بريد العمليات' : 'Operations Inbox',
+                      value: isAr ? 'نشط' : 'Active',
+                      deltaText: 'ops@mashwar.qa · +974 4400 9999',
                       accentColor: AppColors.gold,
                       icon: Icons.alternate_email_rounded,
                     ),

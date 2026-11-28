@@ -34,8 +34,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
   bool _showCustomMeetingPoint = false;
   int _searchSeq = 0;
 
-  final TextEditingController _customPointController =
-      TextEditingController(text: 'مترو مشيرب، بوابة الدخول الرئيسية');
+  final TextEditingController _customPointController = TextEditingController();
 
   @override
   void initState() {

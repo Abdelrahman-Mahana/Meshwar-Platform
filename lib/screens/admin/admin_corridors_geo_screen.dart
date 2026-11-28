@@ -97,7 +97,19 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
               foregroundColor: Colors.white,
             ),
             onPressed: () {
-              if (fromAr.text.trim().isEmpty || toAr.text.trim().isEmpty) return;
+              if (fromAr.text.trim().isEmpty || toAr.text.trim().isEmpty) {
+                ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isAr
+                          ? 'يرجى إدخال نقطة الانطلاق والوجهة'
+                          : 'Please enter origin and destination',
+                    ),
+                    backgroundColor: AppColors.coral,
+                  ),
+                );
+                return;
+              }
               admin.addCorridor(
                 AdminCorridorNode(
                   id: 'cor_${DateTime.now().millisecondsSinceEpoch}',
@@ -108,12 +120,12 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                   municipalityAr: munAr.text.trim(),
                   municipalityEn: 'Qatar Municipality',
                   status: 'active',
-                  activeProviders: 12,
-                  openRequests: 24,
-                  conversionPct: 40.0,
-                  avgEtaMin: 26,
+                  activeProviders: 0,
+                  openRequests: 0,
+                  conversionPct: 0.0,
+                  avgEtaMin: 25,
                   incentiveMultiplier: 1.0,
-                  dailyGmvQar: 1400,
+                  dailyGmvQar: 0,
                 ),
               );
               Navigator.of(ctx).pop();
@@ -122,7 +134,15 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        fromAr.dispose();
+        fromEn.dispose();
+        toAr.dispose();
+        toEn.dispose();
+        munAr.dispose();
+      });
+    });
   }
 
   String _statusLabel(String st, bool isAr) {
@@ -148,10 +168,17 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
       return c.status == _statusFilter;
     }).toList();
 
-    final selectedCorridor = admin.corridors.firstWhere(
-      (c) => c.id == admin.selectedCorridorId,
-      orElse: () => admin.corridors.first,
-    );
+    final AdminCorridorNode? selectedCorridor = admin.corridors.isEmpty
+        ? null
+        : admin.corridors.firstWhere(
+            (c) => c.id == admin.selectedCorridorId,
+            orElse: () => admin.corridors.first,
+          );
+    const validCorridorStatuses = ['active', 'peak', 'paused'];
+    final safeCorridorStatus = selectedCorridor != null &&
+            validCorridorStatuses.contains(selectedCorridor.status)
+        ? selectedCorridor.status
+        : 'active';
 
     return AdminPageBody(
       child: Column(
@@ -199,7 +226,32 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
           const SizedBox(height: 16),
 
           // Live Map + Corridor Selector Split
-          LayoutBuilder(
+          if (selectedCorridor == null)
+            AdminSectionCard(
+              padding: const EdgeInsets.all(32),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.alt_route_rounded, size: 42, color: t.accentTeal),
+                    const SizedBox(height: 12),
+                    Text(
+                      isAr
+                          ? 'لا توجد محاور مسجلة بعد — اضغط "إضافة محور جديد" للبدء'
+                          : 'No corridors configured yet — click "Add Corridor" to begin',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: t.textPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            LayoutBuilder(
             builder: (context, constraints) {
               final isStacked = constraints.maxWidth < 960;
               final mapPanel = AdminSectionCard(
@@ -388,8 +440,8 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                           ),
                         ),
                         DropdownButton<String>(
-                          value: selectedCorridor.status,
-                          items: ['active', 'peak', 'paused']
+                          value: safeCorridorStatus,
+                          items: validCorridorStatuses
                               .map((st) => DropdownMenuItem(value: st, child: Text(_statusLabel(st, isAr))))
                               .toList(),
                           onChanged: (v) {

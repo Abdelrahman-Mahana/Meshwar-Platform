@@ -1,72 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart';
 
-import 'firebase_options.dart';
-import 'core/config/app_environment.dart';
-import 'core/theme/app_theme.dart';
 import 'core/constants/app_colors.dart';
-import 'state/settings_provider.dart';
-import 'state/admin_provider.dart';
+import 'core/localization/app_strings.dart';
+import 'core/theme/app_theme.dart';
+import 'main.dart' show ServiceUnavailableScreen, initializeMashwarStartup;
 import 'screens/admin/admin_login_screen.dart';
 import 'screens/admin/admin_shell.dart';
-import 'data/repositories/app_repositories.dart';
-import 'data/services/firebase_firestore_service.dart';
+import 'state/admin_provider.dart';
+import 'state/settings_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final shouldUseFirebase = !AppEnvironment.useDevMocks &&
-      (!AppEnvironment.hasExplicitUseFirebase ||
-          AppEnvironment.useFirebase ||
-          FirebaseConfig.useFirebase);
+  final startupError = await initializeMashwarStartup();
 
-  if (shouldUseFirebase) {
-    try {
-      if (Firebase.apps.isEmpty) {
-        await Firebase.initializeApp(
-          options: DefaultFirebaseOptions.currentPlatform,
-        );
-      }
-      AppEnvironment.setFirebaseRuntimeActive(true);
-      AppRepositories.instance.useFirebase();
-    } catch (e) {
-      AppEnvironment.setFirebaseRuntimeActive(false);
-      debugPrint('Firebase admin initialization notice: $e');
-    }
-  } else {
-    AppEnvironment.setFirebaseRuntimeActive(false);
-    if (AppEnvironment.useDevMocks) {
-      AppRepositories.instance.useLocalMocks(allowDevMocks: true);
-    }
-  }
-
-  runApp(const MashwarAdminWebApp());
+  runApp(
+    MashwarAdminWebApp(
+      initialStartupError: startupError,
+      onRetryStartup: initializeMashwarStartup,
+    ),
+  );
 }
 
-class MashwarAdminWebApp extends StatelessWidget {
+class MashwarAdminWebApp extends StatefulWidget {
   final AdminProvider? adminProvider;
   final SettingsProvider? settingsProvider;
+  final String? initialStartupError;
+  final Future<String?> Function()? onRetryStartup;
 
   const MashwarAdminWebApp({
     super.key,
     this.adminProvider,
     this.settingsProvider,
+    this.initialStartupError,
+    this.onRetryStartup,
   });
+
+  @override
+  State<MashwarAdminWebApp> createState() => _MashwarAdminWebAppState();
+}
+
+class _MashwarAdminWebAppState extends State<MashwarAdminWebApp> {
+  String? _startupError;
+  bool _isRetrying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startupError = widget.initialStartupError;
+  }
+
+  Future<void> _handleRetryStartup() async {
+    if (_isRetrying) return;
+    setState(() => _isRetrying = true);
+    try {
+      final retryFn = widget.onRetryStartup ?? initializeMashwarStartup;
+      final error = await retryFn();
+      if (mounted) {
+        setState(() {
+          _startupError = error;
+          _isRetrying = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _startupError = e.toString();
+          _isRetrying = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        if (settingsProvider != null)
+        if (widget.settingsProvider != null)
           ChangeNotifierProvider<SettingsProvider>.value(
-            value: settingsProvider!,
+            value: widget.settingsProvider!,
           )
         else
           ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        if (adminProvider != null)
-          ChangeNotifierProvider<AdminProvider>.value(value: adminProvider!)
+        if (widget.adminProvider != null)
+          ChangeNotifierProvider<AdminProvider>.value(
+            value: widget.adminProvider!,
+          )
         else
           ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
@@ -74,6 +96,19 @@ class MashwarAdminWebApp extends StatelessWidget {
         builder: (context, settings, admin, _) {
           final isDark = admin.isDarkMode;
           final baseTheme = AppTheme.lightTheme;
+          final baseDarkTheme = ThemeData.dark(useMaterial3: true);
+
+          final Widget homeWidget;
+          if (_startupError != null) {
+            homeWidget = ServiceUnavailableScreen(
+              errorDetails: _startupError!,
+              isRetrying: _isRetrying,
+              onRetry: _handleRetryStartup,
+            );
+          } else {
+            homeWidget =
+                admin.isLoggedIn ? const AdminShell() : const AdminLoginScreen();
+          }
 
           return MaterialApp(
             title: settings.isArabic
@@ -98,7 +133,10 @@ class MashwarAdminWebApp extends StatelessWidget {
                 ),
               ),
             ),
-            darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
+            darkTheme: baseDarkTheme.copyWith(
+              textTheme: GoogleFonts.cairoTextTheme(baseDarkTheme.textTheme),
+              primaryTextTheme:
+                  GoogleFonts.cairoTextTheme(baseDarkTheme.primaryTextTheme),
               scaffoldBackgroundColor: const Color(0xFF0A1422),
               colorScheme: const ColorScheme.dark(
                 primary: AppColors.gold,
@@ -122,13 +160,9 @@ class MashwarAdminWebApp extends StatelessWidget {
               ),
             ),
             locale: settings.locale,
-            supportedLocales: const [
-              Locale('ar', 'QA'),
-              Locale('ar'),
-              Locale('en', 'US'),
-              Locale('en'),
-            ],
+            supportedLocales: AppLocalizations.supportedLocales,
             localizationsDelegates: const [
+              AppLocalizations.delegate,
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
@@ -137,7 +171,7 @@ class MashwarAdminWebApp extends StatelessWidget {
               '/admin': (_) => const AdminShell(),
               '/admin-login': (_) => const AdminLoginScreen(),
             },
-            home: admin.isLoggedIn ? const AdminShell() : const AdminLoginScreen(),
+            home: homeWidget,
           );
         },
       ),

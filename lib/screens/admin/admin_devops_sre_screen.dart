@@ -94,7 +94,17 @@ class _AdminDevOpsSreScreenState extends State<AdminDevOpsSreScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
               onPressed: () {
                 final key = keyCtrl.text.trim();
-                if (key.isEmpty) return;
+                if (key.isEmpty) {
+                  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr ? 'يرجى إدخال مفتاح العلم البرمجي' : 'Please enter a flag key',
+                      ),
+                      backgroundColor: AppColors.coral,
+                    ),
+                  );
+                  return;
+                }
                 admin.addFeatureFlag(
                   AdminFeatureFlag(
                     key: key,
@@ -116,7 +126,14 @@ class _AdminDevOpsSreScreenState extends State<AdminDevOpsSreScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        keyCtrl.dispose();
+        nameArCtrl.dispose();
+        nameEnCtrl.dispose();
+        descCtrl.dispose();
+      });
+    });
   }
 
   void _openConfigExportModal(BuildContext context, AdminProvider admin, bool isAr) {
@@ -184,7 +201,11 @@ class _AdminDevOpsSreScreenState extends State<AdminDevOpsSreScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ctrl.dispose();
+      });
+    });
   }
 
   @override
@@ -346,10 +367,10 @@ class _AdminDevOpsSreScreenState extends State<AdminDevOpsSreScreen> {
                       style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 14),
                     ),
                     const SizedBox(height: 14),
-                    const AdminTelemetryLineChart(
-                      primarySeries: [44, 39, 42, 36, 31, 29, 28],
-                      secondarySeries: [82, 76, 84, 71, 68, 62, 58],
-                      labels: ['06:00', '09:00', '12:00', '15:00', '18:00', '21:00', 'Now'],
+                    AdminTelemetryLineChart(
+                      primarySeries: const [44, 39, 42, 36, 31, 29, 28],
+                      secondarySeries: const [82, 76, 84, 71, 68, 62, 58],
+                      labels: ['06:00', '09:00', '12:00', '15:00', '18:00', '21:00', isAr ? 'الآن' : 'Now'],
                       primaryColor: AppColors.teal,
                       secondaryColor: AppColors.gold,
                     ),
@@ -562,13 +583,70 @@ class _AdminDevOpsSreScreenState extends State<AdminDevOpsSreScreen> {
                       onPressed: () => _openConfigImportModal(context, admin, isAr),
                     ),
                     OutlinedButton.icon(
+                      key: const ValueKey('devops_reset_defaults_btn'),
                       style: OutlinedButton.styleFrom(foregroundColor: AppColors.coral),
                       icon: const Icon(Icons.restore_rounded, size: 17),
                       label: Text(isAr ? 'استعادة الافتراضي' : 'Reset Defaults'),
-                      onPressed: () {
+                      onPressed: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: Row(
+                              children: [
+                                const Icon(
+                                  Icons.warning_amber_rounded,
+                                  color: AppColors.coral,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    isAr
+                                        ? 'تأكيد استعادة الإعدادات الافتراضية'
+                                        : 'Confirm Reset Defaults',
+                                  ),
+                                ),
+                              ],
+                            ),
+                            content: Text(
+                              isAr
+                                  ? 'سيؤدي هذا الإجراء إلى إعادة تعيين كافة الخدمات والمحاور والأعلام البرمجية والإعدادات إلى القيم الافتراضية القياسية. هل أنت متأكد من المتابعة؟'
+                                  : 'This will reset all services, corridors, feature flags, and platform thresholds back to baseline defaults. Are you sure you want to proceed?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(false),
+                                child: Text(isAr ? 'إلغاء' : 'Cancel'),
+                              ),
+                              ElevatedButton(
+                                key: const ValueKey(
+                                  'devops_confirm_reset_defaults_btn',
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.coral,
+                                  foregroundColor: Colors.white,
+                                ),
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                child: Text(
+                                  isAr ? 'نعم، استعادة الافتراضي' : 'Yes, Reset Defaults',
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed != true || !context.mounted) return;
                         admin.resetPlatformToDefaults();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(isAr ? 'تمت استعادة الإعدادات القياسية بأمان' : 'Baseline defaults restored')),
+                          SnackBar(
+                            content: Text(
+                              isAr
+                                  ? 'تمت استعادة الإعدادات القياسية بأمان'
+                                  : 'Baseline defaults restored',
+                            ),
+                          ),
                         );
                       },
                     ),

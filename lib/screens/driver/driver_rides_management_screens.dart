@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -482,6 +483,7 @@ class _DriverRidesScreenState extends State<DriverRidesScreen> {
           child: Divider(height: 1, color: AppColors.slateBorder),
         ),
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -997,48 +999,104 @@ class DriverRequestsScreen extends StatefulWidget {
 
 class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
   int _tab = 0; // 0: حجوزات, 1: طرود
+  bool _isLiveMode =
+      AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
 
-  final List<Map<String, dynamic>> _rideRequests = [
-    {
-      'id': 'req_r1',
-      'passenger': 'نورة العطية',
-      'phone': '+97455612345',
-      'route': 'الوكرة ← الدوحة',
-      'fromCity': 'الوكرة',
-      'toCity': 'الدوحة',
-      'pickup': 'محطة مترو الوكرة',
-      'dropoff': 'مترو مشيرب',
-      'seats': 1,
-      'timeLeft': '24 د',
-      'price': 25,
-    },
-    {
-      'id': 'req_r2',
-      'passenger': 'تميم الهاجري',
-      'phone': '+97455823456',
-      'route': 'الخور ← الدوحة',
-      'fromCity': 'الخور',
-      'toCity': 'الدوحة',
-      'pickup': 'مدخل الخور الرئيسي',
-      'dropoff': 'برج الدفنة',
-      'seats': 2,
-      'timeLeft': '11 د',
-      'price': 70,
-    },
-  ];
+  late final List<Map<String, dynamic>> _rideRequests = _isLiveMode
+      ? <Map<String, dynamic>>[]
+      : [
+          {
+            'id': 'req_r1',
+            'passenger': 'نورة العطية',
+            'phone': '+97455612345',
+            'route': 'الوكرة ← الدوحة',
+            'fromCity': 'الوكرة',
+            'toCity': 'الدوحة',
+            'pickup': 'محطة مترو الوكرة',
+            'dropoff': 'مترو مشيرب',
+            'seats': 1,
+            'timeLeft': '24 د',
+            'price': 25,
+          },
+          {
+            'id': 'req_r2',
+            'passenger': 'تميم الهاجري',
+            'phone': '+97455823456',
+            'route': 'الخور ← الدوحة',
+            'fromCity': 'الخور',
+            'toCity': 'الدوحة',
+            'pickup': 'مدخل الخور الرئيسي',
+            'dropoff': 'برج الدفنة',
+            'seats': 2,
+            'timeLeft': '11 د',
+            'price': 70,
+          },
+        ];
 
-  final List<Map<String, dynamic>> _parcelRequests = [
-    {
-      'id': 'req_p1',
-      'sender': 'حمد الكواري',
-      'phone': '+97455234567',
-      'fromCity': 'الدوحة',
-      'toCity': 'لوسيل',
-      'desc': 'صغير · 2 كجم · أوراق رسمية مغلفة',
-      'val': 300,
-      'fee': 25,
-    },
-  ];
+  late final List<Map<String, dynamic>> _parcelRequests = _isLiveMode
+      ? <Map<String, dynamic>>[]
+      : [
+          {
+            'id': 'req_p1',
+            'sender': 'حمد الكواري',
+            'phone': '+97455234567',
+            'fromCity': 'الدوحة',
+            'toCity': 'لوسيل',
+            'desc': 'صغير · 2 كجم · أوراق رسمية مغلفة',
+            'val': 300,
+            'fee': 25,
+          },
+        ];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isLiveMode =
+        AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
+    if (_isLiveMode) {
+      final rides = Provider.of<RidesProvider?>(context, listen: false);
+      final parcels = Provider.of<ParcelsProvider?>(context, listen: false);
+      _rideRequests
+        ..clear()
+        ..addAll(
+          (rides?.bookedRides ?? const <RideModel>[])
+              .where((r) => widget.ride == null || r.id == widget.ride!.id)
+              .map(
+                (r) => {
+                  'id': r.id,
+                  'passenger': r.driverName,
+                  'phone': r.driverPhone,
+                  'route': '${r.fromCity} ← ${r.toCity}',
+                  'fromCity': r.fromCity,
+                  'toCity': r.toCity,
+                  'pickup': r.fromCity,
+                  'dropoff': r.toCity,
+                  'seats': 1,
+                  'timeLeft': r.departureTime,
+                  'price': r.pricePerSeat,
+                },
+              ),
+        );
+      _parcelRequests
+        ..clear()
+        ..addAll(
+          (parcels?.parcels ?? const <ParcelModel>[])
+              .where((p) => p.status == ParcelStatusStep.requested)
+              .map(
+                (p) => {
+                  'id': p.id,
+                  'sender': p.senderName ?? '',
+                  'phone': p.senderPhone ?? '',
+                  'fromCity': p.fromCity ?? '',
+                  'toCity': p.toCity ?? '',
+                  'desc': '${p.size.name} · ${p.description}',
+                  'val': p.estimatedValue,
+                  'fee': p.fee,
+                },
+              ),
+        );
+    }
+  }
 
   void _declineRequest(String id, String passengerName, bool isAr) {
     setState(() {
@@ -1201,6 +1259,7 @@ class _DriverRequestsScreenState extends State<DriverRequestsScreen> {
           child: Divider(height: 1, color: AppColors.slateBorder),
         ),
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -1739,22 +1798,27 @@ class DriverPreTripScreen extends StatefulWidget {
 }
 
 class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
-  late final List<Map<String, String>> _passengers = [
-    {
-      'id': 'p_1',
-      'name': 'نورة العطية',
-      'pickupAr': 'محطة مترو الوكرة',
-      'pickupEn': 'Al Wakrah Metro Station',
-      'phone': '+97455612345',
-    },
-    {
-      'id': 'p_2',
-      'name': 'تميم الهاجري',
-      'pickupAr': 'مدخل الخور الرئيسي',
-      'pickupEn': 'Al Khor Main Entrance',
-      'phone': '+97455823456',
-    },
-  ];
+  bool get _isLiveMode =>
+      AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
+
+  late final List<Map<String, String>> _passengers = _isLiveMode
+      ? <Map<String, String>>[]
+      : [
+          {
+            'id': 'p_1',
+            'name': 'نورة العطية',
+            'pickupAr': 'محطة مترو الوكرة',
+            'pickupEn': 'Al Wakrah Metro Station',
+            'phone': '+97455612345',
+          },
+          {
+            'id': 'p_2',
+            'name': 'تميم الهاجري',
+            'pickupAr': 'مدخل الخور الرئيسي',
+            'pickupEn': 'Al Khor Main Entrance',
+            'phone': '+97455823456',
+          },
+        ];
 
   void _reportNoShow(BuildContext context, String id, String name) {
     final isAr = context.read<SettingsProvider>().isArabic;
@@ -1845,6 +1909,7 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
           child: Divider(height: 1, color: AppColors.slateBorder),
         ),
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -1933,64 +1998,190 @@ class _DriverPreTripScreenState extends State<DriverPreTripScreen> {
 
                         const SizedBox(height: AppDimens.space16),
 
-                        Text(
-                          isAr ? 'الطرود (1)' : 'Parcels (1)',
-                          style: AppTypography.title().copyWith(fontSize: 16),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.slateBorder),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: AppColors.slateBg,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border:
-                                      Border.all(color: AppColors.slateBorder),
+                        Builder(
+                          builder: (context) {
+                            final parcelsProvider =
+                                Provider.of<ParcelsProvider?>(context);
+                            final liveParcels = _isLiveMode
+                                ? (parcelsProvider?.parcels ??
+                                        const <ParcelModel>[])
+                                    .where((p) =>
+                                        p.status ==
+                                            ParcelStatusStep.accepted ||
+                                        p.status ==
+                                            ParcelStatusStep.handedOver ||
+                                        p.status ==
+                                            ParcelStatusStep.inTransit)
+                                    .toList()
+                                : const <ParcelModel>[];
+                            final parcelCount =
+                                _isLiveMode ? liveParcels.length : 1;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  isAr
+                                      ? 'الطرود ($parcelCount)'
+                                      : 'Parcels ($parcelCount)',
+                                  style: AppTypography.title()
+                                      .copyWith(fontSize: 16),
                                 ),
-                                child: const Icon(
-                                  Icons.inventory_2_outlined,
-                                  color: AppColors.navy,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      isAr ? 'أوراق · صغير' : 'Documents · Small',
-                                      style: AppTypography.body(
-                                        color: AppColors.navy,
-                                      ).copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14.5,
+                                const SizedBox(height: 8),
+                                if (_isLiveMode && liveParcels.isEmpty)
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: AppColors.slateBorder,
                                       ),
                                     ),
-                                    Text(
+                                    child: Text(
                                       isAr
-                                          ? 'تسليم إلى سارة المالك'
-                                          : 'Deliver to Sara Al-Malik',
+                                          ? 'لا توجد طرود مخصصة لهذه الرحلة حالياً'
+                                          : 'No parcels assigned to this trip yet',
                                       style: AppTypography.bodySecondary(),
                                     ),
-                                  ],
-                                ),
-                              ),
-                              MashwarBadge(
-                                type: BadgeType.verified,
-                                customLabel: isAr ? 'في عهدتك' : 'With Driver',
-                              ),
-                            ],
-                          ),
+                                  )
+                                else if (_isLiveMode)
+                                  ...liveParcels.map(
+                                    (p) => Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          border: Border.all(
+                                            color: AppColors.slateBorder,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 40,
+                                              height: 40,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.slateBg,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                border: Border.all(
+                                                  color: AppColors.slateBorder,
+                                                ),
+                                              ),
+                                              child: const Icon(
+                                                Icons.inventory_2_outlined,
+                                                color: AppColors.navy,
+                                                size: 20,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${p.description} · ${p.size.name}',
+                                                    style: AppTypography.body(
+                                                      color: AppColors.navy,
+                                                    ).copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                      fontSize: 14.5,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    isAr
+                                                        ? 'تسليم إلى ${p.receiverName}'
+                                                        : 'Deliver to ${p.receiverName}',
+                                                    style: AppTypography
+                                                        .bodySecondary(),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            MashwarBadge(
+                                              type: BadgeType.verified,
+                                              customLabel: isAr
+                                                  ? 'في عهدتك'
+                                                  : 'With Driver',
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: AppColors.slateBorder,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.slateBg,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: AppColors.slateBorder,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.inventory_2_outlined,
+                                            color: AppColors.navy,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                isAr
+                                                    ? 'أوراق · صغير'
+                                                    : 'Documents · Small',
+                                                style: AppTypography.body(
+                                                  color: AppColors.navy,
+                                                ).copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14.5,
+                                                ),
+                                              ),
+                                              Text(
+                                                isAr
+                                                    ? 'تسليم إلى سارة المالك'
+                                                    : 'Deliver to Sara Al-Malik',
+                                                style: AppTypography
+                                                    .bodySecondary(),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        MashwarBadge(
+                                          type: BadgeType.verified,
+                                          customLabel: isAr
+                                              ? 'في عهدتك'
+                                              : 'With Driver',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 14),
@@ -2231,7 +2422,10 @@ class _DriverInTransitScreenState extends State<DriverInTransitScreen> {
                     text: isAr ? 'تأكيد التسليم' : 'Confirm Delivery',
                     onPressed: () async {
                       final entered = codeCtrl.text.replaceAll(' ', '').trim();
-                      bool verified = entered == '4821' || entered == '7394';
+                      final isLiveMode = AppEnvironment.isFirebaseRuntimeActive &&
+                          !AppEnvironment.useDevMocks;
+                      bool verified = !isLiveMode &&
+                          (entered == '4821' || entered == '7394');
                       if (!verified &&
                           parcelsProvider != null &&
                           activeParcel != null) {
@@ -2280,7 +2474,11 @@ class _DriverInTransitScreenState extends State<DriverInTransitScreen> {
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        codeCtrl.dispose();
+      });
+    });
   }
 
   @override
@@ -2301,6 +2499,7 @@ class _DriverInTransitScreenState extends State<DriverInTransitScreen> {
           child: Divider(height: 1, color: AppColors.slateBorder),
         ),
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
