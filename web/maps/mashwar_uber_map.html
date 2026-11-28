@@ -86,6 +86,14 @@
       border-color: rgba(255, 255, 255, 0.1);
     }
 
+    body.theme-uber .leaflet-tile-pane {
+      filter: saturate(0.52) contrast(1.04) brightness(1.03);
+    }
+
+    body.theme-dark .leaflet-tile-pane {
+      filter: invert(93%) hue-rotate(180deg) brightness(94%) contrast(92%) saturate(78%);
+    }
+
     .leaflet-control-attribution a {
       color: inherit !important;
       text-decoration: none !important;
@@ -793,27 +801,6 @@
 
       function createTileLayer(styleKey, trafficEnabled) {
         var hl = isAr ? 'ar' : 'en';
-        if (styleKey === 'google') {
-          var lyrs = trafficEnabled ? 'm@221097413,traffic' : 'm';
-          return L.tileLayer(
-            'https://mt{s}.google.com/vt/lyrs=' + lyrs + '&hl=' + hl + '&x={x}&y={y}&z={z}',
-            {
-              subdomains: ['0', '1', '2', '3'],
-              maxZoom: 20,
-              attribution: 'Google Maps'
-            }
-          );
-        }
-        if (styleKey === 'uber') {
-          return L.tileLayer(
-            'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-            {
-              subdomains: 'abcd',
-              maxZoom: 20,
-              attribution: '&copy; CARTO &copy; OSM'
-            }
-          );
-        }
         if (styleKey === 'satellite') {
           return L.tileLayer(
             'https://mt{s}.google.com/vt/lyrs=y&hl=' + hl + '&x={x}&y={y}&z={z}',
@@ -824,18 +811,20 @@
             }
           );
         }
+        var lyrs = trafficEnabled ? 'm@221097413,traffic' : 'm';
         return L.tileLayer(
-          'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+          'https://mt{s}.google.com/vt/lyrs=' + lyrs + '&hl=' + hl + '&x={x}&y={y}&z={z}',
           {
-            subdomains: 'abcd',
+            subdomains: ['0', '1', '2', '3'],
             maxZoom: 20,
-            attribution: '&copy; CARTO'
+            attribution: 'Google Maps'
           }
         );
       }
 
       function applyMapStyle() {
         document.body.classList.toggle('theme-dark', currentStyle === 'dark');
+        document.body.classList.toggle('theme-uber', currentStyle === 'uber');
         if (activeTileLayer) {
           map.removeLayer(activeTileLayer);
         }
@@ -844,10 +833,10 @@
         var tileErrors = 0;
         activeTileLayer.on('tileerror', function () {
           tileErrors++;
-          if (tileErrors >= 6 && !fallbackUsed && (currentStyle === 'google' || currentStyle === 'satellite')) {
+          if (tileErrors >= 6 && !fallbackUsed && currentStyle === 'satellite') {
             fallbackUsed = true;
             if (activeTileLayer) map.removeLayer(activeTileLayer);
-            activeTileLayer = createTileLayer('uber', false);
+            activeTileLayer = createTileLayer('google', showTraffic);
             activeTileLayer.addTo(map);
           }
         });

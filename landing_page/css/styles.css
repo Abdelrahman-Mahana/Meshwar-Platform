@@ -756,19 +756,50 @@ textarea {
 .corridor-stage__banner {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  min-height: 300px;
+  aspect-ratio: 16 / 10;
   border-radius: 18px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   background: #071624;
   box-shadow: 0 12px 32px rgba(2, 10, 18, 0.40);
 }
 
-.corridor-stage__banner img {
+.corridor-stage__banner img,
+.corridor-stage__banner iframe {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  border: 0;
   display: block;
+}
+
+.corridor-stage__banner img {
+  object-fit: contain;
+}
+
+.corridor-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.corridor-mode-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #E2E8F0;
+  font-size: 0.80rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.corridor-mode-pill.is-active {
+  background: rgba(27, 127, 121, 0.28);
+  border-color: #5EEAD4;
+  color: #FFFFFF;
 }
 
 .corridor-stage__controls {

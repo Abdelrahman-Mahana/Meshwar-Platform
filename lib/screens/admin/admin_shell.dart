@@ -181,6 +181,29 @@ class _AdminShellState extends State<AdminShell> {
                 _navigateToModule(13, admin, isAr);
               },
             ),
+            const Divider(height: 12),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundColor: AppColors.navy.withValues(alpha: 0.14),
+                child: const Icon(Icons.mark_email_unread_rounded, color: AppColors.navy, size: 20),
+              ),
+              title: Text(
+                isAr
+                    ? '${admin.newInquiriesCount} رسائل جديدة من صفحة الموقع'
+                    : '${admin.newInquiriesCount} new landing page inquiries',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+              subtitle: Text(
+                isAr ? 'طلبات المعاينة والشراكات والمستثمرين' : 'Demo requests, partnerships & investor leads',
+                style: const TextStyle(fontSize: 11),
+              ),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () {
+                Navigator.of(ctx).pop();
+                _navigateToModule(12, admin, isAr);
+              },
+            ),
           ],
         ),
         actions: [
@@ -718,7 +741,7 @@ class _AdminShellState extends State<AdminShell> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'MASHWAR Command v2.4.0 · قطر 🇶🇦',
+                          'MASHWAR Ops · قطر 🇶🇦',
                           style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 10),
                         ),
                       ],

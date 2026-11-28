@@ -1,146 +1,228 @@
-/* MASHWAR (مشوار — Qatar) Lean Investor Landing Page Interactions · v2.4.0 */
+/* MASHWAR (مشوار — Qatar) Landing Page Interactions & Live Corridor Uber Map */
 (function () {
   const CORRIDORS = {
     al_khor: {
-      origin_ar: "الدوحة (الخليج الغربي / لوسيل)",
-      origin_en: "Doha (West Bay / Lusail)",
-      dest_ar: "الخور (وسط المدينة / رأس لفان)",
-      dest_en: "Al Khor / Ras Laffan",
-      dist_ar: "56 كم · ~45 دقيقة",
-      dist_en: "56 km · ~45 mins",
-      seat_ar: "25 ر.ق / مقعد",
-      seat_en: "25 QAR / seat",
-      seat_vs_ar: "توفير 75% مقابل 105 ر.ق تاكسي خاص",
-      seat_vs_en: "Save 75% vs 105 QAR private charter",
-      parcel_ar: "35 ر.ق · خلال ساعتين",
-      parcel_en: "35 QAR · 2h Transit",
-      parcel_vs_ar: "مقابل 24–48 ساعة شحن مستودعات",
-      parcel_vs_en: "vs 24–48h traditional courier",
+      origin_ar: "الدوحة (مشيرب / الخليج الغربي)",
+      origin_en: "Doha (Msheireb / West Bay)",
+      dest_ar: "الخور (الكورنيش / رأس لفان)",
+      dest_en: "Al Khor (Corniche / Ras Laffan)",
+      fromLat: 25.2854,
+      fromLng: 51.5310,
+      toLat: 25.6804,
+      toLng: 51.4969,
+      distKm: 52,
+      etaMin: 39,
+      hwy_ar: "طريق الخور الساحلي",
+      hwy_en: "Al Khor Coastal Rd",
+      defaultMode: "trip",
+      dist_ar: "52 كم · ~39 دقيقة",
+      dist_en: "52 km · ~39 mins",
+      seat_ar: "25 – 35 ر.ق / مقعد",
+      seat_en: "25 – 35 QAR / seat",
+      seat_vs_ar: "أوفر بحوالي 70% من المشوار الخاص (105+ ر.ق)",
+      seat_vs_en: "About 70% less than a private ride (105+ QAR)",
+      parcel_ar: "20 – 35 ر.ق · نفس اليوم",
+      parcel_en: "20 – 35 QAR · Same-Day",
+      parcel_vs_ar: "مباشرة مع مسافر بكودين OTP بدون مخازن فرز",
+      parcel_vs_en: "Direct with a traveler + dual 4-digit OTP",
       driver_ar: "110 – 160 ر.ق / رحلة ذهاب",
       driver_en: "110 – 160 QAR / trip",
-      driver_vs_ar: "3 مقاعد + أوراق ومشتريات على نفس الطريق",
-      driver_vs_en: "3 seats + paperwork/errands en route"
+      driver_vs_ar: "مقاعد فاضية + طرد أو مستند على نفس الطريق",
+      driver_vs_en: "Spare seats + a parcel along the route you drive"
     },
     lusail_supply: {
-      origin_ar: "المنطقة الصناعية الدوحة",
-      origin_en: "Doha Industrial Area",
-      dest_ar: "لوسيل ومواقع الأبراج",
-      dest_en: "Lusail City & Project Sites",
-      dist_ar: "32 كم · ~28 دقيقة",
-      dist_en: "32 km · ~28 mins",
+      origin_ar: "المنطقة الصناعية (شارع 10)",
+      origin_en: "Doha Industrial Area (St 10)",
+      dest_ar: "مارينا لوسيل ومواقع الأبراج",
+      dest_en: "Lusail Marina & Project Sites",
+      fromLat: 25.1903,
+      fromLng: 51.4426,
+      toLat: 25.4300,
+      toLng: 51.4900,
+      distKm: 36,
+      etaMin: 29,
+      hwy_ar: "طريق الدوحة السريع / محور سلوى",
+      hwy_en: "Doha Expressway / Salwa Axis",
+      defaultMode: "supply",
+      dist_ar: "36 كم · ~29 دقيقة",
+      dist_en: "36 km · ~29 mins",
       seat_ar: "18 ر.ق / مقعد",
       seat_en: "18 QAR / seat",
-      seat_vs_ar: "توفير 72% لمشوار المهندسين اليومي",
-      seat_vs_en: "Save 72% for daily site commuters",
-      parcel_ar: "45 ر.ق · توريد موقع بفاتورة",
-      parcel_en: "45 QAR · Live-Receipt Site Supply",
-      parcel_vs_ar: "اعتماد فاتورة المحل بالضمان قبل التحرك",
-      parcel_vs_en: "In-store receipt approved via Escrow",
-      driver_ar: "120 – 185 ر.ق / رحلة",
+      seat_vs_ar: "مثالي لتنقل المهندسين والفنيين اليومي",
+      seat_vs_en: "Practical daily ride for site engineers & technicians",
+      parcel_ar: "45 – 60 ر.ق · توريد موقع بفاتورة",
+      parcel_en: "45 – 60 QAR · Receipt-Verified Supply",
+      parcel_vs_ar: "صورة الفاتورة من المحل + كود تسليم من 6 خانات",
+      parcel_vs_en: "Store invoice photo + 6-char SHA-256 handover code",
+      driver_ar: "120 – 185 ر.ق / مشوار",
       driver_en: "120 – 185 QAR / run",
-      driver_vs_ar: "توريد معدات + مقاعد على نفس الخط",
-      driver_vs_en: "Site supply + commuter seats en route"
+      driver_vs_ar: "توريد مواد كهرباء وسباكة ومعدات مباشرة للموقع",
+      driver_vs_en: "Direct electrical, plumbing & tool supply runs"
     },
     mesaieed: {
       origin_ar: "الدوحة / الوكرة",
       origin_en: "Doha / Al Wakrah",
-      dest_ar: "المنطقة الصناعية مسيعيد",
+      dest_ar: "مدينة مسيعيد الصناعية",
       dest_en: "Mesaieed Industrial City",
+      fromLat: 25.2854,
+      fromLng: 51.5310,
+      toLat: 24.9923,
+      toLng: 51.5507,
+      distKm: 48,
+      etaMin: 38,
+      hwy_ar: "طريق الوكرة – مسيعيد",
+      hwy_en: "Al Wakrah – Mesaieed Rd",
+      defaultMode: "trip",
       dist_ar: "48 كم · ~38 دقيقة",
       dist_en: "48 km · ~38 mins",
       seat_ar: "22 ر.ق / مقعد",
       seat_en: "22 QAR / seat",
-      seat_vs_ar: "توفير 76% مقابل 92 ر.ق تاكسي خاص",
-      seat_vs_en: "Save 76% vs 92 QAR private charter",
+      seat_vs_ar: "مقارنة بـ ~90 ر.ق للمشوار الفردي",
+      seat_vs_en: "Compared to ~90 QAR for a solo trip",
       parcel_ar: "30 ر.ق · خلال ساعتين",
-      parcel_en: "30 QAR · 2h Transit",
-      parcel_vs_ar: "توصيل فوري للمصانع والعقود بـ OTP",
-      parcel_vs_en: "Direct industrial plant & OTP handoff",
-      driver_ar: "96 – 140 ر.ق / رحلة",
-      driver_en: "96 – 140 QAR / trip",
-      driver_vs_ar: "مربوطة بتنقلات المهندسين والموظفين",
-      driver_vs_en: "Anchored by daily staff commuters"
+      parcel_en: "30 QAR · ~2h Handoff",
+      parcel_vs_ar: "تسليم مباشر لمواقع المصانع بكود OTP",
+      parcel_vs_en: "Direct industrial plant handoff with OTP",
+      driver_ar: "95 – 140 ر.ق / رحلة",
+      driver_en: "95 – 140 QAR / trip",
+      driver_vs_ar: "مبني على دوام الموظفين والمهندسين اليومي",
+      driver_vs_en: "Built around daily shift commuters"
     },
     industrial: {
       origin_ar: "المنطقة الصناعية الدوحة",
       origin_en: "Doha Industrial Area",
       dest_ar: "الوكرة ومدينة بروة",
       dest_en: "Al Wakrah & Barwa City",
-      dist_ar: "28 كم · ~25 دقيقة",
-      dist_en: "28 km · ~25 mins",
+      fromLat: 25.1903,
+      fromLng: 51.4426,
+      toLat: 25.1715,
+      toLng: 51.6034,
+      distKm: 28,
+      etaMin: 24,
+      hwy_ar: "طريق المنطقة الصناعية – الوكرة",
+      hwy_en: "Industrial – Al Wakrah Link",
+      defaultMode: "parcel",
+      dist_ar: "28 كم · ~24 دقيقة",
+      dist_en: "28 km · ~24 mins",
       seat_ar: "15 ر.ق / مقعد",
       seat_en: "15 QAR / seat",
-      seat_vs_ar: "توفير 70% مقابل 52 ر.ق رحلة خاصة",
-      seat_vs_en: "Save 70% vs 52 QAR charter",
+      seat_vs_ar: "توفير واضح عن المشوار الخاص (~52 ر.ق)",
+      seat_vs_en: "Clear savings vs ~52 QAR solo ride",
       parcel_ar: "25 ر.ق · خلال 90 دقيقة",
-      parcel_en: "25 QAR · 90m Express",
-      parcel_vs_ar: "مثالي لقطع غيار الورش والمحلات بفاتورة",
-      parcel_vs_en: "Ideal for B2B auto parts & live receipts",
+      parcel_en: "25 QAR · ~90m Express",
+      parcel_vs_ar: "ممتاز لقطع غيار الورش والمحلات بفاتورة واضحة",
+      parcel_vs_en: "Handy for workshop spare parts & store receipts",
       driver_ar: "75 – 115 ر.ق / مسار",
       driver_en: "75 – 115 QAR / route",
-      driver_vs_ar: "توريد سريع بين الورش والمخازن",
-      driver_vs_en: "High-frequency workshop & warehouse runs"
+      driver_vs_ar: "طلبات سريعة متكررة بين الورش والفروع",
+      driver_vs_en: "Frequent short runs between workshops & shops"
     },
     dukhan: {
       origin_ar: "الدوحة (وسط المدينة / الريان)",
       origin_en: "Doha (Central / Al Rayyan)",
       dest_ar: "دخان وأم باب",
       dest_en: "Dukhan & Umm Bab",
+      fromLat: 25.2854,
+      fromLng: 51.5310,
+      toLat: 25.4281,
+      toLng: 50.7822,
+      distKm: 84,
+      etaMin: 60,
+      hwy_ar: "طريق دخان السريع",
+      hwy_en: "Dukhan Highway",
+      defaultMode: "trip",
       dist_ar: "84 كم · ~60 دقيقة",
       dist_en: "84 km · ~60 mins",
       seat_ar: "35 ر.ق / مقعد",
       seat_en: "35 QAR / seat",
-      seat_vs_ar: "توفير 78% مقابل 160 ر.ق تاكسي خاص",
-      seat_vs_en: "Save 78% vs 160 QAR private charter",
+      seat_vs_ar: "أوفر بحوالي 75% من المشوار الخاص (160 ر.ق)",
+      seat_vs_en: "Around 75% cheaper than a 160 QAR private ride",
       parcel_ar: "45 ر.ق · خلال 3 ساعات",
-      parcel_en: "45 QAR · 3h Same-Day",
-      parcel_vs_ar: "تغطية الغرب القطري ومشاوير الحضانات",
-      parcel_vs_en: "Same-day Western Qatar highway fulfillment",
+      parcel_en: "45 QAR · Within 3h",
+      parcel_vs_ar: "تغطية الغرب القطري بدون انتظار شحن اليوم التالي",
+      parcel_vs_en: "Covers western Qatar without next-day courier wait",
       driver_ar: "150 – 210 ر.ق / رحلة",
       driver_en: "150 – 210 QAR / trip",
-      driver_vs_ar: "أعلى عائد كيلومتري على خط الشحانية–دخان",
-      driver_vs_en: "Highest corridor yield along Shahaniya–Dukhan"
+      driver_vs_ar: "يغطي تكلفة المشوار الطويل على خط الشحانية–دخان",
+      driver_vs_en: "Offsets long-haul fuel along Shahaniya–Dukhan"
     }
   };
 
   const SCREENS = [
     "./assets/mobile/10_tab_home_screen.png",
-    "./assets/mobile/67_service_escrow_screen.png",
+    "./assets/mobile/19_ride_details_screen.png",
+    "./assets/mobile/34_parcel_tracking_screen.png",
     "./assets/mobile/11_tab_board_screen.png",
     "./assets/mobile/28_post_ad_screen.png",
-    "./assets/mobile/19_ride_details_screen.png",
-    "./assets/mobile/52_wallet_screen.png",
-    "./assets/mobile/34_parcel_tracking_screen.png",
     "./assets/mobile/47_vehicle_registration_screen.png",
-    "./assets/mobile/50_emergency_sos_sheet.png"
+    "./assets/mobile/35_pickup_code_dialog.png",
+    "./assets/mobile/50_emergency_sos_sheet.png",
+    "./assets/mobile/67_service_escrow_screen.png"
   ];
 
   const WEB_SCREENS = {
-    kpis: { src: "./assets/web/admin_v2_dashboard.png", url: "https://admin.mashwar.qa/dashboard" },
-    services: { src: "./assets/web/admin_v2_services.png", url: "https://admin.mashwar.qa/services-catalog" },
-    escrow: { src: "./assets/web/admin_v2_escrow.png", url: "https://admin.mashwar.qa/escrow-finance" },
-    devops_noc: { src: "./assets/web/admin_v2_devops_noc.png", url: "https://admin.mashwar.qa/devops-sre?mode=noc" },
-    web_home: { src: "./assets/web/01_web_home_desktop.png", url: "https://app.mashwar.qa/home" },
-    web_escrow: { src: "./assets/web/14_web_escrow_desktop.png", url: "https://app.mashwar.qa/escrow" }
+    app_home: { src: "./assets/web/app_home_live_map.png", url: "https://app.mashwar.qa/home" },
+    app_traffic: { src: "./assets/web/app_fullscreen_traffic_map.png", url: "https://app.mashwar.qa/map?traffic=live" },
+    app_ride: { src: "./assets/web/app_ride_details_live.png", url: "https://app.mashwar.qa/trips/ride-details" },
+    app_supply: { src: "./assets/web/app_worksite_supply_live.png", url: "https://app.mashwar.qa/supply/request-details" },
+    admin_dash: { src: "./assets/web/admin_live_dashboard.png", url: "https://admin.mashwar.qa/dashboard" },
+    admin_ops: { src: "./assets/web/admin_live_login_dark.png", url: "https://admin.mashwar.qa/login" }
   };
 
   let currentLang = "ar";
   let currentCorridor = "al_khor";
+  let currentMapMode = "trip";
 
-  function renderCorridor(key) {
+  function buildCorridorMapUrl(c, mode, lang) {
+    const params = new URLSearchParams({
+      fromLat: String(c.fromLat),
+      fromLng: String(c.fromLng),
+      fromName: c[`origin_${lang}`],
+      toLat: String(c.toLat),
+      toLng: String(c.toLng),
+      toName: c[`dest_${lang}`],
+      mode: mode || c.defaultMode || "trip",
+      style: "google",
+      traffic: "1",
+      lang: lang,
+      nearby: "1",
+      dist: String(c.distKm),
+      eta: String(c.etaMin),
+      hwy: c[`hwy_${lang}`]
+    });
+    return `./maps/mashwar_uber_map.html?${params.toString()}`;
+  }
+
+  function renderCorridor(key, overrideMode) {
     currentCorridor = key;
     const c = CORRIDORS[key];
     if (!c) return;
+    currentMapMode = overrideMode || c.defaultMode || "trip";
     const s = currentLang;
-    document.getElementById("cor-origin-name").textContent = c[`origin_${s}`];
-    document.getElementById("cor-dest-name").textContent = c[`dest_${s}`];
-    document.getElementById("cor-dist-badge").textContent = c[`dist_${s}`];
-    document.getElementById("cor-k1-val").textContent = c[`seat_${s}`];
-    document.getElementById("cor-k1-vs").textContent = c[`seat_vs_${s}`];
-    document.getElementById("cor-k2-val").textContent = c[`parcel_${s}`];
-    document.getElementById("cor-k2-vs").textContent = c[`parcel_vs_${s}`];
-    document.getElementById("cor-k3-val").textContent = c[`driver_${s}`];
-    document.getElementById("cor-k3-vs").textContent = c[`driver_vs_${s}`];
+
+    const setText = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = val;
+    };
+
+    setText("cor-origin-name", c[`origin_${s}`]);
+    setText("cor-dest-name", c[`dest_${s}`]);
+    setText("cor-dist-badge", c[`dist_${s}`]);
+    setText("cor-k1-val", c[`seat_${s}`]);
+    setText("cor-k1-vs", c[`seat_vs_${s}`]);
+    setText("cor-k2-val", c[`parcel_${s}`]);
+    setText("cor-k2-vs", c[`parcel_vs_${s}`]);
+    setText("cor-k3-val", c[`driver_${s}`]);
+    setText("cor-k3-vs", c[`driver_vs_${s}`]);
+
+    document.querySelectorAll("[data-cor-mode]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.getAttribute("data-cor-mode") === currentMapMode);
+    });
+
+    const iframe = document.getElementById("corridor-live-map");
+    if (iframe) {
+      iframe.src = buildCorridorMapUrl(c, currentMapMode, s);
+    }
   }
 
   function applyLanguage(lang) {
@@ -161,7 +243,7 @@
       btn.textContent = btn.getAttribute(lang === "ar" ? "data-cor-ar" : "data-cor-en");
     });
 
-    renderCorridor(currentCorridor);
+    renderCorridor(currentCorridor, currentMapMode);
     if (window.MASHWAR_CHARTS) window.MASHWAR_CHARTS.setLang(lang);
   }
 
@@ -242,9 +324,17 @@
       });
     });
 
+    document.querySelectorAll("[data-cor-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        renderCorridor(currentCorridor, btn.getAttribute("data-cor-mode"));
+      });
+    });
+
     const stageImg = document.getElementById("mobile-screen-img");
     const setMobileScreen = (idx) => {
-      document.querySelectorAll("[data-screen-idx]").forEach((b) => b.classList.toggle("is-active", Number(b.getAttribute("data-screen-idx")) === idx));
+      document.querySelectorAll("[data-screen-idx]").forEach((b) =>
+        b.classList.toggle("is-active", Number(b.getAttribute("data-screen-idx")) === idx)
+      );
       if (stageImg && SCREENS[idx]) {
         stageImg.style.opacity = "0.25";
         setTimeout(() => {
@@ -326,8 +416,6 @@
         if (nameInput) nameInput.focus();
       });
     }
-
-    // Investor contact submission is handled by js/firebase-contact.js (Firestore + email alerts).
   }
 
   function init() {

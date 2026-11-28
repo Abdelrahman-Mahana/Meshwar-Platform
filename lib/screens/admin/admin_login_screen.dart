@@ -6,7 +6,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
 import '../../core/widgets/mashwar_button.dart';
-import '../../core/widgets/qatar_live_map_canvas.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
 import 'admin_shell.dart';
@@ -141,42 +142,49 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               const SizedBox(width: 12),
                               Flexible(
                                 child: Text(
-                                  isAr ? 'مركز قيادة مشوار قطر' : 'MASHWAR Qatar Command Center',
+                                  isAr ? 'لوحة إدارة مشوار' : 'MASHWAR Operations Portal',
                                   style: AppTypography.title(color: Colors.white)
                                       .copyWith(fontSize: 18, fontWeight: FontWeight.w800),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
                           Text(
                             isAr
-                                ? 'إدارة شاملة للخدمات الـ 6، الضمان المالي المزدوج، بلديات قطر الـ 8، ومركز DevOps.'
-                                : 'Unified control for all 6 Qatar services, Bilateral Escrow, 8 municipalities & SRE DevOps.',
+                                ? 'تابع عمليات اليوم في مكان واحد: الرحلات التشاركية، الطرود على الطريق، التوريد الميداني، مراجعة هويات QID، ورسائل الموقع.'
+                                : 'Follow daily operations from one workspace: shared trips, route parcels, worksite supply, QID verification, and site inquiries.',
                             style: AppTypography.body(color: const Color(0xFFCBD5E1))
-                                .copyWith(fontSize: 14, height: 1.5),
+                                .copyWith(fontSize: 14, height: 1.55),
                           ),
-                          const SizedBox(height: 24),
-                          const Expanded(
+                          const SizedBox(height: 20),
+                          Expanded(
                             child: ClipRRect(
-                              borderRadius: BorderRadius.all(Radius.circular(20)),
-                              child: QatarLiveMapCanvas(
-                                style: QatarMapStyle.darkExecutive,
-                                activeFromCity: 'الدوحة',
-                                activeToCity: 'لوسيل',
-                                showHubLabels: true,
-                                showCarTrails: true,
+                              borderRadius: const BorderRadius.all(Radius.circular(18)),
+                              child: LayoutBuilder(
+                                builder: (context, mapBox) {
+                                  return MashwarEmbeddedGoogleMap(
+                                    key: const ValueKey('admin_login_uber_map'),
+                                    origin: 'المنطقة الصناعية',
+                                    destination: 'لوسيل',
+                                    vehicleMode: MashwarMapVehicleMode.supply,
+                                    stylePreset: MashwarMapStylePreset.dark,
+                                    showTraffic: true,
+                                    height: mapBox.maxHeight.clamp(220.0, 520.0),
+                                    borderRadius: 18,
+                                  );
+                                },
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 18),
                           Wrap(
                             spacing: 10,
                             runSpacing: 8,
                             children: [
-                              _securityChip(Icons.verified_user_rounded, isAr ? '5 أدوار RBAC محكمة' : '5 RBAC Roles'),
-                              _securityChip(Icons.shield_rounded, isAr ? 'حماية Escrow + OTP' : 'Escrow + OTP Guard'),
-                              _securityChip(Icons.terminal_rounded, isAr ? 'Feature Flags فورية' : 'Runtime Feature Flags'),
+                              _securityChip(Icons.verified_user_rounded, isAr ? 'توثيق QID (11 رقماً)' : '11-Digit QID KYC'),
+                              _securityChip(Icons.qr_code_2_rounded, isAr ? 'تحقق تسليم OTP و SHA-256' : 'OTP & SHA-256 Handover'),
+                              _securityChip(Icons.cloud_done_rounded, isAr ? 'صلاحيات 5 أدوار · Firebase حي' : '5 RBAC Roles · Live Firebase'),
                             ],
                           ),
                         ],
@@ -276,12 +284,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  isAr ? 'دخول الإدارة والعمليات والـ DevOps' : 'Admin, Operations & DevOps Login',
+                  isAr ? 'تسجيل دخول فريق الإدارة' : 'Operations Team Sign In',
                   style: AppTypography.title().copyWith(fontSize: 20, color: AppColors.navy, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  isAr ? 'مشوار · لوحة تحكم النظام المركزية' : 'MASHWAR · Central Operations Center',
+                  isAr ? 'مشوار · إدارة الرحلات والطرود والتوريد' : 'MASHWAR · Trips, Parcels & Supply Ops',
                   style: AppTypography.label(color: AppColors.textSecondary),
                 ),
                 if (AppEnvironment.useDevMocks) ...[
@@ -433,8 +441,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 const SizedBox(height: 20),
                 MashwarButton(
                   text: _isLoading
-                      ? (isAr ? 'جاري التحقق...' : 'Signing in...')
-                      : (isAr ? 'تسجيل الدخول للقيادة' : 'Enter Command Center'),
+                      ? (isAr ? 'جاري التحقق من الصلاحيات...' : 'Checking access...')
+                      : (isAr ? 'دخول لوحة الإدارة' : 'Sign in to Admin Portal'),
                   isLoading: _isLoading,
                   onPressed: _handleLogin,
                 ),

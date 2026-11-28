@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/models/admin_platform_models.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
 import 'widgets/admin_ui_kit.dart';
@@ -17,6 +20,9 @@ class AdminCorridorsGeoScreen extends StatefulWidget {
 
 class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
   String _statusFilter = 'all';
+  bool _useLiveUberMap = true;
+  bool _showTraffic = true;
+  MashwarMapVehicleMode _vehicleMode = MashwarMapVehicleMode.trip;
 
   void _openAddCorridorDialog(BuildContext context, bool isAr) {
     final admin = context.read<AdminProvider>();
@@ -163,15 +169,15 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                   children: [
                     Text(
                       isAr
-                          ? 'إدارة الـ 8 بلديات القطرية و ${admin.corridors.length} محور تشغيل حي'
-                          : 'Qatar 8 Municipalities & ${admin.corridors.length} Active Corridors Control',
+                          ? 'خريطة المحاور والبلديات النشطة (${admin.corridors.length} محور في قطر)'
+                          : 'Active Qatar Corridors & Municipalities (${admin.corridors.length} Routes)',
                       style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 16),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       isAr
-                          ? 'انقر على أي محور لمعاينة مساره المباشر على خريطة قطر وضبط معامل التحفيز والحالة.'
-                          : 'Select any corridor to preview on the live Qatar map and adjust surge/incentive rules.',
+                          ? 'اختر أي محور من الجدول لعرض المسار كاملًا مع الزحمة الحية وتعديل حالة المحور أو معامل التحفيز.'
+                          : 'Pick any corridor from the table to inspect its full live traffic route and tune status or boost rules.',
                       style: TextStyle(color: t.textSecondary, fontSize: 12),
                     ),
                   ],
@@ -232,26 +238,126 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                       ],
                     ),
                     const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        ChoiceChip(
+                          label: Text(
+                            isAr ? 'خريطة حية + زحمة' : 'Live Traffic Map',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _useLiveUberMap ? Colors.white : t.textPrimary,
+                            ),
+                          ),
+                          selectedColor: AppColors.navy,
+                          checkmarkColor: Colors.white,
+                          selected: _useLiveUberMap,
+                          onSelected: (_) => setState(() => _useLiveUberMap = true),
+                        ),
+                        ChoiceChip(
+                          label: Text(
+                            isAr ? 'مخطط المحاور' : 'Schematic',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: !_useLiveUberMap ? Colors.white : t.textPrimary,
+                            ),
+                          ),
+                          selectedColor: AppColors.navy,
+                          checkmarkColor: Colors.white,
+                          selected: !_useLiveUberMap,
+                          onSelected: (_) => setState(() => _useLiveUberMap = false),
+                        ),
+                        if (_useLiveUberMap) ...[
+                          FilterChip(
+                            label: Text(
+                              isAr ? 'الزحمة' : 'Traffic',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _showTraffic ? Colors.white : t.textPrimary,
+                              ),
+                            ),
+                            selectedColor: AppColors.teal,
+                            checkmarkColor: Colors.white,
+                            selected: _showTraffic,
+                            onSelected: (v) => setState(() => _showTraffic = v),
+                          ),
+                          ActionChip(
+                            avatar: Icon(
+                              _vehicleMode == MashwarMapVehicleMode.supply
+                                  ? Icons.local_shipping_rounded
+                                  : Icons.directions_car_rounded,
+                              size: 14,
+                            ),
+                            label: Text(
+                              _vehicleMode == MashwarMapVehicleMode.supply
+                                  ? (isAr ? 'وضع التوريد' : 'Supply')
+                                  : (isAr ? 'وضع الرحلات' : 'Trips'),
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            onPressed: () => setState(() {
+                              _vehicleMode = _vehicleMode == MashwarMapVehicleMode.supply
+                                  ? MashwarMapVehicleMode.trip
+                                  : MashwarMapVehicleMode.supply;
+                            }),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.open_in_full_rounded, size: 13),
+                            label: Text(isAr ? 'ملء الشاشة' : 'Fullscreen', style: const TextStyle(fontSize: 11)),
+                            onPressed: () => openMashwarInAppMap(
+                              context,
+                              titleAr: selectedCorridor.routeLabel(true),
+                              titleEn: selectedCorridor.routeLabel(false),
+                              origin: selectedCorridor.fromCityAr,
+                              destination: selectedCorridor.toCityAr,
+                              vehicleMode: _vehicleMode,
+                              showTraffic: _showTraffic,
+                              stylePreset: t.isDark ? MashwarMapStylePreset.dark : MashwarMapStylePreset.google,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 10),
                     SizedBox(
-                      height: 300,
+                      height: 310,
                       width: double.infinity,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: QatarLiveMapCanvas(
-                          style: t.isDark ? QatarMapStyle.darkExecutive : QatarMapStyle.light,
-                          activeFromCity: selectedCorridor.fromCityAr,
-                          activeToCity: selectedCorridor.toCityAr,
-                          showHubLabels: true,
-                          showCarTrails: true,
-                          onHubTap: (city) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(isAr ? 'النقطة المحددة: $city' : 'Selected Hub: $city'),
-                                duration: const Duration(seconds: 1),
+                        child: _useLiveUberMap
+                            ? MashwarEmbeddedGoogleMap(
+                                key: ValueKey(
+                                  'admin_cor_${selectedCorridor.id}_${_vehicleMode.name}_$_showTraffic',
+                                ),
+                                origin: selectedCorridor.fromCityAr,
+                                destination: selectedCorridor.toCityAr,
+                                vehicleMode: _vehicleMode,
+                                showTraffic: _showTraffic,
+                                stylePreset: t.isDark
+                                    ? MashwarMapStylePreset.dark
+                                    : MashwarMapStylePreset.google,
+                                height: 310,
+                                borderRadius: 14,
+                              )
+                            : QatarLiveMapCanvas(
+                                style: t.isDark ? QatarMapStyle.darkExecutive : QatarMapStyle.light,
+                                activeFromCity: selectedCorridor.fromCityAr,
+                                activeToCity: selectedCorridor.toCityAr,
+                                showHubLabels: true,
+                                showCarTrails: true,
+                                onHubTap: (city) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(isAr ? 'النقطة المحددة: $city' : 'Selected Hub: $city'),
+                                      duration: const Duration(seconds: 1),
+                                    ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -277,7 +383,7 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                             min: 1.0,
                             max: 1.5,
                             divisions: 10,
-                            activeColor: AppColors.qatarMaroon,
+                            activeColor: AppColors.teal,
                             onChanged: (v) => admin.setCorridorIncentive(selectedCorridor.id, v),
                           ),
                         ),
@@ -373,9 +479,9 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: isSel ? AppColors.qatarMaroon.withValues(alpha: 0.08) : t.surfaceAlt,
+                              color: isSel ? AppColors.teal.withValues(alpha: 0.10) : t.surfaceAlt,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: isSel ? AppColors.qatarMaroon : t.border),
+                              border: Border.all(color: isSel ? AppColors.teal : t.border),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>مشوار قطر | منصة الخدمات المجتمعية والتنقل والتوصيل بالضمان المالي (6 في 1)</title>
-  <meta name="description" content="MASHWAR Qatar v2.4.0 — 6-in-1 community services & corridor fulfillment platform: store buy with live receipt, engineer worksite supply, urgent OTP paperwork, nursery commutes, shared seats & B2B cargo protected by Bilateral Escrow, 11-digit QID & 12-module Admin/DevOps console." />
-  <meta property="og:title" content="MASHWAR Qatar v2.4.0 | مشوار قطر" />
-  <meta property="og:description" content="منصة الخدمات اليومية والتوصيل والمشاوير على الطريق في قطر — 6 خدمات بالضمان المالي المزدوج Escrow واعتماد الفاتورة الحية ورمز OTP." />
-  <meta property="og:image" content="./assets/posters/poster_02_six_services_showcase_16x9.png" />
+  <title>مشوار | رحلات تشاركية، طرود على الطريق وتوريد مواقع في قطر</title>
+  <meta name="description" content="MASHWAR Qatar — Shared intercity trips, same-day route parcels with dual 4-digit OTPs, and receipt-verified worksite supply across Qatar with a live Uber-style in-app route map and 14-module operations portal." />
+  <meta property="og:title" content="مشوار | MASHWAR Qatar" />
+  <meta property="og:description" content="رحلات تشاركية، طرود على الطريق، وتوريد مواقع عمل في قطر مع خريطة حية للزحمة والمسار داخل التطبيق وتوثيق بالبطاقة القطرية QID." />
+  <meta property="og:image" content="./assets/web/app_home_live_map.png" />
   <link rel="icon" type="image/png" href="./assets/logos/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -230,7 +230,12 @@
           <div class="corridor-stage__inner">
             <div class="corridor-stage__top">
               <div class="corridor-stage__banner">
-                <img src="./assets/posters/poster_ai_intercity_qatar_wide.jpg" alt="Qatar Coastal Highway Network" />
+                <iframe
+                  id="corridor-live-map"
+                  title="MASHWAR Live Qatar Corridor Map"
+                  src="./maps/mashwar_uber_map.html?fromLat=25.2854&fromLng=51.531&fromName=%D8%A7%D9%84%D8%AF%D9%88%D8%AD%D8%A9&toLat=25.6804&toLng=51.4969&toName=%D8%A7%D9%84%D8%AE%D9%88%D8%B1&mode=trip&style=google&traffic=1&lang=ar&nearby=1&dist=52&eta=39"
+                  loading="lazy"
+                ></iframe>
               </div>
 
               <div class="corridor-stage__controls">
@@ -240,6 +245,12 @@
                   <button class="corridor-tab" type="button" data-corridor="mesaieed" data-cor-ar="الدوحة ↔ مسيعيد" data-cor-en="Doha ↔ Mesaieed">الدوحة ↔ مسيعيد</button>
                   <button class="corridor-tab" type="button" data-corridor="industrial" data-cor-ar="الصناعية ↔ الوكرة" data-cor-en="Industrial Area ↔ Al Wakrah">الصناعية ↔ الوكرة</button>
                   <button class="corridor-tab" type="button" data-corridor="dukhan" data-cor-ar="الدوحة ↔ دخان" data-cor-en="Doha ↔ Dukhan">الدوحة ↔ دخان</button>
+                </div>
+
+                <div class="corridor-mode-row" role="group" aria-label="Vehicle Mode">
+                  <button class="corridor-mode-pill is-active" type="button" data-cor-mode="trip" data-i18n="cor_mode_trip">وضع السيارة (رحلة)</button>
+                  <button class="corridor-mode-pill" type="button" data-cor-mode="parcel" data-i18n="cor_mode_parcel">وضع الطرود (فان)</button>
+                  <button class="corridor-mode-pill" type="button" data-cor-mode="supply" data-i18n="cor_mode_supply">وضع التوريد (شاحنة)</button>
                 </div>
 
                 <div class="corridor-route-bar">
@@ -288,102 +299,57 @@
       </div>
     </section>
 
-    <!-- 4. 6-in-1 Community Services & Bilateral Escrow Shield -->
+    <!-- 4. Three Core Everyday Services & Trust Flow -->
     <section id="services" class="section section--sand">
       <div class="container">
         <div class="section-header section-header--center reveal">
-          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="services_eyebrow">منظومة الخدمات 6 في 1</span></span>
-          <h2 class="section-title" data-i18n="services_title">ست خدمات مجتمعية متكافئة تدور كلها على نفس المحاور في قطر</h2>
-          <p class="section-subtitle" data-i18n="services_sub">من الشراء بفاتورة حية وتوريد مواقع المهندسين إلى مشاوير الحضانات وجلب الأوراق ومشاركة المقاعد؛ جميعها بنفس الأولوية وتحت حماية ضمان مشوار المالي.</p>
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="services_eyebrow">3 خدمات رئيسية تخدم يومك</span></span>
+          <h2 class="section-title" data-i18n="services_title">كل حاجة محتاجها على الطريق في تطبيق واحد مرتّب</h2>
+          <p class="section-subtitle" data-i18n="services_sub">بدل ما تتشتت بين 4 تطبيقات وجروبات واتساب، مشوار يجمع الرحلات اليومية والطرود العاجلة وتوريد مواقع العمل بنفس البساطة والوضوح.</p>
         </div>
 
         <div class="services-grid reveal">
           <article class="service-card">
             <div class="service-card__media">
-              <img src="./assets/services/service_errand.jpg" alt="Store Buy and Deliver with Live Receipt" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_1_rate">عمولة 18%</span>
+              <img src="./assets/services/service_ride.jpg" alt="Shared Trips and Empty Seats in Qatar" loading="lazy" />
+              <span class="service-card__rate" data-i18n="srv_1_rate">توفير حتى 70%</span>
             </div>
             <div class="service-card__body">
-              <h3 data-i18n="srv_1_t">شراء وتوصيل بفاتورة حية</h3>
-              <p data-i18n="srv_1_d">اطلب أي غرض أو مستلزم من أي متجر في قطر ليشتريه منفذ موثق على نفس الطريق ويرسل صورة السلعة والفاتورة للاعتماد قبل الدفع.</p>
+              <h3 data-i18n="srv_1_t">الرحلات التشاركية والمقاعد الفاضية</h3>
+              <p data-i18n="srv_1_d">مسافر من الدوحة للخور أو مسيعيد أو دخان؟ اعرض مقاعدك الفاضية (1–6) في 3 خطوات، أو احجز مقعدك مع سائق موثق على نفس خطك مع خيار «سيدات فقط» ومشاركة المسار مع أهلك.</p>
               <div class="service-card__control">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_1_c">اعتماد الفاتورة الحية · سقف مالي بالضمان · 0 تلاعب بالأسعار</span>
+                <span data-i18n="srv_1_c">تتبع حي على الخريطة · خيار سيدات فقط · زر طوارئ قطر 999</span>
               </div>
             </div>
           </article>
 
           <article class="service-card">
             <div class="service-card__media">
-              <img src="./assets/services/service_site_supply.jpg" alt="Engineer and Worksite Supply in Qatar" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_2_rate">عمولة 18%</span>
+              <img src="./assets/services/service_parcel.jpg" alt="Same-Day Route Parcels and Documents" loading="lazy" />
+              <span class="service-card__rate" data-i18n="srv_2_rate">كودان OTP</span>
             </div>
             <div class="service-card__body">
-              <h3 data-i18n="srv_2_t">توريد مواقع ومعدات للمهندسين</h3>
-              <p data-i18n="srv_2_d">إمداد فوري لقطع الغيار ومواد الصيانة من المنطقة الصناعية إلى مواقع العمل والأبراج في لوسيل والدوحة والوكرة دون إيقاف العمل.</p>
+              <h3 data-i18n="srv_2_t">طرود وأوراق مستعجلة على الطريق</h3>
+              <p data-i18n="srv_2_d">محتاج تبعت عقد، مفتاح، أو غرض مهم لمدينة تانية النهارده؟ سلّمه لمسافر موثق رايح نفس الاتجاه، وتابع المسار لحظة بلحظة بكود استلام رباعي وكود تسليم رباعي.</p>
               <div class="service-card__control">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_2_c">توصيل 35–90 دقيقة · فاتورة ضريبية معتمدة · استلام بكود OTP</span>
+                <span data-i18n="srv_2_c">توصيل مباشر في نفس اليوم · كود استلام + كود تسليم · بدون مخازن</span>
               </div>
             </div>
           </article>
 
           <article class="service-card">
             <div class="service-card__media">
-              <img src="./assets/services/service_parcel.jpg" alt="On-Route Paperwork and Urgent Parcels" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_3_rate">عمولة 18%</span>
+              <img src="./assets/services/service_site_supply.jpg" alt="Worksite Supply and Store Runs in Qatar" loading="lazy" />
+              <span class="service-card__rate" data-i18n="srv_3_rate">فاتورة + SHA-256</span>
             </div>
             <div class="service-card__body">
-              <h3 data-i18n="srv_3_t">جلب أوراق وأمانات على الطريق</h3>
-              <p data-i18n="srv_3_d">بدل السفر من الخور أو الوكرة لإحضار مستند أو ورقة رسمية، فوّض مسافراً موثقاً بالـ QID يعبر نفس الطريق يومياً.</p>
+              <h3 data-i18n="srv_3_t">توريد مواقع العمل والمشتريات اليومية</h3>
+              <p data-i18n="srv_3_d">مهندس في لوسيل أو صاحب ورشة محتاج مواد كهرباء أو سباكة أو عدد من المنطقة الصناعية؟ اكتب طلبك، استقبل عروض، راجع صورة الفاتورة والغرض من المحل، واستلم بكود من 6 خانات.</p>
               <div class="service-card__control">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_3_c">كود OTP رباعي · تتبع مباشر على الخريطة · تسليم خلال 2–4 ساعات</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="service-card">
-            <div class="service-card__media service-card__media--dark">
-              <img src="./assets/services/hero_qatar_services.jpg" alt="Nurseries and Remote Area Commutes" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_4_rate">عمولة 11%</span>
-            </div>
-            <div class="service-card__body">
-              <h3 data-i18n="srv_4_t">مشاوير الحضانات والمناطق البعيدة</h3>
-              <p data-i18n="srv_4_d">توصيل آمن ومجدول للأبناء والمناطق السكنية البعيدة قليلة المواصلات مع اختيار كابتن موثق أو خيار سيدات فقط وطمأنينة لحظية.</p>
-              <div class="service-card__control">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_4_c">فلتر سيدات فقط · مشاركة المسار الحي · زر طوارئ قطر 999</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="service-card">
-            <div class="service-card__media">
-              <img src="./assets/services/service_ride.jpg" alt="Shared Inter-Municipality Empty Seats" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_5_rate">عمولة 11%</span>
-            </div>
-            <div class="service-card__body">
-              <h3 data-i18n="srv_5_t">مشاركة مقاعد بين المدن والبلديات</h3>
-              <p data-i18n="srv_5_d">احجز مقعداً شاغراً مع مسافر يومي بعربيته الخاصة بين الدوحة والخور ومسيعيد ودخان أو اعرض مقاعدك الشاغرة لتغطية تكاليف رحلتك.</p>
-              <div class="service-card__control">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_5_c">توفير حتى 75% · تطابق مسار 3 كم · حجز ذري آمن للمقعد</span>
-              </div>
-            </div>
-          </article>
-
-          <article class="service-card">
-            <div class="service-card__media">
-              <img src="./assets/services/service_cargo.jpg" alt="Commercial Micro-Cargo and Mashwar Business B2B" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_6_rate">79$ / شهر + 18%</span>
-            </div>
-            <div class="service-card__body">
-              <h3 data-i18n="srv_6_t">نقل بضائع الورش وباقات الأعمال (B2B)</h3>
-              <p data-i18n="srv_6_d">اشتراك شهري للمتاجر والورش والمختبرات لنقل العينات والطرود حتى 15 كجم بين الفروع والمناطق الصناعية مع أولوية مطابقة وتقارير مالية.</p>
-              <div class="service-card__control">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_6_c">اشتراك B2B SaaS · فواتير شهرية موحدة · صفر تكاليف مستودعات</span>
+                <span data-i18n="srv_3_c">صورة الفاتورة الحية · كود تسليم من 6 خانات · دفع نقدي أو تحويل بإيصال</span>
               </div>
             </div>
           </article>
@@ -502,21 +468,21 @@
               <p data-i18n="admin_head_d">لوحة تحكم مستقبلية معزولة بـ 5 مستويات RBAC، تسعير ديناميكي للخدمات الـ 6، مراقبة 8 بلديات و14 محوراً، خزينة ضمان #QA، وغرفة DevOps/SRE بالوضع الليلي NOC.</p>
             </div>
             <div class="pill-switch">
-              <button class="is-active" type="button" data-web-tab="kpis" data-i18n="web_tab_kpis">لوحة القيادة والخريطة</button>
-              <button type="button" data-web-tab="services" data-i18n="web_tab_services">الخدمات والتسعير</button>
-              <button type="button" data-web-tab="escrow" data-i18n="web_tab_escrow">الضمان المالي #QA</button>
-              <button type="button" data-web-tab="devops_noc" data-i18n="web_tab_devops_noc">غرفة DevOps NOC</button>
-              <button type="button" data-web-tab="web_home" data-i18n="web_tab_home">نسخة الويب للعملاء</button>
-              <button type="button" data-web-tab="web_escrow" data-i18n="web_tab_web_escrow">الضمان على الويب</button>
+              <button class="is-active" type="button" data-web-tab="app_home" data-i18n="web_tab_app_home">الرئيسية + خريطة أوبر</button>
+              <button type="button" data-web-tab="app_traffic" data-i18n="web_tab_app_traffic">خريطة الزحمة الكاملة</button>
+              <button type="button" data-web-tab="app_ride" data-i18n="web_tab_app_ride">تفاصيل الرحلة</button>
+              <button type="button" data-web-tab="app_supply" data-i18n="web_tab_app_supply">طلب توريد موقع</button>
+              <button type="button" data-web-tab="admin_dash" data-i18n="web_tab_admin_dash">لوحة الإدارة الرئيسية</button>
+              <button type="button" data-web-tab="admin_ops" data-i18n="web_tab_admin_ops">بوابة الإدارة (الوضع الليلي)</button>
             </div>
           </div>
           <div class="browser-frame">
             <div class="browser-frame__bar">
               <div class="browser-dots"><span></span><span></span><span></span></div>
-              <div id="web-stage-url" class="browser-url">https://admin.mashwar.qa/dashboard</div>
+              <div id="web-stage-url" class="browser-url">https://app.mashwar.qa/home</div>
               <div></div>
             </div>
-            <img id="web-stage-img" src="./assets/web/admin_v2_dashboard.png" alt="MASHWAR Admin RBAC & DevOps Operations Dashboard" />
+            <img id="web-stage-img" src="./assets/web/app_home_live_map.png" alt="MASHWAR Live Consumer App and Admin Portal Preview" />
           </div>
           <div class="admin-live-actions">
             <div class="admin-cap-pills">

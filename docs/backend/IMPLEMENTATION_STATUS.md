@@ -1,51 +1,35 @@
-# Implementation Status & Feature Verification Matrix — MASHWAR Platform
-## Ground-Truth Readiness Assessment for Qatar Worksite Supply MVP
+# Implementation Status Matrix — MASHWAR Platform
 
-### 1. Engineering Honesty Standard
-Every status entry in this matrix reflects the **actual code and executed verification** in this repository on `feat/mvp-worksite-supply`:
-- **`PASS`**: Implemented in repository, static analysis clean (`0` issues), and covered by passing automated Dart (`flutter test`) or Node (`node --test`) tests.
-- **`BLOCKED`**: Code/rules/contracts are implemented in the repository, but live execution or end-to-end emulator/cloud verification requires missing host tooling (e.g., Java JRE + `firebase-tools`) or external credentials/SDKs (e.g., `+974` SMS gateway, native mobile config files).
-- **`DEFERRED`**: Intentionally disabled in Phase 1 via `AppEnvironment` feature flags pending regulatory licensing (Qatar MoT / QCB) or Phase 2+ scope.
+A straightforward, ground-truth view of what is built and verified in the codebase today versus what remains gated behind external licensing or store infrastructure.
 
----
-
-### 2. Core Platform, Configuration & Backend Infrastructure
-
-| Subsystem | Files / Artifacts | Status | Verified Details & Remaining Blockers |
-| :--- | :--- | :---: | :--- |
-| **Environment & Fail-Closed Startup** | `lib/core/config/app_environment.dart`, `.env.example`, `lib/main.dart` | **PASS** | `AppFlavor` (`development`/`staging`/`production`), `USE_FIREBASE`, `USE_DEV_MOCKS` (strictly blocked outside `development && !USE_FIREBASE`), and `ServiceUnavailableScreen` with retry when Firebase fails in non-mock mode. |
-| **Worksite Supply Domain & `MoneyMinor`** | `lib/data/models/worksite_models.dart`, `lib/data/models/user_model.dart` | **PASS** | Integer `MoneyMinor` (`1 QAR = 100 dirhams`, zero `double` money fields), 11-state `WorkRequestStatusMachine`, neutral `UserModel` defaults (`isVerified: false`, `walletBalance: 0.0`, `rating: 0.0`), UTC ISO serialization. |
-| **Cloud Functions v2 (`functions/`)** | `functions/src/{index,handlers,stateMachine,handoverCrypto,store,types}.ts` | **PASS** *(Build & Node Tests)* / **BLOCKED** *(Live Deploy)* | 9 v2 `onCall` functions (`europe-west1`, `nodejs20`) compile cleanly (`tsc` exit `0`) and pass `10/10` security tests (`npm test`). Live deployment awaits `firebase-tools` & production authorization. |
-| **Salted SHA-256 Handover Verification** | `functions/src/handoverCrypto.ts`, `worksite_repository_impl.dart` | **PASS** | 6-char unambiguous code (`[A-HJ-NP-Z2-9]`), 128-bit per-request salt, constant-time `timingSafeEqual`, 5-attempt cap, 24h TTL, single-use completion, server-only `work_request_secrets`. |
-| **Firestore Security Rules & Indexes** | `firestore.rules` (2,475 lines), `firestore.indexes.json` (14 indexes) | **PASS** *(Authored)* / **BLOCKED** *(JVM Emulator Run)* | Preserves Collections `1–19` and enforces strict RBAC/schema guards across Worksite Supply Collections `20–29` (11-digit QID, `+974` phone, no self-approval, no client `completed`). Host lacks `java` & `firebase` CLI to run JVM rule emulator tests locally. |
-| **Cloud Storage Security Rules** | `storage.rules` | **PASS** *(Authored)* / **BLOCKED** *(Binary Upload SDK)* | Enforces `<= 10 MB` `image/*` owner/participant/admin ACLs for KYC, reference photos, invoices, and payment proofs. Client binary upload (`firebase_storage` + `image_picker`) is not yet added to `pubspec.yaml` (pilot passes validated `https://`/`gs://` media URLs). |
-| **CI/CD Web Build Pipeline** | `.github/workflows/mashwar_ci_cd.yml`, `vercel.json` | **PASS** | Builds Consumer Web (`build/web`) and standalone Admin Portal (`build/web/admin`) with security headers and `/admin` rewrites. |
-| **Native Android / iOS Release Config** | `android/app/build.gradle.kts`, `lib/firebase_options.dart`, `ios/Runner/Info.plist` | **BLOCKED** | Missing `google-services.json` & `GoogleService-Info.plist`; Android `release` currently uses `debug` signing config; `firebase_options.dart` needs `flutterfire configure` for Qatar iOS bundle ID (`qa.mashwar.app`); `Info.plist` lacks camera/photo/location strings. |
+- **`READY`**: Implemented, `0` analyzer issues, covered by passing automated tests and live local/Firebase verification.
+- **`EXTERNAL GATE`**: Code is ready in the repo, but activation requires an external billing plan, physical device/host, or third-party console approval.
+- **`DEFERRED (REGULATORY)`**: Intentionally disabled via `AppEnvironment` flags until Qatar MoT / QCB licensing is secured.
 
 ---
 
-### 3. Repositories & State Providers
+## 1. Core Application & Backend Subsystems
 
-| Layer / Component | Implementation | Status | Notes |
+| Subsystem | Key Files | Status | Ground-Truth Notes |
 | :--- | :--- | :---: | :--- |
-| **`IAuthRepository` & `AuthProvider`** | `FirebaseAuthRepository` / `AuthRepositoryImpl` | **PASS** *(Email/Password & QID)* / **BLOCKED** *(SMS OTP & Google OAuth)* | Real Firebase Email/Password login, registration, password reset, session restore, `signOut()`, and 11-digit QID submission (`provider_verifications/{uid}`). `+974` SMS OTP explicitly throws `UnsupportedError` until SMS provider configured. |
-| **`IWorksiteRepository` & `WorksiteProvider`** | `FirebaseWorksiteRepository` / `WorksiteRepositoryImpl` | **PASS** | Full Firestore + HTTP v2 callable execution (`FirebaseFunctionsCallableClient`) with typed bilingual `WorksiteRepositoryException`, filtering, Quick Reorder draft generation, and deterministic dev-only repository parity. |
-| **`IProviderRepository`** | `FirebaseProviderRepository` / `ProviderRepositoryImpl` | **PASS** | Provider profile CRUD, 11-digit QID KYC submission, admin approval review, and private `SavedWorksite` persistence (`users/{uid}/private/{id}`). |
-| **`AdminProvider` & Module 13 Ops** | `AdminProvider`, `AdminWorksiteOpsScreen`, `AdminLoginScreen`, `AdminShell` | **PASS** | `_isLoggedIn` defaults `false`; `/admin` guarded by `AdminLoginScreen`; `signInStaffWithFirebase` checks active `admin_staff/{uid}` and server role; Module 13 manages QID KYC reviews, manual bank transfer settlement verification, disputes, and `admin_audit_logs`. |
-| **`IMapsRepository` & `GoogleMapsService`** | `MapsRepositoryImpl`, `GoogleMapsService` | **PASS** *(Qatar Catalog)* / **BLOCKED** *(Live Key)* | 8 Qatari municipalities & 22 hubs work offline; live Google Places/Directions (`country:qa`) activate when `GOOGLE_MAPS_API_KEY` is injected. |
-| **`IChatRepository`** | `FirebaseChatRepository` / `ChatRepositoryImpl` | **PASS** *(Contextual Chat)* | Contextual requester <-> provider messaging from Worksite Supply order details. |
-| **`InvestorInquiries` Lead Capture** | `landing_page/js/firebase-contact.js`, `AdminInquiriesScreen` | **PASS** | Writes public inquiries to `investor_inquiries` on `mashwar-qatar-2026-ec99d` and syncs in Admin Portal. |
+| **3-Pillar Consumer App** | `lib/features/`, `lib/screens/`, `lib/state/` | **READY** | Shared Trips, Route Parcels (dual 4-digit OTPs), and Smart Worksite Supply (receipt photos + 6-char SHA-256 handover). Clean new-user onboarding with zero fake notifications or prefilled defaults. |
+| **Uber-Style In-App Live Map** | `web/maps/mashwar_uber_map.html`, `web/maps/leaflet/*`, `lib/core/widgets/mashwar_embedded_google_map*.dart`, `lib/data/services/google_maps_service.dart` | **READY** | Vendored Leaflet 1.9.4 + Google Maps/Traffic tiles + 4 style presets + OSRM polylines + automatic `fitBounds` + 60fps rotating Car/Parcel/Supply vehicle SVGs across 12 consumer screens and Admin Portal. |
+| **Environment & Fail-Closed Boot** | `lib/core/config/app_environment.dart`, `lib/main.dart`, `lib/admin_main.dart` | **READY** | `USE_DEV_MOCKS` mathematically restricted to `development && !USE_FIREBASE`; staging/production fail closed to `ServiceUnavailableScreen` if Firebase is unreachable. |
+| **Firestore & Storage Rules** | `firestore.rules`, `firestore.indexes.json`, `storage.rules` | **READY** | 29 Firestore collections + 14 composite indexes deployed to `mashwar-qatar-2026-ec99d` and verified `10/10` on local Firebase Emulators. |
+| **Cloud Functions v2 (`functions/`)** | `functions/src/{index,handlers,stateMachine,handoverCrypto,store,types}.ts` | **READY** *(Code & Tests)* / **EXTERNAL GATE** *(Blaze Deploy)* | 10 v2 `onCall` handlers (incl. `deleteUserAccount`) pass `11/11` tests. Spark-safe Firestore fallbacks handle client-permitted actions until the project upgrades to Blaze. |
+| **14-Module Admin Portal (`/admin/`)** | `lib/admin_main.dart`, `lib/screens/admin/*`, `lib/state/admin_provider.dart` | **READY** | Firebase Auth + active `admin_staff/{uid}` RBAC (5 roles), live Uber traffic map on Dashboard & Corridors, Worksite Ops (`Module 13`), Landing Inquiries (`Module 12`), and immutable audit logs. |
+| **5-Account Live Demo Seeder** | `scripts/seed_multi_account_demo.mjs`, `scripts/seed_multi_account_demo.ps1` | **READY** | Idempotently provisions 5 real Firebase Auth accounts + 113 interconnected Firestore docs for hands-on role switching. |
+| **Landing Page & Lead Capture** | `landing_page/index.html`, `landing_page/maps/`, `landing_page/js/firebase-contact.js` | **READY** | Bilingual AR/EN, live interactive corridor Uber map, fresh Retina app/admin screenshots, and live Firestore `investor_inquiries` capture. |
 
 ---
 
-### 4. Deferred Modules & Regulatory Readiness
+## 2. External Pre-Launch & Regulatory Gates
 
-| Module / Capability | `AppEnvironment` Flag | Status | Prerequisite to Enable |
+| Capability | Flag / Scope | Status | What's Needed |
 | :--- | :--- | :---: | :--- |
-| **Passenger Rides & Booking** | `enablePassengerRides = false` | **DEFERRED** | Qatar Ministry of Transport (MoT) passenger transport licensing & rules-aligned booking callables. |
-| **Inter-Area Carpooling** | `enableCarpooling = false` | **DEFERRED** | Qatar MoT shared-mobility regulatory approval. |
-| **Commercial Freight / Parcels** | `enableCommercialCargo = false` | **DEFERRED** | Commercial cargo/courier licensing in Qatar. |
-| **In-App Digital Wallet** | `enableDigitalWallet = false` | **DEFERRED** | Qatar Central Bank (QCB) stored-value compliance & licensed PSP webhook integration. |
-| **Automated Financial Escrow** | `enableEscrowClaims = false` | **DEFERRED** | QCB-regulated escrow custody partner & server ledger integration (`ServiceEscrowScreen` prototype remains disabled in MVP flow). |
-| **Emergency Dialer (`999`) & Account Purge** | — | **BLOCKED** *(SDK/Callable)* | Requires adding `url_launcher` (`tel:999`) and a server-side `deleteUserAccount` Cloud Function for full PDPL Law No. 13 of 2016 data erasure. |
-| **MASHWAR Brand Registration** | — | **LEGAL PREREQUISITE** | Independent Qatar MoCI trademark search and registration prior to commercial launch. |
+| **Live `+974` SMS OTP** | `FirebaseAuthRepository` | **EXTERNAL GATE** | Upgrade `mashwar-qatar-2026-ec99d` to Firebase Blaze, configure Qatar `+974` SMS allowlist, and test on Ooredoo/Vodafone SIMs. |
+| **Google Play & App Store Builds** | `android/`, `ios/` | **EXTERNAL GATE** | Build signed `.aab` / `.ipa` on Android release & macOS/Xcode hosts and submit for store review. |
+| **Qatar Trademark Clearance** | MASHWAR / مشوار | **EXTERNAL GATE** | Prior-art search & Nice Classes 35/39/42 registration with Qatar MoCI. |
+| **In-App Digital Wallet** | `enableDigitalWallet = false` | **DEFERRED (REGULATORY)** | Qatar Central Bank (QCB) e-money / PSP licensing. |
+| **Automated Escrow Custody** | `enableEscrowClaims = false` | **DEFERRED (REGULATORY)** | Licensed QCB escrow partner integration (direct Cash / Bank Transfer proof active today). |
+| **Commercial Heavy Cargo** | `enableCommercialCargo = false` | **DEFERRED (REGULATORY)** | Commercial freight licensing via Qatar MoT. |

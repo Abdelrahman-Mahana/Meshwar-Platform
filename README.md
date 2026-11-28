@@ -1,220 +1,154 @@
-# مشوار (MASHWAR) — International 3-Service Mobility, Route Parcels & Smart Supply Platform
+# مشوار — MASHWAR
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white" alt="Flutter" />
-  <img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white" alt="Dart" />
-  <img src="https://img.shields.io/badge/Firebase-mashwar--qatar--2026--ec99d-FFCA28?logo=firebase&logoColor=black" alt="Firebase" />
-  <img src="https://img.shields.io/badge/Cloud%20Functions-v2%20(Node%2020%20TS)-4285F4" alt="Cloud Functions v2" />
-  <img src="https://img.shields.io/badge/Architecture-3--Service%20Global%20Platform-2563EB" alt="3-Service Platform" />
-  <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License" />
-</p>
+**تطبيق واحد يجمع ثلاث حاجات الناس في قطر بتحتاجها كل يوم على نفس الطريق:**  
+مقعد فاضي في مشوار بين المدن، طرد أو ورقة مستعجلة توصل في نفس اليوم، أو طلب توريد ومعدات لموقع عمل بفاتورة واضحة وكود استلام آمن.
 
-<p align="center">
-  <b>منصة عالمية ثلاثية الخدمات تجمع الرحلات التشاركية والطرود على الطريق والتوريد الذكي</b><br/>
-  <i>Shared Trips & Empty Seats · Parcels & Items on the Way · Smart Shopping, Supply & Errands</i>
-</p>
+*Shared trips, same-day parcels on the way, and smart worksite supply across Qatar — built with Flutter, Firebase, and a live in-app route map.*
 
 ---
 
-## 1. Product Overview (نظرة عامة على المنصة ثلاثية الخدمات)
+## ليه بنينا «مشوار»؟ (What Problem We Solve)
 
-**MASHWAR (مشوار)** is an international, bidirectional 3-service mobility, parcel-on-route, and smart fulfillment platform built with a clean global visual system (Navy `#0F172A`, Cobalt `#2563EB`, Indigo `#4F46E5`, Emerald `#10B981`, and Slate `#F8FAFC` — zero regional Sadu strips or single-country lock-in chrome):
+أي حد عايش أو شغال في قطر بيعرف المشاكل اليومية دي عن قرب:
+- مهندس في موقع بناء في **لوسيل** محتاج قطع كهرباء أو ريش حفر من **المنطقة الصناعية (شارع 10)** حالاً عشان الشغل ما يوقفش.
+- موظف بيسوق يومياً من **الخور** أو **مسيعيد** أو **دخان** للدوحة ومعاه 3 كراسي فاضية، وفي نفس الوقت غيره بيدفع 100+ ريال في مشوار خاص.
+- شخص محتاج يبعت عقد أو مفتاح أو طرد صغير لمدينة تانية في نفس اليوم، بدون ما يستنى شركات الشحن يومين أو يدور في جروبات واتساب بدون أي ضمان أو هوية واضحة.
 
-1. **Shared Trips & Empty Seats (`سفر ومقاعد تشاركية`):** Travelers publish intercity or daily trips with `1..6` empty car seats (`PublishRideScreen` 3-step wizard), while passengers browse live corridors or post destination ride requests (`TripsAndParcelsHubScreen` & `PostAdScreen`) to receive direct offers (`MakeOfferSheet`).
-2. **Parcels & Items on the Way (`طرود وأغراض مع مسافر`):** Travelers optionally enable **"Carry Parcels / Items Along Your Route"** (`publish_accepts_parcels_switch`) with package-size limits (`envelope`, `small`, `medium`), while senders ship documents or items directly with an active traveler or as an open route request (`SendParcelScreen` -> `ParcelTrackingScreen`) protected by **dual 4-digit Pickup & Delivery OTPs**.
-3. **Smart Shopping, Supply & Errands (`شراء وتوريد ومهام خاصة`):** Requesters and contractors post structured shopping, hardware, and site supply orders (`CreateWorkRequestScreen`), receive competing offers from verified providers, review store invoice photos, and confirm completion via a single-use **6-character salted SHA-256 handover code**.
-
-```mermaid
-flowchart LR
-    S1["🚗 1. Shared Trips & Empty Seats<br/>Publish seats or request a ride"] --> M["🤝 Direct Route Matching<br/>5-Tab International Hub"]
-    S2["📦 2. Parcels & Items on the Way<br/>Dual 4-digit Pickup & Delivery OTP"] --> M
-    S3["🛠️ 3. Smart Shopping, Supply & Errands<br/>Invoice proof & 6-char SHA-256 code"] --> M
-    M --> H["✅ Verified Handover & Settlement<br/>Cash or Manual Transfer Proof"]
-```
+**مشوار** بيجمع الثلاث خدمات دول في تجربة واحدة بسيطة، موثقة بالبطاقة القطرية (**11 رقم QID**) ورقم الجوال القطري (**+974**)، مع خريطة حية جوه التطبيق بأسلوب أوبر بتعرض المسار بالكامل والزحمة وحركة المركبة لحظة بلحظة.
 
 ---
 
-## 2. Platform Scope, Feature Flags & Settlement Model
+## الخدمات الأساسية الثلاث في التطبيق
 
-### Active Platform Scope (`AppEnvironment` Flags)
-Controlled centrally in [`lib/core/config/app_environment.dart`](lib/core/config/app_environment.dart):
+1. **الرحلات التشاركية والمقاعد (`Shared Trips`)**  
+   المسافر ينشر رحلته وعدد المقاعد المتاحة (`1–6`) في 3 خطوات بسيطة، والراكب يبحث على نفس المحور أو ينشر طلب رحلة ويقارن العروض، مع خيار **سيدات فقط** ومشاركة خط السير مع العائلة وزر طوارئ قطر `999`.
 
-| Capability | Flag | Status | Rationale |
-| :--- | :--- | :---: | :--- |
-| **Shared Trips & Empty Seats** | `enablePassengerRides` | **`true` (Active)** | Pillar 1: Bidirectional shared trips, seat bookings & passenger route requests. |
-| **Carpooling & Route Parcels** | `enableCarpooling` | **`true` (Active)** | Pillar 1 & 2: Empty-seat cost sharing & parcels carried along a traveler's route with dual 4-digit OTPs. |
-| **Smart Supply & Errands** | `enableWorksiteSupply` | **`true` (Active)** | Pillar 3: Structured shopping, site supply & errands with invoice proof & 6-char handover verification. |
-| **Commercial Heavy Cargo** | `enableCommercialCargo` | `false` (Deferred) | Heavy commercial fleet freight dispatch remains gated separately. |
-| **In-App Digital Wallet** | `enableDigitalWallet` | `false` (Deferred) | Stored-value wallet custody remains disabled in favor of direct settlement. |
-| **Automated Escrow Custody** | `enableEscrowClaims` | `false` (Deferred) | Automated PSP escrow custody remains disabled (`cash_on_delivery` / `bank_transfer_manual` + OTP). |
+2. **الطرود والأوراق على الطريق (`Route Parcels`)**  
+   المسافر يقدر يفعّل خيار حمل الطرود والمظاريف على خط سيره (`envelope` / `small` / `medium`)، أو المرسل ينشر طلب طرد مفتوح، وكل شحنة محمية **بكودين سريين (4 أرقام للاستلام + 4 أرقام للتسليم)**.
 
-> **Direct Settlement Model:** MASHWAR uses **`cash_on_delivery`** (Cash on Handover) and **`bank_transfer_manual`** (Direct Bank Transfer with uploaded transfer proof: `unpaid -> transfer_proof_submitted -> verified_settled`), paired with store invoice verification and cryptographic OTP handover codes without holding stored-value wallet balances.
-
-### Legal, Regulatory & Trademark Readiness Notice
-- **No Transport or Financial Custody License Held:** The repository owner holds **no** passenger transport or commercial freight license from the Qatar Ministry of Transport (MoT) and **no** Payment Service Provider (PSP), e-money wallet, or financial escrow license from the Qatar Central Bank (QCB). Regulated transport and custodial payment modules are disabled in code (`false`) until formal licensing and licensed partner onboarding are completed.
-- **Trademark Clearance Prerequisite:** Commercial use of the **MASHWAR / مشوار** name and mark in the State of Qatar requires independent legal trademark search and registration with the Ministry of Commerce and Industry (MoCI). Any third-party institutions or payment networks referenced in deferred legacy modules remain the property of their respective owners with no implied partnership or endorsement.
+3. **التوريد الميداني ومهام المواقع (`Smart Worksite Supply & Errands`)**  
+   صاحب الموقع أو المستخدم يكتب طلبه (أو يختار من قوالب جاهزة لمواد الكهرباء والسباكة والمعدات)، يستقبل عروض من مزودين موثقين بالـ QID، يراجع صورة الفاتورة والمنتج من المحل، ويقفل الطلب **بكود تسليم من 6 خانات مشفّر بـ Salted SHA-256** (استخدام لمرة واحدة، بحد أقصى 5 محاولات وصلاحية 24 ساعة).
 
 ---
 
-## 3. Implemented Technical Architecture
+## أبرز المزايا الجاهزة فعلياً في الكود
 
-### Runtime Flavors & Fail-Closed Mock Boundary
-Configured via compile-time `--dart-define` parameters (see [`.env.example`](.env.example)):
-- `APP_ENV`: `development` | `staging` | `production` (parsed into `AppFlavor`; defaults to `development`).
-- `USE_FIREBASE`: `true` | `false` — when omitted, real app entrypoints (`lib/main.dart`, `lib/admin_main.dart`) connect to Firebase project `mashwar-qatar-2026-ec99d` (`europe-west1`) by default (`AppEnvironment.isFirebaseRuntimeActive == true`, `AppRepositories.instance.useFirebase()`) unless `USE_DEV_MOCKS=true` is explicitly passed in `development`. Passing `USE_FIREBASE=false` without `USE_DEV_MOCKS=true` fails closed with a configuration error.
-- `USE_DEV_MOCKS`: `true` | `false` — **strictly gated** by `AppEnvironment.resolveUseDevMocks` so local dev mocks can **only** activate when `APP_ENV == 'development'` and Firebase is disabled. Staging and production builds fail closed to `ServiceUnavailableScreen` with retry if Firebase is disabled or unreachable, never leaking mock users or fake balances.
+- **خريطة حية بأسلوب أوبر داخل التطبيق (`web/maps/mashwar_uber_map.html`)**:
+  - مبنية على Leaflet 1.9.4 المضمّنة محلياً داخل التطبيق بدون الاعتماد على CDN خارجي.
+  - تعرض المسار الكامل تلقائياً (`fitBounds`) بدون قص، مع طرق حقيقية عبر OSRM وطبقات Google Maps + الزحمة المرورية الحية، و4 أنماط للعرض (خريطة جوجل، أسلوب أوبر، قمر صناعي، والوضع الليلي).
+  - أيقونات مركبات متحركة تدور مع منحنيات الطريق حسب الخدمة: **سيارة سيدان** للرحلات، **فان توصيل** للطرود، **شاحنة توريد ذهبية** لمواقع العمل، ودبوس رادار نابض لمعاينة المواقع.
+- **بداية نظيفة لأي حساب جديد**:
+  - أي مستخدم يسجل حساب جديد يبدأ برصيد `0.00 ر.ق`، و`0` إشعارات وهمية، و`0` طلبات تجريبية، مع خطوات ترحيبية واضحة لإكمال اسمه ورقم جواله القطري وجهة الطوارئ.
+- **تسوية مالية مباشرة وواضحة**:
+  - نستخدم حالياً الدفع المباشر (**الدفع نقداً عند الاستلام** `cash_on_delivery` أو **تحويل بنكي مباشر مع رفع إيصال التحويل** `bank_transfer_manual`) وبحساب دقيق بالدرهم (`MoneyMinor`: `1 QAR = 100 dirhams`) بدون كسور عشرية عائمة.
+  - الميزات الخاضعة لتراخيص خاصة (المحفظة المالية الرقمية، الضمان المالي المحتجز Escrow، والشحن التجاري الثقيل) مقفولة افتراضياً في `AppEnvironment` لحين استكمال التراخيص الرسمية في قطر (MoT / QCB / MoCI).
+- **لوحة إدارة وعمليات مستقلة (`/admin/`)**:
+  - محمية بتسجيل دخول Firebase وفحص سجل الموظف في `admin_staff/{uid}` مع 5 مستويات صلاحيات (`RBAC`).
+  - تضم 14 وحدة عملية تشمل: لوحة الأرقام مع خريطة الزحمة الحية، مراجعة توثيق السائقين والمزودين (QID)، إدارة عمليات التوريد الميداني والتحويلات (الوحدة 13)، رسائل صفحة الهبوط والمستثمرين (الوحدة 12)، خريطة المحاور القطرية، البلاغات والنزاعات، وسجل التدقيق (`admin_audit_logs`).
 
-### Qatar Domain & Financial Standards
-- **Integer Minor-Unit Currency (`MoneyMinor`):** All MVP financial fields (`budgetMinor`, `estimatedItemsCostMinor`, `maxItemsCapMinor`, `deliveryFeeBudgetMinor`, `agreedAmountMinor`, `agreedFeeMinor`, `totalAmountMinor`, `serviceFeeMinor`) use integer minor units (`1 QAR = 100 dirhams`, e.g., `15000` = `150.00 QAR` / `150 ر.ق`) with zero floating-point `double` arithmetic.
-- **Qatar Identity & Phone Validation:** Providers submit an **11-digit Qatar ID (QID)** (`^[0-9]{11}$`); Qatar mobile numbers validate against 8-digit Ooredoo/Vodafone Qatar prefixes (`+974` `[3567]xxxxxxx`).
-- **Cryptographic Handover Verification:** When a requester accepts an offer, `acceptWorkOffer` generates a 6-character unambiguous alphanumeric code (`[A-HJ-NP-Z2-9]`), hashes it with a 128-bit per-request salt (`SHA-256(salt + ':' + code)`), stores the digest in server-only `work_request_secrets/{requestId}` (`allow read, write: if false;`), and exposes the plaintext code exclusively to the requester via `work_request_handover_view/{requestId}`. `verifyHandoverAndComplete` enforces constant-time comparison (`crypto.timingSafeEqual`), a **5-attempt limit**, **24-hour TTL**, and **single-use** completion.
+---
 
-### Repository Layout
+## هيكل المشروع (Repository Layout)
+
 ```text
-├── .env.example                 # Environment & --dart-define template (zero secrets)
-├── firebase.json                # Auth (Email/Password), Firestore, Cloud Functions v2 (nodejs20), Storage & Emulators
-├── firestore.rules              # 2,552-line AST-optimized ruleset (Collections 1–19 + MVP Collections 20–29)
-├── firestore.indexes.json       # 14 composite indexes (incl. Worksite Supply queries)
-├── storage.rules                # Private KYC & participant-scoped invoice/proof image rules (<=10 MB)
-├── scripts/                     # Automation (provision_firebase_auth.ps1, seed_demo_all_cases.ps1/.mjs, run_emulators_tests.ps1, fetch_firebase_configs.ps1, generate_upload_keystore.ps1)
-├── functions/                   # Firebase Cloud Functions v2 (TypeScript, europe-west1)
-│   ├── src/
-│   │   ├── types.ts             # Domain types, DTOs & error codes
-│   │   ├── stateMachine.ts      # WorkRequest & PaymentSettlement state transition guards
-│   │   ├── handoverCrypto.ts    # CSPRNG 6-char code + salted constant-time SHA-256 verification
-│   │   ├── store.ts             # Transactional Firestore & in-memory test store adapter
-│   │   ├── handlers.ts          # 10 transactional business, account erasure & admin moderation handlers
-│   │   └── index.ts             # Cloud Functions v2 HTTPS onCall exports (incl. deleteUserAccount)
-│   └── test/
-│       ├── backend_security.test.mjs  # Node security & state-machine test suite (11/11 passing)
-│       └── emulator_rules.test.mjs    # Live Firestore & Storage Emulator rules suite (10/10 passing)
 ├── lib/
-│   ├── core/config/             # AppEnvironment, AppFlavor, feature flags & legal disclaimers
-│   ├── core/widgets/            # mashwar_worksite_icons.dart, mashwar_animations.dart, qatar_live_map_canvas.dart
-│   ├── data/
-│   │   ├── demo/                # MashwarDemoCasesCatalog (14 Qatar worksite cases, 11 statuses, 8 providers, 5 handover codes)
-│   │   ├── models/              # worksite_models.dart (MoneyMinor, WorkRequest, WorkOffer, etc.), user_model.dart
-│   │   ├── repositories/        # Contracts + Firebase (+974 Phone, Email Auth, Spark-safe Firestore fallbacks) & dev-gated local implementations
-│   │   └── services/            # firebase_firestore_service.dart (Callable HTTP v2), media_upload_service.dart (Storage), google_maps_service.dart
-│   ├── state/                   # WorksiteProvider, AuthProvider, AdminProvider, SettingsProvider
-│   ├── screens/                 # Customer Worksite Supply flows, Auth, Safety (url_launcher), Legal (PDPL), Admin Portal (Module 13)
-│   ├── main.dart                # Customer & embedded route entrypoint
-│   └── admin_main.dart          # Standalone Enterprise Admin Web entrypoint (Firebase staff auth guarded)
-└── docs/
-    ├── MVP_BASELINE_AUDIT.md                  # Pre-implementation baseline audit (preserved reference)
-    ├── MVP_IMPLEMENTATION_REPORT.md           # Full MVP engineering & verification report
-    ├── QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md # MoCI trademark, +974 SMS, PDPL & mobile store release playbook
-    └── backend/                               # Aligned architecture, schema, API, security, setup & testing docs
+│   ├── main.dart                  # تطبيق المستخدمين (Consumer App)
+│   ├── admin_main.dart            # لوحة الإدارة المستقلة (/admin/)
+│   ├── core/                      # الألوان (#0F2A43 / #1B7F79 / #F5A524)، الإعدادات، الخرائط والمكونات
+│   ├── data/                      # النماذج، المستودعات (Firebase + Dev Mocks)، خدمة الخرائط، وداتا الديمو
+│   ├── features/ & screens/       # شاشات الرئيسية، الرحلات والطرود، التوريد، المحادثة، الحساب، ولوحة الإدارة
+│   └── state/                     # AuthProvider, WorksiteProvider, RidesProvider, ParcelsProvider, BoardProvider, AdminProvider
+├── web/maps/                      # محرك خريطة أوبر الحية + Leaflet 1.9.4 المضمّنة محلياً
+├── functions/                     # Firebase Cloud Functions v2 (TypeScript / Node 20 / europe-west1)
+├── landing_page/                  # صفحة التعريف والمستثمرين ثنائية اللغة (مع خريطة محاور حية ونموذج Firebase)
+├── scripts/                       # سكريبتات البناء والتشغيل، تجهيز Firebase Auth، وزرع بيانات الـ 5 حسابات
+├── test/                          # 200 اختبار آلي لـ Flutter (نماذج، مستودعات، شاشات، خرائط، وإدارة)
+├── firestore.rules                # قواعد أمان Firestore (29 مجموعة، مختبرة على Emulator)
+├── storage.rules                  # قواعد أمان Cloud Storage (ملفات KYC والفواتير <= 10MB)
+└── docs/                          # التوثيق الهندسي، تقارير الاختبار، وخطة الامتثال والإطلاق في قطر
 ```
 
 ---
 
-## 4. Running & Verifying Locally
+## التشغيل المحلي السريع (Quick Start)
 
-### Prerequisites
-- **Flutter SDK** `3.x` (verified on `Flutter 3.47.9` / `Dart 3.x`)
-- **Node.js** `20+` (verified on `v24.19.0`) for `functions/` build and tests
-- **OpenJDK `21 LTS`** (`21.0.13.1`, discoverable via `$env:JAVA_HOME` or `$env:LOCALAPPDATA\Programs\OpenJDK21`) and **`firebase-tools`** (`15.37.0+`) for the live Firestore & Storage Emulator test suite and Android keystore tooling
+### المتطلبات
+- **Flutter SDK** `3.x` (تم الاختبار على `Flutter 3.47.9`)
+- **Node.js** `20+` (لبناء واختبار `functions/` وتشغيل سكريبتات الديمو)
+- **OpenJDK 21 LTS** و**Firebase CLI** (لتشغيل اختبارات قواعد الأمان على Emulators)
 
-### 1. Install Dependencies & Provision Local Ignored Native Configs
+### 1) تثبيت الحزم وتشغيل التطبيق
 ```powershell
 flutter pub get
 Push-Location functions; npm install; Pop-Location
 
-# Idempotently provision Firebase Auth (Email/Password) and localhost/127.0.0.1 authorizedDomains
-powershell -ExecutionPolicy Bypass -File scripts/provision_firebase_auth.ps1
-
-# Seed live Firestore demo cases across all 11 WorkRequestStatus values, grant superAdmin claim to QB0hyc4BVZTkr91EC9KUd2EFbCw1, and verify readback
-powershell -ExecutionPolicy Bypass -File scripts/seed_demo_all_cases.ps1 -DeployRulesAndIndexes
-powershell -ExecutionPolicy Bypass -File scripts/seed_demo_all_cases.ps1 -VerifyOnly
-
-# Optional (for native Android/iOS builds): fetch gitignored google-services.json & GoogleService-Info.plist
-# and generate gitignored android/upload-keystore.jks + android/key.properties
-powershell -ExecutionPolicy Bypass -File scripts/fetch_firebase_configs.ps1
-powershell -ExecutionPolicy Bypass -File scripts/generate_upload_keystore.ps1
-```
-
-### 2. Run Customer App & All-Cases Demo Showcase
-```powershell
-# Default: connects directly to Firebase project mashwar-qatar-2026-ec99d
-# In development builds, HomeScreen displays a compact "Load All Demo Cases (14)" toggle (WorksiteProvider.activateDemoShowcase)
+# تشغيل تطبيق المستخدم متصلاً بـ Firebase الحي (mashwar-qatar-2026-ec99d)
 flutter run -d chrome
 
-# Explicit local development with dev mock data (APP_ENV=development & USE_FIREBASE=false)
+# تشغيل لوحة الإدارة المستقلة
+flutter run -t lib/admin_main.dart -d chrome
+
+# تشغيل ببيانات تطوير محلية بدون اتصال بـ Firebase (للتطوير فقط)
 flutter run -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
 ```
 
-#### Demo Dataset, Admin Claim & Deterministic Handover Test Codes
-- **Primary Seeded Auth & Admin Account:** UID `QB0hyc4BVZTkr91EC9KUd2EFbCw1` (`abdelrahmanmahana01@gmail.com`) provisioned with Firebase Auth custom claim `{ "admin": true, "role": "superAdmin" }`, active `admin_staff/QB0hyc4BVZTkr91EC9KUd2EFbCw1`, and an approved `provider_profiles` entry (`MashwarDemoCasesCatalog`).
-- **All-Cases Demo Coverage (`lib/data/demo/demo_cases_catalog.dart`):** 14 Qatar worksite supply requests covering all **11** `WorkRequestStatus` values, all **7+** Qatar municipalities/hubs, both `PaymentMethod`s (`cash_on_delivery`, `bank_transfer_manual`), all **4** `PaymentSettlementStatus` values, 8 providers across all **4** `ProviderApprovalStatus` values, 3 `SavedWorksite`s, 3 competing offers on `demo_wr_03_offers_mine` (13 live `work_offers` seeded across active/completed/disputed requests), timelines, ratings, bilingual notifications, Qatar `investor_inquiries`, and `admin_audit_logs` (`99 / 99` documents verified in live Firestore).
-- **Spark-Safe Behavior:** `FirebaseWorksiteRepository` executes client-permitted Firestore operations directly when Cloud Functions v2 return `not-found`/`unavailable` on Spark, while throwing clear bilingual `WorksiteRepositoryException`s for Blaze/Admin-SDK gated actions (`acceptWorkOffer`, `verifyHandoverAndComplete`, `submitOffer` `offerCount` update, `verified_settled`).
-- **6-Char Handover Verification Test Codes (Salted SHA-256):**
-  - `demo_wr_06_accepted`: `K7M4P9`
-  - `demo_wr_07_in_prog`: `Q9R3W8`
-  - `demo_wr_08_picked_up`: `M4N8X2`
-  - `demo_wr_09_transit`: `H6P2V5`
-  - `demo_wr_10_deliv_pend`: `T5K9B3` *(assigned to `QB0hyc4BVZTkr91EC9KUd2EFbCw1` as provider so you can verify `delivered_pending_confirmation -> completed`)*
-
-### 3. Run Admin Operations Portal (`Module 13: Worksite Supply Ops`)
+### 2) بناء نسخة الإنتاج الكاملة (التطبيق + لوحة الإدارة)
 ```powershell
-# Default: live Firebase staff auth mode (verifies active Firestore admin_staff/{uid} record)
-flutter run -t lib/admin_main.dart -d chrome
+powershell -ExecutionPolicy Bypass -File scripts/build_platform.ps1 -AppEnv production
+```
+ينتج السكريبت تطبيق المستخدم في `build/web` ولوحة الإدارة في `build/web/admin` مع ملف الفحص `build/web/health.json`.
 
-# Dev-mock staff mode (local testing only)
-flutter run -t lib/admin_main.dart -d chrome --dart-define=APP_ENV=development --dart-define=USE_FIREBASE=false --dart-define=USE_DEV_MOCKS=true
+### 3) تشغيل صفحة الهبوط (Landing Page)
+```powershell
+powershell -ExecutionPolicy Bypass -File run_landing_page.bat
+# أو مباشرة:
+npx serve -l tcp://127.0.0.1:8088 --no-port-switching -n landing_page
 ```
 
-### 4. Run Static Analysis, Unit/Widget Suites & Live Emulator Security Tests
+### 4) زرع 5 حسابات ديمو حقيقية ومترابطة على Firebase للتجربة
+للتبديل بين حسابات مختلفة (طالب توريد، مزود معتمد، مسافرة سيدات فقط، حساب جديد نظيف، ومشرف إدارة):
 ```powershell
-flutter analyze --no-pub
-flutter test --no-pub                                           # 161/161 passing (incl. Wave 9 International 3-Services E2E suite)
-Push-Location functions; npm run build; npm test; Pop-Location  # 11/11 passing
-powershell -ExecutionPolicy Bypass -File scripts/run_emulators_tests.ps1  # 10/10 live Firestore + Storage suites passing
-flutter build web --release --dart-define=USE_FIREBASE=true                                              # Production consumer web bundle
-flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin --dart-define=USE_FIREBASE=true  # Admin web bundle
+powershell -ExecutionPolicy Bypass -File scripts/seed_multi_account_demo.ps1
 ```
 
-### Wave 9 International 3-Service Architecture & Global Brand Summary
-- **Three Unified Bidirectional Services:**
-  1. **Shared Trips & Empty Seats (`سفر ومقاعد تشاركية`):** 3-step `PublishRideScreen` traveler wizard (`1..6` empty seats, flexible `5..2000` contribution, optional stopover, and **"Carry Parcels / Items Along Your Route"** toggle) synced across `RidesProvider` & `BoardProvider`, paired with `TripsAndParcelsHubScreen` (`hub_tab_trips` & `hub_tab_requests`), `PostAdScreen`, and `MakeOfferSheet`.
-  2. **Parcels & Items on the Way (`طرود وأغراض مع مسافر`):** 3-step `SendParcelScreen({ride, initialFromCity, initialToCity})` supporting direct dispatch with a parcel-friendly traveler (`RideDetailsScreen` dual CTA `ride_details_send_parcel_btn`) or standalone open route requests mirrored to `BoardProvider`, plus `ParcelTrackingScreen` displaying **dual 4-digit Pickup & Delivery OTPs**.
-  3. **Smart Shopping, Supply & Errands (`شراء وتوريد ومهام خاصة`):** `CreateWorkRequestScreen`, `WorkRequestsFeedScreen`, and `WorkRequestDetailsScreen` with verified store receipts, `MoneyMinor` integer accounting, and 6-character salted SHA-256 handover verification.
-- **3-Step Visual Journey, Wizard Headers & 5-Tab Navigation:** Added `MashwarThreeStepsBanner`, `MashwarWizardStepHeader` (`1 -> 2 -> 3` step pills), custom duotone `MashwarServicePillarIcon` vector emblems, and the 5-tab `MainNavShell` (`الرئيسية` / `Home`, `الرحلات والطرود` / `Trips & Parcels`, `التوريد والمهام` / `Supply & Tasks`, `نشاطي` / `My Activity` with `All`/`Trips`/`Parcels`/`Supply` filters, and `حسابي` / `Account`).
-- **Complete Removal of Regional Sadu & Lock-In Chrome:** Neutralized `QatarSaduAccentBar` (`SizedBox.shrink()` -> `0.0` height) and removed regional maroon/Sadu strips and single-vertical lock-in phrasing across `HomeScreen` (`"إلى أين مشوارك أو طلبك اليوم؟"` / `"Where does your journey take you today?"`), `WelcomeScreen`, `SplashScreen`, `EmailInputScreen`, `CitySearchModal` (1-tap custom city entry), `ServiceEscrowScreen`, and `WalletScreen`.
+---
 
-### Wave 8 UI/UX & Marketplace Polish Summary
-- **Photography & Custom Vector System:** Added `assets/images/mvp_hero_lusail_supply.jpg` and `assets/images/cat_tools_ppe.jpg`, plus `lib/core/widgets/mashwar_worksite_icons.dart` (`MashwarCategoryIcon`, `MashwarCategoryVisualBanner` with photography + `electrical`/`plumbing` `CustomPainter` dioramas, and `MashwarTrustEmblem`) and `lib/core/widgets/mashwar_animations.dart` (`MashwarShimmerBox`, `MashwarHoverCard`, `MashwarWorksiteStatusStepper`, `MashwarAttachmentThumbnail`, `MashwarImagePreviewDialog`).
-- **Feed, Create & Details Upgrades:** Added search/category/perspective filters & `WorksiteSortOption` sorting on `WorkRequestsFeedScreen`; 4 1-tap Qatar templates, custom deadline picker, and live QAR cost calculator (`create_live_cost_summary`) on `CreateWorkRequestScreen`; and status stepper, smart offer comparison badges (`Lowest Price`, `Fastest ETA`, `Top Rated`), requester `cancelRequest`, and provider `withdrawOffer` on `WorkRequestDetailsScreen`.
-- **Home, Shell & Account Compliance:** Upgraded `HomeScreen` (Lusail hero, category grid, live `QatarLiveMapCanvas` corridor map, trust pillars, clickable notifications strip), `MainNavShell` (unread badges & activity role filters/steppers), real `NotificationsCenterScreen` (`WorksiteNotificationItem`, unread filter, mark-read/mark-all-read, navigation to `WorkRequestDetailsScreen`), `WelcomeScreen`, and Qatar MVP `UserProfileScreen` / `HelpSupportScreen` (`+974 4400 9999`, `ops@mashwar.qa`).
+## التحقق والاختبارات الآلية
+
+| المسار | الأمر | النتيجة المؤكدة |
+| :--- | :--- | :--- |
+| التحليل الساكن (Flutter) | `flutter analyze --no-pub` | **0 أخطاء / 0 تحذيرات** |
+| اختبارات Flutter (الوحدة والواجهات والخرائط والإدارة) | `flutter test --no-pub` | **200 / 200 ناجح** |
+| اختبارات أمان Cloud Functions v2 | `Push-Location functions; npm run build; npm test; Pop-Location` | **11 / 11 ناجح** |
+| اختبارات قواعد Firestore & Storage على Emulator | `powershell -File scripts/run_emulators_tests.ps1` | **10 / 10 ناجح** |
 
 ---
 
-## 5. Remaining External & Pre-Launch Operational Gates
+## خطوات ما قبل الإطلاق التجاري في قطر
 
-All in-repository MVP code, security rules, media upload pipelines, `+974` Phone Auth integration, `deleteUserAccount` erasure, native Firebase app registrations (`1:820084343406:android:a9e464e38a988eddd35c7f`, `1:820084343406:ios:5073f983643cc020d35c7f`, `1:820084343406:web:ad6ce9779a06584bd35c7f`), release signing configs, and live emulator suites are implemented and verified. Remaining gates are external operational/legal steps documented in [`docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md`](docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md):
-
-1. **Firebase Console SMS Billing, App Attestation & Live `+974` SIM Verification:** `+974` Firebase Phone Auth (`signInWithPhoneNumber` on Web, `verifyPhoneNumber` on Android/iOS) is wired with bilingual fallback to Email + Password, but live SMS delivery requires upgrading `mashwar-qatar-2026-ec99d` to the Firebase Blaze plan, enabling Phone Auth with a Qatar-only (`+974`) SMS region allowlist, registering Android SHA-1/SHA-256 fingerprints + iOS APNs `.p8` key + reCAPTCHA Enterprise, and verifying OTP delivery on physical Ooredoo/Vodafone Qatar SIMs.
-2. **Signed Native Store Artifacts & Store Console Review:** Release Gradle signing (`android/app/build.gradle.kts` + `proguard-rules.pro`), iOS `qa.mashwar.app` bundle/privacy strings (`ios/Runner/Info.plist`), and local provisioning scripts (`fetch_firebase_configs.ps1`, `generate_upload_keystore.ps1`) are ready, while building production `.aab` / `.ipa` store binaries requires an Android SDK release host and macOS/Xcode Apple Developer signing host, plus Google Play Console / App Store Connect review.
-3. **Qatar MoCI Trademark Clearance:** Complete prior-art search and Nice Classes 35, 39, and 42 trademark registration for **MASHWAR / مشوار** via the Qatar Ministry of Commerce and Industry (MoCI) Single Window (`investor.sw.gov.qa`) prior to public commercial launch.
-4. **Qatar MoT & QCB Regulatory Authorization (Deferred Phase 2 Flags):** Keep `enablePassengerRides`, `enableCarpooling`, `enableCommercialCargo`, `enableDigitalWallet`, and `enableEscrowClaims` set to `false` until formal Ministry of Transport (MoT) permits and Qatar Central Bank (QCB) PSP/escrow authorizations are obtained.
-
----
-
-## 6. Documentation Index
-- [MVP Implementation & Verification Report](docs/MVP_IMPLEMENTATION_REPORT.md)
-- [Qatar Compliance, Trademark & Mobile Release Playbook](docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md)
-- [Backend Architecture](docs/backend/ARCHITECTURE.md)
-- [Cloud Firestore Database Schema (Collections 1–29)](docs/backend/DATABASE_SCHEMA.md)
-- [Callable Cloud Functions v2 & State Machine API](docs/backend/API_AND_FUNCTIONS.md)
-- [Security Architecture, Rules & Governance](docs/backend/SECURITY.md)
-- [Firebase & Local Emulator Setup](docs/backend/FIREBASE_SETUP.md)
-- [Google Maps & Qatar Geo-Catalog Setup](docs/backend/GOOGLE_MAPS_SETUP.md)
-- [Implementation Status Matrix](docs/backend/IMPLEMENTATION_STATUS.md)
-- [Testing & Verification Report](docs/backend/TESTING_REPORT.md)
-- [Interactive Controls Matrix](docs/backend/INTERACTIVE_CONTROLS_MATRIX.md)
+الكود والبنية الأساسية جاهزة ومختبرة، وتبقى 4 خطوات تشغيلية وقانونية خارج الكود موثّقة بالتفصيل في [`docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md`](docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md):
+1. **ترقية مشروع Firebase لخطة Blaze** لنشر Cloud Functions v2 وتفعيل رسائل SMS القطرية (`+974`) مع اختبارها على شرائح Ooredoo / Vodafone.
+2. **تسجيل العلامة التجارية (مشوار / MASHWAR)** لدى وزارة التجارة والصناعة القطرية (MoCI) قبل الإطلاق التجاري العام.
+3. **إصدار نسخ المتاجر الموقّعة (`.aab` / `.ipa`)** ورفعها لمراجعة Google Play وApp Store Connect.
+4. **استكمال موافقات وزارة المواصلات (MoT) ومصرف قطر المركزي (QCB)** قبل تفعيل وحدات المحفظة المالية أو الضمان المالي المحتجز المؤجلة.
 
 ---
 
-## License
+## فهرس التوثيق
 
-Released under the **MIT License**. © 2026 MASHWAR (مشوار).
+- [نظرة عامة شاملة بالعربية على فكرة المشروع](MASHWAR_PROJECT_OVERVIEW_AR.md)
+- [تقرير التنفيذ والتحقق الهندسي](docs/MVP_IMPLEMENTATION_REPORT.md)
+- [دليل الامتثال القطري وخطة الإطلاق](docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md)
+- [معمارية الباك إند](docs/backend/ARCHITECTURE.md)
+- [مخطط قاعدة البيانات (29 مجموعة Firestore)](docs/backend/DATABASE_SCHEMA.md)
+- [واجهة الدوال السحابية وآلة الحالات](docs/backend/API_AND_FUNCTIONS.md)
+- [الأمان وقواعد Firestore وStorage](docs/backend/SECURITY.md)
+- [إعداد Firebase وEmulators](docs/backend/FIREBASE_SETUP.md)
+- [إعداد خرائط جوجل ومحرك الخريطة الحية](docs/backend/GOOGLE_MAPS_SETUP.md)
+- [مصفوفة حالة التنفيذ](docs/backend/IMPLEMENTATION_STATUS.md)
+- [تقرير الاختبارات والتحقق](docs/backend/TESTING_REPORT.md)
+- [دليل صفحة الهبوط والمستثمرين](landing_page/README.md)
+
+---
+
+© 2026 **MASHWAR (مشوار)** — MIT License.

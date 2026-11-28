@@ -1,20 +1,17 @@
-# MASHWAR (مشوار — Qatar) Investor & Platform Landing Page (v2.4.0)
+# MASHWAR (مشوار) — Landing Page & Investor Preview
 
-Self-contained, bilingual (**Arabic RTL / English LTR**) investor & Startup Qatar landing page synchronized with **MASHWAR Qatar v2.4.0**, showcasing the 6-in-1 community services platform, Bilateral Financial Escrow, 12-module Enterprise Admin & DevOps/SRE Command Center, and Qatar corridor unit economics.
+Bilingual (**Arabic RTL / English LTR**) product & investor landing page for **MASHWAR**, updated to reflect the live 3-pillar platform, the embedded Uber-style live Qatar route map, fresh Retina app & admin screenshots, and the live Firebase inquiry form.
 
-## Architecture (8 Executive Chapters)
-1. **Hero & Business Proof Strip** — Animated Qatar corridor network SVG, floating mobile Super-App preview (`10_tab_home_screen.png`), and verified proof metrics (`6-in-1`, `0 QAR` free post with Escrow protection, `2–4h` delivery, `M21` EBITDA breakeven, `90/90` passing automated tests · `1,539` Firestore rule lines · `12` Admin/DevOps modules).
-2. **Interactive Qatar Corridor Economics** — 5 clickable Qatar corridors (`Doha ↔ Al Khor`, `Industrial Area ↔ Lusail`, `Doha ↔ Mesaieed`, `Industrial Area ↔ Al Wakrah`, `Doha ↔ Dukhan`) with uncropped visual framing (`16:9`) comparing shared seat fares, live-receipt site supply / OTP parcel speed, and provider yields.
-3. **6-in-1 Community Services & Bilateral Escrow Shield** — Equal-weight marketplace covering Store Buy & Deliver with Live Receipt (`18%`), Engineer & Worksite Supply (`18%`), On-Route Paperwork & Parcels (`18%`), Nurseries & Daily Commutes (`11%`), Shared Inter-District Seats (`11%`), and Commercial Micro-Cargo / B2B SaaS (`$79/mo + 18%`), followed by the 4-step **Bilateral Financial Escrow (`Fawran`, `QPay / Himyan`, `SkipCash`, `Apple Pay`)** anti-fraud protection card.
-4. **Interactive Mobile & 12-Module Enterprise Admin/DevOps Console** — 6+3 interactive mobile preview screens (`Home`, `#QA Bilateral Escrow`, `Board`, `0 QAR Post`, `Details`, `Wallet`, `OTP Tracking`, `QID Plate KYC`, `Qatar 999 SOS`) plus a 6-tab Browser stage (`Executive KPIs & Qatar Map`, `6-Service Dynamic Pricing`, `#QA Escrow & Gateways`, `DevOps SRE Dark NOC Mode`, `Consumer Web`, `Web Escrow`) and direct local launch controls.
-5. **Competitive Positioning Matrix & Technical Due Diligence** — 7-row comparison vs Uber/Karwa, Aramex/Q-Post, and WhatsApp groups + cursor-spotlight engineering cards (`8` `AppRepositories` contracts, `1,539` Firestore security rules across `18` collections, `90/90` automated tests, CI/CD & `/health.json`).
-6. **Investor Data Room (36-Month Operating Model)** — Scenario (`Base` / `Stress -30%`) and Currency (`USD` / `QAR @ 3.64`) switches driving TAM/SAM/SOM cards (`$272.50M` / `$59.95M` / `$3.02M GMV`), 3 interactive SVG charts, interactive Corridor Simulator, 3-Year P&L table, and QDB tranches (`$450K`).
-7. **Founder Spotlight & Doha Hiring Roadmap** — Abdelrahman Mahana's solo full-stack engineering track record + Tranche 1–3 Doha hires.
-8. **Cross-Platform App Access, Live Portal Launch & Investor Inquiry Form** — TestFlight / Android APK / live Consumer Web (`http://localhost:8080/`) / 13-Module Admin & DevOps (`http://localhost:8080/admin/`) + Firebase-connected investor inquiry form (`js/firebase-contact.js` -> Cloud Firestore `investor_inquiries` in `mashwar-qatar-2026-ec99d` + instant email alerts to `abdelrahmanmahana01@gmail.com`).
+## What's Inside
+1. **Hero & Live Proof Strip** — Plain-spoken overview of MASHWAR's 3 services (Shared Trips, Route Parcels with dual 4-digit OTPs, and Smart Worksite Supply with live receipts & 6-char SHA-256 handover codes) backed by verified engineering stats (`200/200` Flutter tests, `11/11` Cloud Functions security tests, `10/10` live Emulator rules tests, `14` Admin modules).
+2. **Interactive Qatar Corridors + Live Uber-Style Map (`maps/mashwar_uber_map.html`)** — Click any of the 5 key corridors (`Doha ↔ Al Khor`, `Industrial Area ↔ Lusail`, `Doha ↔ Mesaieed`, `Industrial Area ↔ Al Wakrah`, `Doha ↔ Dukhan`) to watch the embedded map auto-fit the full route on live Google Maps + traffic tiles with an animated vehicle icon alongside real time and cost benchmarks.
+3. **3 Core Services + Direct Settlement & Safety Flow** — Clear breakdown of how Shared Trips, Route Parcels, and Worksite Supply work day-to-day, plus the 4-step verification loop (QID check, live store receipt photo, 6-char SHA-256 / 4-digit OTP handover, direct Cash or verified Bank Transfer proof).
+4. **Live App & 14-Module Admin Walkthrough** — Fresh Retina screenshots from the actual running Consumer Web App (Home Uber map, Full-Screen Traffic Map, Ride Details, Worksite Supply) and the newly updated Operations Admin Portal, with direct local preview buttons.
+5. **Comparison Matrix, Technical Readiness & 36-Month Investor Model** — Interactive `Base` / `Stress (-30%)` and `USD` / `QAR` financial charts, corridor economics simulator, founder roadmap, and the live Firebase contact form (`js/firebase-contact.js` -> `investor_inquiries` in `mashwar-qatar-2026-ec99d`).
 
 ## Local Preview
-Run `run_landing_page.bat` from the repository root, or run:
-```bash
-npx serve -l tcp://127.0.0.1:8088 -l tcp://[::1]:8088 --no-port-switching -n landing_page
+Run `run_landing_page.bat` from the repository root, or serve directly:
+```powershell
+npx serve -l tcp://127.0.0.1:8088 --no-port-switching -n landing_page
 ```
-Then open `http://localhost:8088`.
+Then open `http://127.0.0.1:8088`.

@@ -1,73 +1,40 @@
-# Comprehensive Testing & Verification Report — MASHWAR Platform
-## Observed Static Analysis, Flutter Test Suites & Cloud Functions v2 Security Tests
+# Testing & Verification Report — MASHWAR Platform
 
-### 1. Verification Environment & Toolchain
-All measurements below were executed against branch `feat/mvp-worksite-supply` on Windows PowerShell 5.1:
-
-| Tool / Runtime | Observed Version / State | Notes |
-| :--- | :--- | :--- |
-| **Flutter SDK** | `Flutter 3.47.9` (channel `stable`) / `Dart 3.x` | Used for `flutter analyze` and `flutter test`. |
-| **Node.js** | `v24.19.0` | Used for `functions/` TypeScript build (`tsc`) and `node:test` security suite. |
-| **Java Runtime (`java`)** | **Not installed in `PATH`** | Blocks local JVM Firestore & Storage Emulator startup on this host. |
-| **Firebase CLI (`firebase`)** | **Not installed in `PATH`** | Blocks `firebase emulators:exec` on this host until `firebase-tools` + JRE are installed. |
+This document tracks the real automated checks, emulator rule tests, and live browser QA runs executed against the repository.
 
 ---
 
-### 2. Cloud Functions v2 Build & Security Suite (`functions/`)
+## 1. Toolchain Used
+- **Flutter SDK:** `3.47.9` (`stable`) / Dart `3.x`
+- **Node.js:** `v24.19.0` (Cloud Functions v2 build & `node:test` suites)
+- **OpenJDK:** `21.0.13.1` LTS + **Firebase CLI** (`15.37.0+`) for local Firestore & Storage Emulator runs
+- **Live Browser QA:** Headless Microsoft Edge CDP at `1440×900 @ 2x` (Retina)
 
-Executed inside [`functions/`](../../functions):
+---
+
+## 2. Automated Test Summary
+
+| Suite | Command | Result | Coverage |
+| :--- | :--- | :---: | :--- |
+| **Flutter Static Analysis** | `flutter analyze --no-pub` | **0 issues** | Full `lib/` and `test/` tree |
+| **Flutter Unit, Widget & E2E Tests** | `flutter test --no-pub` | **200 / 200 passed** | Models, `MoneyMinor`, state machines, clean new-user onboarding, 3-service E2E flows, Uber in-app map URLs/modes, 14-module Admin RBAC & multi-viewport zero-overflow checks |
+| **Cloud Functions v2 Security Suite** | `Push-Location functions; npm run build; npm test; Pop-Location` | **11 / 11 passed** | Auth enforcement, self-bidding guard, approved-provider gate, linear status transitions, salted SHA-256 handover (wrong/exhausted/expired/reused), settlement lock, ratings, admin RBAC & `deleteUserAccount` |
+| **Live Firestore & Storage Emulator Suite** | `powershell -File scripts/run_emulators_tests.ps1` | **10 / 10 passed** | Live rule evaluation across `firestore.rules` (Collections `1–29`) & `storage.rules` (`<= 10 MB` private KYC/invoice ACLs) |
+
+---
+
+## 3. Production Web Build & Live Browser Verification
+
+Built cleanly via:
 ```powershell
-Push-Location functions
-npm run build
-npm test
-Pop-Location
+powershell -ExecutionPolicy Bypass -File scripts/build_platform.ps1 -AppEnv production
 ```
-
-- **TypeScript Compilation (`npm run build` / `tsc`):** Exit code `0` (`0` errors; `functions/node_modules/` and `functions/lib/` remain gitignored with `0` tracked build artifacts).
-- **Security & State Machine Suite (`node --test test/backend_security.test.mjs`):**
-  - **Total Tests:** `10`
-  - **Passed:** `10` (`0` failed)
-  - **Verified Security & Domain Scenarios:**
-    1. Unauthenticated callers rejected (`unauthenticated`) across all 9 callables.
-    2. `createWorkRequest` enforces positive integer `budgetMinor` (`1 QAR = 100 dirhams`) and blocks forged initial `paymentStatus`.
-    3. `submitWorkOffer` blocks requester self-bidding and rejects unapproved providers (`approvalStatus != 'approved'`).
-    4. `acceptWorkOffer` enforces requester ownership, rejects non-pending/foreign offers, marks competing offers `rejected`, and mints salted SHA-256 secret + requester handover view.
-    5. `transitionWorkRequestStatus` enforces linear provider fulfillment (`accepted -> in_progress -> picked_up -> in_transit -> delivered_pending_confirmation`), blocks requester direct `completed` transitions, and enforces pre-pickup cancellation rules.
-    6. `verifyHandoverAndComplete` performs constant-time SHA-256 matching, decrements `attemptsRemaining` on wrong codes, and rejects wrong, exhausted (`0` remaining), expired (`> 24h`), and reused (`usedAtUtc != null`) handover codes.
-    7. Valid handover verification transitions request to `completed`, stamps `usedAtUtc`, and increments provider `completedTasksCount`.
-    8. `recordPaymentStatus` enforces `unpaid -> transfer_proof_submitted -> verified_settled` and rejects any overwrite once `verified_settled`.
-    9. `submitRequestRating` enforces completed-request participant scope, deterministic single-rating ID (`${requestId}_${uid}`), and running average updates (`ratingAvg`, `ratingCount`).
-    10. `adminReviewProvider` and `adminModerateWorkRequest` verify active `admin_staff/{uid}` role permissions, enforce mandatory rejection/suspension reasons, and append immutable `admin_audit_logs`.
+- **Consumer Web App (`build/web`):** Verified live at `http://127.0.0.1:8080/` across brand-new user signup (`0` fake notifications, `0.00 QAR` wallet, clean onboarding checklist), all 5 live Firebase demo accounts (`requester.demo@mashwar.qa`, `provider.demo@mashwar.qa`, `traveler.demo@mashwar.qa`, `fresh.demo@mashwar.qa`, `admin.demo@mashwar.qa`), and live Uber-style embedded maps (`HomeScreen`, full-screen map, `RideDetailsScreen`, `WorkRequestDetailsScreen`) with **0 console errors** and **0 external tabs opened**.
+- **Admin Operations Portal (`build/web/admin`):** Verified live at `http://127.0.0.1:8080/admin/` with Firebase staff auth guard (`admin_staff/{uid}`), Cairo Arabic typography, live Uber corridor traffic map, Worksite Supply Ops (`Module 13`), and Landing Page Inquiries (`Module 12`).
+- **Vendored Map Assets:** Verified `HTTP 200` on `/maps/mashwar_uber_map.html`, `/maps/leaflet/leaflet.js`, and `/maps/leaflet/leaflet.css` in both consumer and admin bundles.
 
 ---
 
-### 3. Flutter Static Analysis & Automated Test Suite (`test/`)
-
-Executed at repository root:
-```powershell
-flutter analyze
-flutter test
-```
-
-- **`flutter analyze`:** Exit code `0` — **`No issues found!`** (`0` errors, `0` warnings).
-- **`flutter test` (Wave 3A Integration Baseline `a90c86f5`):** **`126 / 126` tests passing** (`0` failures), with additional customer Worksite Supply UI widget tests landing in Wave 3B (`test/mvp_worksite_ui_test.dart`):
-  - [`test/mvp_models_and_auth_test.dart`](../../test/mvp_models_and_auth_test.dart): Verifies `AppEnvironment` flavor/mock boundaries, `MoneyMinor` integer parsing/formatting, `WorkRequestStatusMachine` role guards, neutral `UserModel` defaults, `AuthProvider` unauthenticated startup, 11-digit Qatar QID validation, `+974` `[3567]xxxxxxx` phone validation, disabled SMS OTP `UnsupportedError`, and wallet mutation lockouts.
-  - [`test/mvp_worksite_provider_and_repo_test.dart`](../../test/mvp_worksite_provider_and_repo_test.dart) & [`test/firebase_repositories_test.dart`](../../test/firebase_repositories_test.dart): Verifies `WorksiteProvider` & repository persistence across reloads, ownership enforcement, approved-provider gating, municipality/budget/status filters, network/callable error propagation (`WorksiteRepositoryException`), salted SHA-256 handover verification (wrong/expired/reused codes), Quick Reorder draft prefill, and `ServiceUnavailableScreen` fail-closed startup.
-  - [`test/admin_enterprise_devops_test.dart`](../../test/admin_enterprise_devops_test.dart) & [`test/admin_web_test.dart`](../../test/admin_web_test.dart): Verifies unauthenticated `/admin` route guard -> `AdminLoginScreen`, Firebase `admin_staff/{uid}` role derivation & audit logging, Module `13` (`AdminWorksiteOpsScreen`) QID review + payment settlement verification + audit export, and 14-module 4-viewport zero-overflow checks.
-  - Bilingual RTL/LTR, localization, onboarding, and responsive layout suites across `test/*_test.dart`.
-
----
-
-### 4. CI/CD Build Verification (`.github/workflows/mashwar_ci_cd.yml`)
-The GitHub Actions workflow validates:
-1. `flutter pub get` -> `flutter analyze` -> `flutter test --reporter expanded`
-2. Consumer Web release bundle: `flutter build web --release --base-href /`
-3. Standalone Admin Portal release bundle: `flutter build web --release -t lib/admin_main.dart --base-href /admin/ -o build/web/admin`
-4. Manifest & health check assertions (`build/web/index.html`, `build/web/admin/index.html`, `build/web/health.json`).
-
----
-
-### 5. Explicitly Untested / Blocked Scenarios (Pending Host & Cloud Provisioning)
-1. **JVM Firestore & Storage Rules Emulator Suite:** Not yet executed on this workstation because `java` and `firebase-tools` are not installed in `PATH`. Once installed, run `firebase emulators:exec --only auth,firestore,functions,storage "..."` to execute live security-rule integration assertions against `firestore.rules` and `storage.rules`.
-2. **Live `+974` SMS OTP Delivery:** Disabled in `FirebaseAuthRepository` (`UnsupportedError`) until an SMS provider and Firebase Phone Auth quota are provisioned.
-3. **Physical Device Native Camera/Storage Upload:** Requires `firebase_storage`, `image_picker`, `google-services.json`, and `GoogleService-Info.plist` on Android/iOS hardware.
+## 4. Remaining External Pre-Launch Checks
+1. **Physical `+974` SIM SMS OTP Verification:** Code is wired (`FirebaseAuthRepository`), pending Firebase Blaze upgrade and Qatar SMS region allowlist testing on live Ooredoo/Vodafone SIMs.
+2. **Signed Native Store Binaries (`.aab` / `.ipa`):** Release configs and provisioning scripts are in place; store submission binaries require dedicated Android SDK & macOS/Xcode signing hosts.

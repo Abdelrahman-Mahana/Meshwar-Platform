@@ -2,15 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/mashwar_animations.dart';
+import '../../core/widgets/mashwar_embedded_google_map.dart';
+import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/qatar_live_map_canvas.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
 import 'widgets/admin_ui_kit.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   final ValueChanged<int>? onJumpToModule;
 
   const AdminDashboardScreen({super.key, this.onJumpToModule});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  bool _useLiveUberMap = true;
+  bool _showTraffic = true;
+  MashwarMapVehicleMode _previewMode = MashwarMapVehicleMode.supply;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +32,10 @@ class AdminDashboardScreen extends StatelessWidget {
 
     final openDisputesCount = admin.disputes.where((d) => d.status == 'مفتوح').length;
     final pendingDriversCount = admin.driverRequests.where((r) => r.status == 'قيد المراجعة').length;
-    final enabledFlags = admin.featureFlags.where((f) => f.isEnabled && !f.isKillSwitch).length;
+    final pendingWorksiteKyc = admin.pendingVerificationsCount;
+    final pendingProofsCount = admin.pendingPaymentProofsCount;
+    final newInquiriesCount = admin.newInquiriesCount;
+    final worksiteTotal = admin.worksiteRequests.length;
 
     return AdminPageBody(
       child: Column(
@@ -31,7 +46,7 @@ class AdminDashboardScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF0F2A43), Color(0xFF8A1538)],
+                colors: [Color(0xFF0F2A43), Color(0xFF155E63)],
                 begin: AlignmentDirectional.centerStart,
                 end: AlignmentDirectional.centerEnd,
               ),
@@ -51,8 +66,8 @@ class AdminDashboardScreen extends StatelessWidget {
                     Flexible(
                       child: Text(
                         isAr
-                            ? 'مركز عمليات مشوار قطر · ${admin.servicesCatalog.where((s) => s.isEnabled).length} خدمات · ${admin.corridors.length} محور حي · $enabledFlags Feature Flags'
-                            : 'MASHWAR Qatar Command · ${admin.servicesCatalog.where((s) => s.isEnabled).length} Services · ${admin.corridors.length} Corridors · $enabledFlags Flags',
+                            ? 'متابعة عمليات مشوار اليومية · 3 خدمات رئيسية · $worksiteTotal طلب توريد · ${admin.corridors.length} محور نشط'
+                            : 'MASHWAR Daily Operations · 3 Core Pillars · $worksiteTotal Supply Orders · ${admin.corridors.length} Corridors',
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5),
                       ),
                     ),
@@ -63,12 +78,12 @@ class AdminDashboardScreen extends StatelessWidget {
                   runSpacing: 6,
                   children: [
                     _bannerTag(
-                      isAr ? 'النطاق: ${admin.currentPeriod}' : 'Scope: ${admin.currentPeriod}',
+                      isAr ? 'الفترة: ${admin.currentPeriod}' : 'Period: ${admin.currentPeriod}',
                       AppColors.gold,
                     ),
                     _bannerTag(
                       'ENV: ${admin.activeEnvironment.toUpperCase()}',
-                      const Color(0xFF2DD4BF),
+                      const Color(0xFF5EEAD4),
                     ),
                   ],
                 ),
@@ -91,23 +106,25 @@ class AdminDashboardScreen extends StatelessWidget {
                   SizedBox(
                     width: cardWidth,
                     child: AdminKpiCard(
-                      title: isAr ? 'مستخدمون جدد' : 'New Users',
-                      value: '${admin.kpiNewUsers}',
-                      deltaText: admin.kpiNewUsersSubtext,
+                      title: isAr ? 'طلبات التوريد الميداني' : 'Worksite Supply Orders',
+                      value: '$worksiteTotal',
+                      deltaText: isAr
+                          ? '$pendingWorksiteKyc توثيق مزود · $pendingProofsCount تحويل'
+                          : '$pendingWorksiteKyc KYC · $pendingProofsCount transfers',
                       accentColor: t.accentTeal,
-                      icon: Icons.group_add_rounded,
-                      onTap: () => onJumpToModule?.call(2),
+                      icon: Icons.engineering_rounded,
+                      onTap: () => widget.onJumpToModule?.call(13),
                     ),
                   ),
                   SizedBox(
                     width: cardWidth,
                     child: AdminKpiCard(
-                      title: isAr ? 'رحلات منشورة' : 'Published Rides',
+                      title: isAr ? 'الرحلات المنشورة' : 'Published Rides',
                       value: '${admin.kpiPublishedRides}',
                       deltaText: admin.kpiPublishedRidesSubtext,
                       accentColor: t.accentPrimary,
                       icon: Icons.directions_car_filled_rounded,
-                      onTap: () => onJumpToModule?.call(3),
+                      onTap: () => widget.onJumpToModule?.call(3),
                     ),
                   ),
                   SizedBox(
@@ -118,29 +135,31 @@ class AdminDashboardScreen extends StatelessWidget {
                       deltaText: admin.kpiConversionRate,
                       accentColor: AppColors.gold,
                       icon: Icons.confirmation_number_rounded,
-                      onTap: () => onJumpToModule?.call(3),
+                      onTap: () => widget.onJumpToModule?.call(3),
                     ),
                   ),
                   SizedBox(
                     width: cardWidth,
                     child: AdminKpiCard(
-                      title: isAr ? 'طرود مسلّمة' : 'Delivered Parcels',
+                      title: isAr ? 'طرود مسلّمة بـ OTP' : 'OTP Delivered Parcels',
                       value: '${admin.kpiDeliveredParcels}',
                       deltaText: admin.kpiParcelSuccessRate,
                       accentColor: t.accentTeal,
                       icon: Icons.inventory_2_rounded,
-                      onTap: () => onJumpToModule?.call(3),
+                      onTap: () => widget.onJumpToModule?.call(3),
                     ),
                   ),
                   SizedBox(
                     width: cardWidth,
                     child: AdminKpiCard(
-                      title: isAr ? 'بلاغات مفتوحة' : 'Open Disputes',
-                      value: '$openDisputesCount',
-                      deltaText: isAr ? 'تحتاج مراجعة فورية' : 'Requires action',
+                      title: isAr ? 'بلاغات واستفسارات' : 'Disputes & Inquiries',
+                      value: '${openDisputesCount + newInquiriesCount}',
+                      deltaText: isAr
+                          ? '$openDisputesCount نزاع · $newInquiriesCount رسالة موقع'
+                          : '$openDisputesCount disputes · $newInquiriesCount inquiries',
                       accentColor: AppColors.coral,
-                      icon: Icons.warning_amber_rounded,
-                      onTap: () => onJumpToModule?.call(4),
+                      icon: Icons.mark_chat_unread_rounded,
+                      onTap: () => widget.onJumpToModule?.call(openDisputesCount > 0 ? 4 : 12),
                     ),
                   ),
                 ],
@@ -159,7 +178,7 @@ class AdminDashboardScreen extends StatelessWidget {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  isAr ? 'وصول تنفيذي سريع:' : 'Quick Operational Actions:',
+                  isAr ? 'مهام تحتاج مراجعتك الآن:' : 'Needs Your Review:',
                   style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 13),
                 ),
                 Wrap(
@@ -167,30 +186,30 @@ class AdminDashboardScreen extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     _quickActionBtn(
-                      icon: Icons.verified_user_rounded,
-                      label: isAr ? 'مراجعة السائقين ($pendingDriversCount)' : 'Verify Drivers ($pendingDriversCount)',
-                      color: AppColors.gold,
-                      onTap: () => onJumpToModule?.call(1),
-                    ),
-                    _quickActionBtn(
-                      icon: Icons.account_balance_wallet_rounded,
+                      icon: Icons.engineering_rounded,
                       label: isAr
-                          ? 'الضمان المالي (${admin.kpiActiveEscrowHoldQar.toStringAsFixed(0)} ر.ق)'
-                          : 'Escrow Holds (${admin.kpiActiveEscrowHoldQar.toStringAsFixed(0)} QAR)',
-                      color: AppColors.qatarMaroon,
-                      onTap: () => onJumpToModule?.call(10),
-                    ),
-                    _quickActionBtn(
-                      icon: Icons.grid_view_rounded,
-                      label: isAr ? 'إدارة الخدمات (${admin.servicesCatalog.length})' : 'Services (${admin.servicesCatalog.length})',
+                          ? 'التوريد الميداني ($pendingWorksiteKyc)'
+                          : 'Worksite Ops ($pendingWorksiteKyc)',
                       color: AppColors.teal,
-                      onTap: () => onJumpToModule?.call(8),
+                      onTap: () => widget.onJumpToModule?.call(13),
                     ),
                     _quickActionBtn(
-                      icon: Icons.terminal_rounded,
-                      label: isAr ? 'غرفة DevOps والـ Flags' : 'DevOps & SRE',
-                      color: const Color(0xFF4338CA),
-                      onTap: () => onJumpToModule?.call(11),
+                      icon: Icons.mark_email_unread_rounded,
+                      label: isAr ? 'رسائل الموقع ($newInquiriesCount)' : 'Inquiries ($newInquiriesCount)',
+                      color: AppColors.navy,
+                      onTap: () => widget.onJumpToModule?.call(12),
+                    ),
+                    _quickActionBtn(
+                      icon: Icons.verified_user_rounded,
+                      label: isAr ? 'السائقون ($pendingDriversCount)' : 'Drivers ($pendingDriversCount)',
+                      color: const Color(0xFFD97706),
+                      onTap: () => widget.onJumpToModule?.call(1),
+                    ),
+                    _quickActionBtn(
+                      icon: Icons.map_rounded,
+                      label: isAr ? 'المحاور الحية' : 'Live Corridors',
+                      color: const Color(0xFF0369A1),
+                      onTap: () => widget.onJumpToModule?.call(9),
                     ),
                   ],
                 ),
@@ -199,7 +218,7 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // GMV Telemetry Chart + Live Qatar Corridor Map
+          // GMV Telemetry Chart + Live Uber Corridor Map
           LayoutBuilder(
             builder: (context, constraints) {
               final isStacked = constraints.maxWidth < 960;
@@ -212,22 +231,22 @@ class AdminDashboardScreen extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            isAr ? 'مؤشر حجم المعاملات والضمان المالي (ر.ق)' : 'GMV & Bilateral Escrow Flow (QAR)',
+                            isAr ? 'حركة الطلبات والتسويات الأسبوعية (ر.ق)' : 'Weekly Order Volume & Settlements (QAR)',
                             style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
                           ),
                         ),
                         Text(
-                          '${admin.kpiNetPlatformCommissionQar.toStringAsFixed(1)} ${isAr ? "ر.ق عمولة" : "QAR Take"}',
+                          '${admin.kpiNetPlatformCommissionQar.toStringAsFixed(1)} ${isAr ? "ر.ق صافي" : "QAR Net"}',
                           style: TextStyle(color: t.accentTeal, fontWeight: FontWeight.w800, fontSize: 12),
                         ),
                       ],
                     ),
                     const SizedBox(height: 14),
-                    const AdminTelemetryLineChart(
-                      primarySeries: [1850, 2240, 2680, 2510, 3190, 3840, 4420],
-                      secondarySeries: [1200, 1480, 1790, 1720, 2140, 2610, 3050],
-                      labels: ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Today'],
-                      primaryColor: AppColors.qatarMaroon,
+                    AdminTelemetryLineChart(
+                      primarySeries: const [1850, 2240, 2680, 2510, 3190, 3840, 4420],
+                      secondarySeries: const [1200, 1480, 1790, 1720, 2140, 2610, 3050],
+                      labels: const ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Today'],
+                      primaryColor: t.isDark ? AppColors.gold : AppColors.navy,
                       secondaryColor: AppColors.teal,
                     ),
                   ],
@@ -238,34 +257,139 @@ class AdminDashboardScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 6,
                       children: [
-                        Expanded(
-                          child: Text(
-                            isAr ? 'شبكة المحاور والبلديات القطرية الحية' : 'Live Qatar Corridor Network',
-                            style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
-                          ),
+                        Text(
+                          isAr ? 'خريطة حركة المحاور الحية (قطر)' : 'Live Qatar Corridor Traffic Map',
+                          style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
                         ),
-                        TextButton(
-                          onPressed: () => onJumpToModule?.call(9),
-                          child: Text(isAr ? 'إدارة المحاور' : 'Manage'),
+                        Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: [
+                            TextButton.icon(
+                              onPressed: () => setState(() => _useLiveUberMap = !_useLiveUberMap),
+                              icon: Icon(
+                                _useLiveUberMap ? Icons.hub_rounded : Icons.map_rounded,
+                                size: 15,
+                              ),
+                              label: Text(
+                                _useLiveUberMap
+                                    ? (isAr ? 'مخطط' : 'Schematic')
+                                    : (isAr ? 'خريطة حية' : 'Live Map'),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => widget.onJumpToModule?.call(9),
+                              child: Text(
+                                isAr ? 'كل المحاور' : 'Corridors',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                    if (_useLiveUberMap) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          ChoiceChip(
+                            label: Text(
+                              isAr ? 'شاحنة توريد' : 'Supply',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _previewMode == MashwarMapVehicleMode.supply
+                                    ? Colors.white
+                                    : t.textPrimary,
+                              ),
+                            ),
+                            selectedColor: AppColors.navy,
+                            checkmarkColor: Colors.white,
+                            selected: _previewMode == MashwarMapVehicleMode.supply,
+                            onSelected: (_) => setState(() => _previewMode = MashwarMapVehicleMode.supply),
+                          ),
+                          ChoiceChip(
+                            label: Text(
+                              isAr ? 'رحلة سيارة' : 'Trip Car',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _previewMode == MashwarMapVehicleMode.trip
+                                    ? Colors.white
+                                    : t.textPrimary,
+                              ),
+                            ),
+                            selectedColor: AppColors.navy,
+                            checkmarkColor: Colors.white,
+                            selected: _previewMode == MashwarMapVehicleMode.trip,
+                            onSelected: (_) => setState(() => _previewMode = MashwarMapVehicleMode.trip),
+                          ),
+                          FilterChip(
+                            label: Text(
+                              isAr ? 'الزحمة الحية' : 'Traffic',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: _showTraffic ? Colors.white : t.textPrimary,
+                              ),
+                            ),
+                            selectedColor: AppColors.teal,
+                            checkmarkColor: Colors.white,
+                            selected: _showTraffic,
+                            onSelected: (v) => setState(() => _showTraffic = v),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.open_in_full_rounded, size: 13),
+                            label: Text(isAr ? 'تكبير' : 'Expand', style: const TextStyle(fontSize: 11)),
+                            onPressed: () => openMashwarInAppMap(
+                              context,
+                              titleAr: 'محور المنطقة الصناعية — لوسيل',
+                              titleEn: 'Industrial Area — Lusail',
+                              origin: 'المنطقة الصناعية',
+                              destination: 'لوسيل',
+                              vehicleMode: _previewMode,
+                              showTraffic: _showTraffic,
+                              stylePreset: t.isDark ? MashwarMapStylePreset.dark : MashwarMapStylePreset.google,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     SizedBox(
-                      height: 196,
+                      height: 220,
                       width: double.infinity,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: QatarLiveMapCanvas(
-                          style: t.isDark ? QatarMapStyle.darkExecutive : QatarMapStyle.light,
-                          activeFromCity: 'المنطقة الصناعية',
-                          activeToCity: 'لوسيل',
-                          showHubLabels: true,
-                          showCarTrails: true,
-                        ),
+                        child: _useLiveUberMap
+                            ? MashwarEmbeddedGoogleMap(
+                                key: ValueKey('admin_dash_map_${_previewMode.name}_$_showTraffic'),
+                                origin: 'المنطقة الصناعية',
+                                destination: 'لوسيل',
+                                vehicleMode: _previewMode,
+                                showTraffic: _showTraffic,
+                                stylePreset: t.isDark
+                                    ? MashwarMapStylePreset.dark
+                                    : MashwarMapStylePreset.google,
+                                height: 220,
+                                borderRadius: 12,
+                              )
+                            : QatarLiveMapCanvas(
+                                style: t.isDark ? QatarMapStyle.darkExecutive : QatarMapStyle.light,
+                                activeFromCity: 'المنطقة الصناعية',
+                                activeToCity: 'لوسيل',
+                                showHubLabels: true,
+                                showCarTrails: true,
+                              ),
                       ),
                     ),
                   ],

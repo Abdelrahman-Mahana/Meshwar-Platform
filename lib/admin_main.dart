@@ -77,8 +77,8 @@ class MashwarAdminWebApp extends StatelessWidget {
 
           return MaterialApp(
             title: settings.isArabic
-                ? 'مشوار · مركز القيادة والإدارة والـ DevOps'
-                : 'MASHWAR · Enterprise Command & DevOps Portal',
+                ? 'مشوار · لوحة إدارة العمليات'
+                : 'MASHWAR · Operations & Admin Portal',
             debugShowCheckedModeBanner: false,
             themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
             theme: baseTheme.copyWith(

@@ -1,71 +1,39 @@
-# Google Maps Platform & Qatar Geo-Catalog Setup — MASHWAR Platform
-## Location Search, Corridor Routing & Offline Fallback for Qatar Worksite Supply
+# Google Maps & Live In-App Map Engine — MASHWAR
 
-### 1. Overview
-[`GoogleMapsService`](../../lib/data/services/google_maps_service.dart) powers pickup supplier search, worksite destination selection, distance/ETA estimation, and reverse geocoding across the **State of Qatar**:
+## Overview
 
-1. **Live Google Maps Web Services (when `GOOGLE_MAPS_API_KEY` is provided):**
-   - **Places Autocomplete API:** Restricted strictly to Qatar via `components=country:qa` (`language=ar`).
-   - **Directions API:** Computes highway distance (`km`), duration (`minutes`), and route polyline across Qatar expressways (`region=qa`).
-   - **Geocoding API:** Reverse-geocodes GPS coordinates into formatted Qatari street/zone addresses.
-2. **Deterministic Offline Qatar Geo-Catalog Fallback (when `GOOGLE_MAPS_API_KEY` is empty or offline):**
-   - Built-in `GoogleMapsService.qatarCitiesCatalog` covering **all 8 Qatari municipalities and 22 key industrial, residential, and worksite hubs**:
-     - **Al Rayyan Municipality (`بلدية الريان`):** Industrial Area (`المنطقة الصناعية`), Al Rayyan (`الريان`), Education City (`المدينة التعليمية`), Abu Samra (`أبو سمرة`).
-     - **Doha Municipality (`بلدية الدوحة`):** Doha (`الدوحة`), Msheireb (`مشيرب`), Al Sadd (`السد`), West Bay / Al Dafna (`الدفنة`), The Pearl (`اللؤلؤة`), Katara (`كتارا`), Hamad International Airport (`مطار حمد الدولي`).
-     - **Al Daayen Municipality (`بلدية الضعاين`):** Lusail (`لوسيل`), Al Daayen (`الضعاين`).
-     - **Al Wakrah Municipality (`بلدية الوكرة`):** Al Wakrah (`الوكرة`), Mesaieed (`مسيعيد`).
-     - **Al Khor & Al Thakhira Municipality (`بلدية الخور والذخيرة`):** Al Khor (`الخور`), Ras Laffan (`رأس لفان`), Al Thakhira (`الذخيرة`).
-     - **Umm Salal (`بلدية أم صلال`):** Umm Salal (`أم صلال`).
-     - **Al Shahaniya (`بلدية الشيحانية`):** Al Shahaniya (`الشيحانية`), Dukhan (`دخان`).
-     - **Al Shamal (`بلدية الشمال`):** Al Shamal (`الشمال`).
-   - *Note:* When running without an API key, `_estimateQatarRoute` uses a lightweight coordinate heuristic (`dLat`/`dLng` road-factor approximation) suitable for offline UI previews rather than turn-by-turn navigation.
+Location search, route metrics, and interactive maps inside MASHWAR are powered by two complementary layers:
 
----
+1. **In-App Uber-Style Live Animated Map Engine (`web/maps/mashwar_uber_map.html`)**
+   - Vendored **Leaflet 1.9.4** locally under [`web/maps/leaflet/`](../../web/maps/leaflet/) so maps never break due to external script CDNs.
+   - Renders real **Google Maps Roads + Live Traffic tiles** (`mt{s}.google.com/vt/lyrs=m@221097413,traffic`), plus instant switching to **Uber Light (CartoDB Voyager 2x)**, **Google Satellite Hybrid (`lyrs=y`)**, and **Uber Night Dark (`dark_all`)**.
+   - Fetches real road-following polylines across Qatar via **OSRM** (`router.project-osrm.org`) with an immediate curved highway fallback, multi-segment traffic coloring, and automatic **full-route `fitBounds`** framing so both origin and destination pins always sit inside the visible frame.
+   - Animates service-specific SVG vehicles at 60fps along the road polyline with heading rotation:
+     - `trip`: Top-down Uber sedan car + nearby cruising cars
+     - `parcel`: Express parcel delivery van
+     - `supply`: Worksite supply pickup truck
+     - `place`: Pulsing radar pin for single-location preview
+   - Wired across Flutter Web via [`MashwarEmbeddedGoogleMap`](../../lib/core/widgets/mashwar_embedded_google_map.dart), [`MashwarGoogleMapPanel`](../../lib/core/widgets/mashwar_google_map_panel.dart), and full-screen [`MashwarInAppMapScreen`](../../lib/core/widgets/mashwar_in_app_map_screen.dart) across 12 consumer screens plus the Admin Portal (`AdminLoginScreen`, `AdminDashboardScreen`, `AdminCorridorsGeoScreen`). On Dart VM tests and non-web targets, it renders a deterministic `QatarLiveMapCanvas` fallback so tests stay fast and `pumpAndSettle`-safe.
 
-### 2. Google Cloud Console Setup (`mashwar-qatar-2026-ec99d`)
-1. Open [Google Cloud Console](https://console.cloud.google.com/) and select project **`mashwar-qatar-2026-ec99d`**.
-2. Navigate to **APIs & Services -> Library** and enable:
-   - **Places API**
-   - **Directions API**
-   - **Geocoding API**
-   - **Maps JavaScript API** *(if embedding interactive Google Map tiles on Web)*
-   - **Maps SDK for Android** & **Maps SDK for iOS** *(when native map SDK widgets are added)*
+2. **Google Maps Platform Web Services & Offline Qatar/GCC Geo-Catalog (`GoogleMapsService`)**
+   - [`GoogleMapsService`](../../lib/data/services/google_maps_service.dart) integrates Google Places API (New v1), Routes API v2, and Geocoding when `GOOGLE_MAPS_API_KEY` is provided at build/run time.
+   - When running without an API key or offline, it falls back cleanly to a **38-hub bilingual Qatar & GCC geo-catalog** covering all 8 Qatar municipalities (Doha, Al Rayyan, Al Daayen/Lusail, Al Wakrah/Mesaieed, Al Khor/Ras Laffan, Umm Salal, Al Shahaniya/Dukhan, Al Shamal) plus nearby regional corridors.
 
 ---
 
-### 3. API Key Creation & Restrictions
-Never commit raw Google Maps API keys to Git. Provision separate, restricted keys per platform:
+## Passing `GOOGLE_MAPS_API_KEY` at Build Time
 
-#### A. Web Key
-- **Application Restrictions:** HTTP referrers:
-  - `https://mashwar.qa/*`
-  - `https://mashwar-qatar-2026-ec99d.web.app/*`
-  - `http://localhost:*`
-- **API Restrictions:** Maps JavaScript API, Places API, Directions API, Geocoding API.
-
-#### B. Android Key
-- **Application Restrictions:** Android apps:
-  - Package name: `com.mashwar.app.mashwar` (matches [`android/app/build.gradle.kts`](../../android/app/build.gradle.kts))
-  - Debug & production release keystore SHA-1 fingerprints.
-- **API Restrictions:** Maps SDK for Android, Places API, Directions API, Geocoding API.
-
-#### C. iOS Key
-- **Application Restrictions:** iOS apps:
-  - Qatar bundle identifier: `qa.mashwar.app` (align `ios/Runner` and `flutterfire configure` before App Store submission).
-- **API Restrictions:** Maps SDK for iOS, Places API, Directions API, Geocoding API.
-
----
-
-### 4. Supplying `GOOGLE_MAPS_API_KEY` at Build / Run Time
-
-`AppEnvironment.googleMapsApiKey` ([`lib/core/config/app_environment.dart`](../../lib/core/config/app_environment.dart)) and `GoogleMapsService` ([`lib/data/services/google_maps_service.dart`](../../lib/data/services/google_maps_service.dart)) read `GOOGLE_MAPS_API_KEY` via `--dart-define`:
+Never commit raw API keys to Git. Pass a domain-restricted key via `--dart-define` or the release build script:
 
 ```powershell
-# Using .env file (copied from .env.example)
+# Local run with .env (copied from .env.example)
 flutter run -d chrome --dart-define-from-file=.env
 
-# Or explicit flag
-flutter run -d chrome --dart-define=GOOGLE_MAPS_API_KEY="YOUR_RESTRICTED_KEY"
+# Production web build (Consumer + Admin)
+powershell -ExecutionPolicy Bypass -File scripts/build_platform.ps1 -AppEnv production -GoogleMapsApiKey "YOUR_RESTRICTED_KEY"
 ```
 
-> **Note on Current Visual Map Widget:** Inside the Flutter client, corridor visuals are rendered locally via `QatarLiveMapCanvas` (`lib/core/widgets/qatar_live_map_canvas.dart`) with zero external script tag in `web/index.html`, while `GoogleMapsService` handles HTTP Places/Directions/Geocoding queries when `GOOGLE_MAPS_API_KEY` is set.
+### Recommended Key Restrictions (Google Cloud Console — `mashwar-qatar-2026-ec99d`)
+- **Web Key:** Restrict by HTTP referrer (`https://mashwar.qa/*`, `https://mashwar-qatar-2026-ec99d.web.app/*`, `http://localhost:*`, `http://127.0.0.1:*`) and enable Places API (New), Routes API, and Geocoding API.
+- **Android Key:** Restrict to package `com.mashwar.app.mashwar` + release/debug SHA-1 fingerprints.
+- **iOS Key:** Restrict to bundle identifier `qa.mashwar.app`.
