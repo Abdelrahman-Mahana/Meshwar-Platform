@@ -1,82 +1,130 @@
-# MASHWAR Media & Brand Kit | حقيبة الهوية البصرية والشاشات لمشوار
+# MASHWAR Media & Brand Kit (2026) | حقيبة الهوية البصرية والإعلامية لمشوار
 
-> Complete visual brand and product screenshot package for **MASHWAR (مشوار)**, Qatar's community services and on-the-way fulfillment platform, prepared for Startup Qatar (QDB) evaluation, Pitch Decks, Engineering Documentation, and App Store listings.
+> Official 2026 press, partner, and investor visual package for **MASHWAR (مشوار)** — Qatar's unified platform for intercity shared rides, route-based parcels, and worksite supply & errands across verified QID-checked members.
 >
-> الحزمة البصرية الكاملة لمنصة **مشوار (MASHWAR)** في قطر (منصة الخدمات المجتمعية والتوصيل على الطريق والضمان المالي المزدوج)، جاهزة مباشرة لعروض المستثمرين والتوثيق الهندسي وحملات التسويق.
+> الحقيبة البصرية الرسمية لعام 2026 لمنصة **مشوار (MASHWAR)** في قطر — المنصة الموحدة للرحلات التشاركية بين المدن، وطرود المسار الفورية، وتوريد مواقع العمل والمشتريات عبر أعضاء موثّقين بالبطاقة القطرية (QID).
+
+---
+
+## Platform Overview | نبذة عن المنصة
+
+**MASHWAR** connects everyday travelers, commuters, and fulfillment runners already driving along Qatar's core corridors — **Doha, Lusail, Al Khor, Al Wakrah, Al Rayyan, West Bay, and the Industrial Area** — with people and site engineers who need reliable rides, direct hand-to-hand parcel delivery, or urgent worksite supplies.
+
+- **Three Core Pillars:**
+  1. **Intercity Shared Rides (الرحلات التشاركية بين المدن):** Verified seat sharing that cuts daily intercity commute spend by up to 70%, with a dedicated Ladies-Only option.
+  2. **Route-Based Parcels (طرود المسار الفورية):** Same-hour (35–90 min) direct corridor delivery for contracts, keys, and urgent packages with zero warehouse sorting delays.
+  3. **Worksite Supply & Errands (توريد مواقع العمل والمشتريات):** On-demand electrical, plumbing, HVAC, tools, and PPE delivered from Industrial Area suppliers straight to Lusail and Doha project sites with live store receipt photos.
+- **Trust & Direct Settlement Architecture:**
+  - 11-digit **Qatar ID (QID)**, `+974` phone, and vehicle plate review before provider activation.
+  - **Dual-OTP Handshake** (independent pickup and drop-off codes) plus live receipt photography for supply runs.
+  - **Live MASHWAR Map** with real-time GPS beacon, directional heading cone, interactive pin picker, and Qatar `999` SOS access.
+  - **Direct Transparent Settlement:** Upfront fee and receipt breakdown settled directly on handover (Cash, Fawran, QPay, or SkipCash) with zero fund freezing or custodial wallet holds.
 
 ---
 
 ## Folder Summary | ملخص المجلدات
 
-| Folder / المجلد | Files / العدد | Formats & Resolutions / الصيغ والأبعاد | Recommended Use / الاستخدام |
+| Folder | Files | Formats & Resolution | Best Used For |
 | :--- | :---: | :--- | :--- |
-| `01_Logos/` | **16** | HD PNG (`@3x`, up to `1024×1024`), Vector SVG, Web PWA Icons | الشعارات الداكنة والفاتحة والشفافة والأيقونات الرسمية للعروض والتطبيق |
-| `02_Banners_and_Posters/` | **9** | Full HD 16:9 PNG (`1920×1080`) + High-Res JPGs | شرائح عرض رئيسية محدثة (6 خدمات + نظام الضمان Escrow + الهوية القطرية) |
-| `03_Service_Illustrations_Assets/` | **9** | High-Res 3D / Vector Render JPGs | الرسوم التوضيحية للخدمات الست، درع الضمان المالي، وبنرات قطر الرئيسية |
-| `04_App_Screens_Mobile/` | **67** | Mobile Retina PNG (`390×844 @2x = 780×1688`) | كل شاشات تطبيق العميل والتبويبات الـ 5 وشاشة الضمان المالي `ServiceEscrowScreen` |
-| `05_Web_and_Admin_Screens/` | **14** | Desktop HD PNG (`1280×800 @1.5x = 1920×1200`) | نسخة الويب التفاعلية للعملاء والضمان المالي ولوحة تحكم الإدارة الكاملة |
-| **Total Visual Assets** | **115** | *(+ this `README.md` index = 116 total files)* | **متكاملة ومفهرسة وجاهزة للاستخدام المباشر** |
+| `01_Logos/` | **16** | Transparent/Framed PNG (`@3x`, up to `1024×1024`), Vector SVG, Web/PWA Icons | Pitch decks, press headers, app stores, partner co-branding |
+| `02_Banners_and_Posters/` | **5** | 16:9 UHD Retina PNG (`3840×2160`, rendered from `1920×1080 @ 2x`) | Investor slide covers, press features, brand guidelines reference |
+| `03_Service_Illustrations_Assets/` | **6** | High-Resolution Editorial Photography (JPG) | Press articles, editorial headers, web cards, partner decks |
+| `04_App_Screens_Mobile/` | **9** | Mobile 2x Retina PNG (`780×1688` from `390×844 @ 2x`) | Consumer app product walkthroughs, App Store previews, demos |
+| `05_Web_and_Admin_Screens/` | **8** | Desktop 2x Retina PNG (`2880×1800`) & Mobile Web (`780×1688`) | Public website showcases, live corridor calculator, Admin NOC |
+| **Total Package** | **45** | **44 curated visual assets + `README.md` (~28.8 MB)** | **Press- and investor-ready 2026 release** |
 
 ---
 
-## Official Brand Color Tokens | لوحة الألوان الرسمية
+## Official Brand Color Palette | لوحة الألوان الرسمية
 
-| Token | Name (AR / EN) | Hex | Usage |
+| Role | Token Name | Hex | Usage |
 | :--- | :--- | :--- | :--- |
-| `AppColors.navy` | كحلي ليلي · Midnight Navy | `#0F2A43` | الهوية الرئيسية، العناوين، خلفيات الغلاف ولوحة الإدارة |
-| `AppColors.qatarMaroon` | عنابي الأدعم · Al-Adaam Maroon | `#8A1538` | الطابع القطري، التوريد الهندسي، وأزرار الطلب الأساسية |
-| `AppColors.escrowGreen` | أخضر الضمان · Escrow Trust Green | `#0F766E` | شاشات الضمان المالي المزدوج (Escrow)، اعتماد الفاتورة، وحجز المبلغ |
-| `AppColors.teal` | أخضر فيروزي · Brand Teal | `#1B7F79` | الثقة والأمان، علامات التوثيق، ونقاط الانطلاق |
-| `AppColors.gold` | ذهبي دافئ · Amber Gold | `#F5A524` | دبوس مشوار المميز، شارات التحفيز، وتنبيهات العروض |
-| `AppColors.sand` | رملي دافئ · Warm Sand | `#FAF7F0` | خلفيات البطاقات الترحيبية وبنرات السائقين |
-
-**Typography / الخط الرسمي:** `Cairo` (Weights 200-900: `ExtraBold` 800 للعناوين والشعار، `SemiBold` 600 للشارات، `Medium` 500 للنصوص).
+| **Dark Canvas** | Deep Slate Navy | `#061320` | Public website hero, dark NOC operations mode, slide backdrops |
+| **Primary Brand** | Midnight Navy | `#0F2A43` | Wordmark, headings, primary app CTAs, navigation surfaces |
+| **Trust & Verification** | Signature Teal | `#0F766E` | QID verification badges, Dual-OTP milestones, route parcels |
+| **Active Telemetry** | Brand Emerald | `#1B7F79` | Success states, live corridor indicators, notification toggles |
+| **Brand Accent** | Warm Amber Gold | `#F5A524` | Signature MASHWAR pin drop tail, worksite supply highlights, CTAs |
+| **Editorial Surface** | Alabaster Canvas | `#F8FAF9` | Consumer app background, clean card layouts, light brand sheets |
 
 ---
 
-## Detailed Contents | المحتويات التفصيلية
+## Typography System | نظام الخطوط
+
+- **Arabic Primary (`AR`):** `Cairo` — Weights `400` Regular, `600` SemiBold, `700` Bold, `800` ExtraBold, `900` Black.
+- **English Primary (`EN`):** `Plus Jakarta Sans` (UI & body, weights `400–700`) paired with `Outfit` (display headings & numerals, weights `600–800`).
+- **Numerals:** Always enable `tabular-nums` for fares (`QAR` / `ر.ق`), distances (`km`), ETAs, and KPI dashboards.
+
+---
+
+## Complete Asset Inventory | الفهرس الكامل للملفات
 
 ### 1. `01_Logos/` (16 Files)
-- **Wordmark & Dual Logos (PNG @3x):**
-  - `mashwar_logo_dark_on_white.png`, `mashwar_logo_dark_transparent.png`
-  - `mashwar_logo_light_on_navy.png`, `mashwar_logo_light_transparent.png`
-  - `mashwar_logo_arabic_only_dark.png`, `mashwar_logo_arabic_only_light.png`
-- **Pin Icon & App Store Launcher Icon:**
-  - `mashwar_pin_icon.svg`, `mashwar_pin_icon_light.svg`
-  - `mashwar_pin_icon_navy.png`, `mashwar_pin_icon_light_on_navy.png`
-  - `mashwar_app_icon_1024.png`
+
+- **Wordmarks & Lockups (PNG `@3x`):**
+  - `01_Logos/mashwar_logo_dark_on_white.png` — Primary dark wordmark on white canvas.
+  - `01_Logos/mashwar_logo_dark_transparent.png` — Primary dark wordmark on transparent background.
+  - `01_Logos/mashwar_logo_light_on_navy.png` — Light wordmark framed on Midnight Navy (`#0F2A43`).
+  - `01_Logos/mashwar_logo_light_transparent.png` — Light wordmark on transparent background for dark surfaces.
+  - `01_Logos/mashwar_logo_arabic_only_dark.png` — Arabic-only lockup (dark).
+  - `01_Logos/mashwar_logo_arabic_only_light.png` — Arabic-only lockup (light).
+- **Pin Symbol & App Icon:**
+  - `01_Logos/mashwar_pin_icon.svg` — Vector pin mark (Midnight Navy + Warm Amber Gold tail).
+  - `01_Logos/mashwar_pin_icon_light.svg` — Vector pin mark for dark surfaces (White + Warm Amber Gold tail).
+  - `01_Logos/mashwar_pin_icon_navy.png` — High-res pin mark on white/transparent.
+  - `01_Logos/mashwar_pin_icon_light_on_navy.png` — High-res light pin mark on Midnight Navy.
+  - `01_Logos/mashwar_app_icon_1024.png` — Official `1024×1024` iOS & Android launcher icon.
 - **Web & PWA Icons (`01_Logos/web_icons/`):**
-  - `favicon.png`, `Icon-192.png`, `Icon-512.png`, `Icon-maskable-192.png`, `Icon-maskable-512.png`
+  - `01_Logos/web_icons/favicon.png`
+  - `01_Logos/web_icons/Icon-192.png`
+  - `01_Logos/web_icons/Icon-512.png`
+  - `01_Logos/web_icons/Icon-maskable-192.png`
+  - `01_Logos/web_icons/Icon-maskable-512.png`
 
-### 2. `02_Banners_and_Posters/` (9 Files)
-- **Pitch Deck 16:9 Brand Posters (`1920×1080` Full HD PNG):**
-  - `poster_01_brand_cover_16x9.png`: غلاف العرض التقديمي بالتدرج العنابي والكحلي القطري وشعار الخدمات المجتمعية الـ 6.
-  - `poster_02_six_services_showcase_16x9.png`: استعراض الخدمات الست المتكاملة (شراء وتوصيل بفاتورة، توريد مواقع للمهندسين، جلب أوراق وأمانات، حضانات ومشاوير يومية، مشاركة مقاعد، وشحن تجاري).
-  - `poster_03_trust_and_safety_16x9.png`: منظومة ضمان مشوار (Escrow) وحفظ حق الطرفين (حجز الأتعاب وسقف الفاتورة، صورة الفاتورة، كود OTP من 4 أرقام، وتوثيق QID وطوارئ 999).
-  - `poster_04_driver_partner_promo_16x9.png`: عرض المنفّذين والمسافرين («حوّل مشوارك في قطر إلى دخل مضمون بالضمان المالي» عبر Fawran وQPay وSkipCash).
-  - `poster_05_brand_colors_and_typography.png`: دليل الهوية البصرية القطرية الكاملة (6 ألوان رسمية + نظام خطوط Cairo).
-- **AI Artwork & In-App Banners (JPG):**
-  - `poster_ai_intercity_qatar_wide.jpg`, `poster_ai_superapp_social_square.jpg`, `hero_banner.jpg`, `driver_promo.jpg`
+### 2. `02_Banners_and_Posters/` (5 Files — `3840×2160` 16:9 UHD)
 
-### 3. `03_Service_Illustrations_Assets/` (9 Files)
-- `service_errand.jpg`: الشراء والتوصيل بفاتورة حية من المحل
-- `service_site_supply.jpg`: توريد قطع الغيار والأدوات لمواقع المهندسين
-- `service_parcel.jpg`: جلب الأوراق والأمانات على الطريق
-- `hero_qatar_services.jpg`: شبكة الخدمات المجتمعية والتوصيل بين مناطق قطر (الحضانات والطلبات اليومية)
-- `service_ride.jpg`: مشاركة مقاعد السفر بين بلديات قطر
-- `service_cargo.jpg`: شحن البضائع والتوريد التجاري
-- `escrow_trust_shield.jpg`: درع الضمان المالي المزدوج لحفظ حق الطالب والمنفّذ
-- `hero_banner.jpg`, `driver_promo.jpg`: البنرات الرئيسية داخل التطبيق
+- `02_Banners_and_Posters/01_mashwar_brand_cover_16x9.png` — Executive brand cover combining the MASHWAR mark, Lusail backdrop, mobile app hero frame, and core corridor proof points.
+- `02_Banners_and_Posters/02_three_core_pillars_16x9.png` — Three-column overview of Intercity Shared Rides, Route-Based Parcels, and Worksite Supply & Errands with real editorial photography.
+- `02_Banners_and_Posters/03_live_gps_map_and_corridors_16x9.png` — Live MASHWAR Map showcase featuring GPS beacon, interactive pin picker, 4 adaptive map styles, and Qatar's 5 core corridors.
+- `02_Banners_and_Posters/04_trust_qid_dual_otp_16x9.png` — Trust, safety, and direct settlement architecture (QID verification, Dual-OTP handshake, live GPS/999 SOS, and direct transparent settlement).
+- `02_Banners_and_Posters/05_brand_guidelines_palette_typography.png` — Single-page brand specification sheet with official hex swatches, bilingual typography specimens, and logo clearspace rules.
 
-### 4. `04_App_Screens_Mobile/` (67 Files - `780×1688` Retina Mobile)
-- **التعريف والتسجيل والأذونات (`01`-`09`):** `01_splash_screen.png` .. `09_notification_permission_screen.png` (بتوثيق رقم قطر `+974` والبطاقة القطرية QID المكونة من 11 رقماً، وخريطة قطر الحية).
-- **التبويبات الخمس الرئيسية (`10`-`14`):** الرئيسية بالخريطة المكبّرة والـ 6 خدمات (`10_tab_home_screen.png`)، لوحة الخدمات والمشاوير (`11_tab_board_screen.png`)، طلباتي بشريط التقدم الثلاثي (`12_tab_my_orders_screen.png`)، الرسائل (`13_tab_messages_screen.png`)، وحسابي (`14_tab_account_screen.png`).
-- **البحث، التفاصيل، والحجز (`15`-`27`):** بحث المناطق القطرية الـ 22 في 8 بلديات، منتقي التاريخ، النتائج بالخريطة، الفلاتر، تفاصيل الرحلة، الشات مع اختصار الضمان وOTP، مراجعة الحجز، الانتظار، التأكيد مع كود OTP، نتيجة الحجز (`ر.ق`)، الإلغاء، الرحلة النشطة، والتقييم.
-- **لوحة الطلبات والإعلانات (`28`-`32`):** نشر طلب أو إعلان (`من وين؟` + 5 قوالب سريعة)، تقديم عرض مع قنوات الدفع ورابط الضمان، إعلاناتي، العروض الواردة، وإعادة الجدولة.
-- **شحن الطرود وتتبع OTP (`33`-`37`):** إرسال طرد، التتبع المباشر، نافذة رمز الاستلام OTP، قائمة الممنوعات، والنزاعات.
-- **رحلة المنفّذ والمركبة (`38`-`47`):** التسجيل، خطوات التوثيق، تفاصيل السيارة، حالة الاعتماد، نشر رحلة، رحلاتي، طلبات الركاب، ما قبل الانطلاق، أثناء الرحلة، وتسجيل المركبة واللوحة القطرية.
-- **الأمان، المحفظة، الضمان المالي Escrow، والنظام (`48`-`67`):** التتبع الحي، مشاركة الرحلة، طوارئ 999 SOS، جهات الطوارئ، المحفظة (`MASHWAR ESCROW` + `Fawran / QPay / SkipCash`)، التنبيهات، الملف الشخصي، تعديل الحساب، مركز الإشعارات، الدعم، الإعدادات، حذف الحساب، الشؤون القانونية القطرية، جاهزية النظام، شاشات الحالة النظامية، و**`67_service_escrow_screen.png`** (شاشة الضمان المالي المزدوج وحماية الطرفين).
+### 3. `03_Service_Illustrations_Assets/` (6 Files — Editorial Photography)
 
-### 5. `05_Web_and_Admin_Screens/` (14 Files - `1920×1200` Desktop HD)
-- **واجهة الويب للعملاء (`01`-`04`, `14`):** `01_web_home_desktop.png`, `02_web_board_desktop.png`, `03_web_ride_details_desktop.png`, `04_web_account_desktop.png`, و`14_web_escrow_desktop.png`.
-- **لوحة تحكم الإدارة (`05`-`13`):** `05_admin_login_screen.png` .. `13_admin_audit_log.png` (إدارة التوثيق، الطلبات، النزاعات بالضمان، الموظفين بصلاحيات RBAC، وسجل التدقيق).
+- `03_Service_Illustrations_Assets/service_rides.jpg` — Modern sedan along the Doha Corniche at golden hour (Intercity Shared Rides).
+- `03_Service_Illustrations_Assets/service_parcels.jpg` — Friendly trunk-side parcel handoff along a shared route (Route-Based Parcels).
+- `03_Service_Illustrations_Assets/service_worksite.jpg` — Site engineer receiving equipment from a supply van with the Lusail skyline in view (Worksite Supply).
+- `03_Service_Illustrations_Assets/pillar_shared_trips.jpg` — Commuters loading travel bags into a shared SUV before departure.
+- `03_Service_Illustrations_Assets/pillar_smart_supply.jpg` — Organized supply parcels, digital checklist, and delivery van ready for dispatch.
+- `03_Service_Illustrations_Assets/cat_tools_ppe.jpg` — Hard hat, safety gloves, laser distance meter, drill, and fasteners arranged over architectural blueprints.
+
+### 4. `04_App_Screens_Mobile/` (9 Files — `780×1688` Mobile 2x Retina)
+
+- `04_App_Screens_Mobile/01_home_hero.png` — Redesigned Home screen with 3-pillar service selector, live trip/request counter, and instant route search.
+- `04_App_Screens_Mobile/02_live_gps_map_picker.png` — Interactive MASHWAR Live Map pickup picker with live GPS beacon, traffic toggle, and tap-to-pin confirmation.
+- `04_App_Screens_Mobile/03_ride_details_route.png` — Intercity ride details (Doha ↔ Al Khor) with embedded live traffic map, rider/driver perspective switch, and seat/parcel booking actions.
+- `04_App_Screens_Mobile/04_parcels_dual_otp.png` — Direct route-parcel dispatch flow with verified traveler details, corridor summary, and 3-step OTP progression.
+- `04_App_Screens_Mobile/05_worksite_supply.png` — Worksite supply and errands marketplace with category/municipality filters, receipt-backed 6-digit OTP notice, and active requests.
+- `04_App_Screens_Mobile/06_welcome_auth.png` — Clean bilingual onboarding & welcome authentication screen introducing MASHWAR's 3 core services.
+- `04_App_Screens_Mobile/07_account_verified_profile.png` — Verified member profile screen displaying QID verification status, activity counters, and provider shortcuts.
+- `04_App_Screens_Mobile/08_settings_clean.png` — Clean settings view featuring QID status, vehicle records, direct payment methods (Fawran, QPay, SkipCash, Cash), emergency contacts, and notification controls.
+- `04_App_Screens_Mobile/09_live_map_fullscreen_nav.png` — Fullscreen live corridor navigation view along Al Khor Coastal Road with live traffic colors, GPS beacon, and route recenter controls.
+
+### 5. `05_Web_and_Admin_Screens/` (8 Files — Desktop & Mobile 2x Retina)
+
+- `05_Web_and_Admin_Screens/01_landing_hero_ar_desktop.png` — Public-first Arabic desktop landing hero (`1440×900 @ 2x`).
+- `05_Web_and_Admin_Screens/02_landing_hero_en_desktop.png` — Public-first English desktop landing hero (`1440×900 @ 2x`).
+- `05_Web_and_Admin_Screens/03_landing_corridors_calculator.png` — Interactive Qatar corridor map (Lusail ↔ Industrial Area) and monthly/annual savings calculator.
+- `05_Web_and_Admin_Screens/04_landing_investor_room.png` — Partners, Contractors & Investors section highlighting Qatar TAM/SAM/SOM and 36-month financial modeling controls.
+- `05_Web_and_Admin_Screens/05_landing_mobile_ar.png` — Responsive Arabic mobile web landing hero (`390×844 @ 2x`).
+- `05_Web_and_Admin_Screens/06_admin_command_dashboard_ar.png` — MASHWAR Admin Command Portal in Arabic with live KPIs, weekly settlement volume, and live Qatar corridor traffic map.
+- `05_Web_and_Admin_Screens/07_admin_command_dashboard_en.png` — MASHWAR Admin Command Portal in English with unified operations telemetry and Direct Settlement navigation.
+- `05_Web_and_Admin_Screens/08_admin_live_corridors_map.png` — Admin Corridors & Geo operations view managing active Qatar routes, provider density, and live traffic telemetry.
+
+---
+
+## Brand Usage Permissions | إرشادات الاستخدام الإعلامي
+
+- **Clearspace:** Maintain a minimum clearspace equal to `1x` the height of the MASHWAR pin mark on all four sides of any logo lockup.
+- **Color Integrity:** Use only the official light or dark logo files from `01_Logos/` on high-contrast backgrounds. Do not stretch, rotate, add drop shadows, or recolor the Warm Amber Gold pin tail.
+- **Editorial & Press Use:** Journalists, startup accelerators, partners, and investors may use these assets directly for editorial coverage, evaluation decks, and official event profiles without alteration.
+- **Contact:** For custom print vectors, press inquiries, or partnership requests, contact **info@mashwar.qa**.
