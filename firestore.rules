@@ -126,8 +126,9 @@ rules_version = '2';
 //      - fee: number (required, 0 - 10000 EGP)
 //      - pickupOtp: string (required, 4-8 chars)
 //      - deliveryOtp: string (optional, <= 8 chars)
-//      - status: string (required, enum: 'requested', 'accepted', 'handedOver', 'inTransit', 'delivered', 'cancelled', 'disputed')
-//      - submittedOtp: string (optional, verification payload)
+//      - status: string (required, enum: 'requested', 'pending', 'accepted', 'handedOver', 'inTransit', 'delivered', 'cancelled', 'disputed')
+//      - submittedOtp: string (optional, 4-8 chars, pickup OTP verification payload)
+//      - submittedDeliveryOtp: string (optional, 4-8 chars, delivery OTP verification payload)
 //      - createdAt: timestamp (optional, immutable)
 //      - updatedAt: timestamp (optional)
 //
@@ -215,7 +216,13 @@ rules_version = '2';
 //       - updatedAt: timestamp (optional)
 //
 // 11. admin_audit_logs/{logId}
-//     Internal security audit log for admin operations (read/write restricted to admin claim).
+//     Immutable security audit log for admin operations (read/create restricted to admin claim;
+//     updates and deletes strictly forbidden).
+//     Fields: action (required, 1-150 chars), actorId or adminUid (at least one required, 1-128 chars),
+//             id, actor, adminRole, targetCollection, targetEntityId, target, targetId,
+//             beforeAfter, previousState (map <= 30 keys), newState (map <= 30 keys),
+//             details (string <= 1000 or map <= 20 keys), metadata (map <= 20 keys),
+//             reason, time, createdAt (timestamp/ISO), timestamp (timestamp/ISO), serverTimestamp (timestamp)
 //
 // 12. platform_config/{configId}
 //     Runtime platform configuration, broadcast banners, and operational thresholds.
@@ -306,11 +313,12 @@ rules_version = '2';
 //             budgetMinor (int > 0), estimatedItemsCostMinor, maxItemsCapMinor, deliveryFeeBudgetMinor,
 //             paymentMethod ('cash_on_delivery' | 'bank_transfer_manual'),
 //             paymentStatus ('unpaid' | 'transfer_proof_submitted' | 'verified_settled' | 'refunded' | 'disputed'),
-//             paymentProofUrl, paymentReference, status, offerCount (int >= 0), selectedOfferId,
+//             paymentProofUrl, paymentReference, paymentVerifiedBy, paymentVerifiedAtUtc,
+//             status, offerCount (int >= 0), selectedOfferId,
 //             assignedProviderId, assignedProviderName, agreedAmountMinor, agreedFeeMinor,
-//             isHandoverVerified, cancellationReason, disputeReason,
+//             isHandoverVerified, cancellationReason, disputeReason, moderationNotes, completedAtUtc,
 //             referenceImageUrls (list <= 5), invoiceImageUrls (list <= 5),
-//             sourceRequestId, scheduledBy, createdAt (immutable), updatedAt
+//             sourceRequestId, scheduledBy, createdAt (timestamp/ISO, immutable), updatedAt (timestamp/ISO)
 //
 // 24. work_offers/{offerId}
 //     Fields: id (immutable), requestId (immutable), providerId (immutable),
@@ -599,6 +607,13 @@ service cloud.firestore {
         (val is string && val.size() >= 10 && val.size() <= 50 && val.matches('^\\d{4}-\\d{2}-\\d{2}T.*'));
     }
 
+    // Lean timestamp-or-ISO validator (avoids regex AST overhead on high-expression rules)
+    function isValidOptTimestampOrIsoString(val) {
+      return val == null ||
+        val is timestamp ||
+        (val is string && val.size() >= 10 && val.size() <= 40);
+    }
+
     // Location field validator for work_requests (supports structured map OR string address)
     function isValidLocationField(val) {
       return (val is map && val.size() > 0 &&
@@ -756,14 +771,15 @@ service cloud.firestore {
         validOptionalString(data, 'notes', 1, 500);
     }
 
-    // Validator for parcels/{parcelId}
-    function isValidParcel(data) {
+    // Shared key whitelist & required keys for parcels/{parcelId}
+    function hasValidParcelKeys(data) {
       let allowed = [
         'id', 'senderId', 'senderName', 'senderPhone', 'driverId',
         'driverName', 'receiverId', 'receiverName', 'receiverPhone',
         'route', 'fromCity', 'toCity', 'description', 'size',
         'weightKg', 'estimatedValue', 'fee', 'pickupOtp',
-        'deliveryOtp', 'status', 'submittedOtp', 'createdAt', 'updatedAt'
+        'deliveryOtp', 'status', 'submittedOtp', 'submittedDeliveryOtp',
+        'createdAt', 'updatedAt'
       ];
       let required = [
         'id', 'senderId', 'receiverName', 'receiverPhone',
@@ -771,7 +787,22 @@ service cloud.firestore {
         'estimatedValue', 'fee', 'pickupOtp', 'status'
       ];
       return hasOnlyAllowedFields(data, allowed) &&
-        hasRequiredFields(data, required) &&
+        hasRequiredFields(data, required);
+    }
+
+    // Validator for parcel fields mutable during client lifecycle transitions
+    function isValidParcelClientFields(data) {
+      return data.status in ['requested', 'pending', 'accepted', 'handedOver', 'inTransit', 'delivered', 'cancelled', 'disputed'] &&
+        isValidOptStringVal(data.get('driverId', null), 1, 128) &&
+        isValidOptStringVal(data.get('driverName', null), 2, 100) &&
+        isValidOptStringVal(data.get('submittedOtp', null), 4, 8) &&
+        isValidOptStringVal(data.get('submittedDeliveryOtp', null), 4, 8) &&
+        isValidOptTimestampOrIsoString(data.get('updatedAt', null));
+    }
+
+    // Full validator for parcels/{parcelId} (create & admin update)
+    function isValidParcel(data) {
+      return hasValidParcelKeys(data) &&
         validString(data.id, 1, 128) &&
         validString(data.senderId, 1, 128) &&
         validString(data.receiverName, 2, 100) &&
@@ -783,16 +814,73 @@ service cloud.firestore {
         data.estimatedValue is number && data.estimatedValue >= 0 && data.estimatedValue <= 100000 &&
         data.fee is number && data.fee >= 0 && data.fee <= 10000 &&
         validString(data.pickupOtp, 4, 8) &&
-        data.status in ['requested', 'accepted', 'handedOver', 'inTransit', 'delivered', 'cancelled', 'disputed'] &&
-        validOptionalString(data, 'senderName', 2, 100) &&
+        isValidParcelClientFields(data) &&
+        isValidOptStringVal(data.get('senderName', null), 2, 100) &&
         isValidOptionalPhone(data, 'senderPhone') &&
-        validOptionalString(data, 'driverId', 1, 128) &&
-        validOptionalString(data, 'driverName', 2, 100) &&
-        validOptionalString(data, 'receiverId', 1, 128) &&
-        validOptionalString(data, 'fromCity', 1, 100) &&
-        validOptionalString(data, 'toCity', 1, 100) &&
-        validOptionalString(data, 'deliveryOtp', 4, 8) &&
-        validOptionalString(data, 'submittedOtp', 4, 8);
+        isValidOptStringVal(data.get('receiverId', null), 1, 128) &&
+        isValidOptStringVal(data.get('fromCity', null), 1, 100) &&
+        isValidOptStringVal(data.get('toCity', null), 1, 100) &&
+        isValidOptStringVal(data.get('deliveryOtp', null), 4, 8) &&
+        isValidOptTimestampOrIsoString(data.get('createdAt', null));
+    }
+
+    // Lean state-transition and OTP verification guard for client parcels/{parcelId} updates
+    function isValidParcelClientUpdate(prev, next) {
+      let changed = next.diff(prev).affectedKeys();
+      return (next.keys() == prev.keys() || hasValidParcelKeys(next)) &&
+        isValidParcelClientFields(next) &&
+        (
+          // Sender cancellation
+          (
+            prev.senderId == request.auth.uid &&
+            next.status == 'cancelled' &&
+            prev.status in ['requested', 'pending'] &&
+            changed.hasOnly(['status', 'updatedAt'])
+          ) ||
+          // Verified traveler claiming an open/pending unassigned parcel
+          (
+            prev.status in ['requested', 'pending'] &&
+            next.status == 'accepted' &&
+            prev.senderId != request.auth.uid &&
+            prev.get('driverId', '') in [null, ''] &&
+            next.driverId == request.auth.uid &&
+            changed.hasOnly(['driverId', 'driverName', 'status', 'updatedAt']) &&
+            isVerifiedDriver()
+          ) ||
+          // Assigned driver status transitions with strict OTP verification
+          (
+            prev.get('driverId', null) == request.auth.uid &&
+            (
+              // Handover: Carrier MUST supply matching pickup OTP
+              (
+                prev.status == 'accepted' &&
+                next.status == 'handedOver' &&
+                changed.hasOnly(['status', 'submittedOtp', 'updatedAt']) &&
+                'submittedOtp' in next &&
+                next.submittedOtp == prev.pickupOtp
+              ) ||
+              // In Transit: Carrier is en route
+              (
+                prev.status == 'handedOver' &&
+                next.status == 'inTransit' &&
+                changed.hasOnly(['status', 'updatedAt'])
+              ) ||
+              // Delivered: Carrier MUST supply matching delivery OTP whenever deliveryOtp is set
+              (
+                prev.status == 'inTransit' &&
+                next.status == 'delivered' &&
+                changed.hasOnly(['status', 'submittedDeliveryOtp', 'updatedAt']) &&
+                (
+                  !(prev.get('deliveryOtp', null) is string && prev.deliveryOtp.size() >= 4) ||
+                  (
+                    'submittedDeliveryOtp' in next &&
+                    next.submittedDeliveryOtp == prev.deliveryOtp
+                  )
+                )
+              )
+            )
+          )
+        );
     }
 
     // Validator for bookings/{bookingId}
@@ -952,7 +1040,7 @@ service cloud.firestore {
     function isParcelParty() {
       return isAuthenticated() && (
         resource.data.senderId == request.auth.uid ||
-        (resource.data.driverId != null && resource.data.driverId == request.auth.uid) ||
+        ('driverId' in resource.data && resource.data.driverId != null && resource.data.driverId == request.auth.uid) ||
         ('receiverId' in resource.data && resource.data.receiverId == request.auth.uid) ||
         (
           'phone_number' in request.auth.token &&
@@ -1199,13 +1287,49 @@ service cloud.firestore {
         data.email.size() >= 5 &&
         data.email.size() <= 100 &&
         data.email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$') &&
-        data.role in ['superAdmin', 'reviewAdmin', 'supportAdmin', 'compliance', 'operations'] &&
+        data.role in ['superAdmin', 'reviewAdmin', 'supportAdmin', 'financeAdmin', 'devopsAdmin', 'compliance', 'operations'] &&
         data.isActive is bool &&
         (!('permissions' in data) || data.permissions == null || (data.permissions is list && data.permissions.size() <= 30)) &&
         validOptionalString(data, 'createdBy', 1, 128) &&
         validOptionalString(data, 'updatedBy', 1, 128) &&
         validOptionalTimestamp(data, 'createdAt') &&
         validOptionalTimestamp(data, 'updatedAt');
+    }
+
+    // Validator for admin_audit_logs/{logId}
+    function isValidAdminAuditLog(data) {
+      let allowed = [
+        'id', 'actorId', 'adminUid', 'actor', 'adminRole', 'action',
+        'targetCollection', 'targetEntityId', 'target', 'targetId',
+        'beforeAfter', 'previousState', 'newState', 'details', 'metadata',
+        'reason', 'time', 'createdAt', 'timestamp', 'serverTimestamp'
+      ];
+      return hasOnlyAllowedFields(data, allowed) &&
+        'action' in data &&
+        validString(data.action, 1, 150) &&
+        (
+          ('actorId' in data && validString(data.actorId, 1, 128)) ||
+          ('adminUid' in data && validString(data.adminUid, 1, 128))
+        ) &&
+        validOptionalString(data, 'id', 1, 128) &&
+        validOptionalString(data, 'actorId', 1, 128) &&
+        validOptionalString(data, 'adminUid', 1, 128) &&
+        validOptionalString(data, 'actor', 1, 150) &&
+        (!('adminRole' in data) || data.adminRole == null || data.adminRole in ['superAdmin', 'reviewAdmin', 'supportAdmin', 'financeAdmin', 'devopsAdmin', 'compliance', 'operations', 'admin']) &&
+        validOptionalString(data, 'targetCollection', 1, 100) &&
+        validOptionalString(data, 'targetEntityId', 1, 128) &&
+        validOptionalString(data, 'target', 1, 200) &&
+        validOptionalString(data, 'targetId', 1, 128) &&
+        validOptionalString(data, 'beforeAfter', 0, 1000) &&
+        (!('previousState' in data) || data.previousState == null || (data.previousState is map && data.previousState.keys().size() <= 30)) &&
+        (!('newState' in data) || data.newState == null || (data.newState is map && data.newState.keys().size() <= 30)) &&
+        (!('details' in data) || data.details == null || (data.details is string && data.details.size() <= 1000) || (data.details is map && data.details.keys().size() <= 20)) &&
+        (!('metadata' in data) || data.metadata == null || (data.metadata is map && data.metadata.keys().size() <= 20)) &&
+        validOptionalString(data, 'reason', 0, 500) &&
+        validOptionalString(data, 'time', 1, 60) &&
+        isValidOptTimestampOrIsoString(data.get('createdAt', null)) &&
+        isValidOptTimestampOrIsoString(data.get('timestamp', null)) &&
+        isValidOptTimestampVal(data.get('serverTimestamp', null));
     }
 
     // Validator for investor_inquiries/{inquiryId}
@@ -1340,10 +1464,12 @@ service cloud.firestore {
         'siteContactName', 'siteContactPhone', 'itemNotes',
         'budgetMinor', 'estimatedItemsCostMinor', 'maxItemsCapMinor',
         'deliveryFeeBudgetMinor', 'paymentMethod', 'paymentStatus',
-        'paymentProofUrl', 'paymentReference', 'status', 'offerCount',
+        'paymentProofUrl', 'paymentReference', 'paymentVerifiedBy',
+        'paymentVerifiedAtUtc', 'status', 'offerCount',
         'selectedOfferId', 'assignedProviderId', 'assignedProviderName',
         'agreedAmountMinor', 'agreedFeeMinor', 'isHandoverVerified',
-        'cancellationReason', 'disputeReason', 'referenceImageUrls',
+        'cancellationReason', 'disputeReason', 'moderationNotes',
+        'completedAtUtc', 'referenceImageUrls',
         'invoiceImageUrls', 'sourceRequestId', 'scheduledBy',
         'createdAt', 'updatedAt'
       ];
@@ -1375,12 +1501,16 @@ service cloud.firestore {
         data.paymentStatus == 'unpaid' &&
         data.get('paymentProofUrl', null) == null &&
         data.get('paymentReference', null) == null &&
+        data.get('paymentVerifiedBy', null) == null &&
+        data.get('paymentVerifiedAtUtc', null) == null &&
         data.get('assignedProviderName', null) == null &&
         data.get('agreedAmountMinor', null) == null &&
         data.get('agreedFeeMinor', null) == null &&
         data.get('isHandoverVerified', false) in [null, false] &&
         data.get('cancellationReason', null) == null &&
         data.get('disputeReason', null) == null &&
+        data.get('moderationNotes', null) == null &&
+        data.get('completedAtUtc', null) == null &&
         (!('invoiceImageUrls' in data) || data.invoiceImageUrls == null || (data.invoiceImageUrls is list && data.invoiceImageUrls.size() == 0)) &&
         (!('requesterName' in data) || data.requesterName == null || (data.requesterName is string && data.requesterName.size() <= 120)) &&
         (!('supplyCategory' in data) || data.supplyCategory == null || (data.supplyCategory is string && data.supplyCategory.size() > 0 && data.supplyCategory.size() <= 80)) &&
@@ -1391,9 +1521,9 @@ service cloud.firestore {
         (!('maxItemsCapMinor' in data) || data.maxItemsCapMinor == null || (data.maxItemsCapMinor is int && data.maxItemsCapMinor >= 0 && data.maxItemsCapMinor <= 50000000)) &&
         (!('deliveryFeeBudgetMinor' in data) || data.deliveryFeeBudgetMinor == null || (data.deliveryFeeBudgetMinor is int && data.deliveryFeeBudgetMinor >= 0 && data.deliveryFeeBudgetMinor <= 50000000)) &&
         (!('sourceRequestId' in data) || data.sourceRequestId == null || (data.sourceRequestId is string && data.sourceRequestId.size() > 0 && data.sourceRequestId.size() <= 128)) &&
-        (!('scheduledBy' in data) || isValidOptTimestampOrIsoVal(data.scheduledBy)) &&
-        (!('createdAt' in data) || data.createdAt == null || data.createdAt is timestamp) &&
-        (!('updatedAt' in data) || data.updatedAt == null || data.updatedAt is timestamp) &&
+        (!('scheduledBy' in data) || isValidOptTimestampOrIsoString(data.scheduledBy)) &&
+        isValidOptTimestampOrIsoString(data.get('createdAt', null)) &&
+        isValidOptTimestampOrIsoString(data.get('updatedAt', null)) &&
         isValidLocationField(data.pickupLocation) &&
         isValidLocationField(data.deliveryLocation) &&
         (!('referenceImageUrls' in data) || data.referenceImageUrls == null || isValidUrlListMax5(data.referenceImageUrls));
@@ -1402,7 +1532,7 @@ service cloud.firestore {
     // Client update schema validator (requester/provider transitions already lock status, paymentStatus, paymentProofUrl, and all immutable/location/ref fields)
     function isValidWorkRequestClientUpdate(data, prev) {
       return (data.keys() == prev.keys() || hasValidWorkRequestKeys(data)) &&
-        (data.get('updatedAt', null) == prev.get('updatedAt', null) || isValidOptTimestampVal(data.get('updatedAt', null))) &&
+        (data.get('updatedAt', null) == prev.get('updatedAt', null) || isValidOptTimestampOrIsoString(data.get('updatedAt', null))) &&
         (data.get('invoiceImageUrls', null) == prev.get('invoiceImageUrls', null) || data.get('invoiceImageUrls', null) == null || isValidUrlListMax5(data.invoiceImageUrls));
     }
 
@@ -1412,8 +1542,9 @@ service cloud.firestore {
           'requesterName', 'assignedProviderName', 'supplyCategory',
           'siteContactName', 'siteContactPhone', 'itemNotes',
           'estimatedItemsCostMinor', 'maxItemsCapMinor', 'deliveryFeeBudgetMinor',
-          'paymentReference', 'isHandoverVerified', 'cancellationReason',
-          'disputeReason', 'scheduledBy'
+          'paymentReference', 'paymentVerifiedBy', 'paymentVerifiedAtUtc',
+          'isHandoverVerified', 'cancellationReason', 'disputeReason',
+          'moderationNotes', 'completedAtUtc', 'scheduledBy'
         ]) || (
           (!('requesterName' in changed) || isValidOptStringVal(data.get('requesterName', null), 0, 120)) &&
           (!('assignedProviderName' in changed) || isValidOptStringVal(data.get('assignedProviderName', null), 0, 120)) &&
@@ -1425,10 +1556,14 @@ service cloud.firestore {
           (!('maxItemsCapMinor' in changed) || isValidOptIntRange(data.get('maxItemsCapMinor', null), 0, 50000000)) &&
           (!('deliveryFeeBudgetMinor' in changed) || isValidOptIntRange(data.get('deliveryFeeBudgetMinor', null), 0, 50000000)) &&
           (!('paymentReference' in changed) || isValidOptStringVal(data.get('paymentReference', null), 0, 128)) &&
+          (!('paymentVerifiedBy' in changed) || isValidOptStringVal(data.get('paymentVerifiedBy', null), 1, 128)) &&
+          (!('paymentVerifiedAtUtc' in changed) || isValidOptTimestampOrIsoString(data.get('paymentVerifiedAtUtc', null))) &&
           (!('isHandoverVerified' in changed) || isValidOptBoolVal(data.get('isHandoverVerified', null))) &&
           (!('cancellationReason' in changed) || isValidOptStringVal(data.get('cancellationReason', null), 0, 500)) &&
           (!('disputeReason' in changed) || isValidOptStringVal(data.get('disputeReason', null), 0, 500)) &&
-          (!('scheduledBy' in changed) || isValidOptTimestampOrIsoVal(data.get('scheduledBy', null)))
+          (!('moderationNotes' in changed) || isValidOptStringVal(data.get('moderationNotes', null), 0, 1000)) &&
+          (!('completedAtUtc' in changed) || isValidOptTimestampOrIsoString(data.get('completedAtUtc', null))) &&
+          (!('scheduledBy' in changed) || isValidOptTimestampOrIsoString(data.get('scheduledBy', null)))
         )
       );
     }
@@ -1442,7 +1577,7 @@ service cloud.firestore {
           'picked_up', 'in_transit', 'delivered_pending_confirmation',
           'completed', 'cancelled', 'disputed'
         ]) &&
-        (!('updatedAt' in changed) || isValidOptTimestampVal(data.get('updatedAt', null))) &&
+        (!('updatedAt' in changed) || isValidOptTimestampOrIsoString(data.get('updatedAt', null))) &&
         (
           !changed.hasAny([
             'paymentStatus', 'paymentProofUrl',
@@ -1486,9 +1621,10 @@ service cloud.firestore {
         'id', 'requesterId', 'requesterName', 'category', 'supplyCategory',
         'budgetMinor', 'estimatedItemsCostMinor', 'maxItemsCapMinor',
         'deliveryFeeBudgetMinor', 'agreedAmountMinor', 'agreedFeeMinor',
-        'paymentMethod', 'offerCount', 'selectedOfferId',
-        'assignedProviderId', 'assignedProviderName', 'isHandoverVerified',
-        'sourceRequestId', 'scheduledBy', 'createdAt'
+        'paymentMethod', 'paymentVerifiedBy', 'paymentVerifiedAtUtc',
+        'offerCount', 'selectedOfferId', 'assignedProviderId',
+        'assignedProviderName', 'isHandoverVerified', 'moderationNotes',
+        'completedAtUtc', 'sourceRequestId', 'scheduledBy', 'createdAt'
       ]) &&
       (
         request.resource.data.paymentStatus == resource.data.paymentStatus ||
@@ -1588,8 +1724,8 @@ service cloud.firestore {
         validOptionalString(data, 'notes', 0, 500) &&
         isValidOptBoolVal(data.get('isSelected', null)) &&
         data.status in ['pending', 'accepted', 'rejected', 'withdrawn', 'expired'] &&
-        validOptionalTimestamp(data, 'createdAt') &&
-        validOptionalTimestamp(data, 'updatedAt');
+        isValidOptTimestampOrIsoString(data.get('createdAt', null)) &&
+        isValidOptTimestampOrIsoString(data.get('updatedAt', null));
     }
 
     // Validator for request_events/{eventId}
@@ -1816,12 +1952,6 @@ service cloud.firestore {
       }
     }
 
-    // Public Profile mirror (for apps leveraging collection splitting for public directory)
-    match /users_public/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner(userId) || isAdmin();
-    }
-
     // ==========================================================================
     // 2. Rides Collection: rides/{rideId}
     // ==========================================================================
@@ -1921,60 +2051,27 @@ service cloud.firestore {
       // Create: Authenticated sender creates a delivery request
       allow create: if isAuthenticated() &&
         request.resource.data.senderId == request.auth.uid &&
-        request.resource.data.status in ['requested', 'accepted'] &&
+        request.resource.data.status in ['requested', 'pending', 'accepted'] &&
+        request.resource.data.get('submittedOtp', null) == null &&
+        request.resource.data.get('submittedDeliveryOtp', null) == null &&
         isValidParcel(request.resource.data);
 
       // Update:
-      //   - Sender can cancel while status is still 'requested'
-      //   - Carrier can accept an unassigned parcel (`driverId == null` -> `driverId == request.auth.uid`)
-      //   - Carrier can advance status to 'handedOver', 'inTransit', or 'delivered'
-      //     Handover and delivery require OTP verification check.
-      //   - Immutable fields protected: parcel ID, senderId, pickupOtp, createdAt.
-      allow update: if isAuthenticated() &&
-        isValidParcel(request.resource.data) &&
-        areImmutableFieldsUnchanged(['id', 'senderId', 'createdAt', 'pickupOtp']) &&
-        (
-          isAdmin() ||
-          // Sender cancellation
-          (
-            resource.data.senderId == request.auth.uid &&
-            request.resource.data.status == 'cancelled' &&
-            resource.data.status == 'requested'
-          ) ||
-          // Driver accepting parcel
-          (
-            isVerifiedDriver() &&
-            (resource.data.driverId == null || !('driverId' in resource.data)) &&
-            request.resource.data.driverId == request.auth.uid &&
-            request.resource.data.status == 'accepted' &&
-            resource.data.status == 'requested'
-          ) ||
-          // Driver status transitions with OTP verification check
-          (
-            resource.data.driverId == request.auth.uid &&
-            (
-              // Handover: Carrier confirms pickup
-              (
-                resource.data.status == 'accepted' &&
-                request.resource.data.status == 'handedOver' &&
-                (
-                  !('submittedOtp' in request.resource.data) ||
-                  request.resource.data.submittedOtp == resource.data.pickupOtp
-                )
-              ) ||
-              // In Transit: Carrier is en route
-              (
-                resource.data.status == 'handedOver' &&
-                request.resource.data.status == 'inTransit'
-              ) ||
-              // Delivered: Carrier delivers to recipient
-              (
-                resource.data.status == 'inTransit' &&
-                request.resource.data.status == 'delivered'
-              )
-            )
-          )
-        );
+      //   - Sender can cancel while status is still 'requested' or 'pending'
+      //   - Verified traveler/carrier can claim an open/pending unassigned parcel (`driverId` absent/null -> `request.auth.uid`)
+      //   - Assigned carrier can advance status:
+      //       * accepted -> handedOver: REQUIRES matching `submittedOtp == resource.data.pickupOtp`
+      //       * handedOver -> inTransit
+      //       * inTransit -> delivered: REQUIRES matching `submittedDeliveryOtp == resource.data.deliveryOtp` whenever `deliveryOtp` is set
+      //   - Immutable fields protected: parcel ID, senderId, createdAt, pickupOtp, deliveryOtp.
+      allow update: if (
+        isAdmin() &&
+        areImmutableFieldsUnchanged(['id', 'senderId', 'createdAt', 'pickupOtp', 'deliveryOtp']) &&
+        isValidParcel(request.resource.data)
+      ) || (
+        isAuthenticated() &&
+        isValidParcelClientUpdate(resource.data, request.resource.data)
+      );
 
       // Delete: Administrator only (parcels maintain full audit history)
       allow delete: if isAdmin();
@@ -2168,8 +2265,10 @@ service cloud.firestore {
     // 11. Admin Audit Logs: admin_audit_logs/{logId}
     // ==========================================================================
     match /admin_audit_logs/{logId} {
-      // Read & Write restricted strictly to administrator custom claims
-      allow read, create: if isAdmin();
+      // Read restricted strictly to administrator custom claims
+      allow read: if isAdmin();
+      // Create restricted to administrators with strict bounded schema validation
+      allow create: if isAdmin() && isValidAdminAuditLog(request.resource.data);
       // Immutable audit log: updates and deletes are forbidden
       allow update, delete: if false;
     }
