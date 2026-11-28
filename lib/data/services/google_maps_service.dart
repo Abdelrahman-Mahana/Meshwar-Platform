@@ -8,6 +8,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../repositories/contracts/i_maps_repository.dart';
 
+/// Service/vehicle presentation mode for the in-app Uber-style interactive map.
+enum MashwarMapVehicleMode { trip, parcel, supply, place }
+
+/// Switchable map tile style preset for the in-app Uber-style interactive map.
+enum MashwarMapStylePreset { google, uber, satellite, dark }
+
 /// Structured bilingual geo-hub entry for instant Qatar & GCC resolution.
 class MashwarGeoHubEntry {
   final String id;
@@ -159,6 +165,170 @@ class GoogleMapsService {
   static String get _activeApiKey => _runtimeApiKey.trim().isNotEmpty
       ? _runtimeApiKey.trim()
       : _compileTimeApiKey.trim();
+
+  static ({double lat, double lng})? _parseLatLngText(String raw) {
+    final match = RegExp(
+      r'^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$',
+    ).firstMatch(raw);
+    if (match == null) return null;
+    final parsedLat = double.tryParse(match.group(1)!);
+    final parsedLng = double.tryParse(match.group(2)!);
+    if (parsedLat == null || parsedLng == null) return null;
+    return (lat: parsedLat, lng: parsedLng);
+  }
+
+  static String _resolveDisplayHubLabel(
+    String raw,
+    MashwarGeoHubEntry? hub, {
+    required bool isArabic,
+  }) {
+    final trimmed = raw.trim();
+    if (hub != null) {
+      if (trimmed.isEmpty) {
+        return isArabic ? hub.nameAr : hub.nameEn;
+      }
+      final rawIsAr = _containsArabic(trimmed);
+      if (rawIsAr == isArabic) {
+        return trimmed;
+      }
+      // Match localized catalog label when script differs from active UI language
+      final norm = _normalizeSearchToken(trimmed);
+      if (norm == _normalizeSearchToken(hub.nameAr) ||
+          norm == _normalizeSearchToken(hub.nameEn) ||
+          hub.aliases.any((a) => _normalizeSearchToken(a) == norm)) {
+        return isArabic ? hub.nameAr : hub.nameEn;
+      }
+      return trimmed;
+    }
+    if (trimmed.isNotEmpty) return trimmed;
+    return isArabic ? 'الدوحة' : 'Doha';
+  }
+
+  /// Builds the relative URL to the self-contained Uber-grade in-app map engine
+  /// (`web/maps/mashwar_uber_map.html`) with resolved coordinates, route
+  /// telemetry, vehicle mode, tile style preset, and live traffic state.
+  static String buildUberInAppMapUrl({
+    String? origin,
+    String? destination,
+    String? stopover,
+    String? placeQuery,
+    double? lat,
+    double? lng,
+    MashwarMapVehicleMode mode = MashwarMapVehicleMode.trip,
+    MashwarMapStylePreset style = MashwarMapStylePreset.google,
+    bool showTraffic = true,
+    bool isArabic = true,
+    double? distanceKm,
+    int? durationMinutes,
+    String? highwayName,
+    bool showNearbyCars = true,
+  }) {
+    final cleanOrigin = origin?.trim() ?? '';
+    final cleanDest = destination?.trim() ?? '';
+    final cleanStop = stopover?.trim() ?? '';
+    final cleanPlace = placeQuery?.trim() ?? '';
+
+    final params = <String, String>{
+      'style': style.name,
+      'traffic': showTraffic ? '1' : '0',
+      'lang': isArabic ? 'ar' : 'en',
+      'nearby': showNearbyCars ? '1' : '0',
+    };
+
+    final bool wantsRoute =
+        mode != MashwarMapVehicleMode.place &&
+        cleanOrigin.isNotEmpty &&
+        cleanDest.isNotEmpty;
+
+    if (wantsRoute) {
+      final origHub = resolveHubEntry(cleanOrigin);
+      final destHub = resolveHubEntry(cleanDest);
+      final origCoordText = _parseLatLngText(cleanOrigin);
+      final destCoordText = _parseLatLngText(cleanDest);
+
+      final oLat = origHub?.lat ?? origCoordText?.lat ?? 25.2854;
+      final oLng = origHub?.lng ?? origCoordText?.lng ?? 51.5310;
+      final dLat = destHub?.lat ?? destCoordText?.lat ?? 25.4357;
+      final dLng = destHub?.lng ?? destCoordText?.lng ?? 51.4910;
+
+      final identicalCoords =
+          (oLat - dLat).abs() < 0.00025 && (oLng - dLng).abs() < 0.00025;
+
+      if (!identicalCoords) {
+        final est = estimateRouteSync(cleanOrigin, cleanDest);
+        final resolvedDist = distanceKm ?? est.distanceKm;
+        final resolvedEta = durationMinutes ?? est.durationMinutes;
+        final resolvedHwy = (highwayName != null && highwayName.trim().isNotEmpty)
+            ? highwayName.trim()
+            : est.corridorHighway(isArabic: isArabic);
+
+        params['mode'] = mode.name;
+        params['fromLat'] = oLat.toStringAsFixed(5);
+        params['fromLng'] = oLng.toStringAsFixed(5);
+        params['fromName'] = _resolveDisplayHubLabel(
+          cleanOrigin,
+          origHub,
+          isArabic: isArabic,
+        );
+        params['toLat'] = dLat.toStringAsFixed(5);
+        params['toLng'] = dLng.toStringAsFixed(5);
+        params['toName'] = _resolveDisplayHubLabel(
+          cleanDest,
+          destHub,
+          isArabic: isArabic,
+        );
+        params['dist'] = resolvedDist.round().toString();
+        params['eta'] = resolvedEta.toString();
+        if (resolvedHwy.isNotEmpty) {
+          params['hwy'] = resolvedHwy;
+        }
+
+        if (cleanStop.isNotEmpty) {
+          final stopHub = resolveHubEntry(cleanStop);
+          final stopCoordText = _parseLatLngText(cleanStop);
+          final sLat = stopHub?.lat ?? stopCoordText?.lat;
+          final sLng = stopHub?.lng ?? stopCoordText?.lng;
+          if (sLat != null && sLng != null) {
+            params['stopLat'] = sLat.toStringAsFixed(5);
+            params['stopLng'] = sLng.toStringAsFixed(5);
+            params['stopName'] = _resolveDisplayHubLabel(
+              cleanStop,
+              stopHub,
+              isArabic: isArabic,
+            );
+          }
+        }
+
+        final query = Uri(queryParameters: params).query;
+        return 'maps/mashwar_uber_map.html?$query';
+      }
+    }
+
+    // Single place preview (or route whose endpoints resolve to the same hub)
+    final effectiveLabel = cleanPlace.isNotEmpty
+        ? cleanPlace
+        : (cleanOrigin.isNotEmpty
+            ? cleanOrigin
+            : (cleanDest.isNotEmpty ? cleanDest : (isArabic ? 'الدوحة' : 'Doha')));
+    final placeHub = resolveHubEntry(effectiveLabel);
+    final placeCoordText = _parseLatLngText(effectiveLabel);
+
+    final pLat = lat ?? placeHub?.lat ?? placeCoordText?.lat ?? 25.2854;
+    final pLng = lng ?? placeHub?.lng ?? placeCoordText?.lng ?? 51.5310;
+    final pLabel = _resolveDisplayHubLabel(
+      effectiveLabel,
+      placeHub,
+      isArabic: isArabic,
+    );
+
+    params['mode'] = MashwarMapVehicleMode.place.name;
+    params['fromLat'] = pLat.toStringAsFixed(5);
+    params['fromLng'] = pLng.toStringAsFixed(5);
+    params['fromName'] = pLabel;
+
+    final query = Uri(queryParameters: params).query;
+    return 'maps/mashwar_uber_map.html?$query';
+  }
 
   static String _resolveEmbeddedLocationParam(String raw) {
     final trimmed = raw.trim();

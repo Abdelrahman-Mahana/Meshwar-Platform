@@ -7,10 +7,12 @@ import 'mashwar_embedded_google_map_stub.dart'
     as impl;
 import 'qatar_live_map_canvas.dart';
 
-/// Real interactive Google Maps view embedded directly inside the MASHWAR app.
+/// Real interactive Uber-grade map view embedded directly inside the MASHWAR app.
 ///
-/// - On Flutter Web (`dart.library.js_interop`), renders a live interactive
-///   Google Maps iframe via `ui_web.platformViewRegistry` & `package:web`.
+/// - On Flutter Web (`dart.library.js_interop`), renders the self-contained
+///   Uber-style Leaflet + Google Live Traffic + OSRM map engine
+///   (`web/maps/mashwar_uber_map.html`) via `ui_web.platformViewRegistry` &
+///   `package:web`.
 /// - On Dart VM / widget tests / non-web runtimes, renders a `pumpAndSettle`-safe
 ///   [QatarLiveMapCanvas] fallback while preserving the exact same key contract
 ///   (`ValueKey('mashwar_embedded_gmap_view')`).
@@ -30,6 +32,13 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
     this.interactive = true,
     this.fallbackStyle = QatarMapStyle.routeFocused,
     this.onHubTap,
+    this.vehicleMode = MashwarMapVehicleMode.trip,
+    this.stylePreset,
+    this.showTraffic = true,
+    this.showNearbyCars = true,
+    this.distanceKm,
+    this.durationMinutes,
+    this.highwayName,
   });
 
   final String? origin;
@@ -45,8 +54,51 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
   final bool interactive;
   final QatarMapStyle fallbackStyle;
   final ValueChanged<String>? onHubTap;
+  final MashwarMapVehicleMode vehicleMode;
+  final MashwarMapStylePreset? stylePreset;
+  final bool showTraffic;
+  final bool showNearbyCars;
+  final double? distanceKm;
+  final int? durationMinutes;
+  final String? highwayName;
 
-  /// Resolves the live Google Maps embed URL for the configured route or place.
+  /// Resolves the active tile style preset, defaulting to [satellite] when
+  /// [stylePreset] is omitted.
+  MashwarMapStylePreset get effectiveStylePreset =>
+      stylePreset ??
+      (satellite
+          ? MashwarMapStylePreset.satellite
+          : MashwarMapStylePreset.google);
+
+  /// Resolves the relative URL for the self-contained Uber-grade in-app map
+  /// engine (`maps/mashwar_uber_map.html?...`).
+  String resolveUberMapUrl({required bool isArabic}) {
+    final cleanOrigin = origin?.trim() ?? '';
+    final cleanDest = destination?.trim() ?? '';
+    final hasRouteEndpoints = cleanOrigin.isNotEmpty && cleanDest.isNotEmpty;
+    final effectiveMode = hasRouteEndpoints
+        ? vehicleMode
+        : MashwarMapVehicleMode.place;
+
+    return GoogleMapsService.buildUberInAppMapUrl(
+      origin: cleanOrigin.isNotEmpty ? cleanOrigin : null,
+      destination: cleanDest.isNotEmpty ? cleanDest : null,
+      stopover: stopover,
+      placeQuery: placeQuery,
+      lat: lat,
+      lng: lng,
+      mode: effectiveMode,
+      style: effectiveStylePreset,
+      showTraffic: showTraffic,
+      isArabic: isArabic,
+      distanceKm: distanceKm,
+      durationMinutes: durationMinutes,
+      highwayName: highwayName,
+      showNearbyCars: showNearbyCars,
+    );
+  }
+
+  /// Resolves the classic Google Maps embed URL for backward compatibility.
   String resolveEmbedUrl({required bool isArabic}) {
     final cleanOrigin = origin?.trim() ?? '';
     final cleanDest = destination?.trim() ?? '';
@@ -56,7 +108,7 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
         destination: cleanDest,
         stopover: stopover,
         isArabic: isArabic,
-        satellite: satellite,
+        satellite: satellite || effectiveStylePreset == MashwarMapStylePreset.satellite,
         zoom: zoom,
       );
     }
@@ -73,7 +125,7 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
       lat: lat,
       lng: lng,
       isArabic: isArabic,
-      satellite: satellite,
+      satellite: satellite || effectiveStylePreset == MashwarMapStylePreset.satellite,
       zoom: zoom,
     );
   }
@@ -81,10 +133,10 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = context.isArabic;
-    final embedUrl = resolveEmbedUrl(isArabic: isArabic);
+    final uberMapUrl = resolveUberMapUrl(isArabic: isArabic);
 
     return impl.buildPlatformEmbeddedGoogleMap(
-      embedUrl: embedUrl,
+      embedUrl: uberMapUrl,
       interactive: interactive,
       height: height,
       borderRadius: borderRadius,
