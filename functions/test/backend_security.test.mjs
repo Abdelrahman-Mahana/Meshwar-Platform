@@ -19,6 +19,7 @@ import {
   submitWorkOffer,
   transitionWorkRequestStatus,
   verifyHandoverAndComplete,
+  withdrawWorkOffer,
 } from '../lib/handlers.js';
 
 function createSeededStore() {
@@ -204,6 +205,10 @@ test('unauthenticated callers are denied across all callable handlers', async ()
   );
   await assert.rejects(
     acceptWorkOffer(store, unauth, { requestId: 'req_x', offerId: 'off_x' }),
+    { code: 'unauthenticated' },
+  );
+  await assert.rejects(
+    withdrawWorkOffer(store, unauth, { requestId: 'req_x', offerId: 'off_x' }),
     { code: 'unauthenticated' },
   );
   await assert.rejects(
@@ -1088,4 +1093,296 @@ test('deleteUserAccount blocks active work_requests across all active statuses, 
   assert.ok(auditDoc);
   assert.equal(auditDoc.action, 'delete_user_account');
   assert.equal(auditDoc.targetEntityId, 'req_1');
+});
+
+test('createWorkRequest, transitionWorkRequestStatus, recordPaymentStatus, submitRequestRating persist extended worksite fields and validate inputs', async () => {
+  const store = createSeededStore();
+  const clock = makeDeps('2026-11-28T10:00:00.000Z');
+
+  // Seed a financeAdmin staff record to verify expanded AdminRole alignment.
+  store.seed('admin_staff', 'admin_finance', {
+    id: 'admin_finance',
+    uid: 'admin_finance',
+    name: 'Salma Finance',
+    email: 'finance@mashwar.qa',
+    role: 'financeAdmin',
+    isActive: true,
+  });
+
+  // Invalid scheduledBy or negative minor fields are rejected.
+  await assert.rejects(
+    createWorkRequest(
+      store,
+      { uid: 'req_1' },
+      {
+        title: 'Cable trays',
+        pickupLocation: 'Industrial Area St 10',
+        deliveryLocation: 'Lusail Marina',
+        budgetMinor: 50000,
+        scheduledBy: 'not-a-date',
+      },
+      clock.deps,
+    ),
+    { code: 'invalid-argument' },
+  );
+  await assert.rejects(
+    createWorkRequest(
+      store,
+      { uid: 'req_1' },
+      {
+        title: 'Cable trays',
+        pickupLocation: 'Industrial Area St 10',
+        deliveryLocation: 'Lusail Marina',
+        budgetMinor: 50000,
+        estimatedItemsCostMinor: -100,
+      },
+      clock.deps,
+    ),
+    { code: 'invalid-argument' },
+  );
+
+  const created = await createWorkRequest(
+    store,
+    { uid: 'req_1' },
+    {
+      title: 'Heavy-duty electrical cables + breaker panel',
+      description: '3x 100m copper rolls + ABB 3-phase breaker',
+      supplyCategory: 'electrical_materials',
+      pickupLocation: 'Industrial Area St 10 Electrical Hub',
+      deliveryLocation: 'Lusail Tower Plot 9',
+      deliveryArea: 'Lusail',
+      siteContactName: 'Eng. Omar Al-Sulaiti',
+      siteContactPhone: '+97455123456',
+      itemNotes: 'Request stamped tax invoice from supplier',
+      budgetMinor: 95000,
+      estimatedItemsCostMinor: 80000,
+      maxItemsCapMinor: 85000,
+      deliveryFeeBudgetMinor: 10000,
+      scheduledBy: '2026-11-28T16:30:00Z',
+      paymentMethod: 'bank_transfer_manual',
+      referenceImageUrls: ['https://storage.example.com/work_requests/ref_cable.jpg'],
+    },
+    clock.deps,
+  );
+
+  const savedReq = store.getDoc('work_requests', created.requestId);
+  assert.equal(savedReq.supplyCategory, 'electrical_materials');
+  assert.equal(savedReq.siteContactName, 'Eng. Omar Al-Sulaiti');
+  assert.equal(savedReq.siteContactPhone, '+97455123456');
+  assert.equal(savedReq.itemNotes, 'Request stamped tax invoice from supplier');
+  assert.equal(savedReq.estimatedItemsCostMinor, 80000);
+  assert.equal(savedReq.maxItemsCapMinor, 85000);
+  assert.equal(savedReq.deliveryFeeBudgetMinor, 10000);
+  assert.equal(savedReq.scheduledBy, '2026-11-28T16:30:00.000Z');
+  assert.deepEqual(savedReq.referenceImageUrls, ['https://storage.example.com/work_requests/ref_cable.jpg']);
+
+  // Submit & accept offer
+  const offer = await submitWorkOffer(
+    store,
+    { uid: 'prov_approved_1' },
+    {
+      requestId: created.requestId,
+      totalAmountMinor: 92000,
+      serviceFeeMinor: 9500,
+      etaMinutes: 60,
+    },
+    clock.deps,
+  );
+  const accepted = await acceptWorkOffer(
+    store,
+    { uid: 'req_1' },
+    { requestId: created.requestId, offerId: offer.offerId },
+    clock.deps,
+  );
+
+  // actualReceiptTotalMinor rejected on in_progress
+  await assert.rejects(
+    transitionWorkRequestStatus(
+      store,
+      { uid: 'prov_approved_1' },
+      {
+        requestId: created.requestId,
+        targetStatus: 'in_progress',
+        actualReceiptTotalMinor: 81500,
+      },
+      clock.deps,
+    ),
+    { code: 'invalid-argument' },
+  );
+
+  await transitionWorkRequestStatus(
+    store,
+    { uid: 'prov_approved_1' },
+    { requestId: created.requestId, targetStatus: 'in_progress' },
+    clock.deps,
+  );
+  await transitionWorkRequestStatus(
+    store,
+    { uid: 'prov_approved_1' },
+    {
+      requestId: created.requestId,
+      targetStatus: 'picked_up',
+      invoiceImageUrls: ['https://storage.example.com/work_requests/receipt_1.jpg'],
+      actualReceiptTotalMinor: 81500,
+    },
+    clock.deps,
+  );
+  assert.equal(store.getDoc('work_requests', created.requestId).actualReceiptTotalMinor, 81500);
+
+  await transitionWorkRequestStatus(
+    store,
+    { uid: 'prov_approved_1' },
+    { requestId: created.requestId, targetStatus: 'in_transit' },
+    clock.deps,
+  );
+  await transitionWorkRequestStatus(
+    store,
+    { uid: 'prov_approved_1' },
+    { requestId: created.requestId, targetStatus: 'delivered_pending_confirmation' },
+    clock.deps,
+  );
+
+  // Record bank transfer proof with referenceNumber -> persisted as paymentReference
+  await recordPaymentStatus(
+    store,
+    { uid: 'req_1' },
+    {
+      requestId: created.requestId,
+      targetPaymentStatus: 'transfer_proof_submitted',
+      paymentProofUrl: 'https://storage.example.com/work_requests/bank_slip.jpg',
+      referenceNumber: 'QNB-2026-998877',
+    },
+    clock.deps,
+  );
+  assert.equal(store.getDoc('work_requests', created.requestId).paymentReference, 'QNB-2026-998877');
+
+  // financeAdmin can settle payment
+  const settled = await recordPaymentStatus(
+    store,
+    { uid: 'admin_finance' },
+    {
+      requestId: created.requestId,
+      targetPaymentStatus: 'verified_settled',
+    },
+    clock.deps,
+  );
+  assert.equal(settled.paymentStatus, 'verified_settled');
+
+  // Complete handover and submit rating with tags
+  await verifyHandoverAndComplete(
+    store,
+    { uid: 'prov_approved_1' },
+    { requestId: created.requestId, code: accepted.handoverCode },
+    clock.deps,
+  );
+
+  await assert.rejects(
+    submitRequestRating(
+      store,
+      { uid: 'req_1' },
+      { requestId: created.requestId, stars: 5, tags: 'not-an-array' },
+      clock.deps,
+    ),
+    { code: 'invalid-argument' },
+  );
+
+  const ratingRes = await submitRequestRating(
+    store,
+    { uid: 'req_1' },
+    {
+      requestId: created.requestId,
+      stars: 5,
+      comment: 'Fast delivery and clear invoice',
+      tags: ['on_time', 'clear_receipt', 'on_time'],
+    },
+    clock.deps,
+  );
+  assert.deepEqual(store.getDoc('ratings', ratingRes.ratingId).tags, ['on_time', 'clear_receipt']);
+
+  // adminReviewProvider maps 'suspended' -> 'rejected' on provider_verifications
+  await adminReviewProvider(
+    store,
+    { uid: 'admin_1' },
+    { providerId: 'prov_pending', decision: 'suspended', reason: 'Document mismatch' },
+    clock.deps,
+  );
+  assert.equal(store.getDoc('provider_profiles', 'prov_pending').approvalStatus, 'suspended');
+  assert.equal(store.getDoc('provider_verifications', 'prov_pending').status, 'rejected');
+});
+
+test('withdrawWorkOffer atomically marks offer withdrawn, decrements offerCount, and reverts status to open when 0 pending offers remain', async () => {
+  const store = createSeededStore();
+  const clock = makeDeps('2026-11-28T11:00:00.000Z');
+
+  const { requestId } = await createWorkRequest(
+    store,
+    { uid: 'req_1' },
+    {
+      title: '15 boxes ceramic tile adhesive',
+      pickupLocation: 'Salwa Road Depot',
+      deliveryLocation: 'Al Wakrah Plot 12',
+      budgetMinor: 35000,
+    },
+    clock.deps,
+  );
+
+  const off1 = await submitWorkOffer(
+    store,
+    { uid: 'prov_approved_1' },
+    { requestId, totalAmountMinor: 34000, serviceFeeMinor: 5000, etaMinutes: 50 },
+    clock.deps,
+  );
+  const off2 = await submitWorkOffer(
+    store,
+    { uid: 'prov_approved_2' },
+    { requestId, totalAmountMinor: 33000, serviceFeeMinor: 4500, etaMinutes: 70 },
+    clock.deps,
+  );
+
+  assert.equal(store.getDoc('work_requests', requestId).status, 'offer_received');
+  assert.equal(store.getDoc('work_requests', requestId).offerCount, 2);
+
+  // Another user/provider cannot withdraw prov_approved_1's offer
+  await assert.rejects(
+    withdrawWorkOffer(store, { uid: 'prov_approved_2' }, { requestId, offerId: off1.offerId }, clock.deps),
+    { code: 'permission-denied' },
+  );
+  await assert.rejects(
+    withdrawWorkOffer(store, { uid: 'req_1' }, { requestId, offerId: off1.offerId }, clock.deps),
+    { code: 'permission-denied' },
+  );
+
+  // First withdrawal: 1 pending offer remains -> stays offer_received, offerCount becomes 1
+  const res1 = await withdrawWorkOffer(
+    store,
+    { uid: 'prov_approved_1' },
+    { requestId, offerId: off1.offerId },
+    clock.deps,
+  );
+  assert.equal(res1.offerStatus, 'withdrawn');
+  assert.equal(res1.requestStatus, 'offer_received');
+  assert.equal(res1.offerCount, 1);
+  assert.equal(store.getDoc('work_offers', off1.offerId).status, 'withdrawn');
+  assert.equal(store.getDoc('work_requests', requestId).status, 'offer_received');
+  assert.equal(store.getDoc('work_requests', requestId).offerCount, 1);
+
+  // Double-withdraw rejected
+  await assert.rejects(
+    withdrawWorkOffer(store, { uid: 'prov_approved_1' }, { requestId, offerId: off1.offerId }, clock.deps),
+    { code: 'failed-precondition' },
+  );
+
+  // Second withdrawal: 0 pending offers remain -> reverts to open, offerCount becomes 0
+  const res2 = await withdrawWorkOffer(
+    store,
+    { uid: 'prov_approved_2' },
+    { requestId, offerId: off2.offerId },
+    clock.deps,
+  );
+  assert.equal(res2.offerStatus, 'withdrawn');
+  assert.equal(res2.requestStatus, 'open');
+  assert.equal(res2.offerCount, 0);
+  assert.equal(store.getDoc('work_offers', off2.offerId).status, 'withdrawn');
+  assert.equal(store.getDoc('work_requests', requestId).status, 'open');
+  assert.equal(store.getDoc('work_requests', requestId).offerCount, 0);
 });

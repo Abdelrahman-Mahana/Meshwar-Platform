@@ -1269,9 +1269,18 @@
         }
       }
 
-      // Smooth 60fps requestAnimationFrame Animation Loop
+      // Smooth 60fps requestAnimationFrame Animation Loop (pauses when hidden or reduced-motion)
       var HERO_SWEEP_MS = 14000;
       var animStartTs = null;
+      var animElapsedOffset = 0;
+      var animRafId = null;
+      var reducedMotionQuery = typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-reduced-motion: reduce)')
+        : null;
+
+      function isReducedMotion() {
+        return !!(reducedMotionQuery && reducedMotionQuery.matches);
+      }
 
       function easeInOutSoft(t) {
         // Gentle acceleration at origin and deceleration at destination
@@ -1280,10 +1289,7 @@
           : (t > 0.92 ? 1 - Math.pow((1 - t) / 0.08, 2) * 0.08 : t);
       }
 
-      function animateFrame(ts) {
-        if (animStartTs === null) animStartTs = ts;
-        var elapsed = ts - animStartTs;
-
+      function renderVehiclesAt(elapsed) {
         // 1. Animate hero service vehicle along real road polyline
         if (isRouteMode && heroMarker && routeArcData) {
           var rawT = (elapsed % HERO_SWEEP_MS) / HERO_SWEEP_MS;
@@ -1309,8 +1315,47 @@
             nv.el.style.transform = 'rotate(' + s.bearing.toFixed(1) + 'deg)';
           }
         }
+      }
 
-        window.requestAnimationFrame(animateFrame);
+      function stopAnimationLoop() {
+        if (animRafId !== null) {
+          window.cancelAnimationFrame(animRafId);
+          animRafId = null;
+        }
+        animStartTs = null;
+      }
+
+      function animateFrame(ts) {
+        if (document.hidden || isReducedMotion()) {
+          stopAnimationLoop();
+          return;
+        }
+        if (animStartTs === null) animStartTs = ts - animElapsedOffset;
+        var elapsed = ts - animStartTs;
+        animElapsedOffset = elapsed;
+
+        renderVehiclesAt(elapsed);
+        animRafId = window.requestAnimationFrame(animateFrame);
+      }
+
+      function syncAnimationLoop() {
+        if (document.hidden || isReducedMotion()) {
+          stopAnimationLoop();
+          if (isReducedMotion()) {
+            renderVehiclesAt(HERO_SWEEP_MS * 0.35);
+          }
+        } else if (animRafId === null) {
+          animRafId = window.requestAnimationFrame(animateFrame);
+        }
+      }
+
+      document.addEventListener('visibilitychange', syncAnimationLoop);
+      if (reducedMotionQuery) {
+        if (typeof reducedMotionQuery.addEventListener === 'function') {
+          reducedMotionQuery.addEventListener('change', syncAnimationLoop);
+        } else if (typeof reducedMotionQuery.addListener === 'function') {
+          reducedMotionQuery.addListener(syncAnimationLoop);
+        }
       }
 
       // OSRM Real Qatar Road Geometry Upgrade (3.5s strict timeout)
@@ -1359,6 +1404,9 @@
             renderRouteRibbon(roadCoords);
             renderPins();
             updateHudUI();
+            if (isReducedMotion()) {
+              renderVehiclesAt(HERO_SWEEP_MS * 0.35);
+            }
             if (!userManuallyMoved) {
               fitFullRoute(true);
             }
@@ -1465,8 +1513,8 @@
       initNearbyCars();
       fitFullRoute(false);
 
-      // Kick off smooth 60fps animation + async OSRM upgrade
-      window.requestAnimationFrame(animateFrame);
+      // Kick off smooth 60fps animation (pauses when hidden/reduced-motion) + async OSRM upgrade
+      syncAnimationLoop();
       if (isRouteMode) {
         fetchOsrmRoadRoute();
       }
