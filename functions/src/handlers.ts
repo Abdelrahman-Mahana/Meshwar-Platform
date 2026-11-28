@@ -41,6 +41,7 @@ import {
   SubmitWorkOfferInput,
   TransitionWorkRequestStatusInput,
   VerifyHandoverAndCompleteInput,
+  WithdrawWorkOfferInput,
   WorkOfferDoc,
   WorkRequestDoc,
   WorkRequestHandoverViewDoc,
@@ -80,6 +81,7 @@ const MODERATION_ADMIN_ROLES: ReadonlySet<AdminRole> = new Set<AdminRole>([
   'supportAdmin',
   'compliance',
   'operations',
+  'financeAdmin',
 ]);
 
 const PROVIDER_REVIEW_ADMIN_ROLES: ReadonlySet<AdminRole> = new Set<AdminRole>([
@@ -170,6 +172,64 @@ function requireNonNegativeInt(
     );
   }
   return value;
+}
+
+function optionalNonNegativeInt(
+  value: unknown,
+  fieldName: string,
+  maxVal = MAX_BUDGET_MINOR,
+): number | null {
+  if (value === undefined || value === null) {
+    return null;
+  }
+  return requireNonNegativeInt(value, fieldName, maxVal);
+}
+
+function optionalIsoTimestamp(value: unknown, fieldName: string): string | null {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  if (typeof value !== 'string') {
+    throw new DomainError('invalid-argument', `'${fieldName}' must be an ISO-8601 date string.`);
+  }
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+  const parsedMs = Date.parse(trimmed);
+  if (Number.isNaN(parsedMs)) {
+    throw new DomainError('invalid-argument', `'${fieldName}' must be a valid ISO-8601 timestamp.`);
+  }
+  return new Date(parsedMs).toISOString();
+}
+
+function validateRatingTags(value: unknown): string[] {
+  if (value === undefined || value === null) {
+    return [];
+  }
+  if (!Array.isArray(value)) {
+    throw new DomainError('invalid-argument', "'tags' must be an array of strings.");
+  }
+  if (value.length > 10) {
+    throw new DomainError('invalid-argument', "'tags' may contain at most 10 entries.");
+  }
+  const cleaned: string[] = [];
+  for (const item of value) {
+    if (typeof item !== 'string') {
+      throw new DomainError('invalid-argument', "Each entry in 'tags' must be a string.");
+    }
+    const trimmed = item.trim();
+    if (trimmed.length === 0 || trimmed.length > 50) {
+      throw new DomainError(
+        'invalid-argument',
+        "Each tag in 'tags' must be between 1 and 50 characters.",
+      );
+    }
+    if (!cleaned.includes(trimmed)) {
+      cleaned.push(trimmed);
+    }
+  }
+  return cleaned;
 }
 
 function isSafeMediaUrl(url: string): boolean {
@@ -316,6 +376,7 @@ export async function createWorkRequest(
 
   const title = requireNonEmptyString(input.title, 'title', 2, 160);
   const description = optionalString(input.description, 'description', 2000) ?? '';
+  const supplyCategory = optionalString(input.supplyCategory, 'supplyCategory', 80);
   const pickupLocation = requireNonEmptyString(
     input.pickupLocation,
     'pickupLocation',
@@ -330,7 +391,20 @@ export async function createWorkRequest(
   );
   const deliveryArea =
     optionalString(input.deliveryArea, 'deliveryArea', 120) ?? deliveryLocation;
+  const siteContactName = optionalString(input.siteContactName, 'siteContactName', 120);
+  const siteContactPhone = optionalString(input.siteContactPhone, 'siteContactPhone', 30);
+  const itemNotes = optionalString(input.itemNotes, 'itemNotes', 2000);
   const budgetMinor = requirePositiveInt(input.budgetMinor, 'budgetMinor');
+  const estimatedItemsCostMinor = optionalNonNegativeInt(
+    input.estimatedItemsCostMinor,
+    'estimatedItemsCostMinor',
+  );
+  const maxItemsCapMinor = optionalNonNegativeInt(input.maxItemsCapMinor, 'maxItemsCapMinor');
+  const deliveryFeeBudgetMinor = optionalNonNegativeInt(
+    input.deliveryFeeBudgetMinor,
+    'deliveryFeeBudgetMinor',
+  );
+  const scheduledBy = optionalIsoTimestamp(input.scheduledBy, 'scheduledBy');
   const requesterName = optionalString(input.requesterName, 'requesterName', 100);
 
   let paymentMethod: PaymentMethod = 'cash_on_delivery';
@@ -360,15 +434,24 @@ export async function createWorkRequest(
     requesterId: uid,
     requesterName,
     category: 'worksite_supply',
+    supplyCategory,
     title,
     description,
     pickupLocation,
     deliveryLocation,
     deliveryArea,
+    siteContactName,
+    siteContactPhone,
+    itemNotes,
     budgetMinor,
+    estimatedItemsCostMinor,
+    maxItemsCapMinor,
+    deliveryFeeBudgetMinor,
+    scheduledBy,
     paymentMethod,
     paymentStatus: 'unpaid',
     paymentProofUrl: null,
+    paymentReference: null,
     paymentVerifiedBy: null,
     paymentVerifiedAtUtc: null,
     status: 'open',
@@ -377,6 +460,7 @@ export async function createWorkRequest(
     assignedProviderId: null,
     agreedAmountMinor: null,
     agreedFeeMinor: null,
+    actualReceiptTotalMinor: null,
     referenceImageUrls,
     invoiceImageUrls: [],
     cancellationReason: null,
@@ -512,6 +596,121 @@ export async function submitWorkOffer(
       offerId,
       offer: offerDoc,
       requestStatus: 'offer_received',
+      offerCount: nextOfferCount,
+    };
+  });
+}
+
+/**
+ * Provider atomically withdraws their own pending offer.
+ * Decrements `work_requests.offerCount` and reverts `work_requests.status`
+ * from `'offer_received'` back to `'open'` when 0 pending offers remain.
+ */
+export async function withdrawWorkOffer(
+  store: DataStore,
+  context: AuthContext,
+  input: WithdrawWorkOfferInput,
+  deps?: HandlerDeps,
+): Promise<{
+  requestId: string;
+  offerId: string;
+  offerStatus: 'withdrawn';
+  requestStatus: WorkRequestStatus;
+  offerCount: number;
+}> {
+  const uid = requireAuthUid(context);
+  const requestId = requireNonEmptyString(input.requestId, 'requestId', 1, 128);
+  const offerId = requireNonEmptyString(input.offerId, 'offerId', 1, 128);
+  const nowIso = nowDate(deps).toISOString();
+
+  return store.runTransaction(async (tx) => {
+    const request = await tx.get<WorkRequestDoc>('work_requests', requestId);
+    if (!request) {
+      throw new DomainError('not-found', `Work request '${requestId}' not found.`);
+    }
+
+    const offer = await tx.get<WorkOfferDoc>('work_offers', offerId);
+    if (!offer || offer.requestId !== requestId) {
+      throw new DomainError(
+        'not-found',
+        `Offer '${offerId}' does not belong to request '${requestId}'.`,
+      );
+    }
+
+    if (offer.providerId !== uid) {
+      throw new DomainError(
+        'permission-denied',
+        'Only the offer owner may withdraw their offer.',
+      );
+    }
+
+    if (offer.status !== 'pending') {
+      throw new DomainError(
+        'failed-precondition',
+        `Only pending offers can be withdrawn (current: '${offer.status}').`,
+      );
+    }
+
+    if (request.status !== 'open' && request.status !== 'offer_received') {
+      throw new DomainError(
+        'failed-precondition',
+        `Cannot withdraw offer when request status is '${request.status}'.`,
+      );
+    }
+
+    const allRequestOffers = await tx.query<WorkOfferDoc>('work_offers', [
+      { field: 'requestId', op: '==', value: requestId },
+    ]);
+
+    const remainingPendingCount = allRequestOffers.filter(
+      (o) => o.id !== offerId && o.data.status === 'pending',
+    ).length;
+
+    const nextOfferCount = Math.max(0, (request.offerCount ?? 1) - 1);
+    const nextRequestStatus: WorkRequestStatus =
+      request.status === 'offer_received' && remainingPendingCount === 0
+        ? 'open'
+        : request.status;
+
+    const eventDoc = createEventDoc(deps, {
+      requestId,
+      actorId: uid,
+      actorRole: 'provider',
+      type: 'offer_withdrawn',
+      fromStatus: request.status,
+      toStatus: nextRequestStatus,
+      note: `Offer ${offerId} withdrawn by provider.`,
+      metadata: { offerId, remainingPendingCount },
+      createdAt: nowIso,
+    });
+
+    const notifDoc = createNotificationDoc(deps, {
+      userId: request.requesterId,
+      requestId,
+      type: 'offer_withdrawn',
+      title: 'Supply offer withdrawn',
+      body: `${offer.providerName} withdrew their offer for '${request.title}'.`,
+      createdAt: nowIso,
+    });
+
+    // Writes strictly after all reads complete.
+    await tx.update('work_offers', offerId, {
+      status: 'withdrawn',
+      updatedAt: nowIso,
+    });
+    await tx.update('work_requests', requestId, {
+      status: nextRequestStatus,
+      offerCount: nextOfferCount,
+      updatedAt: nowIso,
+    });
+    await tx.set('request_events', eventDoc.id, eventDoc);
+    await tx.set('notifications', notifDoc.id, notifDoc);
+
+    return {
+      requestId,
+      offerId,
+      offerStatus: 'withdrawn',
+      requestStatus: nextRequestStatus,
       offerCount: nextOfferCount,
     };
   });
@@ -724,11 +923,22 @@ export async function transitionWorkRequestStatus(
   const targetStatus = input.targetStatus;
   const reason = optionalString(input.reason, 'reason', 500);
   const newInvoiceUrls = validateImageUrlList(input.invoiceImageUrls, 'invoiceImageUrls');
+  const actualReceiptTotalMinor = optionalNonNegativeInt(
+    input.actualReceiptTotalMinor,
+    'actualReceiptTotalMinor',
+  );
 
   if (newInvoiceUrls.length > 0 && !INVOICE_ATTACHMENT_STATUSES.has(targetStatus)) {
     throw new DomainError(
       'invalid-argument',
       `invoiceImageUrls can only be attached when transitioning to picked_up, in_transit, or delivered_pending_confirmation.`,
+    );
+  }
+
+  if (actualReceiptTotalMinor !== null && !INVOICE_ATTACHMENT_STATUSES.has(targetStatus)) {
+    throw new DomainError(
+      'invalid-argument',
+      `actualReceiptTotalMinor can only be recorded when transitioning to picked_up, in_transit, or delivered_pending_confirmation.`,
     );
   }
 
@@ -777,11 +987,23 @@ export async function transitionWorkRequestStatus(
       patch.invoiceImageUrls = merged;
     }
 
+    if (actualReceiptTotalMinor !== null) {
+      patch.actualReceiptTotalMinor = actualReceiptTotalMinor;
+    }
+
     if (targetStatus === 'cancelled' && reason) {
       patch.cancellationReason = reason;
     }
     if (targetStatus === 'disputed' && reason) {
       patch.disputeReason = reason;
+    }
+
+    const eventMetadata: Record<string, unknown> = {};
+    if (newInvoiceUrls.length > 0) {
+      eventMetadata.addedInvoices = newInvoiceUrls.length;
+    }
+    if (actualReceiptTotalMinor !== null) {
+      eventMetadata.actualReceiptTotalMinor = actualReceiptTotalMinor;
     }
 
     const eventDoc = createEventDoc(deps, {
@@ -792,7 +1014,7 @@ export async function transitionWorkRequestStatus(
       fromStatus: request.status,
       toStatus: targetStatus,
       note: reason ?? `Transitioned from '${request.status}' to '${targetStatus}'.`,
-      metadata: newInvoiceUrls.length > 0 ? { addedInvoices: newInvoiceUrls.length } : null,
+      metadata: Object.keys(eventMetadata).length > 0 ? eventMetadata : null,
       createdAt: nowIso,
     });
 
@@ -1003,6 +1225,7 @@ export async function submitRequestRating(
   const requestId = requireNonEmptyString(input.requestId, 'requestId', 1, 128);
   const stars = requirePositiveInt(input.stars, 'stars', 5);
   const comment = optionalString(input.comment, 'comment', 500);
+  const tags = validateRatingTags(input.tags);
   const nowIso = nowDate(deps).toISOString();
 
   return store.runTransaction(async (tx) => {
@@ -1066,6 +1289,7 @@ export async function submitRequestRating(
       fromRole: isRequester ? 'requester' : 'provider',
       stars,
       comment,
+      tags,
       createdAt: nowIso,
     };
 
@@ -1127,6 +1351,11 @@ export async function recordPaymentStatus(
   if (paymentProofUrl !== null && !isSafeMediaUrl(paymentProofUrl)) {
     throw new DomainError('invalid-argument', 'Invalid paymentProofUrl.');
   }
+  const paymentReference = optionalString(
+    input.referenceNumber ?? input.paymentReference,
+    'referenceNumber',
+    128,
+  );
 
   const nowIso = nowDate(deps).toISOString();
 
@@ -1163,6 +1392,9 @@ export async function recordPaymentStatus(
     if (paymentProofUrl) {
       patch.paymentProofUrl = paymentProofUrl;
     }
+    if (paymentReference) {
+      patch.paymentReference = paymentReference;
+    }
     if (targetPaymentStatus === 'verified_settled') {
       patch.paymentVerifiedBy = uid;
       patch.paymentVerifiedAtUtc = nowIso;
@@ -1179,6 +1411,7 @@ export async function recordPaymentStatus(
       metadata: {
         previousPaymentStatus: request.paymentStatus,
         newPaymentStatus: targetPaymentStatus,
+        ...(paymentReference ? { paymentReference } : {}),
       },
       createdAt: nowIso,
     });
@@ -1298,8 +1531,9 @@ export async function adminReviewProvider(
     }
 
     if (verification) {
+      const verificationStatus = decision === 'suspended' ? 'rejected' : decision;
       await tx.update('provider_verifications', providerId, {
-        status: decision,
+        status: verificationStatus,
         reviewedBy: uid,
         reviewedAtUtc: nowIso,
         rejectionReason: decision === 'rejected' || decision === 'suspended' ? reason : null,

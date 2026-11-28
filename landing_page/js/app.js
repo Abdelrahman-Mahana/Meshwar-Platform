@@ -157,7 +157,7 @@
     "./assets/mobile/47_vehicle_registration_screen.png",
     "./assets/mobile/35_pickup_code_dialog.png",
     "./assets/mobile/50_emergency_sos_sheet.png",
-    "./assets/mobile/67_service_escrow_screen.png"
+    "./assets/mobile/35_pickup_code_dialog.png"
   ];
 
   const WEB_SCREENS = {
@@ -369,7 +369,11 @@
     const dlModal = document.getElementById("download-modal");
     const dlClose = document.getElementById("download-modal-close");
     const dlReqBtn = document.getElementById("modal-request-build");
-    const isLocalHost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+    const isLocalLandingServer =
+      ["localhost", "127.0.0.1"].includes(window.location.hostname) &&
+      window.location.port === "8088";
+    const consumerPortalUrl = isLocalLandingServer ? "http://127.0.0.1:8080/" : "/";
+    const adminPortalUrl = isLocalLandingServer ? "http://127.0.0.1:8080/admin/" : "/admin/";
 
     const openDl = () => {
       if (!dlModal) return;
@@ -382,24 +386,23 @@
       dlModal.setAttribute("aria-hidden", "true");
     };
 
+    document.querySelectorAll("[data-live-web-btn], #modal-local-launch").forEach((link) => {
+      link.setAttribute("href", consumerPortalUrl);
+    });
+    document.querySelectorAll("[data-live-admin-btn], #modal-local-admin-launch").forEach((link) => {
+      link.setAttribute("href", adminPortalUrl);
+    });
+
     const localLaunch = document.getElementById("modal-local-launch");
     if (localLaunch) {
-      localLaunch.style.display = isLocalHost ? "inline-flex" : "none";
+      localLaunch.style.display = "inline-flex";
     }
     const localAdminLaunch = document.getElementById("modal-local-admin-launch");
     if (localAdminLaunch) {
-      localAdminLaunch.style.display = isLocalHost ? "inline-flex" : "none";
+      localAdminLaunch.style.display = "inline-flex";
     }
 
     document.querySelectorAll("[data-open-download]").forEach((btn) => btn.addEventListener("click", openDl));
-    document.querySelectorAll("[data-live-web-btn], [data-live-admin-btn]").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        if (!isLocalHost) {
-          e.preventDefault();
-          openDl();
-        }
-      });
-    });
 
     if (dlClose) dlClose.addEventListener("click", closeDl);
     if (dlModal) dlModal.addEventListener("click", (e) => { if (e.target === dlModal) closeDl(); });

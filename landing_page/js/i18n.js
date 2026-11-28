@@ -290,9 +290,9 @@ window.MASHWAR_I18N = {
     f_sending: "جاري إرسال رسالتك...",
     f_err_validation: "تأكد من كتابة الاسم واسم الجهة وبريد إلكتروني صحيح.",
     f_err:
-      "حصل خطأ بسيط أثناء الإرسال. تقدر تكلمني مباشرة على abdelrahmanmahana01@gmail.com أو +201007938491.",
+      "حصل خطأ بسيط أثناء الإرسال. تقدر تراسلنا مباشرة على ops@mashwar.qa.",
     f_success:
-      "وصلت رسالتك وتم حفظها بنجاح! هتواصل معاك في أقرب وقت، وتقدر كمان تراسلني مباشرة على abdelrahmanmahana01@gmail.com.",
+      "وصلت رسالتك وتم حفظها بنجاح! سيتواصل معك فريق مشوار قطر في أقرب وقت، وتقدر كمان تراسلنا مباشرة على ops@mashwar.qa.",
 
     modal_dl_t: "معاينة تطبيق مشوار ولوحة الإدارة",
     modal_dl_d:
@@ -592,9 +592,9 @@ window.MASHWAR_I18N = {
     f_sending: "Sending your message...",
     f_err_validation: "Please enter your name, organization, and a valid email address.",
     f_err:
-      "Something went wrong while sending. You can always reach me directly at abdelrahmanmahana01@gmail.com or +201007938491.",
+      "Something went wrong while sending. You can always reach our Qatar team directly at ops@mashwar.qa.",
     f_success:
-      "Message received and saved! I'll follow up shortly, or feel free to email abdelrahmanmahana01@gmail.com directly.",
+      "Message received and saved! Our Qatar team will follow up shortly, or feel free to email ops@mashwar.qa directly.",
 
     modal_dl_t: "Try the MASHWAR Consumer App & Admin Portal",
     modal_dl_d:

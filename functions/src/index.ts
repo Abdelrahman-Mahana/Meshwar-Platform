@@ -14,6 +14,7 @@ import {
   submitWorkOffer as submitWorkOfferHandler,
   transitionWorkRequestStatus as transitionWorkRequestStatusHandler,
   verifyHandoverAndComplete as verifyHandoverAndCompleteHandler,
+  withdrawWorkOffer as withdrawWorkOfferHandler,
 } from './handlers';
 import { FirestoreStore } from './store';
 import {
@@ -28,6 +29,7 @@ import {
   SubmitWorkOfferInput,
   TransitionWorkRequestStatusInput,
   VerifyHandoverAndCompleteInput,
+  WithdrawWorkOfferInput,
 } from './types';
 
 const FUNCTION_REGION = 'europe-west1';
@@ -86,6 +88,11 @@ export const submitWorkOffer = wrapCallable<
   SubmitWorkOfferInput,
   Awaited<ReturnType<typeof submitWorkOfferHandler>>
 >(submitWorkOfferHandler);
+
+export const withdrawWorkOffer = wrapCallable<
+  WithdrawWorkOfferInput,
+  Awaited<ReturnType<typeof withdrawWorkOfferHandler>>
+>(withdrawWorkOfferHandler);
 
 export const acceptWorkOffer = wrapCallable<
   AcceptWorkOfferInput,

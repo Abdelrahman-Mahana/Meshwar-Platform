@@ -78,6 +78,8 @@ export const ALLOWED_ADMIN_ROLES = [
   'supportAdmin',
   'compliance',
   'operations',
+  'financeAdmin',
+  'devopsAdmin',
 ] as const;
 
 export type AdminRole = (typeof ALLOWED_ADMIN_ROLES)[number];
@@ -94,15 +96,24 @@ export interface WorkRequestDoc extends Record<string, unknown> {
   requesterId: string;
   requesterName?: string | null;
   category: 'worksite_supply';
+  supplyCategory?: string | null;
   title: string;
   description: string;
   pickupLocation: string;
   deliveryLocation: string;
   deliveryArea: string;
+  siteContactName?: string | null;
+  siteContactPhone?: string | null;
+  itemNotes?: string | null;
   budgetMinor: number;
+  estimatedItemsCostMinor?: number | null;
+  maxItemsCapMinor?: number | null;
+  deliveryFeeBudgetMinor?: number | null;
+  scheduledBy?: string | null;
   paymentMethod: PaymentMethod;
   paymentStatus: PaymentSettlementStatus;
   paymentProofUrl?: string | null;
+  paymentReference?: string | null;
   paymentVerifiedBy?: string | null;
   paymentVerifiedAtUtc?: string | null;
   status: WorkRequestStatus;
@@ -111,6 +122,7 @@ export interface WorkRequestDoc extends Record<string, unknown> {
   assignedProviderId: string | null;
   agreedAmountMinor: number | null;
   agreedFeeMinor: number | null;
+  actualReceiptTotalMinor?: number | null;
   referenceImageUrls: string[];
   invoiceImageUrls: string[];
   cancellationReason?: string | null;
@@ -220,6 +232,7 @@ export interface RatingDoc extends Record<string, unknown> {
   fromRole: 'requester' | 'provider';
   stars: number;
   comment: string | null;
+  tags: string[];
   createdAt: string;
 }
 
@@ -259,10 +272,18 @@ export interface NotificationDoc extends Record<string, unknown> {
 export interface CreateWorkRequestInput {
   title?: unknown;
   description?: unknown;
+  supplyCategory?: unknown;
   pickupLocation?: unknown;
   deliveryLocation?: unknown;
   deliveryArea?: unknown;
+  siteContactName?: unknown;
+  siteContactPhone?: unknown;
+  itemNotes?: unknown;
   budgetMinor?: unknown;
+  estimatedItemsCostMinor?: unknown;
+  maxItemsCapMinor?: unknown;
+  deliveryFeeBudgetMinor?: unknown;
+  scheduledBy?: unknown;
   paymentMethod?: unknown;
   paymentStatus?: unknown;
   referenceImageUrls?: unknown;
@@ -277,6 +298,11 @@ export interface SubmitWorkOfferInput {
   notes?: unknown;
 }
 
+export interface WithdrawWorkOfferInput {
+  requestId?: unknown;
+  offerId?: unknown;
+}
+
 export interface AcceptWorkOfferInput {
   requestId?: unknown;
   offerId?: unknown;
@@ -286,6 +312,7 @@ export interface TransitionWorkRequestStatusInput {
   requestId?: unknown;
   targetStatus?: unknown;
   invoiceImageUrls?: unknown;
+  actualReceiptTotalMinor?: unknown;
   reason?: unknown;
   paymentStatus?: unknown;
 }
@@ -299,12 +326,15 @@ export interface SubmitRequestRatingInput {
   requestId?: unknown;
   stars?: unknown;
   comment?: unknown;
+  tags?: unknown;
 }
 
 export interface RecordPaymentStatusInput {
   requestId?: unknown;
   targetPaymentStatus?: unknown;
   paymentProofUrl?: unknown;
+  referenceNumber?: unknown;
+  paymentReference?: unknown;
 }
 
 export interface AdminReviewProviderInput {

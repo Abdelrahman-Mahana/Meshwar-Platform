@@ -6,9 +6,9 @@ rules_version = '2';
 // Enforces:
 // - Authenticated-only reads and uploads (default deny on all unmatched paths)
 // - Maximum file size <= 10 MB
-// - Strict image/* MIME content-type validation on uploads
-// - Private owner-or-admin access for provider QID & verification documents
-// - Participant-scoped access for work_requests reference & invoice images
+// - Strict raster image MIME allowlist (blocks image/svg+xml XSS)
+// - Private owner-or-admin access for provider/driver QID & verification documents
+// - Scoped participant access for chat attachments and work_requests media
 // ==============================================================================
 
 service firebase.storage {
@@ -40,7 +40,24 @@ service firebase.storage {
         request.resource.size > 0 &&
         request.resource.size <= 10 * 1024 * 1024 &&
         request.resource.contentType is string &&
-        request.resource.contentType.matches('image/.*');
+        request.resource.contentType in [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif',
+          'image/heic',
+          'image/heif'
+        ];
+    }
+
+    function isConversationParticipant(convId) {
+      return isSignedIn() && (
+        isAdmin() ||
+        (
+          firestore.exists(/databases/(default)/documents/conversations/$(convId)) &&
+          request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(convId)).data.participantIds
+        )
+      );
     }
 
     function workRequestExists(requestId) {
@@ -113,6 +130,32 @@ service firebase.storage {
       allow create, update: if isSignedIn() &&
         workRequestExists(requestId) &&
         workRequestData(requestId).requesterId == request.auth.uid &&
+        isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // User Profile Avatars (owner write/delete, authenticated read, <= 10 MB raster image)
+    match /users/{uid}/avatar/{file} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() &&
+        request.auth.uid == uid &&
+        isValidImageUpload();
+      allow delete: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // Private Driver KYC / License Verification Media (owner upload, owner/admin read, <= 10 MB)
+    match /driver_verifications/{uid}/{file} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update: if isSignedIn() &&
+        request.auth.uid == uid &&
+        isValidImageUpload();
+      allow delete: if isAdmin();
+    }
+
+    // In-App Conversation Image Attachments (participants or active admin only, <= 10 MB)
+    match /conversations/{convId}/{file} {
+      allow read: if isConversationParticipant(convId);
+      allow create, update: if isConversationParticipant(convId) &&
         isValidImageUpload();
       allow delete: if isAdmin();
     }

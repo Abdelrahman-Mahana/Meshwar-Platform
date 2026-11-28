@@ -183,8 +183,8 @@ function initInvestorContactForm() {
 
       const baseSuccess = getI18nText(
         "f_success",
-        "تم استلام طلبك وحفظه بنجاح! سيتواصل معك المؤسس مباشرة عبر البريد abdelrahmanmahana01@gmail.com أو الهاتف +201007938491.",
-        "Your inquiry has been saved! The founder will reach out directly via abdelrahmanmahana01@gmail.com or +201007938491."
+        "تم استلام طلبك وحفظه بنجاح! سيتواصل معك فريق مشوار قطر قريباً، ويمكنك أيضاً مراسلتنا مباشرة على ops@mashwar.qa.",
+        "Your inquiry has been saved! The MASHWAR Qatar team will follow up shortly, or you can email ops@mashwar.qa directly."
       );
 
       setStatusState({
@@ -205,8 +205,8 @@ function initInvestorContactForm() {
         type: "error",
         message: getI18nText(
           "f_err",
-          "تعذر حفظ الطلب حالياً. يرجى مراسلتنا مباشرة على abdelrahmanmahana01@gmail.com أو +201007938491.",
-          "Unable to save your inquiry right now. Please contact abdelrahmanmahana01@gmail.com or +201007938491 directly."
+          "تعذر حفظ الطلب حالياً. يرجى مراسلتنا مباشرة على ops@mashwar.qa.",
+          "Unable to save your inquiry right now. Please contact ops@mashwar.qa directly."
         ),
       });
     } finally {
