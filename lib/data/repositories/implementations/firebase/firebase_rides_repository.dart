@@ -129,85 +129,41 @@ class FirebaseRidesRepository implements IRidesRepository {
     final otpCode = '${rng.nextInt(9000) + 1000}';
     final now = DateTime.now();
 
-    try {
-      final bookingRef =
-          _firestore.collection(FirestoreCollections.bookings).doc();
-      final rideRef =
-          _firestore.collection(FirestoreCollections.rides).doc(rideId);
+    final bookingRef =
+        _firestore.collection(FirestoreCollections.bookings).doc();
+    final rideRef =
+        _firestore.collection(FirestoreCollections.rides).doc(rideId);
 
-      return await _firestore.runTransaction((transaction) async {
-        final rideDoc = await transaction.get(rideRef);
-        if (!rideDoc.exists || rideDoc.data() == null) {
-          throw StateError('Ride not found');
-        }
+    return _firestore.runTransaction((transaction) async {
+      final rideDoc = await transaction.get(rideRef);
+      if (!rideDoc.exists || rideDoc.data() == null) {
+        throw StateError('Ride not found');
+      }
 
-        final rideData = rideDoc.data()!;
-        final currentSeats = (rideData['remainingSeats'] as num?)?.toInt() ?? 0;
-        final clampedSeats = seats.clamp(1, 10);
-        if (currentSeats < clampedSeats) {
-          throw StateError('Insufficient remaining seats');
-        }
+      final rideData = rideDoc.data()!;
+      final currentSeats = (rideData['remainingSeats'] as num?)?.toInt() ?? 0;
+      final clampedSeats = seats.clamp(1, 10);
+      if (currentSeats < clampedSeats) {
+        throw StateError('Insufficient remaining seats');
+      }
 
-        final pricePerSeat = (rideData['pricePerSeat'] as num?)?.toInt() ?? 35;
-        final driverId =
-            (rideData['driverId']?.toString().trim().isNotEmpty ?? false)
-                ? rideData['driverId'].toString().trim()
-                : 'usr_driver_01';
+      final pricePerSeat = (rideData['pricePerSeat'] as num?)?.toInt() ?? 35;
+      final driverId =
+          (rideData['driverId']?.toString().trim().isNotEmpty ?? false)
+              ? rideData['driverId'].toString().trim()
+              : 'usr_driver_01';
 
-        final booking = BookingModel(
-          id: bookingRef.id,
-          rideId: rideId,
-          passengerId: passengerId,
-          passengerName: passengerName,
-          passengerPhone: passengerPhone,
-          seats: clampedSeats,
-          totalPrice: (pricePerSeat * clampedSeats).clamp(0, 50000),
-          pickupLocation:
-              pickupLocation.trim().isNotEmpty ? pickupLocation.trim() : 'Main Hub',
-          dropoffLocation: dropoffLocation.trim().isNotEmpty
-              ? dropoffLocation.trim()
-              : 'Dropoff Hub',
-          status: BookingStatus.confirmed,
-          otpCode: otpCode,
-          createdAt: now,
-        );
-
-        final firestoreDoc = <String, dynamic>{
-          'id': booking.id,
-          'rideId': booking.rideId,
-          'passengerId': booking.passengerId,
-          'passengerName': booking.passengerName,
-          'passengerPhone': booking.passengerPhone,
-          'driverId': driverId,
-          'seats': booking.seats,
-          'totalPrice': booking.totalPrice,
-          'pickupLocation': booking.pickupLocation,
-          'dropoffLocation': booking.dropoffLocation,
-          'status': booking.status.name,
-          'otpCode': booking.otpCode,
-          'createdAt': FieldValue.serverTimestamp(),
-        };
-
-        if (driverId == passengerId) {
-          transaction.update(rideRef, {
-            'remainingSeats': currentSeats - clampedSeats,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-        transaction.set(bookingRef, firestoreDoc);
-        return booking;
-      });
-    } catch (_) {
-      return BookingModel(
-        id: 'bk_${now.millisecondsSinceEpoch}',
+      final booking = BookingModel(
+        id: bookingRef.id,
         rideId: rideId,
         passengerId: passengerId,
         passengerName: passengerName,
         passengerPhone: passengerPhone,
-        seats: seats.clamp(1, 10),
-        totalPrice: (35 * seats.clamp(1, 10)).clamp(0, 50000),
-        pickupLocation:
-            pickupLocation.trim().isNotEmpty ? pickupLocation.trim() : 'Main Hub',
+        seats: clampedSeats,
+        totalPrice: (pricePerSeat * clampedSeats).clamp(0, 50000),
+        pickupLocation: pickupLocation.trim().isNotEmpty
+            ? pickupLocation.trim()
+            : 'Main Hub',
         dropoffLocation: dropoffLocation.trim().isNotEmpty
             ? dropoffLocation.trim()
             : 'Dropoff Hub',
@@ -215,6 +171,94 @@ class FirebaseRidesRepository implements IRidesRepository {
         otpCode: otpCode,
         createdAt: now,
       );
+
+      final firestoreDoc = <String, dynamic>{
+        'id': booking.id,
+        'rideId': booking.rideId,
+        'passengerId': booking.passengerId,
+        'passengerName': booking.passengerName,
+        'passengerPhone': booking.passengerPhone,
+        'driverId': driverId,
+        'seats': booking.seats,
+        'totalPrice': booking.totalPrice,
+        'pickupLocation': booking.pickupLocation,
+        'dropoffLocation': booking.dropoffLocation,
+        'status': booking.status.name,
+        'otpCode': booking.otpCode,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      // Decrement remainingSeats atomically for every confirmed booking.
+      transaction.update(rideRef, {
+        'remainingSeats': currentSeats - clampedSeats,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      transaction.set(bookingRef, firestoreDoc);
+      return booking;
+    });
+  }
+
+  /// Updates only mutable status fields on `rides/{rideId}` without touching immutable `createdAt`.
+  Future<bool> updateRideStatus(String rideId, String status) async {
+    if (!const {'active', 'completed', 'cancelled'}.contains(status)) {
+      return false;
+    }
+    try {
+      await _firestore
+          .collection(FirestoreCollections.rides)
+          .doc(rideId)
+          .update({
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Persists rescheduled departure date/time on `rides/{rideId}` without touching immutable fields.
+  Future<bool> rescheduleRide({
+    required String rideId,
+    required String newDate,
+    required String newTime,
+  }) async {
+    try {
+      await _firestore
+          .collection(FirestoreCollections.rides)
+          .doc(rideId)
+          .update({
+        'departureDate': newDate.trim(),
+        'departureTime': newTime.trim(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Updates mutable `driverRating` & `status` on `rides/{rideId}` without overwriting `createdAt`.
+  Future<bool> updateRideRating({
+    required String rideId,
+    required double driverRating,
+    String? status,
+  }) async {
+    try {
+      final patch = <String, dynamic>{
+        'driverRating': driverRating.clamp(0.0, 5.0),
+        if (status != null &&
+            const {'active', 'completed', 'cancelled'}.contains(status))
+          'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+      await _firestore
+          .collection(FirestoreCollections.rides)
+          .doc(rideId)
+          .update(patch);
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 

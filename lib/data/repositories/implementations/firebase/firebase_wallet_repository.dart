@@ -152,10 +152,10 @@ class FirebaseWalletRepository implements IWalletRepository {
       );
 
       await txRef.set(tx.toJson()).timeout(const Duration(seconds: 4));
+      return true;
     } catch (_) {
-      // Keep UI responsive if Firestore rules or offline block client ledger writes.
+      return false;
     }
-    return true;
   }
 
   @override
@@ -200,9 +200,9 @@ class FirebaseWalletRepository implements IWalletRepository {
       );
 
       await txRef.set(tx.toJson()).timeout(const Duration(seconds: 4));
+      return true;
     } catch (_) {
-      // Keep UI responsive if Firestore rules or offline block client ledger writes.
+      return false;
     }
-    return true;
   }
 }

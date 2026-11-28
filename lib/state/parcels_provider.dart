@@ -7,7 +7,7 @@ import '../data/mock_data.dart';
 import '../data/models/parcel_model.dart';
 import '../data/models/ride_model.dart';
 import '../data/repositories/app_repositories.dart';
-import '../data/repositories/implementations/parcels_repository_impl.dart';
+import '../data/repositories/implementations/firebase/firebase_parcels_repository.dart';
 
 class ParcelDisputeRecord {
   final String id;
@@ -74,8 +74,14 @@ class ParcelsProvider extends ChangeNotifier {
 
   List<ParcelModel> get parcels => List.unmodifiable(_parcels);
   bool get isLoading => _isLoading;
-  ParcelModel get currentTrackingParcel =>
-      _parcels.isNotEmpty ? _parcels.first : MockData.activeParcel;
+  ParcelModel? get currentTrackingParcel {
+    if (_parcels.isNotEmpty) return _parcels.first;
+    if ((AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks) ||
+        _isLiveBackendMode) {
+      return null;
+    }
+    return MockData.activeParcel;
+  }
   ParcelModel? get activeTrackingParcel =>
       _parcels.isNotEmpty ? _parcels.first : null;
   Map<String, ParcelDisputeRecord> get disputes =>
@@ -253,19 +259,35 @@ class ParcelsProvider extends ChangeNotifier {
     final index = _parcels.indexWhere((p) => p.id == parcelId);
     if (index == -1) return;
     final current = _parcels[index];
+    final resolvedRoute = '${ride.fromCity} ← ${ride.toCity} · ${ride.departureTime}';
+    final resolvedFee = ride.parcelPrice > 0 ? ride.parcelPrice : current.fee;
+    final resolvedDriverId = (ride.driverId != null && ride.driverId!.trim().isNotEmpty)
+        ? ride.driverId!.trim()
+        : (_resolveCurrentAuthUser()?.uid ?? '');
     _parcels[index] = current.copyWith(
-      driverId: ride.driverId,
+      driverId: resolvedDriverId.isNotEmpty ? resolvedDriverId : ride.driverId,
       driverName: ride.driverName,
       fromCity: current.fromCity ?? ride.fromCity,
       toCity: current.toCity ?? ride.toCity,
-      route: '${ride.fromCity} ← ${ride.toCity} · ${ride.departureTime}',
-      fee: ride.parcelPrice > 0 ? ride.parcelPrice : current.fee,
+      route: resolvedRoute,
+      fee: resolvedFee,
       status: ParcelStatusStep.accepted,
     );
     notifyListeners();
-    AppRepositories.instance.parcels
-        .updateParcelStatus(parcelId, ParcelStatusStep.accepted)
-        .ignore();
+    final repo = AppRepositories.instance.parcels;
+    if (repo is FirebaseParcelsRepository) {
+      repo
+          .assignDriver(
+            parcelId: parcelId,
+            driverId: resolvedDriverId,
+            driverName: ride.driverName,
+            route: resolvedRoute,
+            fee: resolvedFee,
+          )
+          .ignore();
+    } else {
+      repo.updateParcelStatus(parcelId, ParcelStatusStep.accepted).ignore();
+    }
   }
 
   Future<bool> verifyPickupOtp(String parcelId, String otp) async {
@@ -288,8 +310,10 @@ class ParcelsProvider extends ChangeNotifier {
     final cleanInput = otp.replaceAll(' ', '').trim();
     final storedDelivery =
         _parcels[index].deliveryOtp?.replaceAll(' ', '').trim() ?? '';
-    if (cleanInput.isEmpty) return false;
-    if (storedDelivery.isNotEmpty && cleanInput != storedDelivery) {
+    // Fail closed when deliveryOtp is absent/empty or mismatched.
+    if (cleanInput.isEmpty ||
+        storedDelivery.isEmpty ||
+        cleanInput != storedDelivery) {
       return false;
     }
 
@@ -374,13 +398,30 @@ class ParcelsProvider extends ChangeNotifier {
 
     notifyListeners();
 
-    if (updatedParcel != null) {
+    final repo = AppRepositories.instance.parcels;
+    if (repo is FirebaseParcelsRepository) {
       try {
-        final repo = AppRepositories.instance.parcels;
+        final authUser = _resolveCurrentAuthUser();
+        await repo.submitDispute(
+          disputeId: 'dsp_${DateTime.now().millisecondsSinceEpoch}',
+          parcelId: resolvedParcelId,
+          category: effectiveReason,
+          description: cleanDetails.isNotEmpty ? cleanDetails : effectiveReason,
+          complainantId: authUser?.uid ?? _boundUserId,
+          complainantName:
+              updatedParcel?.senderName ?? authUser?.displayName,
+          respondentId: updatedParcel?.driverId,
+          againstName: updatedParcel?.driverName,
+          parcelDetails: updatedParcel != null
+              ? '${updatedParcel.route} · ${updatedParcel.description}'
+              : null,
+        );
+      } catch (_) {
+        // Keep optimistic local dispute record when offline or unauthenticated.
+      }
+    } else if (updatedParcel != null) {
+      try {
         await repo.updateParcelStatus(updatedParcel.id, updatedParcel.status);
-        if (repo is! ParcelsRepositoryImpl) {
-          await repo.createParcel(updatedParcel);
-        }
       } catch (_) {
         // Keep optimistic local dispute record when offline or unauthenticated.
       }
@@ -392,5 +433,9 @@ class ParcelsProvider extends ChangeNotifier {
   void cancelParcel(String id) {
     _parcels.removeWhere((p) => p.id == id);
     notifyListeners();
+    final repo = AppRepositories.instance.parcels;
+    if (repo is FirebaseParcelsRepository) {
+      repo.cancelParcel(id).ignore();
+    }
   }
 }

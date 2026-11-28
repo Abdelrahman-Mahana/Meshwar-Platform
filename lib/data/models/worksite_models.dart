@@ -769,6 +769,7 @@ class WorkRequest {
   final String? assignedProviderName;
   final bool requiresPurchaseReceipt;
   final String? receiptImageUrl;
+  final List<String> referenceImageUrls;
   final MoneyMinor? actualReceiptTotalMinor;
   final int offerCount;
   final bool isHandoverVerified;
@@ -807,6 +808,7 @@ class WorkRequest {
     this.assignedProviderName,
     this.requiresPurchaseReceipt = true,
     this.receiptImageUrl,
+    this.referenceImageUrls = const [],
     this.actualReceiptTotalMinor,
     this.offerCount = 0,
     this.isHandoverVerified = false,
@@ -851,6 +853,7 @@ class WorkRequest {
     String? assignedProviderName,
     bool? requiresPurchaseReceipt,
     String? receiptImageUrl,
+    List<String>? referenceImageUrls,
     MoneyMinor? actualReceiptTotalMinor,
     int? offerCount,
     bool? isHandoverVerified,
@@ -893,6 +896,7 @@ class WorkRequest {
       requiresPurchaseReceipt:
           requiresPurchaseReceipt ?? this.requiresPurchaseReceipt,
       receiptImageUrl: receiptImageUrl ?? this.receiptImageUrl,
+      referenceImageUrls: referenceImageUrls ?? this.referenceImageUrls,
       actualReceiptTotalMinor:
           actualReceiptTotalMinor ?? this.actualReceiptTotalMinor,
       offerCount: offerCount ?? this.offerCount,
@@ -935,6 +939,8 @@ class WorkRequest {
       'assignedProviderName': assignedProviderName,
       'requiresPurchaseReceipt': requiresPurchaseReceipt,
       'receiptImageUrl': receiptImageUrl,
+      if (referenceImageUrls.isNotEmpty)
+        'referenceImageUrls': referenceImageUrls,
       'actualReceiptTotalMinor': actualReceiptTotalMinor?.toJson(),
       'offerCount': offerCount,
       'isHandoverVerified': isHandoverVerified,
@@ -1003,6 +1009,12 @@ class WorkRequest {
       requiresPurchaseReceipt:
           json['requiresPurchaseReceipt'] as bool? ?? true,
       receiptImageUrl: (json['receiptImageUrl'] as String?) ?? firstReceipt,
+      referenceImageUrls: json['referenceImageUrls'] is Iterable
+          ? (json['referenceImageUrls'] as Iterable)
+              .map((e) => e.toString().trim())
+              .where((s) => s.isNotEmpty)
+              .toList(growable: false)
+          : const [],
       actualReceiptTotalMinor: MoneyMinor.tryParseNullable(
         json['actualReceiptTotalMinor'] ?? json['agreedAmountMinor'],
       ),

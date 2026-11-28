@@ -80,6 +80,18 @@ class AppStrings {
     'نشط': 'Active',
     'منتهي': 'Expired',
     'تم الاستلام': 'Picked Up',
+    'مفتوح': 'Open',
+    'محلول': 'Resolved',
+    'محظور': 'Banned',
+    'مرفوض': 'Rejected',
+    'مرفوضة': 'Rejected',
+    'مقبول': 'Accepted',
+    'مقبولة': 'Accepted',
+    'منشورة': 'Published',
+    'مكتملة الحجز': 'Fully Booked',
+    'جارية': 'In Progress',
+    'ذروة عالية': 'High Peak',
+    'متوقف مؤقتاً': 'Paused',
   };
 
   static final Map<String, String> _statusEnToAr = {
@@ -344,25 +356,58 @@ class AppStrings {
     }
   }
 
+  static final RegExp _standaloneArabicAmRegex =
+      RegExp(r'(?<![\u0600-\u06FF])ص(?![\u0600-\u06FF])');
+  static final RegExp _standaloneArabicPmRegex =
+      RegExp(r'(?<![\u0600-\u06FF])م(?![\u0600-\u06FF])');
+
   /// Translate Date & Time strings
   static String translateDate(String dateText, {required bool isArabic}) {
     var result = dateText;
     if (isArabic) {
       result = result
           .replaceAll(',', '،')
-          .replaceAll('Today', 'اليوم')
-          .replaceAll('Tomorrow', 'غداً')
-          .replaceAll('Fri', 'الجمعة')
-          .replaceAll('Sat', 'السبت')
-          .replaceAll('Sun', 'الأحد')
-          .replaceAll('Mon', 'الإثنين')
-          .replaceAll('Tue', 'الثلاثاء')
-          .replaceAll('Wed', 'الأربعاء')
-          .replaceAll('Thu', 'الخميس')
-          .replaceAll('Nov', 'نوفمبر')
-          .replaceAll('Oct', 'أكتوبر')
-          .replaceAll('AM', 'ص')
-          .replaceAll('PM', 'م');
+          .replaceAll(RegExp(r'\bToday\b'), 'اليوم')
+          .replaceAll(RegExp(r'\bTomorrow\b'), 'غداً')
+          .replaceAll(RegExp(r'\bFriday\b'), 'الجمعة')
+          .replaceAll(RegExp(r'\bSaturday\b'), 'السبت')
+          .replaceAll(RegExp(r'\bSunday\b'), 'الأحد')
+          .replaceAll(RegExp(r'\bMonday\b'), 'الإثنين')
+          .replaceAll(RegExp(r'\bTuesday\b'), 'الثلاثاء')
+          .replaceAll(RegExp(r'\bWednesday\b'), 'الأربعاء')
+          .replaceAll(RegExp(r'\bThursday\b'), 'الخميس')
+          .replaceAll(RegExp(r'\bFri\b'), 'الجمعة')
+          .replaceAll(RegExp(r'\bSat\b'), 'السبت')
+          .replaceAll(RegExp(r'\bSun\b'), 'الأحد')
+          .replaceAll(RegExp(r'\bMon\b'), 'الإثنين')
+          .replaceAll(RegExp(r'\bTue\b'), 'الثلاثاء')
+          .replaceAll(RegExp(r'\bWed\b'), 'الأربعاء')
+          .replaceAll(RegExp(r'\bThu\b'), 'الخميس')
+          .replaceAll(RegExp(r'\bJanuary\b'), 'يناير')
+          .replaceAll(RegExp(r'\bFebruary\b'), 'فبراير')
+          .replaceAll(RegExp(r'\bMarch\b'), 'مارس')
+          .replaceAll(RegExp(r'\bApril\b'), 'أبريل')
+          .replaceAll(RegExp(r'\bMay\b'), 'مايو')
+          .replaceAll(RegExp(r'\bJune\b'), 'يونيو')
+          .replaceAll(RegExp(r'\bJuly\b'), 'يوليو')
+          .replaceAll(RegExp(r'\bAugust\b'), 'أغسطس')
+          .replaceAll(RegExp(r'\bSeptember\b'), 'سبتمبر')
+          .replaceAll(RegExp(r'\bOctober\b'), 'أكتوبر')
+          .replaceAll(RegExp(r'\bNovember\b'), 'نوفمبر')
+          .replaceAll(RegExp(r'\bDecember\b'), 'ديسمبر')
+          .replaceAll(RegExp(r'\bJan\b'), 'يناير')
+          .replaceAll(RegExp(r'\bFeb\b'), 'فبراير')
+          .replaceAll(RegExp(r'\bMar\b'), 'مارس')
+          .replaceAll(RegExp(r'\bApr\b'), 'أبريل')
+          .replaceAll(RegExp(r'\bJun\b'), 'يونيو')
+          .replaceAll(RegExp(r'\bJul\b'), 'يوليو')
+          .replaceAll(RegExp(r'\bAug\b'), 'أغسطس')
+          .replaceAll(RegExp(r'\bSep\b'), 'سبتمبر')
+          .replaceAll(RegExp(r'\bOct\b'), 'أكتوبر')
+          .replaceAll(RegExp(r'\bNov\b'), 'نوفمبر')
+          .replaceAll(RegExp(r'\bDec\b'), 'ديسمبر')
+          .replaceAll(RegExp(r'\bAM\b'), 'ص')
+          .replaceAll(RegExp(r'\bPM\b'), 'م');
     } else {
       result = result
           .replaceAll('،', ',')
@@ -376,10 +421,23 @@ class AppStrings {
           .replaceAll('الثلاثاء', 'Tue')
           .replaceAll('الأربعاء', 'Wed')
           .replaceAll('الخميس', 'Thu')
-          .replaceAll('نوفمبر', 'Nov')
+          .replaceAll('يناير', 'Jan')
+          .replaceAll('فبراير', 'Feb')
+          .replaceAll('مارس', 'Mar')
+          .replaceAll('أبريل', 'Apr')
+          .replaceAll('ابريل', 'Apr')
+          .replaceAll('مايو', 'May')
+          .replaceAll('يونيو', 'Jun')
+          .replaceAll('يوليو', 'Jul')
+          .replaceAll('أغسطس', 'Aug')
+          .replaceAll('اغسطس', 'Aug')
+          .replaceAll('سبتمبر', 'Sep')
           .replaceAll('أكتوبر', 'Oct')
-          .replaceAll('ص', 'AM')
-          .replaceAll('م', 'PM');
+          .replaceAll('اكتوبر', 'Oct')
+          .replaceAll('نوفمبر', 'Nov')
+          .replaceAll('ديسمبر', 'Dec')
+          .replaceAll(_standaloneArabicAmRegex, 'AM')
+          .replaceAll(_standaloneArabicPmRegex, 'PM');
     }
     return result;
   }

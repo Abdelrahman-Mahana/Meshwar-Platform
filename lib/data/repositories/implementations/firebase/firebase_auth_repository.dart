@@ -795,16 +795,33 @@ class FirebaseAuthRepository implements IAuthRepository {
       );
     }
 
+    String resolvedFullName =
+        _firebaseAuth.currentUser?.displayName?.trim() ?? '';
+    if (resolvedFullName.length < 2) {
+      try {
+        final existingUserDoc = await _userStore.getUserDoc(uid);
+        final docName = existingUserDoc?['fullName']?.toString().trim() ?? '';
+        if (docName.length >= 2) {
+          resolvedFullName = docName;
+        }
+      } catch (_) {
+        // Fallback below when user doc is unreadable.
+      }
+    }
+    if (resolvedFullName.length < 2) {
+      resolvedFullName = 'MASHWAR Provider';
+    }
+
+    // Strictly complies with `isValidProviderVerification` in `firestore.rules`.
     final verificationDoc = <String, dynamic>{
-      'id': 'ver_$uid',
-      'userId': uid,
+      'id': uid,
+      'providerId': uid,
+      'fullName': resolvedFullName,
       'qidNumber': trimmedQid,
-      'nationalId': trimmedQid,
-      'idFrontImage': idFrontImage,
-      'idBackImage': idBackImage,
-      'selfieImage': selfieImage,
+      'qidFrontUrl': idFrontImage.trim(),
+      'qidBackUrl': idBackImage.trim(),
+      'selfieUrl': selfieImage.trim(),
       'status': 'pending',
-      'approvalStatus': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };

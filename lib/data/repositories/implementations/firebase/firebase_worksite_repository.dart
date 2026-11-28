@@ -80,14 +80,29 @@ abstract interface class FirebaseNotificationStore {
   });
 }
 
+/// Optional provider-scoped work_offers read gateway implemented by live
+/// [_FirestoreWorksiteStore] so non-requester/non-admin callers filter by
+/// `providerId == uid` without breaking existing [FirebaseWorksiteStore] test mocks.
+@visibleForTesting
+abstract interface class FirebaseScopedWorkOfferStore {
+  Future<List<Map<String, dynamic>>> queryWorkOffersForProvider(
+    String requestId,
+    String providerId,
+  );
+
+  Future<bool> isCurrentUserAdmin();
+}
+
 class _FirestoreWorksiteStore
     implements
         FirebaseWorksiteStore,
         SparkWorksiteWriteGateway,
-        FirebaseNotificationStore {
+        FirebaseNotificationStore,
+        FirebaseScopedWorkOfferStore {
   final FirebaseFirestore? _injectedFirestore;
+  final fb_auth.FirebaseAuth? _injectedAuth;
 
-  _FirestoreWorksiteStore([this._injectedFirestore]);
+  _FirestoreWorksiteStore([this._injectedFirestore, this._injectedAuth]);
 
   FirebaseFirestore get _firestore =>
       _injectedFirestore ?? FirebaseFirestore.instance;
@@ -147,6 +162,61 @@ class _FirestoreWorksiteStore
     return snap.docs
         .map((doc) => normalizeFirestoreDocument(doc.data(), fallbackId: doc.id))
         .toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> queryWorkOffersForProvider(
+    String requestId,
+    String providerId,
+  ) async {
+    try {
+      final snap = await _firestore
+          .collection(FirestoreCollections.workOffers)
+          .where('requestId', isEqualTo: requestId)
+          .where('providerId', isEqualTo: providerId)
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snap.docs
+          .map(
+            (doc) => normalizeFirestoreDocument(doc.data(), fallbackId: doc.id),
+          )
+          .toList();
+    } on FirebaseException catch (e) {
+      if (e.code != 'failed-precondition') rethrow;
+      // Graceful fallback if composite index (requestId, providerId, createdAt) is still building.
+      final snap = await _firestore
+          .collection(FirestoreCollections.workOffers)
+          .where('requestId', isEqualTo: requestId)
+          .where('providerId', isEqualTo: providerId)
+          .get();
+      final docs = snap.docs
+          .map(
+            (doc) => normalizeFirestoreDocument(doc.data(), fallbackId: doc.id),
+          )
+          .toList();
+      docs.sort(
+        (a, b) => (b['createdAt']?.toString() ?? '')
+            .compareTo(a['createdAt']?.toString() ?? ''),
+      );
+      return docs;
+    }
+  }
+
+  @override
+  Future<bool> isCurrentUserAdmin() async {
+    try {
+      final user =
+          (_injectedAuth ?? fb_auth.FirebaseAuth.instance).currentUser;
+      if (user == null) return false;
+      final tokenResult = await user.getIdTokenResult();
+      final claims = tokenResult.claims ?? const <String, dynamic>{};
+      final role = claims['role']?.toString() ?? '';
+      return claims['admin'] == true ||
+          role == 'admin' ||
+          role == 'superAdmin';
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
@@ -350,7 +420,7 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
                       .currentUser
                       ?.getIdToken(),
             ),
-        _store = _FirestoreWorksiteStore(firestore),
+        _store = _FirestoreWorksiteStore(firestore, firebaseAuth),
         _sparkGatewayOverride = null,
         _notificationStoreOverride = null;
 
@@ -491,6 +561,21 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
         'paymentMethod': request.paymentMethod.value,
         if (request.requesterName.trim().isNotEmpty)
           'requesterName': request.requesterName.trim(),
+        if (request.supplyCategory.trim().isNotEmpty)
+          'supplyCategory': request.supplyCategory.trim(),
+        if (request.siteContactName?.trim().isNotEmpty == true)
+          'siteContactName': request.siteContactName!.trim(),
+        if (request.siteContactPhone?.trim().isNotEmpty == true)
+          'siteContactPhone': request.siteContactPhone!.trim(),
+        if (request.itemNotes?.trim().isNotEmpty == true)
+          'itemNotes': request.itemNotes!.trim(),
+        'estimatedItemsCostMinor': request.estimatedItemsCostMinor.minorUnits,
+        'maxItemsCapMinor': request.maxItemsCapMinor.minorUnits,
+        'deliveryFeeBudgetMinor': request.deliveryFeeBudgetMinor.minorUnits,
+        if (request.scheduledBy != null)
+          'scheduledBy': request.scheduledBy!.toUtc().toIso8601String(),
+        if (request.referenceImageUrls.isNotEmpty)
+          'referenceImageUrls': request.referenceImageUrls.take(5).toList(),
       });
 
       final rawRequest = result['request'];
@@ -563,6 +648,8 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
         'isHandoverVerified': false,
         'cancellationReason': null,
         'disputeReason': null,
+        if (request.referenceImageUrls.isNotEmpty)
+          'referenceImageUrls': request.referenceImageUrls.take(5).toList(),
         if (request.scheduledBy != null)
           'scheduledBy': _scheduledByToken(request.scheduledBy!),
         'createdAt': ts,
@@ -697,7 +784,7 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
 
   @override
   Future<List<WorkOffer>> listOffersForRequest(String requestId) async {
-    await _requireSignedInUid();
+    final uid = await _requireSignedInUid();
     final cleanId = requestId.trim();
     if (cleanId.isEmpty) {
       throw const WorksiteRepositoryException(
@@ -707,6 +794,19 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
       );
     }
     try {
+      final store = _store;
+      if (store is FirebaseScopedWorkOfferStore) {
+        final scopedStore = store as FirebaseScopedWorkOfferStore;
+        final reqDoc = await _store.getWorkRequestDoc(cleanId);
+        final isRequester = reqDoc != null && reqDoc['requesterId'] == uid;
+        if (isRequester || await scopedStore.isCurrentUserAdmin()) {
+          final docs = await _store.queryWorkOffers(cleanId);
+          return docs.map(WorkOffer.fromJson).toList();
+        }
+        final scopedDocs =
+            await scopedStore.queryWorkOffersForProvider(cleanId, uid);
+        return scopedDocs.map(WorkOffer.fromJson).toList();
+      }
       final docs = await _store.queryWorkOffers(cleanId);
       return docs.map(WorkOffer.fromJson).toList();
     } catch (e) {
@@ -854,7 +954,9 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
     }
   }
 
-  /// Withdraws a pending offer owned by [providerId].
+  /// Withdraws a pending offer owned by [providerId] via Cloud Function
+  /// `withdrawWorkOffer`, falling back to rule-compliant Spark direct write when
+  /// Cloud Functions are unavailable.
   @override
   Future<void> withdrawOffer({
     required String requestId,
@@ -862,6 +964,19 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
     required String providerId,
   }) async {
     final uid = await _requireSignedInUid(expectedUid: providerId);
+    final cleanReqId = requestId.trim();
+    final cleanOfferId = offerId.trim();
+
+    try {
+      await _functionsClient.call('withdrawWorkOffer', {
+        'requestId': cleanReqId,
+        'offerId': cleanOfferId,
+      });
+      return;
+    } on WorksiteRepositoryException catch (e) {
+      if (!_isSparkFallbackTrigger(e)) rethrow;
+    }
+
     final gateway = _sparkGateway;
     if (gateway == null) {
       throw const WorksiteRepositoryException(
@@ -870,8 +985,8 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
         messageEn: 'Offer withdrawal is unavailable in this store configuration.',
       );
     }
-    final existing = await gateway.getWorkOfferDoc(offerId.trim());
-    if (existing == null || existing['requestId'] != requestId.trim()) {
+    final existing = await gateway.getWorkOfferDoc(cleanOfferId);
+    if (existing == null || existing['requestId'] != cleanReqId) {
       throw const WorksiteRepositoryException(
         code: 'not-found',
         messageAr: 'العرض المطلوب غير موجود.',
@@ -894,7 +1009,7 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
     }
     try {
       await gateway.withdrawWorkOffer(
-        offerId: offerId.trim(),
+        offerId: cleanOfferId,
         patch: {
           'status': 'withdrawn',
           'updatedAt': _timestampToken(),
@@ -994,6 +1109,8 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
         if (cleanNote != null && cleanNote.isNotEmpty) 'reason': cleanNote,
         if (cleanReceipt != null && cleanReceipt.isNotEmpty)
           'invoiceImageUrls': [cleanReceipt],
+        if (actualReceiptTotalMinor != null)
+          'actualReceiptTotalMinor': actualReceiptTotalMinor.minorUnits,
       });
 
       final refreshed = await getRequestById(cleanReqId);
@@ -1250,6 +1367,7 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
         'stars': rating.score,
         if (rating.comment != null && rating.comment!.trim().isNotEmpty)
           'comment': rating.comment!.trim(),
+        if (rating.tags.isNotEmpty) 'tags': rating.tags.take(10).toList(),
       });
 
       return rating.copyWith(
@@ -1391,6 +1509,8 @@ class FirebaseWorksiteRepository implements IWorksiteRepository {
         'targetPaymentStatus': settlementStatus.value,
         if (cleanProof != null && cleanProof.isNotEmpty)
           'paymentProofUrl': cleanProof,
+        if (cleanRef != null && cleanRef.isNotEmpty)
+          'referenceNumber': cleanRef,
       });
 
       final refreshed = await getRequestById(cleanReqId);

@@ -6,6 +6,7 @@ import '../data/mock_data.dart';
 import '../data/models/board_ad_model.dart';
 import '../data/repositories/app_repositories.dart';
 import '../data/repositories/implementations/firebase/firebase_board_repository.dart';
+import '../data/services/qatar_city_matcher.dart';
 
 class BoardProvider extends ChangeNotifier {
   static bool get _isLiveBackendMode =>
@@ -125,47 +126,8 @@ class BoardProvider extends ChangeNotifier {
         _ads.where((ad) => ad.status == BoardAdStatus.offerSent),
       );
 
-  static const Map<String, List<String>> _cityAliases = {
-    'الدوحة': ['doha', 'الدوحة', 'مشيرب', 'الخليج الغربي', 'west bay', 'msheireb'],
-    'لوسيل': ['lusail', 'لوسيل', 'marina'],
-    'الخور': ['al khor', 'alkhor', 'khor', 'الخور'],
-    'الوكرة': ['al wakrah', 'wakrah', 'الوكرة'],
-    'الريان': ['al rayyan', 'rayyan', 'الريان'],
-    'المنطقة الصناعية': ['industrial area', 'industrial', 'المنطقة الصناعية', 'الصناعية'],
-    'دخان': ['dukhan', 'دخان'],
-    'مسيعيد': ['mesaieed', 'مسيعيد'],
-    'أم صلال': ['umm salal', 'أم صلال', 'ام صلال'],
-    'الضعاين': ['al daayen', 'daayen', 'الضعاين'],
-    'الشمال': ['al shamal', 'shamal', 'الشمال'],
-    'رأس لفان': ['ras laffan', 'رأس لفان', 'راس لفان'],
-    'المدينة التعليمية': ['education city', 'المدينة التعليمية'],
-    'مطار حمد الدولي': ['hamad international airport', 'hia', 'airport', 'مطار حمد الدولي', 'المطار'],
-  };
-
-  static bool _matchesRouteToken(String query, List<String?> candidates) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return true;
-
-    final expanded = <String>{q};
-    for (final entry in _cityAliases.entries) {
-      if (entry.key.toLowerCase().contains(q) ||
-          entry.value.any((alias) => alias.contains(q) || q.contains(alias))) {
-        expanded.add(entry.key.toLowerCase());
-        expanded.addAll(entry.value.map((e) => e.toLowerCase()));
-      }
-    }
-
-    for (final raw in candidates) {
-      if (raw == null || raw.trim().isEmpty) continue;
-      final candidate = raw.trim().toLowerCase();
-      for (final token in expanded) {
-        if (candidate.contains(token) || token.contains(candidate)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
+  static bool _matchesRouteToken(String query, List<String?> candidates) =>
+      QatarCityMatcher.matchesCityField(query, candidates);
 
   /// Fetches live `board_ads` and user-owned ads from [AppRepositories.instance.board].
   /// In live Firebase/production mode, never merges [MockData.initialBoardAds].
@@ -387,7 +349,9 @@ class BoardProvider extends ChangeNotifier {
     _ads.insert(0, newAd);
     _myAds.insert(0, newAd);
     notifyListeners();
-    AppRepositories.instance.board.createBoardAd(newAd).ignore();
+    AppRepositories.instance.board
+        .createBoardAd(newAd)
+        .catchError((_) => newAd);
     return newAd;
   }
 

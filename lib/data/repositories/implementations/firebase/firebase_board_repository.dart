@@ -84,14 +84,10 @@ class FirebaseBoardRepository implements IBoardRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     };
 
-    try {
-      await _firestore
-          .collection(FirestoreCollections.boardAds)
-          .doc(resolvedAd.id)
-          .set(payload);
-    } catch (_) {
-      // Keep optimistic local board state when offline or unauthenticated.
-    }
+    await _firestore
+        .collection(FirestoreCollections.boardAds)
+        .doc(resolvedAd.id)
+        .set(payload);
     return resolvedAd;
   }
 
@@ -152,6 +148,7 @@ class FirebaseBoardRepository implements IBoardRepository {
   @override
   Future<bool> withdrawOffer(String adId) async {
     final user = _currentUser;
+    var withdrewOwnOffer = false;
     try {
       if (user != null && user.uid.isNotEmpty) {
         final myOffers = await _firestore
@@ -165,6 +162,7 @@ class FirebaseBoardRepository implements IBoardRepository {
             'status': 'withdrawn',
             'updatedAt': FieldValue.serverTimestamp(),
           });
+          withdrewOwnOffer = true;
         }
       }
     } catch (_) {}
@@ -180,7 +178,8 @@ class FirebaseBoardRepository implements IBoardRepository {
       });
       return true;
     } catch (_) {
-      return false;
+      // Non-author drivers cannot update parent board_ads doc under firestore.rules.
+      return withdrewOwnOffer;
     }
   }
 
@@ -227,16 +226,44 @@ class FirebaseBoardRepository implements IBoardRepository {
 
   @override
   Future<List<BoardAdModel>> getMySentOffers() async {
+    final user = _currentUser;
+    if (user == null || user.uid.isEmpty) {
+      return const [];
+    }
     try {
-      final snapshot = await _firestore
-          .collection(FirestoreCollections.boardAds)
-          .where('status', isEqualTo: BoardAdStatus.offerSent.name)
+      // Strictly scope sent offers to the authenticated user's own `driverId`
+      // via the `offers` collectionGroup to prevent cross-user IDOR leakage.
+      final offersSnap = await _firestore
+          .collectionGroup(FirestoreCollections.boardOffers)
+          .where('driverId', isEqualTo: user.uid)
           .limit(20)
           .get();
 
-      return snapshot.docs
-          .map((doc) => BoardAdModel.fromJson(doc.data()))
-          .toList();
+      final results = <BoardAdModel>[];
+      final seenAdIds = <String>{};
+      for (final offerDoc in offersSnap.docs) {
+        final offerData = offerDoc.data();
+        final offerStatus = offerData['status']?.toString() ?? '';
+        if (offerStatus == 'withdrawn') continue;
+        final adId = offerData['adId']?.toString().trim() ?? '';
+        if (adId.isEmpty || !seenAdIds.add(adId)) continue;
+
+        final adSnap = await _firestore
+            .collection(FirestoreCollections.boardAds)
+            .doc(adId)
+            .get();
+        if (adSnap.exists && adSnap.data() != null) {
+          final parsed = BoardAdModel.fromJson(adSnap.data()!);
+          final offerPrice = (offerData['offerPrice'] as num?)?.toInt();
+          results.add(
+            parsed.copyWith(
+              status: BoardAdStatus.offerSent,
+              myOfferPrice: offerPrice ?? parsed.myOfferPrice,
+            ),
+          );
+        }
+      }
+      return results;
     } catch (_) {
       return const [];
     }
