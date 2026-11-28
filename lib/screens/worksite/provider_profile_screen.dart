@@ -1548,6 +1548,13 @@ class _ProviderProfileScreenState extends State<ProviderProfileScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        labelCtrl.dispose();
+        streetCtrl.dispose();
+        contactNameCtrl.dispose();
+        contactPhoneCtrl.dispose();
+      });
+    });
   }
 }

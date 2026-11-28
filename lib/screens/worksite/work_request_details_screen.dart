@@ -1810,7 +1810,14 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        feeCtrl.dispose();
+        itemsCtrl.dispose();
+        etaCtrl.dispose();
+        notesCtrl.dispose();
+      });
+    });
   }
 
   void _showAdvanceStageSheet(
@@ -2069,7 +2076,13 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        invoiceUrlCtrl.dispose();
+        actualReceiptCtrl.dispose();
+        noteCtrl.dispose();
+      });
+    });
   }
 
   void _showHandoverVerificationModal(
@@ -2300,7 +2313,11 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        codeCtrl.dispose();
+      });
+    });
   }
 
   Future<bool> _launchExternalUri(
@@ -2592,7 +2609,12 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        proofCtrl.dispose();
+        refCtrl.dispose();
+      });
+    });
   }
 
   void _showRatingModal(
@@ -2635,6 +2657,7 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                       children: List.generate(5, (index) {
                         final star = index + 1;
                         return IconButton(
+                          tooltip: isAr ? '$star نجوم' : '$star stars',
                           icon: Icon(
                             star <= selectedStars
                                 ? Icons.star_rounded
@@ -2694,7 +2717,11 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        commentCtrl.dispose();
+      });
+    });
   }
 
   void _showDisputeModal(
@@ -2783,7 +2810,11 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        reasonCtrl.dispose();
+      });
+    });
   }
 
   void _showCancelRequestSheet(
@@ -2909,6 +2940,10 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        reasonCtrl.dispose();
+      });
+    });
   }
 }

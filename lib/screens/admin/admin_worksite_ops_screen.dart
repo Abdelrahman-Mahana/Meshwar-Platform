@@ -244,7 +244,7 @@ class _AdminWorksiteOpsScreenState extends State<AdminWorksiteOpsScreen> {
                           ? 'تحويلات بانتظار التحقق'
                           : 'Transfers Pending Check',
                       value: '$pendingProofs',
-                      deltaText: 'transfer_proof_submitted',
+                      deltaText: isAr ? 'إيصال تحويل مرفق' : 'Transfer Proof Attached',
                       accentColor: t.accentTeal,
                       icon: Icons.receipt_long_rounded,
                       onTap: () => setState(() => _activeTab = 1),
@@ -1306,9 +1306,9 @@ class _ProviderKycReviewDialogState extends State<_ProviderKycReviewDialog> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: AdminThemeTokens.of(context).surfaceAlt,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      border: Border.all(color: AdminThemeTokens.of(context).border),
                     ),
                     child: Row(
                       children: [

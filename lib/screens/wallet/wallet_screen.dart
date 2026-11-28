@@ -271,7 +271,12 @@ class _WalletScreenState extends State<WalletScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        amountController.dispose();
+        targetController.dispose();
+      });
+    });
   }
 
   void _showAddFundsSheet(BuildContext parentContext) {
@@ -570,7 +575,11 @@ class _WalletScreenState extends State<WalletScreen> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        customAmountController.dispose();
+      });
+    });
   }
 
   @override

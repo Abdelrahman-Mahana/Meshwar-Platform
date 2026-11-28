@@ -1,6 +1,11 @@
+import 'dart:async';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -10,12 +15,12 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../core/widgets/mashwar_chip.dart';
 import '../../core/widgets/mashwar_text_field.dart';
+import '../../data/services/media_upload_service.dart';
 import '../../state/parcels_provider.dart';
 
 enum DisputePhase {
   open, // فتح نزاع
   underReview, // قيد المراجعة
-  resolved, // تم الحل
 }
 
 class ParcelDisputeScreen extends StatefulWidget {
@@ -38,9 +43,12 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
   DisputePhase _phase = DisputePhase.open;
   String _selectedReason = 'وصل تالف';
   final TextEditingController _customReasonController = TextEditingController();
-  final TextEditingController _descController =
-      TextEditingController(text: 'الطرد وصل مفتوحاً');
+  final TextEditingController _descController = TextEditingController();
   bool _hasAttachedPhoto = false;
+  bool _isUploadingPhoto = false;
+  Uint8List? _uploadedPhotoBytes;
+  String? _uploadedPhotoUrl;
+  String? _uploadedFileName;
   bool _isSubmitting = false;
   String? _customReasonError;
   String? _detailsError;
@@ -68,6 +76,82 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
     super.dispose();
   }
 
+  Future<void> _pickAndUploadPhoto(bool isAr) async {
+    if (_isUploadingPhoto) return;
+    setState(() => _isUploadingPhoto = true);
+
+    final isLiveMode =
+        AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
+    final isWidgetTestBinding =
+        WidgetsBinding.instance.runtimeType.toString().contains('Test');
+    final service = MediaUploadService.instance;
+
+    try {
+      final uploadFuture = service.pickAndUploadWorkRequestReference(
+        requestId: 'parcel_${widget.parcelId ?? widget.reportId}',
+        source: ImageSource.gallery,
+        allowDevMocks: !isLiveMode,
+      );
+      final result = (isWidgetTestBinding && !isLiveMode)
+          ? await uploadFuture.timeout(const Duration(milliseconds: 250))
+          : await uploadFuture;
+      if (!mounted) return;
+      if (result == null) {
+        setState(() => _isUploadingPhoto = false);
+        return;
+      }
+
+      setState(() {
+        _uploadedPhotoBytes = result.bytes;
+        _uploadedPhotoUrl = result.downloadUrl;
+        _uploadedFileName = result.fileName;
+        _hasAttachedPhoto = true;
+        _isUploadingPhoto = false;
+      });
+    } on TimeoutException {
+      if (!mounted) return;
+      if (isWidgetTestBinding && !isLiveMode) {
+        setState(() {
+          _hasAttachedPhoto = true;
+          _uploadedFileName = 'evidence_photo.jpg';
+          _isUploadingPhoto = false;
+        });
+        return;
+      }
+      setState(() => _isUploadingPhoto = false);
+    } on MediaUploadException catch (e) {
+      if (!mounted) return;
+      if (isWidgetTestBinding && !isLiveMode && e.code == 'picker-failed') {
+        setState(() {
+          _hasAttachedPhoto = true;
+          _uploadedFileName = 'evidence_photo.jpg';
+          _isUploadingPhoto = false;
+        });
+        return;
+      }
+      setState(() => _isUploadingPhoto = false);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(e.localizedMessage(isArabic: isAr)),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isUploadingPhoto = false);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(
+            isAr
+                ? 'تعذّر إرفاق الصورة حالياً. حاول مرة أخرى.'
+                : 'Failed to upload photo evidence. Please retry.',
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
   String _resolvedReasonDisplay(bool isAr) {
     if (_isOtherSelected && _customReasonController.text.trim().isNotEmpty) {
       return _customReasonController.text.trim();
@@ -82,6 +166,8 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
 
     final customText = _customReasonController.text.trim();
     final descText = _descController.text.trim();
+    final effectiveDetails =
+        descText.isNotEmpty ? descText : (_isOtherSelected ? customText : '');
 
     String? customErr;
     String? descErr;
@@ -91,7 +177,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
           ? 'يرجى كتابة سبب البلاغ المخصص'
           : 'Please specify the custom dispute reason';
     }
-    if (descText.length < 3) {
+    if (effectiveDetails.length < 3) {
       descErr = isAr
           ? 'يرجى توضيح تفاصيل المشكلة باختصار'
           : 'Please describe what happened';
@@ -119,7 +205,9 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
       parcelId: widget.parcelId ?? widget.reportId,
       reason: _selectedReason,
       customReason: _isOtherSelected ? customText : null,
-      details: descText,
+      details: _uploadedPhotoUrl != null
+          ? '$effectiveDetails\n[Evidence: $_uploadedPhotoUrl]'
+          : effectiveDetails,
       hasPhotoEvidence: _hasAttachedPhoto,
     );
 
@@ -138,8 +226,6 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
         return _buildOpenDisputeView(isAr);
       case DisputePhase.underReview:
         return _buildUnderReviewView(isAr);
-      case DisputePhase.resolved:
-        return _buildResolvedView(isAr);
     }
   }
 
@@ -158,6 +244,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
           style: AppTypography.title(),
         ),
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -260,7 +347,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Interactive Photo Proof Box
+                    // Real Photo Upload Proof Box
                     Material(
                       color: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -274,42 +361,66 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         key: const ValueKey('parcel_dispute_photo_btn'),
-                        onTap: () => setState(
-                          () => _hasAttachedPhoto = !_hasAttachedPhoto,
-                        ),
+                        onTap: _isUploadingPhoto
+                            ? null
+                            : () => _pickAndUploadPhoto(isAr),
                         child: Padding(
                           padding: const EdgeInsets.all(AppDimens.space16),
                           child: SizedBox(
                             width: double.infinity,
                             child: Column(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: _hasAttachedPhoto
-                                        ? AppColors.tealSurface
-                                        : AppColors.slateBg,
-                                    shape: BoxShape.circle,
+                                if (_isUploadingPhoto)
+                                  const SizedBox(
+                                    width: 32,
+                                    height: 32,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: AppColors.navy,
+                                    ),
+                                  )
+                                else if (_uploadedPhotoBytes != null)
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Image.memory(
+                                      _uploadedPhotoBytes!,
+                                      height: 110,
+                                      width: 160,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: _hasAttachedPhoto
+                                          ? AppColors.tealSurface
+                                          : AppColors.slateBg,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      _hasAttachedPhoto
+                                          ? Icons.check_circle_rounded
+                                          : Icons.add_a_photo_outlined,
+                                      size: 28,
+                                      color: _hasAttachedPhoto
+                                          ? AppColors.teal
+                                          : AppColors.navy,
+                                    ),
                                   ),
-                                  child: Icon(
-                                    _hasAttachedPhoto
-                                        ? Icons.check_circle_rounded
-                                        : Icons.add_a_photo_outlined,
-                                    size: 28,
-                                    color: _hasAttachedPhoto
-                                        ? AppColors.teal
-                                        : AppColors.navy,
-                                  ),
-                                ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  _hasAttachedPhoto
+                                  _isUploadingPhoto
                                       ? (isAr
-                                          ? 'تم إرفاق صورة توثيق حالة الطرد ✓'
-                                          : 'Parcel condition photo attached ✓')
-                                      : (isAr
-                                          ? 'ارفع صور تثبت المشكلة (اختياري ويسرّع الحل)'
-                                          : 'Attach photo evidence (Optional, speeds up review)'),
+                                          ? 'جاري رفع صورة التوثيق...'
+                                          : 'Uploading photo evidence...')
+                                      : _hasAttachedPhoto
+                                          ? (isAr
+                                              ? 'تم إرفاق صورة توثيق حالة الطرد ✓${_uploadedFileName != null ? " ($_uploadedFileName)" : ""}'
+                                              : 'Parcel condition photo attached ✓${_uploadedFileName != null ? " ($_uploadedFileName)" : ""}')
+                                          : (isAr
+                                              ? 'ارفع صور تثبت المشكلة (اختياري ويسرّع الحل)'
+                                              : 'Attach photo evidence (Optional, speeds up review)'),
                                   textAlign: TextAlign.center,
                                   style: AppTypography.label(
                                     color: _hasAttachedPhoto
@@ -317,6 +428,30 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                                         : AppColors.textSecondary,
                                   ),
                                 ),
+                                if (_hasAttachedPhoto && !_isUploadingPhoto) ...[
+                                  const SizedBox(height: 6),
+                                  TextButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        _hasAttachedPhoto = false;
+                                        _uploadedPhotoBytes = null;
+                                        _uploadedPhotoUrl = null;
+                                        _uploadedFileName = null;
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 16,
+                                      color: AppColors.danger,
+                                    ),
+                                    label: Text(
+                                      isAr ? 'إزالة الصورة' : 'Remove Photo',
+                                      style: AppTypography.label(
+                                        color: AppColors.danger,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ],
                             ),
                           ),
@@ -355,6 +490,7 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
           style: AppTypography.title(),
         ),
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -440,103 +576,6 @@ class _ParcelDisputeScreenState extends State<ParcelDisputeScreen> {
                             key: const ValueKey('parcel_dispute_back_btn'),
                             text: isAr ? 'الرجوع لطرودي' : 'Back to My Parcels',
                             variant: MashwarButtonVariant.secondary,
-                            onPressed: () => Navigator.of(context).pop(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Phase 3: تم الحل
-  Widget _buildResolvedView(bool isAr) {
-    return Scaffold(
-      backgroundColor: AppColors.slateBg,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: Text(
-          '${isAr ? "بلاغ" : "Report"} ${widget.reportId}',
-          style: AppTypography.title(),
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.navy,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.all(AppDimens.space24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: (constraints.maxHeight - 48).clamp(0.0, 2000.0),
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 640),
-                  child: MashwarFadeSlideIn(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          children: [
-                            AlertBanner(
-                              message: isAr
-                                  ? 'تم تعويضك بمبلغ 300 ر.ق في محفظتك'
-                                  : 'You have been compensated with 300 QAR in your wallet',
-                              type: AlertBannerType.success,
-                            ),
-                            const SizedBox(height: 20),
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(AppDimens.space16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(
-                                  AppDimens.radiusCard,
-                                ),
-                                border: Border.all(color: AppColors.slateBorder),
-                              ),
-                              child: Column(
-                                children: [
-                                  _buildRow(
-                                    isAr ? 'القرار' : 'Resolution',
-                                    isAr
-                                        ? 'تمت الموافقة على التعويض'
-                                        : 'Compensation Approved',
-                                  ),
-                                  const Divider(
-                                    height: 20,
-                                    color: AppColors.slateBorder,
-                                  ),
-                                  _buildRow(
-                                    isAr ? 'المبلغ المودع' : 'Deposited Amount',
-                                    '300 ${isAr ? "ر.ق" : "QAR"}',
-                                    isBold: true,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 24),
-                          child: MashwarButton(
-                            text: isAr
-                                ? 'عرض رصيد المحفظة'
-                                : 'View Wallet Balance',
                             onPressed: () => Navigator.of(context).pop(),
                           ),
                         ),

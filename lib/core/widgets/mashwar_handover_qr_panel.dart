@@ -853,7 +853,11 @@ Future<String?> showMashwarQrScanSheet(
         },
       );
     },
-  );
+  ).whenComplete(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      pasteCtrl.dispose();
+    });
+  });
 }
 
 /// Interactive Real-World Handover Contingency & Fallback Center.
@@ -1247,7 +1251,14 @@ Future<void> showMashwarHandoverContingencySheet(
         },
       );
     },
-  );
+  ).whenComplete(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      backupNameCtrl.dispose();
+      backupPhoneCtrl.dispose();
+      qidLast4Ctrl.dispose();
+      noteCtrl.dispose();
+    });
+  });
 }
 
 class _ContingencyScenarioCard extends StatelessWidget {

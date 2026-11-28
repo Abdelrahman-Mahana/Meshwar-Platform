@@ -148,7 +148,7 @@ class _AdminServicesCatalogScreenState
                     SwitchListTile(
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: Text(isAr ? 'حماية الضمان المالي (Escrow)' : 'Bilateral Escrow Protection'),
+                      title: Text(isAr ? 'التحقق من التسوية والتسليم' : 'Verified Settlement & Handover'),
                       value: requiresEscrow,
                       onChanged: (v) => setModalState(() => requiresEscrow = v),
                     ),
@@ -224,7 +224,17 @@ class _AdminServicesCatalogScreenState
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        nameArCtrl.dispose();
+        nameEnCtrl.dispose();
+        commCtrl.dispose();
+        minFeeCtrl.dispose();
+        maxFeeCtrl.dispose();
+        receiptCapCtrl.dispose();
+        slaCtrl.dispose();
+      });
+    });
   }
 
   void _openCreateServiceDialog(BuildContext context, bool isAr) {
@@ -360,7 +370,21 @@ class _AdminServicesCatalogScreenState
               onPressed: () {
                 final ar = nameArCtrl.text.trim();
                 final en = nameEnCtrl.text.trim();
-                if (ar.isEmpty || en.isEmpty) return;
+                if (ar.isEmpty || en.isEmpty) {
+                  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr
+                            ? 'يرجى إدخال اسم الخدمة بالعربية والإنجليزية'
+                            : 'Please enter both Arabic and English service titles',
+                      ),
+                      backgroundColor: AppColors.coral,
+                    ),
+                  );
+                  return;
+                }
+                final minFee = int.tryParse(minCtrl.text) ?? 25;
+                final maxFee = int.tryParse(maxCtrl.text) ?? 600;
                 final code = codeCtrl.text.trim().isEmpty
                     ? 'custom_${DateTime.now().millisecondsSinceEpoch}'
                     : codeCtrl.text.trim();
@@ -378,8 +402,8 @@ class _AdminServicesCatalogScreenState
                     accentHex: 0xFF8A1538,
                     isEnabled: true,
                     commissionPct: double.tryParse(commCtrl.text) ?? 16.0,
-                    minFeeQar: int.tryParse(minCtrl.text) ?? 25,
-                    maxFeeQar: int.tryParse(maxCtrl.text) ?? 600,
+                    minFeeQar: minFee,
+                    maxFeeQar: maxFee >= minFee ? maxFee : minFee,
                     requiresEscrow: escrow,
                     requiresReceiptPhoto: receipt,
                     requiresFourDigitOtp: otp,
@@ -398,7 +422,17 @@ class _AdminServicesCatalogScreenState
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        codeCtrl.dispose();
+        nameArCtrl.dispose();
+        nameEnCtrl.dispose();
+        descArCtrl.dispose();
+        commCtrl.dispose();
+        minCtrl.dispose();
+        maxCtrl.dispose();
+      });
+    });
   }
 
   @override

@@ -19,7 +19,7 @@ class AdminDriverVerificationsScreen extends StatefulWidget {
 
 class _AdminDriverVerificationsScreenState
     extends State<AdminDriverVerificationsScreen> {
-  String _selectedTab = 'قيد المراجعة'; // 'قيد المراجعة', 'مرفوضة', 'مقبولة'
+  String _selectedTab = 'pending'; // 'pending', 'rejected', 'approved'
 
   void _showReviewDialog(BuildContext context, AdminDriverVerificationRequest req) {
     showDialog(
@@ -27,6 +27,20 @@ class _AdminDriverVerificationsScreenState
       barrierDismissible: false,
       builder: (_) => _DriverReviewModal(req: req),
     );
+  }
+
+  String _localizeReqStatus(String status, bool isAr) {
+    if (isAr) return status;
+    switch (status.trim()) {
+      case 'قيد المراجعة':
+        return 'Pending';
+      case 'مرفوضة':
+        return 'Rejected';
+      case 'مقبولة':
+        return 'Approved';
+      default:
+        return status;
+    }
   }
 
   @override
@@ -40,9 +54,9 @@ class _AdminDriverVerificationsScreenState
     final approvedCount = admin.driverRequests.where((r) => r.status == 'مقبولة').length;
 
     final filteredList = admin.driverRequests.where((r) {
-      if (_selectedTab.startsWith('قيد') || _selectedTab.startsWith('Under')) {
+      if (_selectedTab == 'pending') {
         return r.status == 'قيد المراجعة';
-      } else if (_selectedTab.startsWith('مرفوض') || _selectedTab.startsWith('Reject')) {
+      } else if (_selectedTab == 'rejected') {
         return r.status == 'مرفوضة';
       } else {
         return r.status == 'مقبولة';
@@ -59,21 +73,21 @@ class _AdminDriverVerificationsScreenState
             children: [
               _buildFilterTab(
                 label: isAr ? 'قيد المراجعة ($pendingCount)' : 'Pending ($pendingCount)',
-                isSelected: _selectedTab.startsWith('قيد') || _selectedTab.startsWith('Under'),
+                isSelected: _selectedTab == 'pending',
                 t: t,
-                onTap: () => setState(() => _selectedTab = isAr ? 'قيد المراجعة' : 'Under Review'),
+                onTap: () => setState(() => _selectedTab = 'pending'),
               ),
               _buildFilterTab(
                 label: isAr ? 'مرفوضة ($rejectedCount)' : 'Rejected ($rejectedCount)',
-                isSelected: _selectedTab.startsWith('مرفوض') || _selectedTab.startsWith('Reject'),
+                isSelected: _selectedTab == 'rejected',
                 t: t,
-                onTap: () => setState(() => _selectedTab = isAr ? 'مرفوضة' : 'Rejected'),
+                onTap: () => setState(() => _selectedTab = 'rejected'),
               ),
               _buildFilterTab(
                 label: isAr ? 'مقبولة ($approvedCount)' : 'Approved ($approvedCount)',
-                isSelected: _selectedTab.startsWith('مقبول') || _selectedTab.startsWith('Approv'),
+                isSelected: _selectedTab == 'approved',
                 t: t,
-                onTap: () => setState(() => _selectedTab = isAr ? 'مقبولة' : 'Approved'),
+                onTap: () => setState(() => _selectedTab = 'approved'),
               ),
             ],
           ),
@@ -120,7 +134,7 @@ class _AdminDriverVerificationsScreenState
                           DataCell(Text(req.governorate)),
                           DataCell(Text(req.carModel, style: const TextStyle(fontSize: 12))),
                           DataCell(Text(req.durationText, style: const TextStyle(fontSize: 12))),
-                          DataCell(MashwarBadge(type: bType, customLabel: req.status)),
+                          DataCell(MashwarBadge(type: bType, customLabel: _localizeReqStatus(req.status, isAr))),
                           DataCell(
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
@@ -260,9 +274,16 @@ class _DriverReviewModal extends StatefulWidget {
 }
 
 class _DriverReviewModalState extends State<_DriverReviewModal> {
+  static const List<(String ar, String en)> _rejectReasons = [
+    ('صورة غير واضحة', 'Blurry Document'),
+    ('مستند منتهي', 'Expired Document'),
+    ('بيانات غير مطابقة', 'Mismatched Info'),
+    ('أخرى', 'Other'),
+  ];
+
   bool _isRejecting = false;
   String _rejectReason = 'صورة غير واضحة';
-  final TextEditingController _rejectMsgController = TextEditingController(text: 'صورة الرخصة غير واضحة، يرجى إعادة التصوير');
+  final TextEditingController _rejectMsgController = TextEditingController();
 
   @override
   void dispose() {
@@ -274,6 +295,7 @@ class _DriverReviewModalState extends State<_DriverReviewModal> {
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
     final admin = context.read<AdminProvider>();
+    final t = AdminThemeTokens.of(context);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -281,8 +303,9 @@ class _DriverReviewModalState extends State<_DriverReviewModal> {
       child: Container(
         constraints: const BoxConstraints(maxWidth: 740),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: t.surface,
           borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+          border: Border.all(color: t.border),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20)],
         ),
         child: SingleChildScrollView(
@@ -318,66 +341,71 @@ class _DriverReviewModalState extends State<_DriverReviewModal> {
                   Expanded(
                     child: Text(
                       isAr ? 'مراجعة: ${widget.req.driverName}' : 'Review: ${widget.req.driverName}',
-                      style: AppTypography.title().copyWith(fontSize: 18),
+                      style: AppTypography.title(color: t.textPrimary).copyWith(fontSize: 18),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded),
+                    tooltip: isAr ? 'إغلاق' : 'Close',
+                    icon: Icon(Icons.close_rounded, color: t.textPrimary),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
               const Divider(height: 20),
-              Text(isAr ? 'المستندات المرفوعة' : 'Uploaded Documents', style: AppTypography.label().copyWith(fontWeight: FontWeight.w700)),
+              Text(isAr ? 'المستندات المرفوعة' : 'Uploaded Documents', style: AppTypography.label(color: t.textPrimary).copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
                 children: [
-                  _buildDocCard(context, isAr ? 'QID (وجه)' : 'QID (Front)', Icons.badge_outlined, isAr),
-                  _buildDocCard(context, isAr ? 'QID (ظهر)' : 'QID (Back)', Icons.qr_code_scanner_outlined, isAr),
-                  _buildDocCard(context, isAr ? 'رخصة قيادة' : 'Driving License', Icons.card_membership_outlined, isAr),
-                  _buildDocCard(context, isAr ? 'استمارة المركبة' : 'Istamara', Icons.directions_car_filled_outlined, isAr),
-                  _buildDocCard(context, isAr ? 'سيلفي التحقق' : 'Live Selfie', Icons.face_rounded, isAr),
-                  _buildDocCard(context, isAr ? 'صور السيارة' : 'Car Photos', Icons.camera_alt_outlined, isAr),
+                  _buildDocCard(t, isAr ? 'QID (وجه)' : 'QID (Front)', Icons.badge_outlined),
+                  _buildDocCard(t, isAr ? 'QID (ظهر)' : 'QID (Back)', Icons.qr_code_scanner_outlined),
+                  _buildDocCard(t, isAr ? 'رخصة قيادة' : 'Driving License', Icons.card_membership_outlined),
+                  _buildDocCard(t, isAr ? 'استمارة المركبة' : 'Istamara', Icons.directions_car_filled_outlined),
+                  _buildDocCard(t, isAr ? 'سيلفي التحقق' : 'Live Selfie', Icons.face_rounded),
+                  _buildDocCard(t, isAr ? 'صور السيارة' : 'Car Photos', Icons.camera_alt_outlined),
                 ],
               ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: AppColors.sand, borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(
+                  color: t.surfaceAlt,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: t.border),
+                ),
                 child: Column(
                   children: [
-                    _detail(isAr ? 'الاسم' : 'Driver Name', widget.req.driverName),
+                    _detail(t, isAr ? 'الاسم' : 'Driver Name', widget.req.driverName),
                     const Divider(height: 14),
-                    _detail('QID', widget.req.qidMasked),
+                    _detail(t, 'QID', widget.req.qidMasked),
                     const Divider(height: 14),
-                    _detail(isAr ? 'البلدية' : 'Municipality', widget.req.governorate),
+                    _detail(t, isAr ? 'البلدية' : 'Municipality', widget.req.governorate),
                     const Divider(height: 14),
-                    _detail(isAr ? 'السيارة' : 'Vehicle', widget.req.carModel),
+                    _detail(t, isAr ? 'السيارة' : 'Vehicle', widget.req.carModel),
                     const Divider(height: 14),
-                    _detail(isAr ? 'اللوحة' : 'Plate', widget.req.carPlate),
+                    _detail(t, isAr ? 'اللوحة' : 'Plate', widget.req.carPlate),
                     const Divider(height: 14),
-                    _detail(isAr ? 'انتهاء الرخصة' : 'Expiry', widget.req.licenseExpiryDate),
+                    _detail(t, isAr ? 'انتهاء الرخصة' : 'Expiry', widget.req.licenseExpiryDate),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
               if (_isRejecting) ...[
-                Text(isAr ? 'سبب الرفض' : 'Rejection Reason', style: AppTypography.label().copyWith(fontWeight: FontWeight.bold)),
+                Text(isAr ? 'سبب الرفض' : 'Rejection Reason', style: AppTypography.label(color: t.textPrimary).copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   runSpacing: 6,
-                  children: ['صورة غير واضحة', 'مستند منتهي', 'بيانات غير مطابقة', 'أخرى'].map((reason) {
-                    final isSel = _rejectReason == reason;
+                  children: _rejectReasons.map((reason) {
+                    final isSel = _rejectReason == reason.$1;
                     return ChoiceChip(
-                      label: Text(reason),
+                      label: Text(isAr ? reason.$1 : reason.$2),
                       selected: isSel,
                       selectedColor: AppColors.coral,
-                      backgroundColor: AppColors.sand,
-                      labelStyle: TextStyle(color: isSel ? Colors.white : AppColors.navy, fontWeight: FontWeight.w700, fontSize: 11),
-                      onSelected: (_) => setState(() => _rejectReason = reason),
+                      backgroundColor: t.surfaceAlt,
+                      labelStyle: TextStyle(color: isSel ? Colors.white : t.textPrimary, fontWeight: FontWeight.w700, fontSize: 11),
+                      onSelected: (_) => setState(() => _rejectReason = reason.$1),
                     );
                   }).toList(),
                 ),
@@ -387,8 +415,11 @@ class _DriverReviewModalState extends State<_DriverReviewModal> {
                   maxLines: 2,
                   decoration: InputDecoration(
                     labelText: isAr ? 'رسالة للسائق' : 'Message to driver',
+                    hintText: isAr
+                        ? 'مثال: صورة الرخصة غير واضحة، يرجى إعادة التصوير'
+                        : 'e.g. License photo is blurry, please re-upload',
                     filled: true,
-                    fillColor: AppColors.sand,
+                    fillColor: t.surfaceAlt,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
@@ -438,32 +469,32 @@ class _DriverReviewModalState extends State<_DriverReviewModal> {
     );
   }
 
-  Widget _buildDocCard(BuildContext context, String label, IconData icon, bool isAr) {
+  Widget _buildDocCard(AdminThemeTokens t, String label, IconData icon) {
     return Container(
       width: 100,
       height: 82,
       decoration: BoxDecoration(
-        color: AppColors.sand,
+        color: t.surfaceAlt,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.borderDisabled),
+        border: Border.all(color: t.border),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, color: AppColors.navy, size: 24),
+          Icon(icon, color: t.accentPrimary, size: 24),
           const SizedBox(height: 6),
-          Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.navy)),
+          Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: t.textPrimary)),
         ],
       ),
     );
   }
 
-  Widget _detail(String label, String value) {
+  Widget _detail(AdminThemeTokens t, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.navy)),
+        Text(label, style: TextStyle(color: t.textSecondary, fontSize: 13)),
+        Text(value, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: t.textPrimary)),
       ],
     );
   }

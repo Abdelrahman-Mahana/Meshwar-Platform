@@ -76,7 +76,19 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
               onPressed: () {
                 final name = nameCtrl.text.trim();
                 final email = emailCtrl.text.trim();
-                if (name.isEmpty || email.isEmpty) return;
+                if (name.isEmpty || email.isEmpty) {
+                  ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAr
+                            ? 'يرجى إدخال اسم الموظف والبريد الإلكتروني'
+                            : 'Please enter staff name and email address',
+                      ),
+                      backgroundColor: AppColors.coral,
+                    ),
+                  );
+                  return;
+                }
                 admin.addStaff(name, email, selectedRole);
                 Navigator.of(ctx).pop();
               },
@@ -85,7 +97,12 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        nameCtrl.dispose();
+        emailCtrl.dispose();
+      });
+    });
   }
 
   void _showEditStaffDialog(BuildContext context, AdminStaffMember staff, bool isAr) {
@@ -152,15 +169,16 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
   }
 
   bool _roleHasAccess(AdminRole role, int idx) {
+    // Matches AdminProvider.canAccessMenu(index) across all 14 modules (0..13)
     switch (role) {
       case AdminRole.superAdmin:
         return true;
       case AdminRole.reviewAdmin:
-        return idx == 0 || idx == 1;
+        return idx == 0 || idx == 1 || idx == 13;
       case AdminRole.supportAdmin:
-        return idx == 0 || idx == 2 || idx == 3 || idx == 4;
+        return idx == 0 || idx == 2 || idx == 3 || idx == 4 || idx == 12 || idx == 13;
       case AdminRole.financeAdmin:
-        return idx == 0 || idx == 3 || idx == 7 || idx == 8 || idx == 10;
+        return idx == 0 || idx == 3 || idx == 7 || idx == 8 || idx == 10 || idx == 13;
       case AdminRole.devopsAdmin:
         return idx == 0 || idx == 5 || idx == 7 || idx == 8 || idx == 9 || idx == 11;
     }
@@ -281,13 +299,13 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Visual 12-Module x 5-Role Permissions Matrix
+          // Visual 14-Module x 5-Role Permissions Matrix
           AdminSectionCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isAr ? 'مصفوفة الصلاحيات التفصيلية (12 قسم × 5 أدوار)' : 'Interactive RBAC Matrix (12 Modules × 5 Roles)',
+                  isAr ? 'مصفوفة الصلاحيات التفصيلية (14 وحدة × 5 أدوار)' : 'Interactive RBAC Matrix (14 Modules × 5 Roles)',
                   style: TextStyle(color: t.textPrimary, fontWeight: FontWeight.w800, fontSize: 15),
                 ),
                 const SizedBox(height: 12),

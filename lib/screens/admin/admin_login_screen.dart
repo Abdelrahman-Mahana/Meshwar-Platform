@@ -11,6 +11,7 @@ import '../../data/services/google_maps_service.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
 import 'admin_shell.dart';
+import 'widgets/admin_ui_kit.dart';
 
 class AdminLoginScreen extends StatefulWidget {
   const AdminLoginScreen({super.key});
@@ -23,9 +24,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _hasError = false;
-  int _remainingAttempts = 3;
+  int _remainingAttempts = 5;
+  DateTime? _lockoutUntil;
   bool _isLoading = false;
   bool _obscurePassword = true;
+
+  bool get _isLockedOut =>
+      _lockoutUntil != null && DateTime.now().isBefore(_lockoutUntil!);
 
   @override
   void dispose() {
@@ -35,6 +40,16 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    if (_isLoading) return;
+    if (_isLockedOut) {
+      setState(() => _hasError = true);
+      return;
+    }
+    if (_lockoutUntil != null && !DateTime.now().isBefore(_lockoutUntil!)) {
+      _lockoutUntil = null;
+      _remainingAttempts = 5;
+    }
+
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
@@ -62,7 +77,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     if (!mounted) return;
 
     if (ok) {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _remainingAttempts = 5;
+        _lockoutUntil = null;
+      });
       final insideShell =
           context.findAncestorWidgetOfExactType<AdminShell>() != null;
       final insideAdminApp =
@@ -76,8 +95,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       setState(() {
         _isLoading = false;
         _hasError = true;
-        if (_remainingAttempts > 1) {
+        if (_remainingAttempts > 0) {
           _remainingAttempts--;
+        }
+        if (_remainingAttempts == 0) {
+          _lockoutUntil = DateTime.now().add(const Duration(seconds: 30));
         }
       });
     }
@@ -97,9 +119,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     final isAr = settings.isArabic;
+    final t = AdminThemeTokens.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FA),
+      backgroundColor: t.scaffoldBg,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -131,7 +154,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                                 ),
                                 child: Center(
                                   child: Text(
-                                    'م',
+                                    isAr ? 'م' : 'M',
                                     style: AppTypography.brandLogo(
                                       size: 22,
                                       color: AppColors.navy,
@@ -229,6 +252,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   }
 
   Widget _buildFormCard(BuildContext context, SettingsProvider settings, bool isAr) {
+    final t = AdminThemeTokens.of(context);
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppDimens.space24),
@@ -237,12 +261,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
           child: Container(
             padding: const EdgeInsets.all(AppDimens.space24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: t.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: t.border),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withValues(alpha: t.isDark ? 0.25 : 0.05),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -261,7 +285,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(10)),
                       child: Center(
                         child: Text(
-                          'م',
+                          isAr ? 'م' : 'M',
                           style: AppTypography.brandLogo(
                             size: 20,
                             color: AppColors.navy,
@@ -270,12 +294,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       ),
                     ),
                     ActionChip(
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      side: const BorderSide(color: Color(0xFFE2E8F0), width: 0.8),
-                      avatar: const Icon(Icons.language_rounded, size: 16, color: AppColors.navy),
+                      backgroundColor: t.surfaceAlt,
+                      side: BorderSide(color: t.border, width: 0.8),
+                      avatar: Icon(Icons.language_rounded, size: 16, color: t.textPrimary),
                       label: Text(
                         isAr ? 'English' : 'العربية',
-                        style: AppTypography.label(color: AppColors.navy)
+                        style: AppTypography.label(color: t.textPrimary)
                             .copyWith(fontWeight: FontWeight.w700, fontSize: 11),
                       ),
                       onPressed: settings.toggleLanguage,
@@ -285,12 +309,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                 const SizedBox(height: 18),
                 Text(
                   isAr ? 'تسجيل دخول فريق الإدارة' : 'Operations Team Sign In',
-                  style: AppTypography.title().copyWith(fontSize: 20, color: AppColors.navy, fontWeight: FontWeight.w800),
+                  style: AppTypography.title(color: t.textPrimary).copyWith(fontSize: 20, fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   isAr ? 'مشوار · إدارة الرحلات والطرود والتوريد' : 'MASHWAR · Trips, Parcels & Supply Ops',
-                  style: AppTypography.label(color: AppColors.textSecondary),
+                  style: AppTypography.label(color: t.textSecondary),
                 ),
                 if (AppEnvironment.useDevMocks) ...[
                   const SizedBox(height: 14),
@@ -385,10 +409,14 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            context.watch<AdminProvider>().authError ??
-                                (isAr
-                                    ? 'بيانات الدخول غير صحيحة أو الحساب غير مخوّل. باقي $_remainingAttempts محاولات'
-                                    : 'Invalid credentials or inactive staff access. $_remainingAttempts attempts left'),
+                            _isLockedOut
+                                ? (isAr
+                                    ? 'تم تجاوز الحد المسموح من المحاولات. يرجى الانتظار 30 ثانية ثم إعادة المحاولة.'
+                                    : 'Too many failed attempts. Please wait 30 seconds before trying again.')
+                                : (context.watch<AdminProvider>().authError ??
+                                    (isAr
+                                        ? 'بيانات الدخول غير صحيحة أو الحساب غير مخوّل. باقي $_remainingAttempts محاولات'
+                                        : 'Invalid credentials or inactive staff access. $_remainingAttempts attempts remaining')),
                             style: AppTypography.label(color: AppColors.danger).copyWith(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -397,44 +425,51 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   ),
                   const SizedBox(height: 14),
                 ],
-                Text(isAr ? 'البريد الإلكتروني الإداري' : 'Admin Email', style: AppTypography.label().copyWith(fontWeight: FontWeight.w700)),
+                Text(isAr ? 'البريد الإلكتروني الإداري' : 'Admin Email', style: AppTypography.label(color: t.textPrimary).copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
                   textDirection: TextDirection.ltr,
-                  style: AppTypography.body(color: AppColors.navy),
+                  onSubmitted: (_) => _handleLogin(),
+                  style: AppTypography.body(color: t.textPrimary),
                   decoration: InputDecoration(
                     hintText: 'staff@mashwar.qa',
                     hintStyle: AppTypography.bodySecondary(
-                      color: AppColors.textSecondary.withValues(alpha: 0.72),
+                      color: t.textSecondary.withValues(alpha: 0.72),
                     ),
-                    prefixIcon: const Icon(Icons.email_outlined, color: AppColors.navy),
+                    prefixIcon: Icon(Icons.email_outlined, color: t.accentPrimary),
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    fillColor: t.surfaceAlt,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppDimens.radiusField)),
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(isAr ? 'كلمة المرور' : 'Password', style: AppTypography.label().copyWith(fontWeight: FontWeight.w700)),
+                Text(isAr ? 'كلمة المرور' : 'Password', style: AppTypography.label(color: t.textPrimary).copyWith(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 6),
                 TextField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
                   textDirection: TextDirection.ltr,
-                  style: AppTypography.body(color: AppColors.navy),
+                  onSubmitted: (_) => _handleLogin(),
+                  style: AppTypography.body(color: t.textPrimary),
                   decoration: InputDecoration(
                     hintText: '••••••••',
                     hintStyle: AppTypography.bodySecondary(
-                      color: AppColors.textSecondary.withValues(alpha: 0.72),
+                      color: t.textSecondary.withValues(alpha: 0.72),
                     ),
-                    prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.navy),
+                    prefixIcon: Icon(Icons.lock_outline_rounded, color: t.accentPrimary),
                     suffixIcon: IconButton(
+                      tooltip: _obscurePassword
+                          ? (isAr ? 'إظهار كلمة المرور' : 'Show password')
+                          : (isAr ? 'إخفاء كلمة المرور' : 'Hide password'),
                       icon: Icon(_obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
+                    fillColor: t.surfaceAlt,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppDimens.radiusField)),
                   ),
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -42,22 +43,29 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     (_otherColorKey, 'أخرى (لون مخصص)', 'Other (Custom Color)'),
   ];
 
-  final TextEditingController _modelController =
-      TextEditingController(text: 'تويوتا كامري 2024');
-  final TextEditingController _colorController =
-      TextEditingController(text: 'أبيض لؤلؤي');
-  final TextEditingController _plateLettersController =
-      TextEditingController(text: 'قطر');
-  final TextEditingController _plateNumbersController =
-      TextEditingController(text: '482910');
+  static bool get _isLiveMode =>
+      AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
+
+  final TextEditingController _modelController = TextEditingController(
+    text: _isLiveMode ? '' : 'تويوتا كامري 2024',
+  );
+  final TextEditingController _colorController = TextEditingController(
+    text: _isLiveMode ? '' : 'أبيض لؤلؤي',
+  );
+  final TextEditingController _plateLettersController = TextEditingController(
+    text: _isLiveMode ? '' : 'قطر',
+  );
+  final TextEditingController _plateNumbersController = TextEditingController(
+    text: _isLiveMode ? '' : '482910',
+  );
 
   String _selectedModelPreset = 'تويوتا كامري 2024';
   String _selectedColorPreset = 'أبيض لؤلؤي';
   int _seatsCount = 3;
   bool _hasAC = true;
   bool _largeTrunk = true;
-  bool _drivingLicenseUploaded = true;
-  bool _carLicenseUploaded = true;
+  bool _drivingLicenseUploaded = !_isLiveMode;
+  bool _carLicenseUploaded = !_isLiveMode;
   bool _isSaving = false;
   String? _validationError;
 

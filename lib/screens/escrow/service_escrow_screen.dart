@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -26,9 +27,11 @@ class ServiceEscrowScreen extends StatefulWidget {
   const ServiceEscrowScreen({
     super.key,
     this.ad,
+    this.expectedOtp,
   });
 
   final BoardAdModel? ad;
+  final String? expectedOtp;
 
   @override
   State<ServiceEscrowScreen> createState() => _ServiceEscrowScreenState();
@@ -46,7 +49,16 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
   final TextEditingController _otpController = TextEditingController();
   String? _otpError;
 
-  BoardAdModel get _activeAd => widget.ad ?? MockData.initialBoardAds.first;
+  bool get _isLiveMode =>
+      AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
+
+  String get _resolvedExpectedOtp =>
+      (widget.expectedOtp != null && widget.expectedOtp!.trim().isNotEmpty)
+          ? widget.expectedOtp!.trim()
+          : '4829';
+
+  BoardAdModel? get _activeAd =>
+      widget.ad ?? (_isLiveMode ? null : MockData.initialBoardAds.first);
 
   @override
   void dispose() {
@@ -117,6 +129,14 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
       });
       return;
     }
+    if (code != _resolvedExpectedOtp) {
+      setState(() {
+        _otpError = isAr
+            ? 'كود التسليم غير مطابق للكود المسجّل لهذا الطلب'
+            : 'Handover OTP does not match this order';
+      });
+      return;
+    }
     setState(() {
       _otpError = null;
       _escrowReleased = true;
@@ -125,8 +145,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
       SnackBar(
         content: Text(
           isAr
-              ? 'تم التحقق من الكود وتحرير المستحقات لمحفظة المنفّذ بنجاح'
-              : 'OTP verified and Escrow funds released to provider wallet',
+              ? 'تم التحقق من كود التسليم بنجاح'
+              : 'Handover OTP verified successfully',
         ),
         backgroundColor: AppColors.escrowGreen,
       ),
@@ -199,9 +219,15 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
     final settings = Provider.of<SettingsProvider?>(context);
     final isAr = settings?.isArabic ?? context.isArabic;
     final ad = _activeAd;
-    final serviceFee = ad.priceOrBudget;
+
+    if (_isLiveMode) {
+      return _buildLiveDirectSettlementView(context, isAr, ad);
+    }
+
+    final activeAd = ad!;
+    final serviceFee = activeAd.priceOrBudget;
     final itemBudget =
-        ad.estimatedItemCost ?? (ad.requiresReceiptProof ? 150 : 0);
+        activeAd.estimatedItemCost ?? (activeAd.requiresReceiptProof ? 150 : 0);
     final totalLocked = serviceFee + itemBudget;
 
     return Scaffold(
@@ -222,8 +248,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
             Flexible(
               child: Text(
                 isAr
-                    ? 'الضمان المالي وحماية الطرفين'
-                    : 'Bilateral Escrow Shield',
+                    ? 'التسوية المباشرة وحماية التسليم'
+                    : 'Direct Settlement & Handover Protection',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.title().copyWith(fontSize: 17),
@@ -232,6 +258,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
           ],
         ),
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -251,7 +278,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildHeroShieldBanner(isAr, ad, totalLocked),
+                      _buildHeroShieldBanner(isAr, activeAd, totalLocked),
                       const SizedBox(height: 16),
 
                       if (_disputeFrozen) ...[
@@ -285,7 +312,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                               child: _buildFiveStageExecutionCard(
                                 context,
                                 isAr,
-                                ad: ad,
+                                ad: activeAd,
                                 itemBudget: itemBudget,
                               ),
                             ),
@@ -304,7 +331,7 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                         _buildFiveStageExecutionCard(
                           context,
                           isAr,
-                          ad: ad,
+                          ad: activeAd,
                           itemBudget: itemBudget,
                         ),
                       ],
@@ -318,6 +345,115 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLiveDirectSettlementView(
+    BuildContext context,
+    bool isAr,
+    BoardAdModel? ad,
+  ) {
+    return Scaffold(
+      backgroundColor: AppColors.slateBg,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.navy,
+          ),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          isAr
+              ? 'التسوية المباشرة وتوثيق التسليم'
+              : 'Direct Settlement & Handover',
+          style: AppTypography.title().copyWith(fontSize: 17),
+        ),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 640),
+            child: ListView(
+              padding: const EdgeInsets.all(AppDimens.space16),
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(AppDimens.radiusCard),
+                    border: Border.all(color: AppColors.slateBorder),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.verified_user_rounded,
+                            color: AppColors.teal,
+                            size: 26,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              isAr
+                                  ? 'نموذج التسوية المباشرة المعتمد في قطر'
+                                  : 'Qatar Direct Settlement & Verified Handover',
+                              style: AppTypography.title().copyWith(fontSize: 16),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        isAr
+                            ? 'لا يحتفظ مشوار بأموال المستخدمين في محافظ مسبقة الدفع أو حسابات ضمان مالي. تتم التسوية مباشرة بين الطرفين نقداً عند الاستلام (COD) أو بتحويل بنكي مباشر موثّق بإيصال الفاتورة وكود التسليم OTP.'
+                            : 'MASHWAR does not hold customer funds in prepaid wallets or escrow custody. Settlement happens directly between parties via Cash on Delivery (COD) or direct bank transfer backed by receipt proof and server-verified handover OTP.',
+                        style: AppTypography.bodySecondary(),
+                      ),
+                      if (ad != null) ...[
+                        const Divider(height: 24, color: AppColors.slateBorder),
+                        Text(
+                          '${ad.displaySubTag(isAr)} · ${context.trRoute(ad.route)}',
+                          style: AppTypography.body(color: AppColors.navy)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          isAr
+                              ? 'الأتعاب المتفق عليها: ${ad.priceOrBudget} ر.ق'
+                              : 'Agreed Fee: ${ad.priceOrBudget} QAR',
+                          style: AppTypography.label(color: AppColors.teal)
+                              .copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ] else ...[
+                        const Divider(height: 24, color: AppColors.slateBorder),
+                        Text(
+                          isAr
+                              ? 'لا يوجد طلب مرتبط حالياً. افتح تفاصيل طلب التوريد أو الطرد النشط للتحقق من كود التسليم الرسمي.'
+                              : 'No active order linked. Open your active Worksite Supply request or Parcel tracking screen to verify the official handover OTP.',
+                          style: AppTypography.bodySmall(),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                MashwarButton(
+                  text: isAr ? 'العودة' : 'Back',
+                  variant: MashwarButtonVariant.secondary,
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

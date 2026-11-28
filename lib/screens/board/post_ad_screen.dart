@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -43,26 +44,37 @@ class _PostAdScreenState extends State<PostAdScreen> {
   String? _formError;
   double _swapTurns = 0.0;
 
+  static bool get _isLiveMode =>
+      AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
+
   // Form Controllers
-  final TextEditingController _fromController =
-      TextEditingController(text: 'الدوحة');
-  final TextEditingController _toController =
-      TextEditingController(text: 'الخور');
-  final TextEditingController _timeController =
-      TextEditingController(text: 'الجمعة بعد الظهر');
-  final TextEditingController _seatsController =
-      TextEditingController(text: '3');
-  final TextEditingController _priceController =
-      TextEditingController(text: '35');
-  final TextEditingController _parcelDescController =
-      TextEditingController(text: 'أوراق ومستندات رسمية');
-  final TextEditingController _weightController =
-      TextEditingController(text: '2');
+  final TextEditingController _fromController = TextEditingController(
+    text: _isLiveMode ? '' : 'الدوحة',
+  );
+  final TextEditingController _toController = TextEditingController(
+    text: _isLiveMode ? '' : 'الخور',
+  );
+  final TextEditingController _timeController = TextEditingController(
+    text: _isLiveMode ? '' : 'الجمعة بعد الظهر',
+  );
+  final TextEditingController _seatsController = TextEditingController(
+    text: _isLiveMode ? '' : '3',
+  );
+  final TextEditingController _priceController = TextEditingController(
+    text: _isLiveMode ? '' : '35',
+  );
+  final TextEditingController _parcelDescController = TextEditingController(
+    text: _isLiveMode ? '' : 'أوراق ومستندات رسمية',
+  );
+  final TextEditingController _weightController = TextEditingController(
+    text: _isLiveMode ? '' : '2',
+  );
   final TextEditingController _errandDescController = TextEditingController();
   final TextEditingController _goodsDescController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
-  final TextEditingController _itemBudgetController =
-      TextEditingController(text: '150');
+  final TextEditingController _itemBudgetController = TextEditingController(
+    text: _isLiveMode ? '' : '150',
+  );
   final TextEditingController _customServiceController =
       TextEditingController();
   bool _isOtherCategory = false;

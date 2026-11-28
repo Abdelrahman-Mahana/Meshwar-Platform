@@ -149,7 +149,7 @@ class _AdminShellState extends State<AdminShell> {
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               subtitle: Text(
-                isAr ? 'تتطلب مراجعة وحسماً عبر الضمان المالي' : 'Requires arbitration & Escrow settlement',
+                isAr ? 'تتطلب مراجعة وحسماً عبر التسوية والتحكيم' : 'Requires arbitration & settlement review',
                 style: const TextStyle(fontSize: 11),
               ),
               trailing: const Icon(Icons.chevron_right_rounded),
@@ -321,18 +321,18 @@ class _AdminShellState extends State<AdminShell> {
     }
   }
 
-  String _getRoleInitial(AdminRole role) {
+  String _getRoleInitial(AdminRole role, bool isAr) {
     switch (role) {
       case AdminRole.superAdmin:
-        return 'م';
+        return isAr ? 'م' : 'S';
       case AdminRole.reviewAdmin:
-        return 'ر';
+        return isAr ? 'ر' : 'R';
       case AdminRole.supportAdmin:
-        return 'د';
+        return isAr ? 'د' : 'U';
       case AdminRole.financeAdmin:
-        return 'ض';
+        return isAr ? 'ض' : 'F';
       case AdminRole.devopsAdmin:
-        return 'S';
+        return 'D';
     }
   }
 
@@ -428,10 +428,10 @@ class _AdminShellState extends State<AdminShell> {
                         ),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Text(
-                          'م',
-                          style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w900, fontSize: 18),
+                          isAr ? 'م' : 'M',
+                          style: const TextStyle(color: AppColors.navy, fontWeight: FontWeight.w900, fontSize: 18),
                         ),
                       ),
                     ),
@@ -741,7 +741,7 @@ class _AdminShellState extends State<AdminShell> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'MASHWAR Ops · قطر 🇶🇦',
+                          isAr ? 'عمليات مشوار · قطر 🇶🇦' : 'MASHWAR Ops · Qatar 🇶🇦',
                           style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 10),
                         ),
                       ],
@@ -776,7 +776,7 @@ class _AdminShellState extends State<AdminShell> {
             radius: compact ? 10 : 11,
             backgroundColor: AppColors.navy,
             child: Text(
-              _getRoleInitial(admin.activeRole),
+              _getRoleInitial(admin.activeRole, isAr),
               style: TextStyle(
                 color: AppColors.gold,
                 fontSize: compact ? 9.5 : 10,
@@ -884,10 +884,10 @@ class _AdminShellState extends State<AdminShell> {
                               color: AppColors.gold,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Center(
+                            child: Center(
                               child: Text(
-                                'م',
-                                style: TextStyle(
+                                isAr ? 'م' : 'M',
+                                style: const TextStyle(
                                   color: AppColors.navy,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 15,

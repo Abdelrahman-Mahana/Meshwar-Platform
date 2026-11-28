@@ -372,7 +372,12 @@ class MyAlertsScreen extends StatelessWidget {
           );
         },
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        customFromController.dispose();
+        customToController.dispose();
+      });
+    });
   }
 
   @override

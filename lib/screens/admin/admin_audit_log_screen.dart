@@ -15,13 +15,21 @@ class AdminAuditLogScreen extends StatefulWidget {
 }
 
 class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
+  final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
-  String _selectedTarget = 'الكل';
+  String _selectedTarget = 'all';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _resetFilters() {
+    _searchController.clear();
     setState(() {
       _searchText = '';
-      _selectedTarget = 'الكل';
+      _selectedTarget = 'all';
     });
   }
 
@@ -42,9 +50,16 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
     final admin = context.watch<AdminProvider>();
     final t = AdminThemeTokens.of(context);
 
-    final targetOptions = isAr
-        ? ['الكل', 'سائق', 'مستخدم', 'رحلة', 'بلاغ', 'إعداد', 'Escrow', 'Flag']
-        : ['All', 'Driver', 'User', 'Ride', 'Dispute', 'Setting', 'Escrow', 'Flag'];
+    const targetOptions = [
+      ('all', 'الكل', 'All', <String>[]),
+      ('driver', 'سائق', 'Driver', ['سائق', 'driver', 'provider']),
+      ('user', 'مستخدم', 'User', ['مستخدم', 'user']),
+      ('ride', 'رحلة', 'Ride', ['رحلة', 'ride']),
+      ('dispute', 'بلاغ', 'Dispute', ['بلاغ', 'dispute']),
+      ('setting', 'إعداد', 'Setting', ['إعداد', 'setting', 'config']),
+      ('escrow', 'التسوية', 'Settlement', ['escrow', 'ضمان', 'settlement', 'payment']),
+      ('flag', 'Flag', 'Flag', ['flag', 'علم']),
+    ];
 
     final filteredLogs = admin.auditLogs.where((log) {
       if (_searchText.isNotEmpty) {
@@ -56,22 +71,17 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
           return false;
         }
       }
-      if (_selectedTarget != 'الكل' && _selectedTarget != 'All') {
-        final matchTerm = isAr
-            ? _selectedTarget
-            : (_selectedTarget == 'Driver'
-                ? 'سائق'
-                : _selectedTarget == 'User'
-                    ? 'مستخدم'
-                    : _selectedTarget == 'Ride'
-                        ? 'رحلة'
-                        : _selectedTarget == 'Dispute'
-                            ? 'بلاغ'
-                            : _selectedTarget);
-        if (!log.target.toLowerCase().contains(matchTerm.toLowerCase()) &&
-            !log.action.toLowerCase().contains(matchTerm.toLowerCase())) {
-          return false;
-        }
+      if (_selectedTarget != 'all') {
+        final matchedOpt = targetOptions.firstWhere(
+          (o) => o.$1 == _selectedTarget,
+          orElse: () => targetOptions.first,
+        );
+        final targetLower = log.target.toLowerCase();
+        final actionLower = log.action.toLowerCase();
+        final matches = matchedOpt.$4.any(
+          (term) => targetLower.contains(term) || actionLower.contains(term),
+        );
+        if (!matches) return false;
       }
       return true;
     }).toList();
@@ -90,6 +100,7 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                 SizedBox(
                   width: 300,
                   child: TextField(
+                    controller: _searchController,
                     style: TextStyle(color: t.textPrimary, fontSize: 13),
                     onChanged: (v) => setState(() => _searchText = v.trim()),
                     decoration: InputDecoration(
@@ -110,11 +121,11 @@ class _AdminAuditLogScreenState extends State<AdminAuditLogScreen> {
                   children: [
                     for (final opt in targetOptions)
                       ChoiceChip(
-                        label: Text(opt),
-                        selected: _selectedTarget == opt,
-                        onSelected: (_) => setState(() => _selectedTarget = opt),
+                        label: Text(isAr ? opt.$2 : opt.$3),
+                        selected: _selectedTarget == opt.$1,
+                        onSelected: (_) => setState(() => _selectedTarget = opt.$1),
                       ),
-                    if (_searchText.isNotEmpty || _selectedTarget != 'الكل')
+                    if (_searchText.isNotEmpty || _selectedTarget != 'all')
                       TextButton(onPressed: _resetFilters, child: Text(isAr ? 'إعادة ضبط' : 'Reset')),
                     OutlinedButton.icon(
                       icon: const Icon(Icons.copy_all_rounded, size: 16),

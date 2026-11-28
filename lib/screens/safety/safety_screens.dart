@@ -1,8 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -1324,98 +1328,6 @@ class _EmergencySosSheetState extends State<EmergencySosSheet> {
   }
 }
 
-// Page 54: المركبة ابتعدت عن المسار (Off-Route Detection Alert)
-class OffRouteAlertSheet extends StatelessWidget {
-  const OffRouteAlertSheet({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final settings = Provider.of<SettingsProvider?>(context);
-    final isAr = settings?.isArabic ?? context.isArabic;
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppDimens.space24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: const BoxDecoration(
-              color: AppColors.warningBg,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.alt_route_rounded,
-              color: AppColors.warning,
-              size: 30,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            isAr
-                ? 'المركبة ابتعدت عن المسار'
-                : 'Vehicle deviated from planned route',
-            textAlign: TextAlign.center,
-            style: AppTypography.title(),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            isAr
-                ? 'رصدنا خروج المركبة عن المسار المعتاد. هل الأمور على ما يرام؟'
-                : 'We detected the vehicle left the planned corridor. Are you okay?',
-            textAlign: TextAlign.center,
-            style: AppTypography.bodySecondary(),
-          ),
-          const SizedBox(height: 20),
-          MashwarButton(
-            text: isAr ? 'أنا بخير' : 'I am fine',
-            onPressed: () {
-              Navigator.of(context).maybePop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    isAr
-                        ? 'حسناً، سنواصل متابعة رحلتك بأمان'
-                        : 'Glad you are okay. Live monitoring continues.',
-                  ),
-                  backgroundColor: AppColors.teal,
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 10),
-          MashwarButton(
-            text: isAr ? 'تواصل مع عمليات الأمان' : 'Call Safety Operations',
-            variant: MashwarButtonVariant.secondary,
-            onPressed: () => _confirmAndCallOperationsSupport(context, isAr),
-          ),
-          const SizedBox(height: 10),
-          MashwarButton(
-            text: isAr ? 'بحاجة إلى مساعدة طارئة' : 'Need Emergency Help',
-            variant: MashwarButtonVariant.danger,
-            onPressed: () {
-              Navigator.of(context).maybePop();
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.white,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(AppDimens.radiusBottomSheet),
-                  ),
-                ),
-                builder: (_) => const EmergencySosSheet(),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // Page 55: إبلاغ وشكوى (Report Issue Screen)
 class ReportIssueScreen extends StatefulWidget {
   const ReportIssueScreen({super.key});
@@ -1426,10 +1338,11 @@ class ReportIssueScreen extends StatefulWidget {
 
 class _ReportIssueScreenState extends State<ReportIssueScreen> {
   String _selectedCategory = 'قيادة متهورة';
-  final TextEditingController _detailsController = TextEditingController(
-    text: 'السائق كان يقود بسرعة عالية',
-  );
+  final TextEditingController _detailsController = TextEditingController();
   bool _isSent = false;
+  bool _isSubmitting = false;
+  String? _submitError;
+  String? _ticketId;
 
   static const List<String> _categoriesAr = [
     'سلوك غير لائق',
@@ -1455,6 +1368,86 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     super.dispose();
   }
 
+  Future<void> _submitSafetyReport(bool isAr) async {
+    if (_isSubmitting) return;
+    final details = _detailsController.text.trim();
+    if (details.length < 3) {
+      setState(() {
+        _submitError = isAr
+            ? 'يرجى كتابة تفاصيل البلاغ (3 أحرف على الأقل).'
+            : 'Please describe what happened (at least 3 characters).';
+      });
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+      _submitError = null;
+    });
+
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final generatedId = 'rep_$nowMs';
+    final isLiveFirebase =
+        AppEnvironment.isFirebaseRuntimeActive && !AppEnvironment.useDevMocks;
+
+    try {
+      if (isLiveFirebase && Firebase.apps.isNotEmpty) {
+        final fbUser = fb_auth.FirebaseAuth.instance.currentUser;
+        final auth = Provider.of<AuthProvider?>(context, listen: false);
+        final uid = fbUser?.uid ?? auth?.user.id.trim() ?? '';
+        if (uid.isEmpty) {
+          throw StateError(
+            isAr
+                ? 'يرجى تسجيل الدخول لإرسال بلاغ أمان موثّق.'
+                : 'Please sign in to submit a verified safety report.',
+          );
+        }
+        final rawName = auth?.user.fullName.trim() ?? fbUser?.displayName?.trim() ?? '';
+        final complainantName = rawName.length >= 2 ? rawName : 'Mashwar User';
+        final disputeType = _selectedCategory == 'طرد مفقود أو تالف'
+            ? 'parcel'
+            : 'ride';
+
+        await FirebaseFirestore.instance
+            .collection('disputes')
+            .doc(generatedId)
+            .set({
+          'id': generatedId,
+          'type': disputeType,
+          'category': _selectedCategory,
+          'complainantId': uid,
+          'complainantName': complainantName,
+          'description': details,
+          'status': 'open',
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        }).timeout(const Duration(seconds: 10));
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _ticketId = '#${generatedId.substring(generatedId.length - 6)}';
+        _isSubmitting = false;
+        _isSent = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      final msg = isAr
+          ? 'تعذّر حفظ البلاغ حالياً. يرجى المحاولة مرة أخرى أو الاتصال بعمليات الأمان.'
+          : 'Could not submit your safety report right now. Please retry or call Safety Ops.';
+      setState(() {
+        _isSubmitting = false;
+        _submitError = msg;
+      });
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final settings = Provider.of<SettingsProvider?>(context);
@@ -1462,6 +1455,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
     final categories = isAr ? _categoriesAr : _categoriesEn;
 
     if (_isSent) {
+      final ticketLabel = _ticketId ?? '#${DateTime.now().millisecondsSinceEpoch % 100000}';
       return Scaffold(
         backgroundColor: AppColors.slateBg,
         body: Center(
@@ -1492,8 +1486,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                     const SizedBox(height: 6),
                     Text(
                       isAr
-                          ? 'فريق الثقة والأمان يراجع البلاغ #5127 وسيتواصل معك.'
-                          : 'Our Trust & Safety team is reviewing Report #5127.',
+                          ? 'فريق الثقة والأمان يراجع البلاغ $ticketLabel وسيتواصل معك.'
+                          : 'Our Trust & Safety team is reviewing Report $ticketLabel.',
                       textAlign: TextAlign.center,
                       style: AppTypography.bodySecondary(),
                     ),
@@ -1518,6 +1512,7 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -1613,9 +1608,18 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                                 controller: _detailsController,
                                 maxLines: 3,
                                 style: AppTypography.body(),
+                                onChanged: (_) {
+                                  if (_submitError != null) {
+                                    setState(() => _submitError = null);
+                                  }
+                                },
                                 decoration: InputDecoration(
                                   filled: true,
                                   fillColor: AppColors.slateBg,
+                                  hintText: isAr
+                                      ? 'مثال: وصف الواقعة، وقتها، وأي تفاصيل تساعد فريق الأمان...'
+                                      : 'Describe the incident, timing, and details for Safety Ops...',
+                                  errorText: _submitError,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     borderSide: const BorderSide(
@@ -1670,7 +1674,8 @@ class _ReportIssueScreenState extends State<ReportIssueScreen> {
                   MashwarButton(
                     key: const ValueKey('report_issue_submit_btn'),
                     text: isAr ? 'إرسال البلاغ' : 'Submit Report',
-                    onPressed: () => setState(() => _isSent = true),
+                    isLoading: _isSubmitting,
+                    onPressed: () => _submitSafetyReport(isAr),
                   ),
                 ],
               ),
@@ -1707,17 +1712,22 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
         if (savedName.isNotEmpty)
           {
             'name': savedName,
-            'phone': savedPhone.isNotEmpty ? savedPhone : '5500 1122',
+            'phone': savedPhone,
           },
-        {'name': 'نورة (أختي)', 'phone': '5511 2233'},
-        {'name': 'راشد (والدي)', 'phone': '6622 3344'},
       ];
     }
   }
 
   void _syncPrimaryContactToAuth() {
     final auth = Provider.of<AuthProvider?>(context, listen: false);
-    if (auth == null || _contacts.isEmpty) return;
+    if (auth == null) return;
+    if (_contacts.isEmpty) {
+      auth.updateProfile(
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+      );
+      return;
+    }
     auth.updateProfile(
       emergencyContactName: _contacts.first['name'],
       emergencyContactPhone: _contacts.first['phone'],
@@ -1729,93 +1739,115 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     final phoneCtrl = TextEditingController();
     final settings = Provider.of<SettingsProvider?>(context, listen: false);
     final isAr = settings?.isArabic ?? context.isArabic;
+    String? errorMsg;
 
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          isAr ? 'جهة طوارئ جديدة' : 'New Emergency Contact',
-          style: AppTypography.title(),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isAr ? 'الاسم أو صلة القرابة' : 'Name or Relationship',
-              style: AppTypography.label(color: AppColors.navy)
-                  .copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              key: const ValueKey('emergency_contact_dialog_name_input'),
-              controller: nameCtrl,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppColors.slateBg,
-                hintText: isAr ? 'مثال: حمد (أخي)' : 'e.g. Hamad (Brother)',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.slateBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.slateBorder),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              isAr ? 'رقم الهاتف المحمول' : 'Mobile Phone Number',
-              style: AppTypography.label(color: AppColors.navy)
-                  .copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              key: const ValueKey('emergency_contact_dialog_phone_input'),
-              controller: phoneCtrl,
-              keyboardType: TextInputType.phone,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppColors.slateBg,
-                hintText: '55XXXXXX',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.slateBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.slateBorder),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              isAr ? 'إلغاء' : 'Cancel',
-              style: AppTypography.label(color: AppColors.textSecondary),
-            ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            isAr ? 'جهة طوارئ جديدة' : 'New Emergency Contact',
+            style: AppTypography.title(),
           ),
-          ElevatedButton(
-            key: const ValueKey('emergency_contact_dialog_save_btn'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.navy,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isAr ? 'الاسم أو صلة القرابة' : 'Name or Relationship',
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                key: const ValueKey('emergency_contact_dialog_name_input'),
+                controller: nameCtrl,
+                onChanged: (_) {
+                  if (errorMsg != null) setDialogState(() => errorMsg = null);
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.slateBg,
+                  hintText: isAr ? 'مثال: حمد (أخي)' : 'e.g. Hamad (Brother)',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppColors.slateBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppColors.slateBorder),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                isAr ? 'رقم الهاتف المحمول' : 'Mobile Phone Number',
+                style: AppTypography.label(color: AppColors.navy)
+                    .copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                key: const ValueKey('emergency_contact_dialog_phone_input'),
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                onChanged: (_) {
+                  if (errorMsg != null) setDialogState(() => errorMsg = null);
+                },
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.slateBg,
+                  hintText: '55XXXXXX',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppColors.slateBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: AppColors.slateBorder),
+                  ),
+                ),
+              ),
+              if (errorMsg != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  errorMsg!,
+                  style: AppTypography.label(color: AppColors.danger),
+                ),
+              ],
+            ],
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(
+                isAr ? 'إلغاء' : 'Cancel',
+                style: AppTypography.label(color: AppColors.textSecondary),
               ),
             ),
-            onPressed: () {
-              if (nameCtrl.text.trim().isNotEmpty &&
-                  phoneCtrl.text.trim().isNotEmpty) {
+            ElevatedButton(
+              key: const ValueKey('emergency_contact_dialog_save_btn'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.navy,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                if (nameCtrl.text.trim().isEmpty ||
+                    phoneCtrl.text.trim().isEmpty) {
+                  setDialogState(() {
+                    errorMsg = isAr
+                        ? 'يرجى إدخال الاسم ورقم الهاتف.'
+                        : 'Please enter both name and phone number.';
+                  });
+                  return;
+                }
                 setState(() {
                   _contacts.insert(0, {
                     'name': nameCtrl.text.trim(),
@@ -1824,13 +1856,18 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                 });
                 _syncPrimaryContactToAuth();
                 Navigator.of(ctx).pop();
-              }
-            },
-            child: Text(isAr ? 'إضافة' : 'Add'),
-          ),
-        ],
+              },
+              child: Text(isAr ? 'إضافة' : 'Add'),
+            ),
+          ],
+        ),
       ),
-    );
+    ).whenComplete(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        nameCtrl.dispose();
+        phoneCtrl.dispose();
+      });
+    });
   }
 
   @override
@@ -1845,6 +1882,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
         elevation: 0,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
+          tooltip: isAr ? 'رجوع' : 'Back',
           icon: const Icon(
             Icons.arrow_back_ios_new_rounded,
             color: AppColors.navy,
@@ -1914,102 +1952,146 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                 const SizedBox(height: 8),
 
                 Expanded(
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimens.space16,
-                    ),
-                    itemCount: _contacts.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final c = _contacts[index];
-                      return MashwarFadeSlideIn(
-                        offsetY: 8,
-                        child: Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(
-                              AppDimens.radiusCard,
-                            ),
-                            border: Border.all(color: AppColors.slateBorder),
-                          ),
-                          child: Row(
-                            children: [
-                              MashwarUserAvatar(
-                                avatarUrl: null,
-                                fullName: c['name']!,
-                                size: 40,
-                                borderWidth: 1.2,
-                                borderColor: AppColors.slateBorder,
-                                autoCommunityPortrait: true,
+                  child: _contacts.isEmpty
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppDimens.space24),
+                            child: Container(
+                              padding: const EdgeInsets.all(AppDimens.space24),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(
+                                  AppDimens.radiusCard,
+                                ),
+                                border: Border.all(color: AppColors.slateBorder),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.contact_emergency_outlined,
+                                    size: 40,
+                                    color: AppColors.teal,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    isAr
+                                        ? 'لا توجد جهات طوارئ محفوظة بعد'
+                                        : 'No emergency contacts saved yet',
+                                    textAlign: TextAlign.center,
+                                    style: AppTypography.title().copyWith(fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    isAr
+                                        ? 'أضف رقم أحد أفراد العائلة أو صديق موثوق ليتم إشعاره فورياً عند تفعيل SOS.'
+                                        : 'Add a trusted family member or friend to notify instantly if you trigger SOS.',
+                                    textAlign: TextAlign.center,
+                                    style: AppTypography.bodySecondary(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimens.space16,
+                          ),
+                          itemCount: _contacts.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (context, index) {
+                            final c = _contacts[index];
+                            return MashwarFadeSlideIn(
+                              offsetY: 8,
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimens.radiusCard,
+                                  ),
+                                  border: Border.all(color: AppColors.slateBorder),
+                                ),
+                                child: Row(
                                   children: [
-                                    Text(
-                                      c['name']!,
-                                      style: AppTypography.body(
-                                        color: AppColors.navy,
-                                      ).copyWith(fontWeight: FontWeight.w700),
+                                    MashwarUserAvatar(
+                                      avatarUrl: null,
+                                      fullName: c['name']!,
+                                      size: 40,
+                                      borderWidth: 1.2,
+                                      borderColor: AppColors.slateBorder,
+                                      autoCommunityPortrait: true,
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      c['phone']!,
-                                      style: AppTypography.bodySecondary(),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            c['name']!,
+                                            style: AppTypography.body(
+                                              color: AppColors.navy,
+                                            ).copyWith(fontWeight: FontWeight.w700),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            c['phone']!,
+                                            style: AppTypography.bodySecondary(),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: isAr ? 'اتصال' : 'Call',
+                                      icon: const Icon(
+                                        Icons.phone_in_talk_rounded,
+                                        color: AppColors.teal,
+                                        size: 20,
+                                      ),
+                                      onPressed: () async {
+                                        final messenger =
+                                            ScaffoldMessenger.maybeOf(context);
+                                        final raw =
+                                            c['phone']!.replaceAll(' ', '').trim();
+                                        final path = raw.startsWith('+')
+                                            ? raw
+                                            : '+974$raw';
+                                        final ok = await launchMashwarExternalUri(
+                                          Uri(scheme: 'tel', path: path),
+                                        );
+                                        if (!ok) {
+                                          messenger?.showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                isAr
+                                                    ? 'الاتصال على $path'
+                                                    : 'Dial $path',
+                                              ),
+                                              backgroundColor: AppColors.navy,
+                                            ),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      tooltip: isAr ? 'حذف' : 'Remove',
+                                      icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: AppColors.danger,
+                                        size: 20,
+                                      ),
+                                      onPressed: () {
+                                        setState(() => _contacts.removeAt(index));
+                                        _syncPrimaryContactToAuth();
+                                      },
                                     ),
                                   ],
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.phone_in_talk_rounded,
-                                  color: AppColors.teal,
-                                  size: 20,
-                                ),
-                                onPressed: () async {
-                                  final messenger =
-                                      ScaffoldMessenger.maybeOf(context);
-                                  final raw =
-                                      c['phone']!.replaceAll(' ', '').trim();
-                                  final path = raw.startsWith('+')
-                                      ? raw
-                                      : '+974$raw';
-                                  final ok = await launchMashwarExternalUri(
-                                    Uri(scheme: 'tel', path: path),
-                                  );
-                                  if (!ok) {
-                                    messenger?.showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          isAr
-                                              ? 'الاتصال على $path'
-                                              : 'Dial $path',
-                                        ),
-                                        backgroundColor: AppColors.navy,
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline_rounded,
-                                  color: AppColors.danger,
-                                  size: 20,
-                                ),
-                                onPressed: () {
-                                  setState(() => _contacts.removeAt(index));
-                                  _syncPrimaryContactToAuth();
-                                },
-                              ),
-                            ],
-                          ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
 
                 Padding(

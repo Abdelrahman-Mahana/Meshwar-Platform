@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -61,20 +63,23 @@ class _ChatScreenState extends State<ChatScreen> {
   final ScrollController _scrollController = ScrollController();
 
   List<ChatMessageModel> _messages = <ChatMessageModel>[];
+  StreamSubscription<List<ChatMessageModel>>? _messagesSub;
   bool _isLoading = true;
+  String? _failedMessageText;
+  String? _sendError;
 
   static const List<String> _quickChipsAr = [
     'أنا عند نقطة الالتقاء الآن',
-    'أرفقت صورة الفاتورة في الضمان',
+    'أرفقت صورة الفاتورة للطلب',
     'شاركني الموقع الدقيق',
     'جاهز للتسليم ومطابقة كود OTP',
   ];
 
   static const List<String> _quickChipsEn = [
     'I arrived at meetup spot',
-    'Uploaded store receipt to Escrow',
+    'Uploaded store receipt for order',
     'Share exact location',
-    'Ready to settle with 4-digit OTP',
+    'Ready for verified OTP handover',
   ];
 
   String get _effectiveChatId => ChatScreen.resolveChatId(
@@ -87,6 +92,27 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _loadInitialMessages();
+    _subscribeToMessages();
+  }
+
+  void _subscribeToMessages() {
+    _messagesSub?.cancel();
+    _messagesSub = AppRepositories.instance.chat
+        .streamMessages(_effectiveChatId)
+        .listen(
+      (streamed) {
+        if (!mounted) return;
+        setState(() {
+          _messages = List<ChatMessageModel>.from(streamed);
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      },
+      onError: (_) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+      },
+    );
   }
 
   Future<void> _loadInitialMessages() async {
@@ -153,6 +179,11 @@ class _ChatScreenState extends State<ChatScreen> {
     final senderId = _resolveMySenderId();
     final senderName = _resolveMySenderName(isAr);
 
+    setState(() {
+      _sendError = null;
+      _failedMessageText = null;
+    });
+
     try {
       final saved = await AppRepositories.instance.chat.sendMessage(
         conversationId: _effectiveChatId,
@@ -161,25 +192,28 @@ class _ChatScreenState extends State<ChatScreen> {
         text: text,
       );
       if (!mounted) return;
-      setState(() {
-        _messages = List<ChatMessageModel>.from(_messages)..add(saved);
-      });
+      final alreadyInList = _messages.any((m) => m.id == saved.id);
+      if (!alreadyInList) {
+        setState(() {
+          _messages = List<ChatMessageModel>.from(_messages)..add(saved);
+        });
+      }
       _scrollToBottom();
     } catch (_) {
       if (!mounted) return;
-      final fallback = ChatMessageModel(
-        id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-        conversationId: _effectiveChatId,
-        senderId: senderId,
-        senderName: senderName,
-        text: text,
-        timestamp: DateTime.now(),
-        isRead: true,
-      );
+      final errMsg = isAr
+          ? 'تعذّر إرسال الرسالة. تحقق من الاتصال وأعد المحاولة.'
+          : 'Failed to send message. Check connection and retry.';
       setState(() {
-        _messages = List<ChatMessageModel>.from(_messages)..add(fallback);
+        _sendError = errMsg;
+        _failedMessageText = text;
       });
-      _scrollToBottom();
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(errMsg),
+          backgroundColor: AppColors.danger,
+        ),
+      );
     }
   }
 
@@ -346,6 +380,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _messagesSub?.cancel();
     _msgController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -506,7 +541,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                isAr ? 'الضمان و OTP' : 'Escrow',
+                                isAr ? 'التسوية و OTP' : 'Handover OTP',
                                 style: AppTypography.label(color: AppColors.teal).copyWith(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
@@ -583,6 +618,46 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 ),
+
+                // Failed-send error banner with Retry action
+                if (_sendError != null && _failedMessageText != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    color: AppColors.dangerBg,
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.error_outline_rounded,
+                          size: 16,
+                          color: AppColors.danger,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _sendError!,
+                            style: AppTypography.label(color: AppColors.danger),
+                          ),
+                        ),
+                        TextButton(
+                          key: const ValueKey('chat_retry_send_btn'),
+                          onPressed: () {
+                            final retryText = _failedMessageText;
+                            if (retryText != null) {
+                              _sendMessage(retryText);
+                            }
+                          },
+                          child: Text(
+                            isAr ? 'إعادة المحاولة' : 'Retry',
+                            style: AppTypography.label(color: AppColors.navy)
+                                .copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 // Messages List
                 Expanded(

@@ -469,12 +469,12 @@ class BookingConfirmationScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
 
-                    // Secondary CTA: Bilateral Escrow & Safety Center
+                    // Secondary CTA: Direct Settlement & Safety Center
                     MashwarButton(
                       variant: MashwarButtonVariant.secondary,
                       text: isAr
-                          ? 'مركز الضمان والتتبع الحي'
-                          : 'Open Bilateral Escrow & Tracking',
+                          ? 'مركز التسوية المباشرة والتتبع الحي'
+                          : 'Direct Settlement & Live Tracking',
                       icon: const Icon(
                         Icons.shield_outlined,
                         size: 18,
