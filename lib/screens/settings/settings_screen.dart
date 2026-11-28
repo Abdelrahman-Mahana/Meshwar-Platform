@@ -24,7 +24,7 @@ import '../safety/safety_screens.dart';
 import '../vehicle/vehicle_registration_screen.dart';
 import '../wallet/wallet_screen.dart';
 
-/// Clean, minimalist, Uber/inDrive-style Settings screen.
+/// Clean, minimalist MASHWAR Settings screen.
 /// Implements pure white surfaces, soft neutral icon containers, indented hairlines,
 /// high-contrast Cairo typography, and zero emoji clutter.
 class SettingsScreen extends StatelessWidget {
@@ -649,7 +649,7 @@ class SettingsScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  if (!AppEnvironment.current.isProduction || AppEnvironment.useDevMocks) ...[
+                  if (AppEnvironment.useDevMocks) ...[
                     _buildIndentedDivider(),
                     _buildSettingsTile(
                       icon: Icons.admin_panel_settings_outlined,

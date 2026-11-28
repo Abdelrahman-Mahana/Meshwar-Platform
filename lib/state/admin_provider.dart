@@ -76,7 +76,7 @@ class AdminStaffMember {
       case AdminRole.supportAdmin:
         return 'Support Admin';
       case AdminRole.financeAdmin:
-        return 'Finance & Escrow';
+        return 'Finance & Settlement';
       case AdminRole.devopsAdmin:
         return 'DevOps & SRE';
     }
@@ -999,17 +999,17 @@ class AdminProvider extends ChangeNotifier {
     ),
     AdminModuleSpec(
       index: 10,
-      groupAr: 'الضمان والمالية والأمان',
-      groupEn: 'Escrow & Trust',
-      titleAr: 'الضمان والمحافظ',
-      titleEn: 'Escrow & Payouts',
-      shortAr: 'الضمان',
-      shortEn: 'Escrow',
+      groupAr: 'التسوية والمالية والأمان',
+      groupEn: 'Settlement & Trust',
+      titleAr: 'التسوية المباشرة والمالية',
+      titleEn: 'Direct Settlement & Finance',
+      shortAr: 'التسوية',
+      shortEn: 'Finance',
     ),
     AdminModuleSpec(
       index: 1,
-      groupAr: 'الضمان والمالية والأمان',
-      groupEn: 'Escrow & Trust',
+      groupAr: 'التسوية والمالية والأمان',
+      groupEn: 'Settlement & Trust',
       titleAr: 'توثيق السائقين',
       titleEn: 'Driver Verifications',
       shortAr: 'التوثيق',
@@ -1017,8 +1017,8 @@ class AdminProvider extends ChangeNotifier {
     ),
     AdminModuleSpec(
       index: 2,
-      groupAr: 'الضمان والمالية والأمان',
-      groupEn: 'Escrow & Trust',
+      groupAr: 'التسوية والمالية والأمان',
+      groupEn: 'Settlement & Trust',
       titleAr: 'المستخدمون',
       titleEn: 'Users',
       shortAr: 'المستخدمون',
@@ -1026,8 +1026,8 @@ class AdminProvider extends ChangeNotifier {
     ),
     AdminModuleSpec(
       index: 4,
-      groupAr: 'الضمان والمالية والأمان',
-      groupEn: 'Escrow & Trust',
+      groupAr: 'التسوية والمالية والأمان',
+      groupEn: 'Settlement & Trust',
       titleAr: 'البلاغات والنزاعات',
       titleEn: 'Disputes & SOS',
       shortAr: 'النزاعات',
@@ -1867,10 +1867,10 @@ class AdminProvider extends ChangeNotifier {
     ),
     const AdminB2BAccountItem(
       id: 'b2b_3',
-      companyAr: 'حضانة براعم الخليج ثنائية اللغة',
-      companyEn: 'Gulf Buds Bilingual Nursery',
-      sectorAr: 'اشتراكات نقل يومي ومرافقين',
-      sectorEn: 'Scheduled Nursery Commutes',
+      companyAr: 'مجموعة الريان للخدمات التعليمية',
+      companyEn: 'Al-Rayyan Education Services',
+      sectorAr: 'اشتراكات تنقل يومي للكوادر',
+      sectorEn: 'Scheduled Daily Staff Commutes',
       municipalityAr: 'الريان ↔ لوسيل',
       municipalityEn: 'Al Rayyan ↔ Lusail',
       monthlyRuns: 64,
@@ -1949,9 +1949,9 @@ class AdminProvider extends ChangeNotifier {
       timeline: [
         '7 نوفمبر 7:35 ص: استلم السائق الطرد (صورة مرفقة)',
         '7 نوفمبر 9:50 ص: تسليم برمز صحيح للمستلم',
-        '8 نوفمبر 10:12 ص: المستلم أبلغ عن تلف بالظرف وتجميد الضمان',
+        '8 نوفمبر 10:12 ص: المستلم أبلغ عن تلف بالظرف وتعليق التسوية للمراجعة',
       ],
-      internalNote: 'الصور تؤكد التلف الجزئي للمستندات، المبلغ مجمد في الضمان المالي.',
+      internalNote: 'الصور تؤكد التلف الجزئي للمستندات، الطلب قيد مراجعة فريق التسوية.',
     ),
     AdminDisputeItem(
       id: '#5126',
@@ -1980,7 +1980,7 @@ class AdminProvider extends ChangeNotifier {
       resolutionDecision: 'تم حظر الحساب وتعويض الراكبة',
       timeline: [
         '1 نوفمبر: تم تقديم الشكوى والتحقق من التحويل البنكي',
-        '2 نوفمبر: تم إيقاف الحساب وتعويض الراكبة من الضمان',
+        '2 نوفمبر: تم إيقاف الحساب ومعالجة التسوية للراكبة',
       ],
     ),
   ];
@@ -2027,7 +2027,7 @@ class AdminProvider extends ChangeNotifier {
           nameAr: 'شراء وتوصيل بفاتورة حية',
           nameEn: 'Store Buy & Deliver',
           descriptionAr: 'مشتريات المحلات والطلبات اليومية مع إلزامية رفع الفاتورة وصورة السلعة قبل التحرك.',
-          descriptionEn: 'Store purchases with live receipt & photo verification held inside Escrow.',
+          descriptionEn: 'Store purchases with live receipt & photo verification and direct OTP settlement.',
           iconName: 'shopping_bag',
           accentHex: 0xFFB45309,
           isEnabled: true,
@@ -2087,10 +2087,10 @@ class AdminProvider extends ChangeNotifier {
         const AdminServiceDefinition(
           id: 'svc_nursery_commute',
           code: 'nursery_commute',
-          nameAr: 'مشاوير الحضانات والمناطق البعيدة',
-          nameEn: 'Nurseries & Daily Commutes',
-          descriptionAr: 'توصيل مجدول وآمن للحضانات والمدارس والأحياء قليلة المواصلات مع فلتر للنساء.',
-          descriptionEn: 'Scheduled neighborhood & nursery runs with verified drivers & ladies-only filter.',
+          nameAr: 'المشاوير العائلية والمناطق البعيدة',
+          nameEn: 'Family & Daily Commutes',
+          descriptionAr: 'توصيل مجدول وآمن للمشاوير العائلية واليومية والأحياء قليلة المواصلات مع فلتر للنساء.',
+          descriptionEn: 'Scheduled neighborhood & family daily commutes with verified drivers & ladies-only filter.',
           iconName: 'family_restroom',
           accentHex: 0xFFBE185D,
           isEnabled: true,
@@ -2588,8 +2588,8 @@ class AdminProvider extends ChangeNotifier {
           key: 'strict_qid_for_escrow',
           nameAr: 'إلزامية QID للمدفوعات فوق 500 ر.ق',
           nameEn: 'Strict QID Check Above 500 QAR',
-          descriptionAr: 'يفرض توثيق البطاقة القطرية قبل قفل الضمان للطلبات المرتفعة.',
-          descriptionEn: 'Enforces verified Qatar ID before locking high-value escrow holds.',
+          descriptionAr: 'يفرض توثيق البطاقة القطرية قبل اعتماد التسويات للطلبات المرتفعة.',
+          descriptionEn: 'Enforces verified Qatar ID before confirming high-value direct settlements.',
           category: 'security',
           isEnabled: true,
           rolloutPct: 100,
@@ -2600,8 +2600,8 @@ class AdminProvider extends ChangeNotifier {
           key: 'instant_fawran_payouts',
           nameAr: 'التحويل الفوري للمنفذين عبر فوراً',
           nameEn: 'Instant QCB Fawran Payouts',
-          descriptionAr: 'تحرير أتعاب المنفذ تلقائياً خلال ثوانٍ فور تأكيد كود OTP.',
-          descriptionEn: 'Auto-disburse provider earnings upon 4-digit OTP completion.',
+          descriptionAr: 'توثيق التسوية المباشرة للمنفذ تلقائياً فور تأكيد كود OTP.',
+          descriptionEn: 'Verify direct provider settlement automatically upon 4-digit OTP completion.',
           category: 'payments',
           isEnabled: true,
           rolloutPct: 100,
@@ -2610,10 +2610,10 @@ class AdminProvider extends ChangeNotifier {
         ),
         const AdminFeatureFlag(
           key: 'ladies_only_corridor_mode',
-          nameAr: 'وضع "السيدات فقط" للمشاوير والحضانات',
+          nameAr: 'وضع "السيدات فقط" للمشاوير العائلية',
           nameEn: 'Ladies-Only Matching Filter',
-          descriptionAr: 'تخصيص كابتن سيدة لمشاوير الأسر والحضانات في كافة البلديات.',
-          descriptionEn: 'Routes family & nursery requests strictly to verified female providers.',
+          descriptionAr: 'تخصيص كابتن سيدة لمشاوير الأسر والسيدات في كافة البلديات.',
+          descriptionEn: 'Routes family & ladies-only requests strictly to verified female providers.',
           category: 'operations',
           isEnabled: true,
           rolloutPct: 100,
@@ -2726,8 +2726,8 @@ class AdminProvider extends ChangeNotifier {
     ),
     const AdminInfraServiceHealth(
       id: 'srv_escrow',
-      nameAr: 'محرك الضمان المالي المزدوج (Escrow)',
-      nameEn: 'Bilateral Escrow Engine',
+      nameAr: 'محرك التسوية المباشرة والتحقق (OTP)',
+      nameEn: 'Direct Settlement & OTP Engine',
       region: 'qatar-core-vault',
       status: 'operational',
       uptimePct: 99.99,
@@ -2884,7 +2884,7 @@ class AdminProvider extends ChangeNotifier {
           unitAr: 'ر.ق',
           unitEn: 'QAR',
           descriptionAr: 'القيمة المالية القصوى للتغطية التعويضية للطرد بالريال القطري',
-          descriptionEn: 'Max valuation in QAR covered under Escrow protection',
+          descriptionEn: 'Max valuation in QAR covered under direct settlement & OTP verification',
           category: 'escrow',
         ),
         AdminSystemSetting(

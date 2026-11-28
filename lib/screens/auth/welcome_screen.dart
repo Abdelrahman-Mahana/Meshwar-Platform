@@ -496,8 +496,8 @@ class WelcomeScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 isAr
-                    ? 'ملاحظة: رسائل التحقق عبر SMS تتطلب تفعيل فوترة الرسائل في Firebase Console، أو يمكنك الدخول فوراً بالبريد الإلكتروني وكلمة المرور أعلاه.'
-                    : 'Note: SMS OTP requires SMS billing enabled in Firebase Console, or sign in anytime with Email & Password above.',
+                    ? 'تتوفر خدمة رسائل التحقق عبر الجوال تدريجياً، ويمكنك الدخول فوراً باستخدام البريد الإلكتروني وكلمة المرور أعلاه.'
+                    : 'SMS verification is rolling out gradually — you can sign in immediately with Email & Password above.',
                 textAlign: TextAlign.center,
                 style: AppTypography.bodySmall(),
               ),
@@ -529,8 +529,8 @@ class WelcomeScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           isAr
-                              ? 'الدخول عبر رسائل SMS يتطلب تفعيل Firebase Auth وفوترة الرسائل؛ يرجى استخدام البريد الإلكتروني وكلمة المرور.'
-                              : 'Phone SMS OTP requires Firebase Auth & SMS billing enabled. Please sign in with Email & Password.',
+                              ? 'خدمة رسائل التحقق غير متاحة مؤقتاً، يرجى المحاولة لاحقاً أو استخدام البريد الإلكتروني وكلمة المرور.'
+                              : 'SMS verification is temporarily unavailable. Please try again later or sign in with Email & Password.',
                           style: AppTypography.bodySmall(),
                         ),
                       ),

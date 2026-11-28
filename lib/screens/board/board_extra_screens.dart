@@ -981,8 +981,8 @@ class _BoardAdOffersScreenState extends State<BoardAdOffersScreen> {
                           ),
                           label: Text(
                             isAr
-                                ? 'الضمان المالي وكود التسليم OTP'
-                                : 'Escrow Shield & Handover OTP',
+                                ? 'التسوية المباشرة وكود التسليم OTP'
+                                : 'Direct Settlement & Handover OTP',
                             style: AppTypography.label(color: AppColors.teal)
                                 .copyWith(fontWeight: FontWeight.w700),
                           ),

@@ -98,7 +98,7 @@ class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
               minTableWidth: 880,
               columns: [
                 DataColumn(label: Text(isAr ? 'الرقم' : 'ID')),
-                DataColumn(label: Text(isAr ? 'الأولوية / الضمان' : 'Priority / Escrow')),
+                DataColumn(label: Text(isAr ? 'الأولوية / التسوية' : 'Priority / Settlement')),
                 DataColumn(label: Text(isAr ? 'الفئة' : 'Category')),
                 DataColumn(label: Text(isAr ? 'المُبلِّغ' : 'Complainant')),
                 DataColumn(label: Text(isAr ? 'الحالة' : 'Status')),
@@ -177,7 +177,10 @@ class _AdminDisputesScreenState extends State<AdminDisputesScreen> {
                       const SizedBox(height: 6),
                       Text('${d.complainantName} -> ${d.againstName}', style: TextStyle(color: t.textSecondary, fontSize: 12)),
                       if (d.linkedEscrowId != null)
-                        Text('Escrow: ${d.linkedEscrowId}', style: TextStyle(color: t.accentTeal, fontSize: 11, fontWeight: FontWeight.bold)),
+                        Text(
+                          isAr ? 'مرجع التسوية: ${d.linkedEscrowId}' : 'Settlement Ref: ${d.linkedEscrowId}',
+                          style: TextStyle(color: t.accentTeal, fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
                       const SizedBox(height: 8),
                       Align(
                         alignment: AlignmentDirectional.centerEnd,

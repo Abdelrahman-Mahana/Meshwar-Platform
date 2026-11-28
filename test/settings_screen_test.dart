@@ -61,6 +61,10 @@ void main() {
     expect(find.text('الامتثال التنظيمي وحماية البيانات (قطر)'), findsOneWidget);
     expect(find.text('حذف الحساب نهائياً'), findsOneWidget);
 
+    // Verify internal Admin / DevOps / Backend Readiness rows are hidden for normal consumers
+    expect(find.text('لوحة التحكم المركزية والـ DevOps'), findsNothing);
+    expect(find.text('جاهزية الخادم وحالة النظام'), findsNothing);
+
     // Verify Version Info & Logout Button
     expect(find.text('مشوار MASHWAR v2.5.0'), findsOneWidget);
     expect(find.byType(MashwarButton), findsOneWidget);

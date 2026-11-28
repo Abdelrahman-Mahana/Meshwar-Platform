@@ -169,21 +169,26 @@ void main() {
       await tester.pumpWidget(wrapWithProviders(const LegalComplianceScreen(), settings: settings));
       await tester.pumpAndSettle();
 
-      // Arabic Tab 1: Worksite Supply Pilot Terms & cash_on_delivery / bank_transfer_manual
+      // Arabic Tab 1: Worksite Supply Pilot Terms & clean Direct Settlement language (zero raw snake_case tokens)
       expect(find.text('الشروط القانونية والامتثال التنظيمي'), findsOneWidget);
       expect(find.text('شروط الخدمة'), findsOneWidget);
       expect(find.text('حماية البيانات'), findsOneWidget);
       expect(find.text('الحدود التنظيمية والعلامة'), findsOneWidget);
-      expect(find.textContaining('cash_on_delivery'), findsWidgets);
-      expect(find.textContaining('bank_transfer_manual'), findsWidgets);
+      expect(find.textContaining('الدفع النقدي عند الاستلام'), findsWidgets);
+      expect(find.textContaining('التحويل البنكي'), findsWidgets);
+      expect(find.textContaining('cash_on_delivery'), findsNothing);
+      expect(find.textContaining('bank_transfer_manual'), findsNothing);
       expect(find.textContaining('SkipCash'), findsNothing);
       expect(find.textContaining('Fawran'), findsNothing);
 
-      // Arabic Tab 2: Qatar PDPL Law No. 13 of 2016 + account deletion rights
+      // Arabic Tab 2: Qatar PDPL Law No. 13 of 2016 + account deletion rights (zero raw DB/crypto jargon)
       await tester.tap(find.text('حماية البيانات'));
       await tester.pumpAndSettle();
       expect(find.textContaining('قانون حماية خصوصية البيانات الشخصية رقم 13 لسنة 2016'), findsOneWidget);
       expect(find.textContaining('حذف حسابه'), findsOneWidget);
+      expect(find.textContaining('provider_verifications'), findsNothing);
+      expect(find.textContaining('Salted SHA-256'), findsNothing);
+      expect(find.textContaining('europe-west1'), findsNothing);
 
       // Arabic Tab 3: Regulatory Boundaries & MASHWAR MoCI trademark notice
       await tester.tap(find.text('الحدود التنظيمية والعلامة'));
@@ -319,16 +324,22 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
 
-      // 3. WalletScreen renders transactions in Arabic and English without TypeError or null crash
+      // 3. WalletScreen renders transactions in Arabic and English with truthful Direct Settlement card (zero fake 225 QAR Escrow card)
       await tester.pumpWidget(wrapWithProviders(const WalletScreen(), settings: settings));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      expect(find.byKey(const ValueKey('wallet_direct_settlement_card')), findsOneWidget);
+      expect(find.text('التسوية المباشرة والشفافة'), findsOneWidget);
+      expect(find.text('225 ر.ق'), findsNothing);
+      expect(find.text('MASHWAR ESCROW'), findsNothing);
       expect(find.text('+200 ر.ق'), findsOneWidget);
       expect(find.text('-35 ر.ق'), findsOneWidget);
 
       settings.setLocale(const Locale('en', 'US'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      expect(find.text('Direct & Transparent Settlement'), findsOneWidget);
+      expect(find.text('225 QAR'), findsNothing);
       expect(find.text('+200 QAR'), findsOneWidget);
       expect(find.text('-35 QAR'), findsOneWidget);
 

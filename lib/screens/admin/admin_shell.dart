@@ -145,7 +145,7 @@ class _AdminShellState extends State<AdminShell> {
                 child: const Icon(Icons.warning_amber_rounded, color: AppColors.coral, size: 20),
               ),
               title: Text(
-                isAr ? '$openDisputes بلاغات مفتوحة · $frozenEscrows ضمان مجمد' : '$openDisputes open disputes · $frozenEscrows frozen escrows',
+                isAr ? '$openDisputes بلاغات مفتوحة · $frozenEscrows تسوية معلّقة' : '$openDisputes open disputes · $frozenEscrows held settlements',
                 style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               subtitle: Text(
@@ -315,7 +315,7 @@ class _AdminShellState extends State<AdminShell> {
       case AdminRole.supportAdmin:
         return isAr ? 'مشرف دعم' : 'Support Admin';
       case AdminRole.financeAdmin:
-        return isAr ? 'مشرف مالية وضمان' : 'Finance & Escrow';
+        return isAr ? 'مشرف المالية والتسوية' : 'Finance & Settlement';
       case AdminRole.devopsAdmin:
         return isAr ? 'مهندس DevOps' : 'DevOps & SRE';
     }
@@ -347,7 +347,7 @@ class _AdminShellState extends State<AdminShell> {
       case AdminRole.supportAdmin:
         desc = isAr ? 'المستخدمون، الطلبات والنزاعات' : 'Users, Orders & Disputes';
       case AdminRole.financeAdmin:
-        desc = isAr ? 'الضمان المالي، البوابات والخدمات' : 'Escrow, Gateways & Pricing';
+        desc = isAr ? 'التسوية المباشرة، القنوات والتسعير' : 'Direct Settlement, Channels & Pricing';
       case AdminRole.devopsAdmin:
         desc = isAr ? 'SRE، الأعلام البرمجية والمحاور' : 'Infra SRE, Flags & Corridors';
     }

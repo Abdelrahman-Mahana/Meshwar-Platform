@@ -1963,7 +1963,7 @@ class _MainNavShellState extends State<MainNavShell> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // 1. Clean Uber-Style Executive Identity & 4-Stat Header
+                    // 1. Clean MASHWAR Executive Identity & 4-Stat Header
                     MashwarSectionCard(
                       padding: const EdgeInsets.all(20),
                       borderRadius: 16,

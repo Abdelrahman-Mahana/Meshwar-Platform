@@ -103,8 +103,8 @@ class DriverOnboardingScreen extends StatelessWidget {
                             const SizedBox(height: 8),
                             Text(
                               isAr
-                                  ? 'نفّذ طلبات الشراء بالفاتورة، توريد مواقع العمل، توصيل الطرود أو شارك مقاعدك بضمان مشوار Escrow.'
-                                  : 'Fulfill shopping errands, worksite supplies, daily commutes or empty seats with Escrow protection.',
+                                  ? 'نفّذ طلبات الشراء بالفاتورة، توريد مواقع العمل، توصيل الطرود أو شارك مقاعدك بتسوية مباشرة وموثّقة بـ OTP.'
+                                  : 'Fulfill shopping errands, worksite supplies, daily commutes or empty seats with direct OTP-verified settlement.',
                               textAlign: TextAlign.center,
                               style: AppTypography.bodySecondary(),
                             ),
@@ -146,8 +146,8 @@ class DriverOnboardingScreen extends StatelessWidget {
                                   _buildStepRow(
                                     '3',
                                     isAr
-                                        ? 'نفّذ الخدمة واستلم أتعابك فوراً بـ Escrow'
-                                        : 'Fulfill safely & receive instant Escrow payout',
+                                        ? 'نفّذ الخدمة واستلم أتعابك مباشرة فور مطابقة كود OTP'
+                                        : 'Fulfill safely & settle directly upon OTP confirmation',
                                   ),
                                 ],
                               ),

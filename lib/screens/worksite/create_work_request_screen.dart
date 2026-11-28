@@ -2022,8 +2022,8 @@ class _CreateWorkRequestScreenState extends State<CreateWorkRequestScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildFieldLabel(isAr
-                  ? 'طريقة السداد (المرحلة التجريبية قطر)'
-                  : 'Pilot Payment Method (Qatar)'),
+                  ? 'طريقة السداد المباشر (قطر)'
+                  : 'Direct Payment Method (Qatar)'),
               const SizedBox(height: 8),
               _buildPaymentOptionTile(
                 method: PaymentMethod.cashOnDelivery,

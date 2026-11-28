@@ -1110,7 +1110,7 @@ class MashwarWizardStepHeader extends StatelessWidget {
   }
 }
 
-/// Compact responsive badge signifying Bilateral MASHWAR Escrow Protection.
+/// Compact responsive badge signifying MASHWAR OTP Handover & Direct Settlement verification.
 class MashwarEscrowBadge extends StatelessWidget {
   const MashwarEscrowBadge({
     super.key,
@@ -1147,7 +1147,7 @@ class MashwarEscrowBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Flexible(
             child: Text(
-              isAr ? 'مضمون بـ Escrow' : 'Escrow Protected',
+              isAr ? 'موثّق بـ OTP' : 'OTP Verified',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -1164,7 +1164,7 @@ class MashwarEscrowBadge extends StatelessWidget {
   }
 }
 
-/// Custom vector art tile for Qatar Nursery, School & Remote-Area Daily Commutes.
+/// Custom vector art tile for Qatar Family, School & Remote-Area Daily Commutes.
 class MashwarFamilyCommuteArt extends StatelessWidget {
   const MashwarFamilyCommuteArt({
     super.key,

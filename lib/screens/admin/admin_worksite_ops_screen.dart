@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../data/models/worksite_models.dart';
-import '../../data/services/firebase_firestore_service.dart';
 import '../../state/admin_provider.dart';
 import '../../state/settings_provider.dart';
 import 'widgets/admin_ui_kit.dart';
@@ -155,8 +154,8 @@ class _AdminWorksiteOpsScreenState extends State<AdminWorksiteOpsScreen> {
                       const SizedBox(height: 4),
                       Text(
                         isAr
-                            ? 'المشروع: ${FirebaseConfig.projectId} · ${Firebase.apps.isNotEmpty ? 'متصل بـ Firebase الحي' : (admin.isDevMockMode ? 'وضع التطوير التجريبي (Dev Mock)' : 'بانتظار جلسة Firebase')} · المراجعة بالـ QID والتحقق من التحويلات'
-                            : 'Project: ${FirebaseConfig.projectId} · ${Firebase.apps.isNotEmpty ? 'Firebase Live' : (admin.isDevMockMode ? 'Dev Mock Queue' : 'Firebase Session Required')} · QID 11-digit & Payment Settlement Ops',
+                            ? '${Firebase.apps.isNotEmpty ? 'متصل بالسجلات الحية' : (admin.isDevMockMode ? 'وضع المعاينة المحلية' : 'بانتظار الجلسة السحابية')} · المراجعة بالـ QID والتحقق من التحويلات'
+                            : '${Firebase.apps.isNotEmpty ? 'Live Cloud Connected' : (admin.isDevMockMode ? 'Local Preview Queue' : 'Cloud Session Required')} · QID 11-digit & Payment Settlement Ops',
                         style: TextStyle(color: t.textSecondary, fontSize: 12),
                       ),
                       if (admin.worksiteSyncStatus != null) ...[
@@ -192,7 +191,7 @@ class _AdminWorksiteOpsScreenState extends State<AdminWorksiteOpsScreen> {
                         )
                       : const Icon(Icons.cloud_sync_rounded, size: 17),
                   label: Text(
-                    isAr ? 'مزامنة السجلات' : 'Sync Firestore',
+                    isAr ? 'مزامنة السجلات الحية' : 'Sync Live Records',
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
