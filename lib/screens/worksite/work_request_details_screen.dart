@@ -17,6 +17,7 @@ import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/worksite_models.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../data/services/media_upload_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/worksite_provider.dart';
@@ -327,7 +328,9 @@ class _WorkRequestDetailsScreenState extends State<WorkRequestDetailsScreen> {
                   : req.municipality,
               destination: '${req.dropoffWorksite}, ${req.municipality}',
               keyPrefix: 'details',
-              mapHeight: 200.0,
+              mapHeight: 260.0,
+              vehicleMode: MashwarMapVehicleMode.supply,
+              showTraffic: true,
               openButtonLabelAr: 'تكبير خريطة الموقع داخل التطبيق',
               openButtonLabelEn: 'Full-Screen Worksite Map',
               urlLauncherOverride: WorkRequestDetailsScreen.debugUrlLauncher,

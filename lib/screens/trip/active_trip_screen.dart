@@ -13,6 +13,7 @@ import '../../core/widgets/mashwar_embedded_google_map.dart';
 import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/ride_model.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/rides_provider.dart';
 import '../booking/cancellation_sheet.dart';
 import '../chat/chat_screen.dart';
@@ -176,6 +177,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
       origin: effectiveOrigin,
       destination: effectiveDest,
       stopover: ride.stopoverCity,
+      vehicleMode: MashwarMapVehicleMode.trip,
+      showTraffic: true,
       titleAr: 'مسار الرحلة · ${ride.fromCity} ← ${ride.toCity}',
       titleEn: 'Trip Route · ${ride.fromCity} → ${ride.toCity}',
     );
@@ -502,7 +505,9 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                             ? ride.dropoffPoint
                             : ride.toCity,
                         stopover: ride.stopoverCity,
-                        height: 195,
+                        vehicleMode: MashwarMapVehicleMode.trip,
+                        showTraffic: true,
+                        height: 260,
                         borderRadius: 12,
                       ),
                     ),

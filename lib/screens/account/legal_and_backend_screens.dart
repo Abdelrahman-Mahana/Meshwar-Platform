@@ -1411,7 +1411,7 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
                 ],
                 const SizedBox(height: 10),
                 Container(
-                  height: 190,
+                  height: 230,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.slateBorder),
@@ -1419,7 +1419,12 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
                   child: MashwarEmbeddedGoogleMap(
                     origin: preset.from,
                     destination: preset.to,
-                    height: 190,
+                    vehicleMode: MashwarMapVehicleMode.trip,
+                    showTraffic: true,
+                    distanceKm: route.distanceKm,
+                    durationMinutes: route.durationMinutes,
+                    highwayName: route.corridorHighway(isArabic: isAr),
+                    height: 230,
                     borderRadius: 11,
                     interactive: true,
                   ),
@@ -1486,6 +1491,8 @@ class _BackendReadinessScreenState extends State<BackendReadinessScreen> {
                         context,
                         origin: preset.from,
                         destination: preset.to,
+                        vehicleMode: MashwarMapVehicleMode.trip,
+                        showTraffic: true,
                         titleAr: preset.labelAr,
                         titleEn: preset.labelEn,
                       ),

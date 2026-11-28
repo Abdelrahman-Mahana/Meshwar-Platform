@@ -13,6 +13,7 @@ import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/board_ad_model.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/settings_provider.dart';
 import '../chat/chat_screen.dart';
 import '../safety/safety_screens.dart';
@@ -99,6 +100,8 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
       origin: ad.fromCity,
       destination: ad.toCity,
       stopover: ad.stopoverCity,
+      vehicleMode: MashwarMapVehicleMode.supply,
+      showTraffic: true,
       titleAr: 'مسار الضمان · ${ad.fromCity} ← ${ad.toCity}',
       titleEn: 'Escrow Route · ${ad.fromCity} → ${ad.toCity}',
     );
@@ -1126,7 +1129,9 @@ class _ServiceEscrowScreenState extends State<ServiceEscrowScreen> {
                     origin: ad.fromCity,
                     destination: ad.toCity,
                     stopover: ad.stopoverCity,
-                    height: 175,
+                    vehicleMode: MashwarMapVehicleMode.supply,
+                    showTraffic: true,
+                    height: 230,
                     borderRadius: 12,
                   ),
                 ),

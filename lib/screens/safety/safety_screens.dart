@@ -15,6 +15,7 @@ import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/mock_data.dart';
 import '../../data/models/ride_model.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
 
@@ -220,7 +221,9 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                       origin: activeRide.fromCity,
                       destination: activeRide.toCity,
                       stopover: activeRide.stopoverCity,
-                      height: 220,
+                      vehicleMode: MashwarMapVehicleMode.trip,
+                      showTraffic: true,
+                      height: 270,
                       borderRadius: 12,
                     ),
                   ),
@@ -272,6 +275,8 @@ class _LiveTripTrackingScreenState extends State<LiveTripTrackingScreen> {
                         origin: activeRide.fromCity,
                         destination: activeRide.toCity,
                         stopover: activeRide.stopoverCity,
+                        vehicleMode: MashwarMapVehicleMode.trip,
+                        showTraffic: true,
                         titleAr:
                             'التتبع المباشر · ${activeRide.fromCity} ← ${activeRide.toCity}',
                         titleEn:
@@ -630,6 +635,8 @@ class _ShareTripSheetState extends State<ShareTripSheet> {
       origin: _fromCity,
       destination: _toCity,
       stopover: widget.ride?.stopoverCity,
+      vehicleMode: MashwarMapVehicleMode.trip,
+      showTraffic: true,
       titleAr: 'مسار الرحلة · $_fromCity ← $_toCity',
       titleEn: 'Trip Route · $_fromCity → $_toCity',
     );

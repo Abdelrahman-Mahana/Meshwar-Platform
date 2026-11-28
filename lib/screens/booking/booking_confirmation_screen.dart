@@ -14,6 +14,7 @@ import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/ride_model.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/rides_provider.dart';
 import '../../state/settings_provider.dart';
@@ -129,6 +130,8 @@ class BookingConfirmationScreen extends StatelessWidget {
       origin: effectiveOrigin,
       destination: effectiveDest,
       stopover: ride.stopoverCity,
+      vehicleMode: MashwarMapVehicleMode.trip,
+      showTraffic: true,
       titleAr: 'خريطة الالتقاء · ${ride.fromCity} ← ${ride.toCity}',
       titleEn: 'Pickup Map · ${ride.fromCity} → ${ride.toCity}',
     );
@@ -370,7 +373,9 @@ class BookingConfirmationScreen extends StatelessWidget {
                                 ? ride.dropoffPoint
                                 : ride.toCity,
                             stopover: ride.stopoverCity,
-                            height: 185,
+                            vehicleMode: MashwarMapVehicleMode.trip,
+                            showTraffic: true,
+                            height: 230,
                             borderRadius: 12,
                           ),
                           const SizedBox(height: 10),

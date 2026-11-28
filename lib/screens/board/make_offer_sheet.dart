@@ -14,6 +14,7 @@ import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_text_field.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/board_ad_model.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/board_provider.dart';
 import '../chat/chat_screen.dart';
@@ -77,6 +78,18 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
     );
   }
 
+  MashwarMapVehicleMode _vehicleModeForAd(BoardAdModel ad) {
+    switch (ad.type) {
+      case BoardAdType.parcelRequest:
+        return MashwarMapVehicleMode.parcel;
+      case BoardAdType.errandService:
+      case BoardAdType.goodsDelivery:
+        return MashwarMapVehicleMode.supply;
+      default:
+        return MashwarMapVehicleMode.trip;
+    }
+  }
+
   Future<void> _openRouteInGoogleMaps(
     BuildContext context,
     BoardAdModel ad,
@@ -122,6 +135,8 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
       origin: ad.fromCity,
       destination: ad.toCity,
       stopover: ad.stopoverCity,
+      vehicleMode: _vehicleModeForAd(ad),
+      showTraffic: true,
       titleAr: 'مسار الطلب · ${ad.fromCity} ← ${ad.toCity}',
       titleEn: 'Listing Route · ${ad.fromCity} → ${ad.toCity}',
     );
@@ -707,7 +722,9 @@ class _MakeOfferSheetState extends State<MakeOfferSheet> {
             origin: ad.fromCity,
             destination: ad.toCity,
             stopover: ad.stopoverCity,
-            height: 150,
+            vehicleMode: _vehicleModeForAd(ad),
+            showTraffic: true,
+            height: 190,
             borderRadius: 12,
           ),
           const SizedBox(height: 10),

@@ -60,8 +60,41 @@ class _HomeScreenState extends State<HomeScreen> {
   double _swapTurns = 0.0;
   bool _isMapExpanded = false;
   bool _useLiveGoogleMap = true;
-  bool _isMapSatellite = false;
+  MashwarMapStylePreset _mapStylePreset = MashwarMapStylePreset.google;
+  bool _showMapTraffic = true;
   bool _dismissedOnboardingChecklist = false;
+
+  bool get _isMapSatellite =>
+      _mapStylePreset == MashwarMapStylePreset.satellite;
+
+  MashwarMapVehicleMode get _activeHomeVehicleMode {
+    switch (_selectedHeroMode) {
+      case 1:
+        return MashwarMapVehicleMode.parcel;
+      case 2:
+        return MashwarMapVehicleMode.supply;
+      default:
+        return MashwarMapVehicleMode.trip;
+    }
+  }
+
+  String _resolveDistinctCorridorDestination(String from, String candidate) {
+    final cleanFrom = from.trim();
+    final cleanCandidate = candidate.trim();
+    final fromHub = GoogleMapsService.resolveHubEntry(cleanFrom);
+    final candHub = GoogleMapsService.resolveHubEntry(cleanCandidate);
+    final bool sameHub = cleanCandidate.isEmpty ||
+        cleanFrom.toLowerCase() == cleanCandidate.toLowerCase() ||
+        (fromHub != null && candHub != null && fromHub.id == candHub.id);
+    if (!sameHub) return cleanCandidate;
+    if (fromHub?.id == 'lusail' || cleanFrom == 'لوسيل') {
+      return 'الدوحة';
+    }
+    if (fromHub?.id == 'doha' || cleanFrom == 'الدوحة') {
+      return 'الخور';
+    }
+    return 'لوسيل';
+  }
 
   String? _selectedSavedWorksiteId;
   String? _previewHubCity;
@@ -299,8 +332,12 @@ class _HomeScreenState extends State<HomeScreen> {
     final corridorFrom = rides.fromCity.trim().isNotEmpty
         ? rides.fromCity.trim()
         : (activeSite?.municipality ?? 'الدوحة');
-    final previewHub = _previewHubCity ??
+    final rawPreviewHub = _previewHubCity ??
         (rides.toCity.trim().isNotEmpty ? rides.toCity.trim() : 'لوسيل');
+    final previewHub = _resolveDistinctCorridorDestination(
+      corridorFrom,
+      rawPreviewHub,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.slateBg,
@@ -3268,9 +3305,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ? '${route.durationMinutes} دقيقة'
         : '${route.durationMinutes} min';
     final highwayText = route.corridorHighway(isArabic: isAr);
+    final vehicleMode = _activeHomeVehicleMode;
     final double mapHeight = _isMapExpanded
-        ? (isWide ? 380.0 : 300.0)
-        : (isWide ? 250.0 : 210.0);
+        ? (isWide ? 430.0 : 340.0)
+        : (isWide ? 310.0 : 250.0);
 
     const hubChips = [
       'الدوحة',
@@ -3359,7 +3397,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          // Sleek compact layer switcher: Live Google Map / Satellite / Corridor Schematic
+          // Sleek compact Uber-style map toolbar: Google + Traffic / Uber / Satellite / Dark / Corridor
           Container(
             key: const ValueKey('home_map_layer_toggle'),
             padding: const EdgeInsets.all(3),
@@ -3374,22 +3412,63 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildMapLayerPill(
-                    selected: _useLiveGoogleMap && !_isMapSatellite,
+                    selected: _useLiveGoogleMap &&
+                        _mapStylePreset == MashwarMapStylePreset.google,
                     icon: Icons.map_rounded,
-                    label: isAr ? 'خريطة جوجل الحية' : 'Live Google Map',
+                    label: isAr
+                        ? (_showMapTraffic ? 'خريطة جوجل + زحمة' : 'خريطة جوجل')
+                        : (_showMapTraffic ? 'Google + Traffic' : 'Google Map'),
                     onTap: () => setState(() {
                       _useLiveGoogleMap = true;
-                      _isMapSatellite = false;
+                      _mapStylePreset = MashwarMapStylePreset.google;
                     }),
                   ),
                   const SizedBox(width: 4),
                   _buildMapLayerPill(
-                    selected: _useLiveGoogleMap && _isMapSatellite,
+                    key: const ValueKey('home_map_traffic_toggle'),
+                    selected: _useLiveGoogleMap && _showMapTraffic,
+                    icon: Icons.traffic_rounded,
+                    label: isAr ? 'الزحمة' : 'Traffic',
+                    onTap: () => setState(() {
+                      if (!_useLiveGoogleMap) {
+                        _useLiveGoogleMap = true;
+                        _showMapTraffic = true;
+                      } else {
+                        _showMapTraffic = !_showMapTraffic;
+                      }
+                    }),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildMapLayerPill(
+                    selected: _useLiveGoogleMap &&
+                        _mapStylePreset == MashwarMapStylePreset.uber,
+                    icon: Icons.navigation_rounded,
+                    label: isAr ? 'أسلوب أوبر' : 'Uber Style',
+                    onTap: () => setState(() {
+                      _useLiveGoogleMap = true;
+                      _mapStylePreset = MashwarMapStylePreset.uber;
+                    }),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildMapLayerPill(
+                    selected: _useLiveGoogleMap &&
+                        _mapStylePreset == MashwarMapStylePreset.satellite,
                     icon: Icons.satellite_alt_rounded,
                     label: isAr ? 'قمر صناعي' : 'Satellite',
                     onTap: () => setState(() {
                       _useLiveGoogleMap = true;
-                      _isMapSatellite = true;
+                      _mapStylePreset = MashwarMapStylePreset.satellite;
+                    }),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildMapLayerPill(
+                    selected: _useLiveGoogleMap &&
+                        _mapStylePreset == MashwarMapStylePreset.dark,
+                    icon: Icons.dark_mode_rounded,
+                    label: isAr ? 'ليلي' : 'Dark',
+                    onTap: () => setState(() {
+                      _useLiveGoogleMap = true;
+                      _mapStylePreset = MashwarMapStylePreset.dark;
                     }),
                   ),
                   const SizedBox(width: 4),
@@ -3419,6 +3498,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     origin: corridorFrom,
                     destination: previewHub,
                     satellite: _isMapSatellite,
+                    stylePreset: _mapStylePreset,
+                    vehicleMode: vehicleMode,
+                    showTraffic: _showMapTraffic,
+                    distanceKm: route.distanceKm,
+                    durationMinutes: route.durationMinutes,
+                    highwayName: highwayText,
                     height: mapHeight,
                     borderRadius: 15.0,
                     interactive: true,
@@ -3520,6 +3605,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   origin: corridorFrom,
                   destination: previewHub,
                   initialSatellite: _isMapSatellite,
+                  stylePreset: _mapStylePreset,
+                  vehicleMode: vehicleMode,
+                  showTraffic: _showMapTraffic,
                   titleAr: 'خريطة المسارات التفاعلية',
                   titleEn: 'Interactive Route Corridor Map',
                 ),
@@ -3593,12 +3681,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildMapLayerPill({
+    Key? key,
     required bool selected,
     required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
     return InkWell(
+      key: key,
       borderRadius: BorderRadius.circular(9),
       onTap: onTap,
       child: AnimatedContainer(

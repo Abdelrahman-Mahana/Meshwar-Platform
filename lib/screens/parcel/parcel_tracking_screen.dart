@@ -13,6 +13,7 @@ import '../../core/widgets/mashwar_handover_qr_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
 import '../../data/models/parcel_model.dart';
+import '../../data/services/google_maps_service.dart';
 import '../chat/chat_screen.dart';
 import 'parcel_dispute_screen.dart';
 import 'pickup_code_dialog.dart';
@@ -261,7 +262,9 @@ class _ParcelTrackingScreenState extends State<ParcelTrackingScreen> {
                           origin: endpoints.origin,
                           destination: endpoints.destination,
                           keyPrefix: 'parcel',
-                          mapHeight: 210.0,
+                          mapHeight: 260.0,
+                          vehicleMode: MashwarMapVehicleMode.parcel,
+                          showTraffic: true,
                           openButtonLabelAr: 'تكبير خريطة المسار داخل التطبيق',
                           openButtonLabelEn: 'Full-Screen Route Map',
                         );

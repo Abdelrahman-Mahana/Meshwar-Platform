@@ -11,6 +11,7 @@ import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../data/models/chat_message_model.dart';
 import '../../data/repositories/app_repositories.dart';
+import '../../data/services/google_maps_service.dart';
 import '../../state/auth_provider.dart';
 import '../../state/rides_provider.dart';
 import '../../state/settings_provider.dart';
@@ -293,6 +294,7 @@ class _ChatScreenState extends State<ChatScreen> {
             : (origin == null && destination == null ? fallbackOrigin : null),
         lat: lat,
         lng: lng,
+        vehicleMode: MashwarMapVehicleMode.place,
         titleAr: 'الموقع المشترك في المحادثة',
         titleEn: 'Shared Chat Location',
       );

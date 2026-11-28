@@ -389,6 +389,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
                                   final confirmed = await openMashwarInAppMap(
                                     context,
                                     placeQuery: typedQuery,
+                                    vehicleMode: MashwarMapVehicleMode.place,
                                     titleAr: typedQuery,
                                     titleEn: typedQuery,
                                     showConfirmLocationButton: true,
@@ -696,6 +697,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
                                   placeQuery: item.name,
                                   lat: coords?.lat,
                                   lng: coords?.lng,
+                                  vehicleMode: MashwarMapVehicleMode.place,
                                   titleAr: localizedName,
                                   titleEn: localizedName,
                                   showConfirmLocationButton: true,

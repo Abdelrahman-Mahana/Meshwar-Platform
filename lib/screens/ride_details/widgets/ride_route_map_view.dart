@@ -17,6 +17,45 @@ enum RoutePerspective {
   driver,    // منظور السائق: مسار القيادة، نقطة التجمع المخصصة، والمحطات السريعة
 }
 
+MashwarMapStylePreset _nextRideMapStyle(MashwarMapStylePreset current) {
+  switch (current) {
+    case MashwarMapStylePreset.google:
+      return MashwarMapStylePreset.satellite;
+    case MashwarMapStylePreset.satellite:
+      return MashwarMapStylePreset.uber;
+    case MashwarMapStylePreset.uber:
+      return MashwarMapStylePreset.dark;
+    case MashwarMapStylePreset.dark:
+      return MashwarMapStylePreset.google;
+  }
+}
+
+String _rideMapStyleLabel(MashwarMapStylePreset preset, bool isAr) {
+  switch (preset) {
+    case MashwarMapStylePreset.google:
+      return isAr ? 'خريطة' : 'Map';
+    case MashwarMapStylePreset.uber:
+      return isAr ? 'أوبر' : 'Uber';
+    case MashwarMapStylePreset.satellite:
+      return isAr ? 'قمر صناعي' : 'Satellite';
+    case MashwarMapStylePreset.dark:
+      return isAr ? 'ليلي' : 'Dark';
+  }
+}
+
+IconData _rideMapStyleIcon(MashwarMapStylePreset preset) {
+  switch (preset) {
+    case MashwarMapStylePreset.google:
+      return Icons.map_rounded;
+    case MashwarMapStylePreset.uber:
+      return Icons.navigation_rounded;
+    case MashwarMapStylePreset.satellite:
+      return Icons.satellite_alt_rounded;
+    case MashwarMapStylePreset.dark:
+      return Icons.dark_mode_rounded;
+  }
+}
+
 /// Rich, high-fidelity interactive route map view for ride details.
 /// Precisely delineates route milestones for both Passenger and Driver perspectives.
 class RideRouteMapView extends StatefulWidget {
@@ -37,10 +76,16 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
     with SingleTickerProviderStateMixin {
   late RoutePerspective _perspective;
   bool _useLiveGoogleMap = true;
-  bool _showSatellite = false;
+  MashwarMapStylePreset _stylePreset = MashwarMapStylePreset.google;
+  bool _showTraffic = true;
   bool _isRouteExpanded = false;
   late RouteDetails _routeDetails;
   late final AnimationController _routeAnimController;
+
+  bool get _showSatellite => _stylePreset == MashwarMapStylePreset.satellite;
+  bool get _isDarkSchematic =>
+      _stylePreset == MashwarMapStylePreset.satellite ||
+      _stylePreset == MashwarMapStylePreset.dark;
 
   @override
   void initState() {
@@ -139,6 +184,11 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
           originQuery: _originQuery,
           destinationQuery: _destinationQuery,
           initialSatellite: _showSatellite,
+          initialStylePreset: _stylePreset,
+          initialShowTraffic: _showTraffic,
+          vehicleMode: MashwarMapVehicleMode.trip,
+          distanceKm: _routeDetails.distanceKm,
+          durationMinutes: _routeDetails.durationMinutes,
           distance: _distanceKm(isAr),
           duration: _durationFormatted(isAr),
           highway: _highwayName(isAr),
@@ -229,34 +279,73 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
             ),
             const SizedBox(width: 6),
             Tooltip(
-              message: _showSatellite
-                  ? (isAr ? 'عرض الخريطة العادية' : 'Standard Map')
-                  : (isAr ? 'عرض القمر الصناعي' : 'Satellite View'),
+              message: _showTraffic
+                  ? (isAr ? 'إخفاء الزحمة الحية' : 'Hide Live Traffic')
+                  : (isAr ? 'عرض الزحمة الحية' : 'Show Live Traffic'),
               child: InkWell(
-                key: const ValueKey('ride_map_satellite_btn'),
+                key: const ValueKey('ride_map_traffic_btn'),
                 borderRadius: BorderRadius.circular(10),
                 onTap: () => setState(() {
-                  _showSatellite = !_showSatellite;
+                  if (!_useLiveGoogleMap) {
+                    _useLiveGoogleMap = true;
+                    _showTraffic = true;
+                  } else {
+                    _showTraffic = !_showTraffic;
+                  }
                 }),
                 child: Container(
                   padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
-                    color: _showSatellite
+                    color: (_useLiveGoogleMap && _showTraffic)
                         ? AppColors.tealSurface
                         : AppColors.slateBg,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: _showSatellite
+                      color: (_useLiveGoogleMap && _showTraffic)
                           ? AppColors.teal.withValues(alpha: 0.45)
                           : AppColors.slateBorder,
                     ),
                   ),
                   child: Icon(
-                    _showSatellite
-                        ? Icons.map_rounded
-                        : Icons.satellite_alt_rounded,
+                    Icons.traffic_rounded,
                     size: 16,
-                    color: _showSatellite ? AppColors.tealDark : AppColors.navy,
+                    color: (_useLiveGoogleMap && _showTraffic)
+                        ? AppColors.tealDark
+                        : AppColors.navy,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Tooltip(
+              message:
+                  '${isAr ? 'طبقة الخريطة' : 'Map Layer'}: ${_rideMapStyleLabel(_stylePreset, isAr)}',
+              child: InkWell(
+                key: const ValueKey('ride_map_satellite_btn'),
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => setState(() {
+                  _useLiveGoogleMap = true;
+                  _stylePreset = _nextRideMapStyle(_stylePreset);
+                }),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: _stylePreset != MashwarMapStylePreset.google
+                        ? AppColors.tealSurface
+                        : AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _stylePreset != MashwarMapStylePreset.google
+                          ? AppColors.teal.withValues(alpha: 0.45)
+                          : AppColors.slateBorder,
+                    ),
+                  ),
+                  child: Icon(
+                    _rideMapStyleIcon(_stylePreset),
+                    size: 16,
+                    color: _stylePreset != MashwarMapStylePreset.google
+                        ? AppColors.tealDark
+                        : AppColors.navy,
                   ),
                 ),
               ),
@@ -287,11 +376,13 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
         ),
         const SizedBox(height: 8),
 
-        // 2b. Main 250px Map Container (Live Embedded Google Map default + Animated Vector Schematic option)
+        // 2b. Main 290px Map Container (Live Uber-grade Embedded Map default + Animated Vector Schematic option)
         Container(
-          height: 250,
+          height: 290,
           decoration: BoxDecoration(
-            color: _showSatellite ? const Color(0xFF1E2833) : const Color(0xFFF4F6F8),
+            color: _isDarkSchematic
+                ? const Color(0xFF1E2833)
+                : const Color(0xFFF4F6F8),
             borderRadius: BorderRadius.circular(AppDimens.radiusCard),
             border: Border.all(color: const Color(0xFFE5E5EA), width: 0.8),
             boxShadow: [
@@ -308,8 +399,15 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                 ? MashwarEmbeddedGoogleMap(
                     origin: _originQuery,
                     destination: _destinationQuery,
+                    stopover: widget.ride.stopoverCity,
                     satellite: _showSatellite,
-                    height: 250,
+                    stylePreset: _stylePreset,
+                    vehicleMode: MashwarMapVehicleMode.trip,
+                    showTraffic: _showTraffic,
+                    distanceKm: _routeDetails.distanceKm,
+                    durationMinutes: _routeDetails.durationMinutes,
+                    highwayName: _highwayName(isAr),
+                    height: 290,
                     borderRadius: AppDimens.radiusCard,
                     interactive: true,
                   )
@@ -323,7 +421,7 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                             return CustomPaint(
                               painter: _AccurateRouteMapPainter(
                                 perspective: _perspective,
-                                isSatellite: _showSatellite,
+                                isSatellite: _isDarkSchematic,
                                 fromCity: widget.ride.fromCity,
                                 toCity: widget.ride.toCity,
                                 pickupPoint: widget.ride.pickupPoint,
@@ -438,14 +536,13 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             _buildFloatingMapButton(
-                              icon: _showSatellite
-                                  ? Icons.map_rounded
-                                  : Icons.satellite_alt_rounded,
+                              icon: _rideMapStyleIcon(_stylePreset),
                               tooltip: isAr
                                   ? 'تبديل طبقة الخريطة'
                                   : 'Toggle Layer',
                               onTap: () => setState(
-                                () => _showSatellite = !_showSatellite,
+                                () => _stylePreset =
+                                    _nextRideMapStyle(_stylePreset),
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -585,7 +682,11 @@ class _RideRouteMapViewState extends State<RideRouteMapView>
                   context,
                   origin: _originQuery,
                   destination: _destinationQuery,
+                  stopover: widget.ride.stopoverCity,
                   initialSatellite: _showSatellite,
+                  stylePreset: _stylePreset,
+                  vehicleMode: MashwarMapVehicleMode.trip,
+                  showTraffic: _showTraffic,
                   titleAr: 'مسار الرحلة المباشر',
                   titleEn: 'Live Trip Route Map',
                 ),
@@ -1494,6 +1595,11 @@ class _FullScreenRouteMapModal extends StatefulWidget {
   final String originQuery;
   final String destinationQuery;
   final bool initialSatellite;
+  final MashwarMapStylePreset? initialStylePreset;
+  final bool initialShowTraffic;
+  final MashwarMapVehicleMode vehicleMode;
+  final double? distanceKm;
+  final int? durationMinutes;
   final String distance;
   final String duration;
   final String highway;
@@ -1504,6 +1610,11 @@ class _FullScreenRouteMapModal extends StatefulWidget {
     required this.originQuery,
     required this.destinationQuery,
     required this.initialSatellite,
+    this.initialStylePreset,
+    this.initialShowTraffic = true,
+    this.vehicleMode = MashwarMapVehicleMode.trip,
+    this.distanceKm,
+    this.durationMinutes,
     required this.distance,
     required this.duration,
     required this.highway,
@@ -1517,15 +1628,25 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
     with SingleTickerProviderStateMixin {
   late RoutePerspective _currentPerspective;
   bool _useLiveGoogleMap = true;
-  late bool _isSat;
+  late MashwarMapStylePreset _stylePreset;
+  late bool _showTraffic;
   final TransformationController _transformController = TransformationController();
   late final AnimationController _modalAnimController;
+
+  bool get _isSat => _stylePreset == MashwarMapStylePreset.satellite;
+  bool get _isDarkSchematic =>
+      _stylePreset == MashwarMapStylePreset.satellite ||
+      _stylePreset == MashwarMapStylePreset.dark;
 
   @override
   void initState() {
     super.initState();
     _currentPerspective = widget.perspective;
-    _isSat = widget.initialSatellite;
+    _stylePreset = widget.initialStylePreset ??
+        (widget.initialSatellite
+            ? MashwarMapStylePreset.satellite
+            : MashwarMapStylePreset.google);
+    _showTraffic = widget.initialShowTraffic;
     _modalAnimController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 9),
@@ -1574,6 +1695,21 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
         actions: [
           IconButton(
             icon: Icon(
+              Icons.traffic_rounded,
+              color: (_useLiveGoogleMap && _showTraffic)
+                  ? AppColors.teal
+                  : AppColors.navy,
+            ),
+            tooltip: _showTraffic
+                ? (isAr ? 'إخفاء الزحمة الحية' : 'Hide Live Traffic')
+                : (isAr ? 'عرض الزحمة الحية' : 'Show Live Traffic'),
+            onPressed: () => setState(() {
+              _useLiveGoogleMap = true;
+              _showTraffic = !_showTraffic;
+            }),
+          ),
+          IconButton(
+            icon: Icon(
               _useLiveGoogleMap ? Icons.timeline_rounded : Icons.map_rounded,
               color: AppColors.navy,
             ),
@@ -1584,9 +1720,18 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
                 setState(() => _useLiveGoogleMap = !_useLiveGoogleMap),
           ),
           IconButton(
-            icon: Icon(_isSat ? Icons.map_rounded : Icons.satellite_alt_rounded, color: AppColors.navy),
-            tooltip: isAr ? 'تبديل طبقة الخريطة' : 'Toggle Satellite',
-            onPressed: () => setState(() => _isSat = !_isSat),
+            icon: Icon(
+              _rideMapStyleIcon(_stylePreset),
+              color: _stylePreset != MashwarMapStylePreset.google
+                  ? AppColors.teal
+                  : AppColors.navy,
+            ),
+            tooltip:
+                '${isAr ? 'طبقة الخريطة' : 'Map Layer'}: ${_rideMapStyleLabel(_stylePreset, isAr)}',
+            onPressed: () => setState(() {
+              _useLiveGoogleMap = true;
+              _stylePreset = _nextRideMapStyle(_stylePreset);
+            }),
           ),
           if (!_useLiveGoogleMap)
             IconButton(
@@ -1665,7 +1810,14 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
                   ? MashwarEmbeddedGoogleMap(
                       origin: widget.originQuery,
                       destination: widget.destinationQuery,
+                      stopover: widget.ride.stopoverCity,
                       satellite: _isSat,
+                      stylePreset: _stylePreset,
+                      vehicleMode: widget.vehicleMode,
+                      showTraffic: _showTraffic,
+                      distanceKm: widget.distanceKm,
+                      durationMinutes: widget.durationMinutes,
+                      highwayName: widget.highway,
                       zoom: 11,
                       height: double.infinity,
                       borderRadius: 0,
@@ -1684,7 +1836,7 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
                               return CustomPaint(
                                 painter: _AccurateRouteMapPainter(
                                   perspective: _currentPerspective,
-                                  isSatellite: _isSat,
+                                  isSatellite: _isDarkSchematic,
                                   fromCity: widget.ride.fromCity,
                                   toCity: widget.ride.toCity,
                                   pickupPoint: widget.ride.pickupPoint,
@@ -1741,19 +1893,15 @@ class _FullScreenRouteMapModalState extends State<_FullScreenRouteMapModal>
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         icon: Icon(
-                          _isSat
-                              ? Icons.map_rounded
-                              : Icons.satellite_alt_rounded,
+                          _rideMapStyleIcon(_stylePreset),
                           size: 16,
                         ),
                         label: Text(
-                          _isSat
-                              ? (isAr ? 'خريطة عادية' : 'Standard Map')
-                              : (isAr ? 'قمر صناعي' : 'Satellite'),
+                          _rideMapStyleLabel(_stylePreset, isAr),
                         ),
                         onPressed: () => setState(() {
                           _useLiveGoogleMap = true;
-                          _isSat = !_isSat;
+                          _stylePreset = _nextRideMapStyle(_stylePreset);
                         }),
                       ),
                     ],
