@@ -74,8 +74,8 @@
     if (somEl) somEl.textContent = `${fmtMoney(y3.gmv, true)} GMV`;
     if (somSubEl) {
       somSubEl.textContent = isAr
-        ? `${y3.end_corridors} ممراً تنفذ ${y3.tx.toLocaleString("en-US")} معاملة + ${y3.end_b2b} اشتراك B2B (صافي إيراد ${fmtMoney(y3.net_rev, true)}).`
-        : `${y3.end_corridors} corridors executing ${y3.tx.toLocaleString("en-US")} annual tx + ${y3.end_b2b} B2B accounts (${fmtMoney(y3.net_rev, true)} Net Revenue).`;
+        ? `${y3.end_corridors} محوراً تنفّذ ${y3.tx.toLocaleString("en-US")} معاملة سنوياً + ${y3.end_b2b} حساب شركات (صافي إيراد ${fmtMoney(y3.net_rev, true)}).`
+        : `${y3.end_corridors} corridors executing ${y3.tx.toLocaleString("en-US")} annual transactions + ${y3.end_b2b} B2B accounts (${fmtMoney(y3.net_rev, true)} Net Revenue).`;
     }
 
     DATA.tranches.forEach((tr, idx) => {
@@ -92,7 +92,7 @@
     const factor = mult() / 1000.0;
 
     const W = 740, H = 315;
-    const m = { top: 32, right: 60, bottom: 38, left: 60 };
+    const m = { top: 32, right: 62, bottom: 38, left: 62 };
     const pw = W - m.left - m.right;
     const ph = H - m.top - m.bottom;
 
@@ -105,12 +105,12 @@
     let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Quarterly GMV and Net Revenue Chart">`;
     svg += `<defs>
       <linearGradient id="gmvBarGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#163959"/>
-        <stop offset="100%" stop-color="#0F2A43"/>
+        <stop offset="0%" stop-color="#14B8A6"/>
+        <stop offset="100%" stop-color="#0B1F33"/>
       </linearGradient>
       <linearGradient id="revAreaGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#F5A524" stop-opacity="0.26"/>
-        <stop offset="100%" stop-color="#F5A524" stop-opacity="0.0"/>
+        <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.28"/>
+        <stop offset="100%" stop-color="#F59E0B" stop-opacity="0.0"/>
       </linearGradient>
     </defs>`;
 
@@ -131,21 +131,21 @@
       const ry = m.top + ph - ((q.net_rev * factor) / maxRev) * ph;
       linePts.push({ x: cx, y: ry, q, idx });
 
-      svg += `<rect x="${cx - barW / 2}" y="${by}" width="${barW}" height="${Math.max(bh, 2)}" rx="6" fill="url(#gmvBarGrad)" opacity="0.90"/>`;
-      svg += `<text x="${cx}" y="${H - 12}" text-anchor="middle" font-size="11" fill="#0F2A43" font-weight="700">${q.label}</text>`;
+      svg += `<rect x="${cx - barW / 2}" y="${by}" width="${barW}" height="${Math.max(bh, 2)}" rx="6" fill="url(#gmvBarGrad)" opacity="0.92"/>`;
+      svg += `<text x="${cx}" y="${H - 12}" text-anchor="middle" font-size="11" fill="#0B1F33" font-weight="700">${q.label}</text>`;
     });
 
     const pathD = linePts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
     const areaD = `${pathD} L${linePts[linePts.length - 1].x.toFixed(1)},${m.top + ph} L${linePts[0].x.toFixed(1)},${m.top + ph} Z`;
     svg += `<path d="${areaD}" fill="url(#revAreaGrad)"/>`;
-    svg += `<path d="${pathD}" fill="none" stroke="#F5A524" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    svg += `<path d="${pathD}" fill="none" stroke="#F59E0B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
 
     linePts.forEach((p, idx) => {
-      svg += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#F5A524" stroke="#0F2A43" stroke-width="1.8"/>`;
+      svg += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#F59E0B" stroke="#0B1F33" stroke-width="1.8"/>`;
       if (idx === 3 || idx === 7 || idx === 11) {
         const lbl = fmtMoney(p.q.net_rev, true);
-        const pwBox = Math.max(46, lbl.length * 6.5);
-        svg += `<rect x="${p.x - pwBox / 2}" y="${p.y - 25}" width="${pwBox}" height="17" rx="5" fill="#FEF3C7" stroke="#F5A524" stroke-width="0.9"/>`;
+        const pwBox = Math.max(48, lbl.length * 6.8);
+        svg += `<rect x="${p.x - pwBox / 2}" y="${p.y - 25}" width="${pwBox}" height="17" rx="5" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/>`;
         svg += `<text x="${p.x}" y="${p.y - 13}" text-anchor="middle" font-size="10" fill="#78350F" font-weight="800">${lbl}</text>`;
       }
       const colX = m.left + step * idx;
@@ -162,7 +162,7 @@
         const isAr = state.lang === "ar";
         showTip(
           evt,
-          `<div style="font-weight:800;color:#F5A524;margin-bottom:4px">${q.label} · ${q.corridors} ${isAr ? "ممرات" : "Corridors"}</div>` +
+          `<div style="font-weight:800;color:#FBBF24;margin-bottom:4px">${q.label} · ${q.corridors} ${isAr ? "محاور" : "Corridors"}</div>` +
             `<div>GMV: <strong>${fmtMoney(q.gmv)}</strong></div>` +
             `<div>${isAr ? "صافي الإيراد:" : "Net Revenue:"} <strong>${fmtMoney(q.net_rev)}</strong></div>` +
             `<div>${isAr ? "المعاملات:" : "Transactions:"} <strong>${q.tx.toLocaleString("en-US")}</strong></div>`
@@ -180,17 +180,37 @@
     const y3 = DATA[state.scenario].years[2];
     const isAr = state.lang === "ar";
     const items = [
-      { key: "b2b", label: isAr ? "اشتراكات الأعمال والورش (B2B SaaS)" : "Mashwar Business (B2B SaaS)", val: y3.rev_b2b, color: "#1B7F79" },
-      { key: "parcels", label: isAr ? "توريد المواقع والأمانات (OTP)" : "Worksite Supply & OTP Parcels", val: y3.rev_parcels, color: "#F5A524" },
-      { key: "seats", label: isAr ? "مشاركة المقاعد والحضانات" : "Shared Seats & Nursery Rides", val: y3.rev_seats, color: "#0F2A43" },
-      { key: "board", label: isAr ? "مشتريات الفاتورة الحية واللوحة" : "Live-Receipt Buy & Community Board", val: y3.rev_board, color: "#8A1538" }
+      {
+        key: "b2b",
+        label: isAr ? "باقات الشركات والمقاولين (B2B)" : "Contractor & Business Plans (B2B)",
+        val: y3.rev_b2b,
+        color: "#0F766E"
+      },
+      {
+        key: "parcels",
+        label: isAr ? "طرود المسار (كود تسليم ثنائي)" : "Route Parcels (Dual-OTP)",
+        val: y3.rev_parcels,
+        color: "#F59E0B"
+      },
+      {
+        key: "seats",
+        label: isAr ? "الرحلات التشاركية بين المدن" : "Intercity Shared Rides",
+        val: y3.rev_seats,
+        color: "#0B1F33"
+      },
+      {
+        key: "board",
+        label: isAr ? "توريد المواقع والمشتريات الموثّقة" : "Worksite Supply & Receipt Runs",
+        val: y3.rev_board,
+        color: "#0284C7"
+      }
     ];
     const total = items.reduce((s, x) => s + x.val, 0) || 1;
 
     const R = 74, C = 2 * Math.PI * R;
     let offset = 0;
     let svg = `<svg viewBox="0 0 210 210" style="max-width:205px" role="img" aria-label="Year 3 Revenue Mix Donut">`;
-    svg += `<circle cx="105" cy="105" r="${R}" fill="none" stroke="#EEF2F6" stroke-width="26"/>`;
+    svg += `<circle cx="105" cy="105" r="${R}" fill="none" stroke="#E2E8F0" stroke-width="26"/>`;
 
     items.forEach((item) => {
       const pct = item.val / total;
@@ -199,8 +219,8 @@
       offset += dash;
     });
 
-    svg += `<text id="donut-center-val" x="105" y="102" text-anchor="middle" font-size="18" font-weight="900" fill="#0F2A43">${fmtMoney(y3.gross_rev, true)}</text>`;
-    svg += `<text id="donut-center-lbl" x="105" y="121" text-anchor="middle" font-size="10.5" font-weight="700" fill="#475569">${isAr ? "إجمالي إيراد Y3" : "Y3 Gross Revenue"}</text>`;
+    svg += `<text id="donut-center-val" x="105" y="102" text-anchor="middle" font-size="18" font-weight="900" fill="#0B1F33">${fmtMoney(y3.gross_rev, true)}</text>`;
+    svg += `<text id="donut-center-lbl" x="105" y="121" text-anchor="middle" font-size="10.5" font-weight="700" fill="#475569">${isAr ? "إجمالي إيراد السنة 3" : "Y3 Gross Revenue"}</text>`;
     svg += `</svg>`;
     svgHost.innerHTML = svg;
 
@@ -230,7 +250,7 @@
     const resetHover = () => {
       if (!centerVal || !centerLbl) return;
       centerVal.textContent = fmtMoney(y3.gross_rev, true);
-      centerLbl.textContent = isAr ? "إجمالي إيراد Y3" : "Y3 Gross Revenue";
+      centerLbl.textContent = isAr ? "إجمالي إيراد السنة 3" : "Y3 Gross Revenue";
     };
 
     svgHost.querySelectorAll(".donut-seg").forEach((seg) => {
@@ -269,8 +289,8 @@
     let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="36-Month Cash Runway and Breakeven Chart">`;
     svg += `<defs>
       <linearGradient id="cashAreaGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#1B7F79" stop-opacity="0.28"/>
-        <stop offset="100%" stop-color="#1B7F79" stop-opacity="0.02"/>
+        <stop offset="0%" stop-color="#0F766E" stop-opacity="0.28"/>
+        <stop offset="100%" stop-color="#0F766E" stop-opacity="0.02"/>
       </linearGradient>
     </defs>`;
 
@@ -292,8 +312,8 @@
     const ebitD = ebitPts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
 
     svg += `<path d="${cashAreaD}" fill="url(#cashAreaGrad)"/>`;
-    svg += `<path d="${cashD}" fill="none" stroke="#1B7F79" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
-    svg += `<path d="${ebitD}" fill="none" stroke="#0F2A43" stroke-width="2" stroke-dasharray="6 4"/>`;
+    svg += `<path d="${cashD}" fill="none" stroke="#0F766E" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+    svg += `<path d="${ebitD}" fill="none" stroke="#0B1F33" stroke-width="2" stroke-dasharray="6 4"/>`;
 
     const be = model.breakeven_month;
     if (be) {
@@ -304,8 +324,8 @@
 
     DATA.tranches.forEach((t) => {
       const pt = cashPts[t.month - 1];
-      svg += `<circle cx="${pt.x}" cy="${pt.y}" r="6" fill="#F5A524" stroke="#0F2A43" stroke-width="2"/>`;
-      svg += `<text x="${pt.x + 8}" y="${pt.y - 10}" font-size="10.5" font-weight="800" fill="#0F2A43">${t.label} (+${fmtMoney(t.amount, true)})</text>`;
+      svg += `<circle cx="${pt.x}" cy="${pt.y}" r="6" fill="#F59E0B" stroke="#0B1F33" stroke-width="2"/>`;
+      svg += `<text x="${pt.x + 8}" y="${pt.y - 10}" font-size="10.5" font-weight="800" fill="#0B1F33">${t.label} (+${fmtMoney(t.amount, true)})</text>`;
     });
 
     [1, 6, 12, 18, 24, 30, 36].forEach((mn) => {
@@ -326,7 +346,7 @@
       el.addEventListener("mousemove", (evt) => {
         showTip(
           evt,
-          `<div style="font-weight:800;color:#5EEAD4;margin-bottom:4px">Month ${mo.month} · ${mo.corridors} ${isAr ? "ممرات" : "Corridors"}</div>` +
+          `<div style="font-weight:800;color:#2DD4BF;margin-bottom:4px">${isAr ? `الشهر ${mo.month}` : `Month ${mo.month}`} · ${mo.corridors} ${isAr ? "محاور" : "Corridors"}</div>` +
             `<div>${isAr ? "الرصيد النقدي:" : "Ending Cash:"} <strong>${fmtMoney(mo.ending_cash)}</strong></div>` +
             `<div>EBITDA: <strong>${fmtMoney(mo.ebitda)}</strong></div>` +
             `<div>${isAr ? "الإيراد الشهري:" : "Monthly Rev:"} <strong>${fmtMoney(mo.net_rev)}</strong></div>`
@@ -342,7 +362,7 @@
     const ys = DATA[state.scenario].years;
     const isAr = state.lang === "ar";
     const rows = [
-      { label: isAr ? "الممرات النشطة بنهاية العام" : "Active Corridors (Year End)", vals: [ys[0].end_corridors, ys[1].end_corridors, ys[2].end_corridors], cum: "14" },
+      { label: isAr ? "المحاور النشطة بنهاية العام" : "Active Corridors (Year End)", vals: [ys[0].end_corridors, ys[1].end_corridors, ys[2].end_corridors], cum: "14" },
       { label: isAr ? "إجمالي المعاملات السنوية" : "Completed Transactions", vals: ys.map((y) => y.tx.toLocaleString("en-US")), cum: (ys[0].tx + ys[1].tx + ys[2].tx).toLocaleString("en-US") },
       { label: isAr ? "إجمالي قيمة التعاملات (GMV)" : "Gross Merchandise Value (GMV)", vals: ys.map((y) => fmtMoney(y.gmv)), cum: fmtMoney(ys[0].gmv + ys[1].gmv + ys[2].gmv) },
       { label: isAr ? "صافي إيرادات المنصة" : "Net Platform Revenue", vals: ys.map((y) => fmtMoney(y.net_rev)), cum: fmtMoney(ys[0].net_rev + ys[1].net_rev + ys[2].net_rev), hi: true },
@@ -373,9 +393,12 @@
     const ord = Number(sOrd.value);
     const b2b = Number(sB2b.value);
 
-    document.getElementById("sim-corridors-val").textContent = cor;
-    document.getElementById("sim-orders-val").textContent = ord;
-    document.getElementById("sim-b2b-val").textContent = b2b;
+    const corVal = document.getElementById("sim-corridors-val");
+    const ordVal = document.getElementById("sim-orders-val");
+    const b2bVal = document.getElementById("sim-b2b-val");
+    if (corVal) corVal.textContent = cor;
+    if (ordVal) ordVal.textContent = ord;
+    if (b2bVal) b2bVal.textContent = b2b;
 
     const blendedTicket = 0.54 * 7.5 + 0.30 * 9.5 + 0.16 * 14.0;
     const blendedTake = 0.54 * 0.11 + 0.46 * 0.18;
@@ -386,10 +409,14 @@
     const driverPayout = annualTxGmv - annualCommRev;
     const b2bShare = totalRev > 0 ? (annualB2bRev / totalRev) * 100 : 0;
 
-    document.getElementById("sim-gmv-out").textContent = fmtMoney(annualTxGmv, true);
-    document.getElementById("sim-rev-out").textContent = fmtMoney(totalRev, true);
-    document.getElementById("sim-driver-out").textContent = fmtMoney(driverPayout, true);
-    document.getElementById("sim-b2b-pct-out").textContent = `${b2bShare.toFixed(1)}%`;
+    const gmvOut = document.getElementById("sim-gmv-out");
+    const revOut = document.getElementById("sim-rev-out");
+    const drvOut = document.getElementById("sim-driver-out");
+    const b2bOut = document.getElementById("sim-b2b-pct-out");
+    if (gmvOut) gmvOut.textContent = fmtMoney(annualTxGmv, true);
+    if (revOut) revOut.textContent = fmtMoney(totalRev, true);
+    if (drvOut) drvOut.textContent = fmtMoney(driverPayout, true);
+    if (b2bOut) b2bOut.textContent = `${b2bShare.toFixed(1)}%`;
   }
 
   function renderAllCharts() {

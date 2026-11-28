@@ -1,16 +1,20 @@
-# MASHWAR (مشوار) — Landing Page & Investor Preview
+# MASHWAR (مشوار — Qatar) Public-First Landing Page
 
-Bilingual (**Arabic RTL / English LTR**) product & investor landing page for **MASHWAR**, updated to reflect the live 3-pillar platform, the embedded Uber-style live Qatar route map, fresh Retina app & admin screenshots, and the live Firebase inquiry form.
+Bilingual (**Arabic RTL / English LTR**) public-first website and executive partner room for **MASHWAR Qatar**, showcasing shared intercity rides, same-hour route parcels, and worksite supply across Qatar's flagship highway corridors.
 
-## What's Inside
-1. **Hero & Live Proof Strip** — Plain-spoken overview of MASHWAR's 3 services (Shared Trips, Route Parcels with dual 4-digit OTPs, and Smart Worksite Supply with live receipts & 6-char SHA-256 handover codes) backed by verified engineering stats (`200/200` Flutter tests, `11/11` Cloud Functions security tests, `10/10` live Emulator rules tests, `14` Admin modules).
-2. **Interactive Qatar Corridors + Live Uber-Style Map (`maps/mashwar_uber_map.html`)** — Click any of the 5 key corridors (`Doha ↔ Al Khor`, `Industrial Area ↔ Lusail`, `Doha ↔ Mesaieed`, `Industrial Area ↔ Al Wakrah`, `Doha ↔ Dukhan`) to watch the embedded map auto-fit the full route on live Google Maps + traffic tiles with an animated vehicle icon alongside real time and cost benchmarks.
-3. **3 Core Services + Direct Settlement & Safety Flow** — Clear breakdown of how Shared Trips, Route Parcels, and Worksite Supply work day-to-day, plus the 4-step verification loop (QID check, live store receipt photo, 6-char SHA-256 / 4-digit OTP handover, direct Cash or verified Bank Transfer proof).
-4. **Live App & 14-Module Admin Walkthrough** — Fresh Retina screenshots from the actual running Consumer Web App (Home Uber map, Full-Screen Traffic Map, Ride Details, Worksite Supply) and the newly updated Operations Admin Portal, with direct local preview buttons.
-5. **Comparison Matrix, Technical Readiness & 36-Month Investor Model** — Interactive `Base` / `Stress (-30%)` and `USD` / `QAR` financial charts, corridor economics simulator, founder roadmap, and the live Firebase contact form (`js/firebase-contact.js` -> `investor_inquiries` in `mashwar-qatar-2026-ec99d`).
+## Architecture (10 Sections)
+1. **Sticky Glassmorphic Header** — 5 navigation links (including subtle gold pill for Partners & Investors), AR/EN toggle, and live app launch CTA.
+2. **Hero Section** — 5-second Qatar value proposition, dual CTAs, floating iPhone showcase (`assets/mobile/app_home_hero.png`), and 4 human business-proof cards.
+3. **Interactive MASHWAR Live Map & Route Calculator (`#corridors`)** — Embeds `maps/mashwar_live_map.html` with 4 MASHWAR themes (`standard`, `light`, `satellite`, `night`), 5 flagship Qatar corridors, trips/month slider (`1–22`), and Rider/Contractor Savings vs. Driver/Runner Earnings toggle.
+4. **3 Core Services (`#services`)** — Full-bleed editorial Qatar photography (`assets/services/service_{rides,parcels,worksite}.jpg`) with QAR pricing and benefit bullets.
+5. **How MASHWAR Works (`#how-it-works`)** — 3-step visual timeline from 30-second posting to Dual-OTP handover.
+6. **Everyday Qatar Stories (`#stories`)** — Grounded scenarios from Lusail, Al Khor, and Al Wakrah.
+7. **Consumer App Walkthrough (`#showcase`)** — Interactive 5-screen consumer gallery (`app_home_hero`, `app_live_map_picker`, `app_ride_details`, `app_parcel_otp`, `app_worksite_supply`).
+8. **Trust, Safety & Neutral Market Comparison (`#safety`)** — Inline SVG MASHWAR Trust Shield, 4 human safety pillars, neutral category comparison matrix, and Driver/Runner partner band.
+9. **Executive Room (`#investors`)** — Tabbed dark-executive section with 36-Month Financial Model (`js/charts.js`), Operations Command Portal (`assets/web/admin_command_live.png`), and 12-Month Doha Launch Roadmap & Founder profile.
+10. **Universal Live Firebase Contact Form (`#contact`)** — Connected to `js/firebase-contact.js` (`investor_inquiries` on `mashwar-qatar-2026-ec99d`) across 4 onboarding tracks.
 
 ## Local Preview
-Run `run_landing_page.bat` from the repository root, or serve directly:
 ```powershell
 npx serve -l tcp://127.0.0.1:8088 --no-port-switching -n landing_page
 ```

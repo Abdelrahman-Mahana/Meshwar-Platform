@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>مشوار | رحلات تشاركية، طرود على الطريق وتوريد مواقع في قطر</title>
-  <meta name="description" content="MASHWAR Qatar — Shared intercity trips, same-day route parcels with dual 4-digit OTPs, and receipt-verified worksite supply across Qatar with a live Uber-style in-app route map and 14-module operations portal." />
-  <meta property="og:title" content="مشوار | MASHWAR Qatar" />
-  <meta property="og:description" content="رحلات تشاركية، طرود على الطريق، وتوريد مواقع عمل في قطر مع خريطة حية للزحمة والمسار داخل التطبيق وتوثيق بالبطاقة القطرية QID." />
-  <meta property="og:image" content="./assets/web/app_home_live_map.png" />
+  <title>مشوار قطر | رحلات تشاركية، طرود فورية وتوريد مواقع في تطبيق واحد</title>
+  <meta name="description" content="مشوار قطر — منصة موحّدة للرحلات التشاركية بين المدن، طرود المسار الفورية بكود استلام وتسليم ثنائي، وتوريد مواقع العمل والمشتريات عبر أعضاء موثّقين بالبطاقة القطرية." />
+  <meta property="og:title" content="مشوار قطر | MASHWAR Qatar" />
+  <meta property="og:description" content="مشوارك، طردك، وتوريد موقعك على نفس الطريق وبثقة كاملة عبر محاور قطر الرئيسية." />
+  <meta property="og:image" content="./assets/mobile/app_home_hero.png" />
   <link rel="icon" type="image/png" href="./assets/logos/favicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,16 +23,18 @@
   <header id="site-header" class="site-header">
     <div class="container nav-wrap">
       <a href="#hero" class="brand-link" aria-label="MASHWAR Home">
-        <img src="./assets/logos/mashwar_logo_light_transparent.png" alt="MASHWAR Logo" />
+        <img src="./assets/logos/mashwar_logo_light_transparent.png" alt="MASHWAR Qatar Logo" />
       </a>
 
       <nav aria-label="Primary Navigation">
         <ul class="nav-links">
-          <li><a href="#corridors" data-i18n="nav_corridors">الخريطة والخدمات</a></li>
-          <li><a href="#showcase" data-i18n="nav_app">جولة داخل التطبيق</a></li>
-          <li><a href="#advantage" data-i18n="nav_advantage">ليه مشوار؟</a></li>
-          <li><a href="#investors" data-i18n="nav_investors">الأرقام والنموذج المالي</a></li>
-          <li><a href="#download" data-i18n="nav_download">جرّب التطبيق</a></li>
+          <li><a href="#services" data-i18n="nav_services">الخدمات</a></li>
+          <li><a href="#corridors" data-i18n="nav_corridors">خريطة التوفير</a></li>
+          <li><a href="#how-it-works" data-i18n="nav_how">كيف يعمل</a></li>
+          <li><a href="#safety" data-i18n="nav_safety">الأمان</a></li>
+          <li>
+            <a href="#investors" class="nav-pill-gold" data-i18n="nav_investors">للشركاء والمستثمرين</a>
+          </li>
         </ul>
       </nav>
 
@@ -46,7 +48,7 @@
           <span data-i18n="lang_btn">EN</span>
         </button>
 
-        <a href="#investors" class="btn btn--gold btn--sm header-cta-desktop" data-i18n="nav_cta">جرّب النسخة الحية</a>
+        <a href="/" target="_blank" rel="noopener" class="btn btn--gold btn--sm header-cta-desktop" data-live-web-btn data-i18n="nav_cta">افتح تطبيق مشوار</a>
 
         <button id="mobile-menu-open" class="mobile-menu-btn" type="button" aria-label="Open Navigation Menu">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -71,88 +73,95 @@
       </button>
     </div>
     <div class="mobile-drawer__links">
-      <a href="#corridors" data-i18n="nav_corridors">الخريطة والخدمات</a>
-      <a href="#showcase" data-i18n="nav_app">جولة داخل التطبيق</a>
-      <a href="#advantage" data-i18n="nav_advantage">ليه مشوار؟</a>
-      <a href="#investors" data-i18n="nav_investors">الأرقام والنموذج المالي</a>
-      <a href="#download" data-i18n="nav_download">جرّب التطبيق</a>
+      <a href="#services" data-i18n="nav_services">الخدمات</a>
+      <a href="#corridors" data-i18n="nav_corridors">خريطة التوفير</a>
+      <a href="#how-it-works" data-i18n="nav_how">كيف يعمل</a>
+      <a href="#safety" data-i18n="nav_safety">الأمان</a>
+      <a href="#investors" class="drawer-pill-gold" data-i18n="nav_investors">للشركاء والمستثمرين</a>
+    </div>
+    <div class="mobile-drawer__cta">
+      <a href="/" target="_blank" rel="noopener" class="btn btn--gold" style="width:100%" data-live-web-btn data-i18n="nav_cta">افتح تطبيق مشوار</a>
     </div>
   </div>
 
   <main>
-    <!-- 2. Hero Section + Animated Qatar Corridor Graph -->
+    <!-- 2. Hero Section -->
     <section id="hero" class="hero">
+      <div class="hero__bg-orb hero__bg-orb--teal" aria-hidden="true"></div>
+      <div class="hero__bg-orb hero__bg-orb--gold" aria-hidden="true"></div>
       <div class="hero__grid-bg" aria-hidden="true"></div>
 
       <svg class="hero-corridor-svg" viewBox="0 0 1440 760" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
           <linearGradient id="corGold" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#F5A524" stop-opacity="0.1" />
-            <stop offset="50%" stop-color="#F5A524" stop-opacity="0.85" />
-            <stop offset="100%" stop-color="#22A89F" stop-opacity="0.7" />
+            <stop offset="0%" stop-color="#F59E0B" stop-opacity="0.08" />
+            <stop offset="50%" stop-color="#FBBF24" stop-opacity="0.82" />
+            <stop offset="100%" stop-color="#14B8A6" stop-opacity="0.65" />
           </linearGradient>
           <linearGradient id="corTeal" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#22A89F" stop-opacity="0.75" />
-            <stop offset="100%" stop-color="#8A1538" stop-opacity="0.65" />
+            <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.72" />
+            <stop offset="100%" stop-color="#0F766E" stop-opacity="0.25" />
           </linearGradient>
         </defs>
-        <path d="M120,620 Q420,420 740,460 T1320,210" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2" />
-        <path class="corridor-flow" d="M120,620 Q420,420 740,460 T1320,210" fill="none" stroke="url(#corGold)" stroke-width="2.5" />
-        <path d="M220,180 Q580,290 880,190 T1360,520" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1.8" />
-        <path class="corridor-flow--slow" d="M220,180 Q580,290 880,190 T1360,520" fill="none" stroke="url(#corTeal)" stroke-width="2.2" />
-        <g fill="#F5A524">
-          <circle cx="445" cy="485" r="5" />
-          <circle class="corridor-node-pulse" cx="445" cy="485" r="14" fill="none" stroke="#F5A524" stroke-width="1.5" />
-          <circle cx="740" cy="460" r="6" />
-          <circle class="corridor-node-pulse" cx="740" cy="460" r="18" fill="none" stroke="#22A89F" stroke-width="1.5" />
-          <circle cx="1055" cy="310" r="5" />
-          <circle class="corridor-node-pulse" cx="1055" cy="310" r="14" fill="none" stroke="#F5A524" stroke-width="1.5" />
+        <path d="M100,620 Q420,420 740,460 T1340,200" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2" />
+        <path class="corridor-flow" d="M100,620 Q420,420 740,460 T1340,200" fill="none" stroke="url(#corGold)" stroke-width="2.4" />
+        <path d="M220,170 Q580,290 880,190 T1360,520" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1.8" />
+        <path class="corridor-flow--slow" d="M220,170 Q580,290 880,190 T1360,520" fill="none" stroke="url(#corTeal)" stroke-width="2" />
+        <g fill="#FBBF24">
+          <circle cx="445" cy="485" r="4.5" />
+          <circle class="corridor-node-pulse" cx="445" cy="485" r="14" fill="none" stroke="#FBBF24" stroke-width="1.4" />
+          <circle cx="740" cy="460" r="5.5" />
+          <circle class="corridor-node-pulse" cx="740" cy="460" r="18" fill="none" stroke="#2DD4BF" stroke-width="1.4" />
+          <circle cx="1055" cy="310" r="4.5" />
+          <circle class="corridor-node-pulse" cx="1055" cy="310" r="14" fill="none" stroke="#FBBF24" stroke-width="1.4" />
         </g>
       </svg>
 
       <div class="container">
         <div class="hero__layout">
-          <div>
-            <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="hero_badge_program">مشوار قطر · 3 خدمات يومية على نفس الطريق مع خريطة حية للزحمة والمسار</span></span>
+          <div class="hero__copy">
+            <span class="eyebrow eyebrow--hero">
+              <span class="eyebrow__dot"></span>
+              <span data-i18n="hero_badge">مشوار قطر · تنقّل تشاركي، طرود المسار، وتوريد مواقع العمل</span>
+            </span>
 
             <h1 class="hero__title">
-              <span data-i18n="hero_title_1">مشوارك، طردك، وطلب موقعك</span><br />
-              <span class="highlight-gold" data-i18n="hero_title_2">مع حد موثق رايح نفس الطريق.</span>
+              <span data-i18n="hero_title_1">مشوارك، طردك، وتوريد موقعك</span><br />
+              <span class="highlight-gold" data-i18n="hero_title_2">على نفس الطريق وبثقة كاملة.</span>
             </h1>
 
-            <p class="hero__desc" data-i18n="hero_desc">فكرة مشوار بسيطة: بدل ما تدفع ثمن مشوار خاص لوحدك، أو تستنى شركة شحن يومين عشان ورقة، أو يوقف شغلك في الموقع عشان قطعة غيار من المنطقة الصناعية — مشوار بيربطك بمسافرين ومزودين موثقين بالبطاقة القطرية (QID) على نفس خط سيرك، مع خريطة حية جوه التطبيق تعرض الطريق والزحمة وحركة المركبة لحظة بلحظة.</p>
+            <p class="hero__desc" data-i18n="hero_desc">
+              منصة قطرية متكاملة تربطك بمسافرين ومزوّدين موثّقين بالبطاقة القطرية (QID) يتجهون عبر نفس مسارك اليومي بين الدوحة ولوسيل والخور والوكرة والمنطقة الصناعية — لتوفير حتى 70% من تكلفة التنقّل، وتوصيل مستنداتك أو مستلزمات موقعك خلال دقائق على خريطة مشوار المباشرة.
+            </p>
 
             <div class="hero__cta-row">
-              <a href="#download" class="btn btn--gold">
+              <a href="/" target="_blank" rel="noopener" class="btn btn--gold btn--lg" data-live-web-btn>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
+                  <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
-                <span data-i18n="hero_cta_download">افتح النسخة الحية أو اطلب التطبيق</span>
+                <span data-i18n="hero_cta_primary">جرّب مشوار الآن</span>
               </a>
-              <a href="#investors" class="btn btn--glass">
+              <a href="#corridors" class="btn btn--glass btn--lg">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <line x1="18" y1="20" x2="18" y2="10" />
-                  <line x1="12" y1="20" x2="12" y2="4" />
-                  <line x1="6" y1="20" x2="6" y2="14" />
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                  <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span data-i18n="hero_cta_investors">شوف الأرقام والممرات</span>
+                <span data-i18n="hero_cta_secondary">احسب توفيرك على الخريطة</span>
               </a>
             </div>
 
             <div class="hero__trust-strip">
               <div class="hero__trust-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
-                <span data-i18n="hero_trust_1">توثيق حقيقي بالبطاقة القطرية (11 رقم QID)</span>
+                <span data-i18n="hero_trust_1">توثيق بالبطاقة القطرية (QID)</span>
+              </div>
+              <div class="hero__trust-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                <span data-i18n="hero_trust_2">تتبع حي على خريطة مشوار المباشرة</span>
               </div>
               <div class="hero__trust-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span data-i18n="hero_trust_2">خريطة حية جوه التطبيق بالزحمة وحركة المركبات</span>
-              </div>
-              <div class="hero__trust-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="hero_trust_3">200 اختبار آلي ناجح + لوحة إدارة من 14 وحدة</span>
+                <span data-i18n="hero_trust_3">كود استلام وتسليم سري ثنائي</span>
               </div>
             </div>
           </div>
@@ -165,15 +174,15 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               </div>
               <div>
-                <div class="float-chip__title" data-i18n="chip_qid_title">هويات QID مراجعة فعلياً</div>
-                <div class="float-chip__sub" data-i18n="chip_qid_sub">فحص 11 رقم + رقم جوال +974</div>
+                <div class="float-chip__title" data-i18n="hero_chip_top_title">أعضاء موثّقون بالبطاقة القطرية</div>
+                <div class="float-chip__sub" data-i18n="hero_chip_top_sub">مراجعة الهوية والمركبة قبل التفعيل</div>
               </div>
             </div>
 
             <div class="phone-frame">
-              <div class="phone-frame__notch" aria-hidden="true"></div>
+              <div class="phone-frame__island" aria-hidden="true"></div>
               <div class="phone-frame__screen">
-                <img src="./assets/mobile/10_tab_home_screen.png" alt="MASHWAR Super-App Home Screen in Qatar" />
+                <img src="./assets/mobile/app_home_hero.png" alt="MASHWAR Qatar App Home Screen" />
               </div>
             </div>
 
@@ -182,752 +191,941 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
               </div>
               <div>
-                <div class="float-chip__title" data-i18n="chip_otp_title">صورة فاتورة + كود تسليم سري</div>
-                <div class="float-chip__sub" data-i18n="chip_otp_sub">كود OTP رباعي للطرود · و6 خانات SHA-256 للتوريد</div>
+                <div class="float-chip__title" data-i18n="hero_chip_bot_title">تسليم مؤمّن بكود سري</div>
+                <div class="float-chip__sub" data-i18n="hero_chip_bot_sub">مع صورة الفاتورة الفعلية عند التوريد</div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Business-First Proof Strip -->
+        <!-- 4 Human Business-Proof Stat Cards -->
         <div class="proof-strip reveal">
           <div class="proof-card">
-            <div class="proof-card__num num" data-i18n="proof_1_num">3 خدمات</div>
-            <div class="proof-card__label" data-i18n="proof_1_lbl">رحلات تشاركية، طرود وأوراق على الطريق، وتوريد مواقع عمل ومشتريات</div>
+            <div class="proof-card__num num" data-i18n="proof_1_num">3 خدمات يومية متكاملة</div>
+            <div class="proof-card__label" data-i18n="proof_1_lbl">الرحلات التشاركية، طرود المسار، وتوريد مواقع العمل والمشتريات</div>
           </div>
           <div class="proof-card">
-            <div class="proof-card__num num" data-i18n="proof_2_num">0 ر.ق نشر</div>
-            <div class="proof-card__label" data-i18n="proof_2_lbl">انشر رحلتك أو طلبك مجاناً، وقارن العروض قبل ما توافق على أي شيء</div>
+            <div class="proof-card__num num" data-i18n="proof_2_num">توفير حتى 70%</div>
+            <div class="proof-card__label" data-i18n="proof_2_lbl">مقارنة بتكلفة المشوار الفردي اليومي بين مدن ومحاور قطر</div>
           </div>
           <div class="proof-card">
-            <div class="proof-card__num num" data-i18n="proof_3_num">35–90 د</div>
-            <div class="proof-card__label" data-i18n="proof_3_lbl">توصيل قطع الغيار والمستندات على نفس الطريق بدل 24–72 ساعة شحن</div>
+            <div class="proof-card__num num" data-i18n="proof_3_num">تسليم خلال 35–90 دقيقة</div>
+            <div class="proof-card__label" data-i18n="proof_3_lbl">توصيل مباشر على نفس الطريق دون انتظار مستودعات الفرز</div>
           </div>
           <div class="proof-card">
-            <div class="proof-card__num num" data-i18n="proof_4_num">خريطة حية</div>
-            <div class="proof-card__label" data-i18n="proof_4_lbl">مسار كامل داخل التطبيق مع زحمة جوجل وأيقونات مركبات متحركة</div>
-          </div>
-          <div class="proof-card">
-            <div class="proof-card__num num" data-i18n="proof_5_num">200 / 200</div>
-            <div class="proof-card__label" data-i18n="proof_5_lbl">اختبار Flutter ناجح + 21 اختبار أمان وقواعد Firestore وStorage</div>
+            <div class="proof-card__num num" data-i18n="proof_4_num">0 ر.ق لنشر الطلب</div>
+            <div class="proof-card__label" data-i18n="proof_4_lbl">انشر رحلتك أو طلبك مجاناً وقارن العروض قبل تأكيد الحجز</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 3. Interactive Qatar Corridor Route Economics Visualizer -->
+    <!-- 3. Flagship Interactive Live MASHWAR Map + Qatar Route Savings & Driver Earnings Calculator -->
     <section id="corridors" class="section section--canvas">
       <div class="container">
         <div class="section-header reveal">
-          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="cor_eyebrow">خريطة قطر الحية واقتصاديات المحاور</span></span>
-          <h2 class="section-title" data-i18n="cor_title">اختَر خط السير وشوف المسار والزحمة والفرق في التكلفة على الطبيعة</h2>
-          <p class="section-subtitle" data-i18n="cor_sub">دي نفس الخريطة الحية اللي بتشتغل جوه تطبيق مشوار. بدّل بين أهم 5 محاور في قطر وشوف المسار كامل مرة واحدة مع الزحمة وحركة السيارة أو شاحنة التوريد.</p>
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="cor_eyebrow">خريطة مشوار المباشرة وحاسبة التوفير</span></span>
+          <h2 class="section-title" data-i18n="cor_title">اختر مسارك في قطر واحسب توفيرك الشهري أو دخلك الإضافي</h2>
+          <p class="section-subtitle" data-i18n="cor_sub">تصفّح المحاور الأكثر حيوية في قطر على خريطة مشوار المباشرة، وبدّل بين وضع الراكب أو المقاول ووضع السائق أو المندوب لمعرفة الأثر المالي الشهري والسنوي بدقة.</p>
         </div>
 
-        <div class="corridor-stage reveal">
-          <div class="corridor-stage__inner">
-            <div class="corridor-stage__top">
-              <div class="corridor-stage__banner">
+        <div class="corridor-shell reveal">
+          <!-- Corridor Selector Strip -->
+          <div class="corridor-bar">
+            <div class="corridor-tabs" role="tablist" aria-label="Qatar Corridors">
+              <button class="corridor-tab is-active" type="button" data-corridor="doha_alkhor" data-cor-ar="الدوحة ↔ الخور" data-cor-en="Doha ↔ Al Khor">الدوحة ↔ الخور</button>
+              <button class="corridor-tab" type="button" data-corridor="doha_alwakrah" data-cor-ar="الدوحة ↔ الوكرة" data-cor-en="Doha ↔ Al Wakrah">الدوحة ↔ الوكرة</button>
+              <button class="corridor-tab" type="button" data-corridor="lusail_industrial" data-cor-ar="لوسيل ↔ الصناعية" data-cor-en="Lusail ↔ Industrial Area">لوسيل ↔ الصناعية</button>
+              <button class="corridor-tab" type="button" data-corridor="alrayyan_westbay" data-cor-ar="الريان ↔ الخليج الغربي" data-cor-en="Al Rayyan ↔ West Bay">الريان ↔ الخليج الغربي</button>
+              <button class="corridor-tab" type="button" data-corridor="alkhor_lusail" data-cor-ar="الخور ↔ لوسيل" data-cor-en="Al Khor ↔ Lusail">الخور ↔ لوسيل</button>
+            </div>
+          </div>
+
+          <div class="corridor-grid">
+            <!-- Live MASHWAR Map Column -->
+            <div class="map-column">
+              <div class="map-toolbar">
+                <div class="map-style-group" role="group" aria-label="MASHWAR Map Style">
+                  <span class="map-toolbar__label" data-i18n="map_theme_label">نمط الخريطة:</span>
+                  <button class="map-chip is-active" type="button" data-map-style="standard" data-i18n="map_style_standard">قياسي</button>
+                  <button class="map-chip" type="button" data-map-style="light" data-i18n="map_style_light">مشوار الفاتح</button>
+                  <button class="map-chip" type="button" data-map-style="satellite" data-i18n="map_style_satellite">قمر صناعي</button>
+                  <button class="map-chip" type="button" data-map-style="night" data-i18n="map_style_night">ليلي</button>
+                </div>
+                <div class="map-mode-group" role="group" aria-label="Service Mode">
+                  <button class="map-mode-pill is-active" type="button" data-cor-mode="trip" data-i18n="cor_mode_trip">رحلة تشاركية</button>
+                  <button class="map-mode-pill" type="button" data-cor-mode="parcel" data-i18n="cor_mode_parcel">طرد على الطريق</button>
+                  <button class="map-mode-pill" type="button" data-cor-mode="supply" data-i18n="cor_mode_supply">توريد موقع</button>
+                </div>
+              </div>
+
+              <div class="map-viewport">
                 <iframe
                   id="corridor-live-map"
                   title="MASHWAR Live Qatar Corridor Map"
-                  src="./maps/mashwar_uber_map.html?fromLat=25.2854&fromLng=51.531&fromName=%D8%A7%D9%84%D8%AF%D9%88%D8%AD%D8%A9&toLat=25.6804&toLng=51.4969&toName=%D8%A7%D9%84%D8%AE%D9%88%D8%B1&mode=trip&style=google&traffic=1&lang=ar&nearby=1&dist=52&eta=39"
+                  src="./maps/mashwar_live_map.html?fromLat=25.2854&fromLng=51.531&fromName=%D8%A7%D9%84%D8%AF%D9%88%D8%AD%D8%A9&toLat=25.6804&toLng=51.4969&toName=%D8%A7%D9%84%D8%AE%D9%88%D8%B1&mode=trip&style=standard&traffic=1&lang=ar&nearby=1&gps=0&dist=52&eta=38"
+                  allow="geolocation; fullscreen"
                   loading="lazy"
                 ></iframe>
               </div>
 
-              <div class="corridor-stage__controls">
-                <div class="corridor-tabs" role="tablist" aria-label="Qatar Corridors">
-                  <button class="corridor-tab is-active" type="button" data-corridor="al_khor" data-cor-ar="الدوحة ↔ الخور" data-cor-en="Doha ↔ Al Khor">الدوحة ↔ الخور</button>
-                  <button class="corridor-tab" type="button" data-corridor="lusail_supply" data-cor-ar="الصناعية ↔ لوسيل" data-cor-en="Industrial Area ↔ Lusail">الصناعية ↔ لوسيل</button>
-                  <button class="corridor-tab" type="button" data-corridor="mesaieed" data-cor-ar="الدوحة ↔ مسيعيد" data-cor-en="Doha ↔ Mesaieed">الدوحة ↔ مسيعيد</button>
-                  <button class="corridor-tab" type="button" data-corridor="industrial" data-cor-ar="الصناعية ↔ الوكرة" data-cor-en="Industrial Area ↔ Al Wakrah">الصناعية ↔ الوكرة</button>
-                  <button class="corridor-tab" type="button" data-corridor="dukhan" data-cor-ar="الدوحة ↔ دخان" data-cor-en="Doha ↔ Dukhan">الدوحة ↔ دخان</button>
+              <div class="corridor-route-strip">
+                <div class="route-point">
+                  <span class="route-point__tag" data-i18n="cor_origin_tag">نقطة الانطلاق</span>
+                  <strong id="cor-origin-name" class="route-point__name">الدوحة (مشيرب / الخليج الغربي)</strong>
                 </div>
-
-                <div class="corridor-mode-row" role="group" aria-label="Vehicle Mode">
-                  <button class="corridor-mode-pill is-active" type="button" data-cor-mode="trip" data-i18n="cor_mode_trip">وضع السيارة (رحلة)</button>
-                  <button class="corridor-mode-pill" type="button" data-cor-mode="parcel" data-i18n="cor_mode_parcel">وضع الطرود (فان)</button>
-                  <button class="corridor-mode-pill" type="button" data-cor-mode="supply" data-i18n="cor_mode_supply">وضع التوريد (شاحنة)</button>
+                <div class="route-line">
+                  <span id="cor-dist-badge" class="route-line__badge num">52 كم · ~38 دقيقة</span>
                 </div>
-
-                <div class="corridor-route-bar">
-                  <div class="route-endpoint">
-                    <span class="route-endpoint__tag" data-i18n="cor_origin_tag">من</span>
-                    <span id="cor-origin-name" class="route-endpoint__name">الدوحة (الخليج الغربي / لوسيل)</span>
-                  </div>
-                  <div class="route-track">
-                    <div class="route-track__fill"></div>
-                    <span id="cor-dist-badge" class="route-track__badge num">56 كم · ~45 دقيقة</span>
-                  </div>
-                  <div class="route-endpoint">
-                    <span class="route-endpoint__tag" data-i18n="cor_dest_tag">إلى</span>
-                    <span id="cor-dest-name" class="route-endpoint__name">الخور (وسط المدينة / رأس لفان)</span>
-                  </div>
+                <div class="route-point">
+                  <span class="route-point__tag" data-i18n="cor_dest_tag">الوجهة</span>
+                  <strong id="cor-dest-name" class="route-point__name">الخور (الكورنيش / رأس لفان)</strong>
                 </div>
               </div>
             </div>
 
-            <div class="corridor-kpis">
-              <div class="corridor-kpi-box">
-                <div class="corridor-kpi-box__label" data-i18n="cor_k1_lbl">المقعد التشاركي في مشوار</div>
-                <div id="cor-k1-val" class="corridor-kpi-box__val num">25 ر.ق / مقعد</div>
-                <div id="cor-k1-vs" class="corridor-kpi-box__vs">توفير 75% مقابل 105 ر.ق تاكسي خاص</div>
+            <!-- Interactive Savings / Earnings Calculator Column -->
+            <div class="calc-column">
+              <div class="role-toggle" role="tablist" aria-label="Calculator Role">
+                <button class="role-toggle__btn is-active" type="button" data-calc-role="rider" data-i18n="calc_role_rider">للراكب / المقاول — وفّر شهرياً</button>
+                <button class="role-toggle__btn" type="button" data-calc-role="driver" data-i18n="calc_role_driver">للسائق / المندوب — اربح على طريقك</button>
               </div>
-              <div class="corridor-kpi-box">
-                <div class="corridor-kpi-box__label" data-i18n="cor_k2_lbl">طرد أو توريد في نفس اليوم</div>
-                <div id="cor-k2-val" class="corridor-kpi-box__val num">35 ر.ق · خلال ساعتين</div>
-                <div id="cor-k2-vs" class="corridor-kpi-box__vs">مقابل 24–48 ساعة شحن مستودعات</div>
-              </div>
-              <div class="corridor-kpi-box">
-                <div class="corridor-kpi-box__label" data-i18n="cor_k3_lbl">متوسط عائد المسافر / المزود</div>
-                <div id="cor-k3-val" class="corridor-kpi-box__val num">110 – 160 ر.ق / رحلة ذهاب</div>
-                <div id="cor-k3-vs" class="corridor-kpi-box__vs">3 مقاعد + طردان على نفس الطريق</div>
-              </div>
-            </div>
 
-            <div class="corridor-steps">
-              <div class="corridor-step"><span class="corridor-step__num num">1</span><span data-i18n="cor_s1">حساب نظيف وتوثيق QID بدون تعقيد</span></div>
-              <div class="corridor-step"><span class="corridor-step__num num">2</span><span data-i18n="cor_s2">تشوف المسار والزحمة كاملة جوه التطبيق</span></div>
-              <div class="corridor-step"><span class="corridor-step__num num">3</span><span data-i18n="cor_s3">صورة الفاتورة من المحل + شات مباشر</span></div>
-              <div class="corridor-step"><span class="corridor-step__num num">4</span><span data-i18n="cor_s4">إغلاق الطلب بكود استلام وتسليم سري</span></div>
+              <div class="calc-slider-box">
+                <div class="calc-slider-box__head">
+                  <label for="calc-trips-slider" data-i18n="calc_slider_label">عدد الرحلات أو الطلبات شهرياً</label>
+                  <div class="calc-slider-badge">
+                    <span id="calc-trips-val" class="num">16</span>
+                    <span data-i18n="calc_trips_unit">رحلة / شهر</span>
+                  </div>
+                </div>
+                <input id="calc-trips-slider" class="calc-range" type="range" min="1" max="22" value="16" />
+                <div class="calc-presets">
+                  <button type="button" class="calc-preset-chip" data-calc-preset="4" data-i18n="calc_preset_4">4 أسبوعياً</button>
+                  <button type="button" class="calc-preset-chip" data-calc-preset="12" data-i18n="calc_preset_12">12 متوسط</button>
+                  <button type="button" class="calc-preset-chip" data-calc-preset="22" data-i18n="calc_preset_22">22 دوام يومي</button>
+                </div>
+              </div>
+
+              <div class="calc-hero-metric">
+                <span id="calc-monthly-lbl" class="calc-hero-metric__label" data-i18n="calc_kpi_monthly_rider">توفيرك الشهري التقديري</span>
+                <div id="calc-monthly-val" class="calc-hero-metric__val num">1,280 ر.ق</div>
+                <div id="calc-monthly-sub" class="calc-hero-metric__sub">30 ر.ق مع مشوار بدلاً من 110 ر.ق للرحلة الفردية</div>
+              </div>
+
+              <div class="calc-sub-grid">
+                <div class="calc-mini-card">
+                  <span id="calc-annual-lbl" class="calc-mini-card__lbl" data-i18n="calc_kpi_annual_rider">إجمالي التوفير السنوي</span>
+                  <strong id="calc-annual-val" class="calc-mini-card__val num">15,360 ر.ق</strong>
+                </div>
+                <div class="calc-mini-card calc-mini-card--eco">
+                  <span class="calc-mini-card__lbl" data-i18n="calc_kpi_co2">انبعاثات CO₂ الموفّرة سنوياً</span>
+                  <strong id="calc-co2-val" class="calc-mini-card__val num">1,114 كجم</strong>
+                </div>
+              </div>
+
+              <div class="calc-benchmark">
+                <span class="calc-benchmark__lbl" data-i18n="calc_kpi_benchmark">متوسط الرحلة على هذا المسار</span>
+                <div class="calc-benchmark__row">
+                  <strong id="calc-benchmark-val" class="num">30 ر.ق / مقعد</strong>
+                  <span id="calc-benchmark-sub">مقابل ~110 ر.ق للتنقل الفردي</span>
+                </div>
+              </div>
+
+              <a href="/" target="_blank" rel="noopener" class="btn btn--teal" style="width:100%" data-live-web-btn>
+                <span data-i18n="calc_cta_start">ابدأ بهذا المسار في التطبيق</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </a>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 4. Three Core Everyday Services & Trust Flow -->
+    <!-- 4. Three Core Services with Full-Bleed Editorial Photography -->
     <section id="services" class="section section--sand">
       <div class="container">
         <div class="section-header section-header--center reveal">
-          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="services_eyebrow">3 خدمات رئيسية تخدم يومك</span></span>
-          <h2 class="section-title" data-i18n="services_title">كل حاجة محتاجها على الطريق في تطبيق واحد مرتّب</h2>
-          <p class="section-subtitle" data-i18n="services_sub">بدل ما تتشتت بين 4 تطبيقات وجروبات واتساب، مشوار يجمع الرحلات اليومية والطرود العاجلة وتوريد مواقع العمل بنفس البساطة والوضوح.</p>
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="services_eyebrow">ثلاث خدمات مصمّمة لحركة قطر اليومية</span></span>
+          <h2 class="section-title" data-i18n="services_title">منصة واحدة تغنيك عن التشتّت بين التطبيقات ومجموعات التواصل</h2>
+          <p class="section-subtitle" data-i18n="services_sub">سواء كنت تتنقّل يومياً إلى عملك، أو تحتاج لإرسال مستند عاجل، أو تدير موقعاً إنشائياً في لوسيل — مشوار ينظّم كل خطوة بوضوح وأمان.</p>
         </div>
 
         <div class="services-grid reveal">
           <article class="service-card">
             <div class="service-card__media">
-              <img src="./assets/services/service_ride.jpg" alt="Shared Trips and Empty Seats in Qatar" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_1_rate">توفير حتى 70%</span>
+              <img src="./assets/services/service_rides.jpg" alt="Intercity Shared Rides Across Qatar" loading="lazy" />
+              <div class="service-card__scrim" aria-hidden="true"></div>
+              <span class="service-card__badge num" data-i18n="srv_1_badge">ابتداءً من 16 ر.ق / مقعد</span>
             </div>
             <div class="service-card__body">
-              <h3 data-i18n="srv_1_t">الرحلات التشاركية والمقاعد الفاضية</h3>
-              <p data-i18n="srv_1_d">مسافر من الدوحة للخور أو مسيعيد أو دخان؟ اعرض مقاعدك الفاضية (1–6) في 3 خطوات، أو احجز مقعدك مع سائق موثق على نفس خطك مع خيار «سيدات فقط» ومشاركة المسار مع أهلك.</p>
-              <div class="service-card__control">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_1_c">تتبع حي على الخريطة · خيار سيدات فقط · زر طوارئ قطر 999</span>
-              </div>
+              <h3 data-i18n="srv_1_title">الرحلات التشاركية بين المدن</h3>
+              <p data-i18n="srv_1_desc">شارك المقاعد المتاحة في رحلتك اليومية بين الدوحة والخور والوكرة ولوسيل والريان، أو احجز مقعدك مع سائق موثّق بالبطاقة القطرية بتوفير يصل إلى 70%.</p>
+              <ul class="service-bullets">
+                <li data-i18n="srv_1_b1">تصفية مخصّصة لرحلات السيدات فقط ومشاركة المسار مع العائلة</li>
+                <li data-i18n="srv_1_b2">وضوح كامل لتوقيت الانطلاق ونقاط التوقف وتقييم السائق</li>
+                <li data-i18n="srv_1_b3">تتبع حي للرحلة عبر خريطة مشوار المباشرة</li>
+              </ul>
             </div>
           </article>
 
           <article class="service-card">
             <div class="service-card__media">
-              <img src="./assets/services/service_parcel.jpg" alt="Same-Day Route Parcels and Documents" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_2_rate">كودان OTP</span>
+              <img src="./assets/services/service_parcels.jpg" alt="Same-Hour Route Parcels and Documents in Qatar" loading="lazy" />
+              <div class="service-card__scrim" aria-hidden="true"></div>
+              <span class="service-card__badge num" data-i18n="srv_2_badge">20 – 45 ر.ق · نفس الساعة</span>
             </div>
             <div class="service-card__body">
-              <h3 data-i18n="srv_2_t">طرود وأوراق مستعجلة على الطريق</h3>
-              <p data-i18n="srv_2_d">محتاج تبعت عقد، مفتاح، أو غرض مهم لمدينة تانية النهارده؟ سلّمه لمسافر موثق رايح نفس الاتجاه، وتابع المسار لحظة بلحظة بكود استلام رباعي وكود تسليم رباعي.</p>
-              <div class="service-card__control">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_2_c">توصيل مباشر في نفس اليوم · كود استلام + كود تسليم · بدون مخازن</span>
-              </div>
+              <h3 data-i18n="srv_2_title">طرود ومستندات على الطريق</h3>
+              <p data-i18n="srv_2_desc">أرسل عقداً رسمياً أو مفاتيح أو غرضاً مهماً إلى مدينة أخرى اليوم عبر مسافر موثّق متجه إلى نفس الوجهة دون تأخير مستودعات الشحن.</p>
+              <ul class="service-bullets">
+                <li data-i18n="srv_2_b1">تسليم مباشر من اليد إلى اليد خلال 35–90 دقيقة</li>
+                <li data-i18n="srv_2_b2">كود استلام رباعي وكود تسليم رباعي لحماية الأمانة</li>
+                <li data-i18n="srv_2_b3">متابعة فورية لموقع الحامل حتى لحظة التسليم</li>
+              </ul>
             </div>
           </article>
 
           <article class="service-card">
             <div class="service-card__media">
-              <img src="./assets/services/service_site_supply.jpg" alt="Worksite Supply and Store Runs in Qatar" loading="lazy" />
-              <span class="service-card__rate" data-i18n="srv_3_rate">فاتورة + SHA-256</span>
+              <img src="./assets/services/service_worksite.jpg" alt="Worksite Supply and Urgent Store Runs in Lusail Qatar" loading="lazy" />
+              <div class="service-card__scrim" aria-hidden="true"></div>
+              <span class="service-card__badge" data-i18n="srv_3_badge">فاتورة المحل + كود سري</span>
             </div>
             <div class="service-card__body">
-              <h3 data-i18n="srv_3_t">توريد مواقع العمل والمشتريات اليومية</h3>
-              <p data-i18n="srv_3_d">مهندس في لوسيل أو صاحب ورشة محتاج مواد كهرباء أو سباكة أو عدد من المنطقة الصناعية؟ اكتب طلبك، استقبل عروض، راجع صورة الفاتورة والغرض من المحل، واستلم بكود من 6 خانات.</p>
-              <div class="service-card__control">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
-                <span data-i18n="srv_3_c">صورة الفاتورة الحية · كود تسليم من 6 خانات · دفع نقدي أو تحويل بإيصال</span>
-              </div>
+              <h3 data-i18n="srv_3_title">توريد مواقع العمل والمشتريات</h3>
+              <p data-i18n="srv_3_desc">اطلب قطع الغيار أو مواد الكهرباء والسباكة والعدد من المنطقة الصناعية لتصل مباشرة إلى موقعك في لوسيل أو الدوحة دون إيقاف فريق العمل.</p>
+              <ul class="service-bullets">
+                <li data-i18n="srv_3_b1">استقبل عروض المنفّذين وقارن السعر ووقت الوصول</li>
+                <li data-i18n="srv_3_b2">مراجعة صورة الغرض وفاتورة المحل الأصلية قبل التحرك</li>
+                <li data-i18n="srv_3_b3">تسوية شفافة نقداً عند الاستلام أو بتحويل بنكي موثّق</li>
+              </ul>
             </div>
           </article>
-        </div>
-
-        <!-- Direct Settlement & Verification Workflow Card -->
-        <div class="escrow-shield-card reveal">
-          <div class="escrow-shield-card__media">
-            <img src="./assets/services/escrow_trust_shield.jpg" alt="MASHWAR Practical Trust and Handover Verification" loading="lazy" />
-          </div>
-          <div class="escrow-shield-card__body">
-            <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="escrow_eyebrow">الأمان ووضوح التعامل في كل خطوة</span></span>
-            <h3 data-i18n="escrow_title">كل خطوة واضحة وموثّقة — لا مفاجآت في السعر ولا مخاطرة في التسليم</h3>
-            <p data-i18n="escrow_desc">اعتمدنا آلية مباشرة وواقعية تشتغل اليوم على أرض الواقع في قطر: توثيق هوية حقيقي قبل التفعيل، صورة الفاتورة الفعلية من المحل قبل التحرك، كود تسليم مشفر لا يُقفل الطلب بدونه، وتسوية مباشرة كاش عند الاستلام أو بتحويل بنكي موثّق بالإيصال.</p>
-            <div class="escrow-steps-grid">
-              <div class="escrow-step">
-                <span class="escrow-step__num num">01</span>
-                <strong data-i18n="escrow_s1_t">انشر مجاناً (0 ر.ق)</strong>
-                <span data-i18n="escrow_s1_d">اكتب طلبك أو مسار رحلتك خلال ثوانٍ وقارن العروض وتقييمات الأعضاء.</span>
-              </div>
-              <div class="escrow-step">
-                <span class="escrow-step__num num">02</span>
-                <strong data-i18n="escrow_s2_t">هوية QID مراجعة</strong>
-                <span data-i18n="escrow_s2_d">كل مزود أو سائق يمر بمراجعة فعلية للبطاقة القطرية (11 رقم) قبل التفعيل.</span>
-              </div>
-              <div class="escrow-step">
-                <span class="escrow-step__num num">03</span>
-                <strong data-i18n="escrow_s3_t">صورة الفاتورة والغرض</strong>
-                <span data-i18n="escrow_s3_d">في طلبات الشراء والتوريد، يرفع المزود صورة المنتج والفاتورة لتراجعها بنفسك.</span>
-              </div>
-              <div class="escrow-step">
-                <span class="escrow-step__num num">04</span>
-                <strong data-i18n="escrow_s4_t">كود تسليم وتسوية واضحة</strong>
-                <span data-i18n="escrow_s4_d">إغلاق الطلب بكود OTP أو 6 خانات SHA-256 مع دفع نقدي أو إيصال تحويل بنكي.</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </section>
 
-    <!-- 5. Interactive Mobile App & RBAC Admin Console Showcase -->
-    <section id="showcase" class="section section--canvas">
+    <!-- 5. How MASHWAR Works (3-Step Visual Timeline) -->
+    <section id="how-it-works" class="section section--surface">
+      <div class="container">
+        <div class="section-header section-header--center reveal">
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="how_eyebrow">ثلاث خطوات سلسة</span></span>
+          <h2 class="section-title" data-i18n="how_title">كيف يعمل مشوار من اللحظة الأولى حتى التسليم؟</h2>
+          <p class="section-subtitle" data-i18n="how_sub">تجربة واضحة ومباشرة صُمّمت لتمنحك السرعة في النشر والاطمئنان الكامل في كل مرحلة.</p>
+        </div>
+
+        <div class="timeline-grid reveal">
+          <div class="timeline-connector" aria-hidden="true"></div>
+
+          <article class="timeline-step">
+            <div class="timeline-step__top">
+              <span class="timeline-step__num num">01</span>
+              <div class="timeline-step__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              </div>
+            </div>
+            <h3 data-i18n="how_s1_title">انشر طلبك أو رحلتك في 30 ثانية</h3>
+            <p data-i18n="how_s1_desc">حدّد نقطة الانطلاق والوجهة على خريطة مشوار المباشرة، واختر نوع الخدمة والوقت المناسب مجاناً دون أي رسوم نشر.</p>
+          </article>
+
+          <article class="timeline-step">
+            <div class="timeline-step__top">
+              <span class="timeline-step__num num">02</span>
+              <div class="timeline-step__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg>
+              </div>
+            </div>
+            <h3 data-i18n="how_s2_title">اختر عرضاً من عضو موثّق بالبطاقة القطرية</h3>
+            <p data-i18n="how_s2_desc">استعرض العروض وتقييمات الأعضاء وبيانات المركبة، وتواصل مباشرة عبر المحادثة الداخلية الآمنة دون كشف رقمك الشخصي.</p>
+          </article>
+
+          <article class="timeline-step">
+            <div class="timeline-step__top">
+              <span class="timeline-step__num num">03</span>
+              <div class="timeline-step__icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+              </div>
+            </div>
+            <h3 data-i18n="how_s3_title">تابع حياً على الخريطة واستلم بكود سري</h3>
+            <p data-i18n="how_s3_desc">شاهد حركة المركبة لحظة بلحظة على المسار، وراجع فاتورة الشراء إن وجدت، ثم أغلق الطلب بكود التسليم السري الثنائي.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Everyday Qatar Stories -->
+    <section id="stories" class="section section--canvas">
       <div class="container">
         <div class="section-header reveal">
-          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="showcase_eyebrow">لقطات حقيقية من التطبيق الحالي</span></span>
-          <h2 class="section-title" data-i18n="showcase_title">تطبيق للمستخدم بخريطة أوبر الحية + لوحة إدارة من 14 وحدة لفريق التشغيل</h2>
-          <p class="section-subtitle" data-i18n="showcase_sub">دي لقطات مباشرة من النسخة الفعلية الشغالة حالياً على الويب والموبايل — تقدر تتنقل بين شاشات المستخدم ولوحة الإدارة وتفتح النسخة الحية وتجربها بنفسك.</p>
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="stories_eyebrow">من واقع الحركة اليومية في قطر</span></span>
+          <h2 class="section-title" data-i18n="stories_title">مواقف حقيقية يختصر فيها مشوار الوقت والتكلفة</h2>
+          <p class="section-subtitle" data-i18n="stories_sub">أمثلة واقعية من محاور الدوحة ولوسيل والخور والوكرة توضّح كيف يندمج مشوار بسلاسة في يومك.</p>
+        </div>
+
+        <div class="stories-grid reveal">
+          <article class="story-card">
+            <div class="story-card__meta">
+              <span class="story-tag story-tag--gold num" data-i18n="st_1_tag">لوسيل ↔ الصناعية · 42 دقيقة</span>
+              <span class="story-role" data-i18n="st_1_role">مهندس موقع في مارينا لوسيل</span>
+            </div>
+            <h3 data-i18n="st_1_title">توريد قاطع كهربائي عاجل دون تعطيل الورشة</h3>
+            <p data-i18n="st_1_desc">نقص قاطع كهربائي رئيسي كاد يوقف عمل الفريق لبقية اليوم. نشر المهندس الطلب على مشوار، تلقّى عرضاً من منفّذ قريب من شارع 10، راجع صورة الفاتورة من المتجر، واستلم القطعة في الموقع بكود سري خلال 42 دقيقة.</p>
+            <div class="story-outcome num" data-i18n="st_1_stat">55 ر.ق · حفظ يوم عمل كامل</div>
+          </article>
+
+          <article class="story-card">
+            <div class="story-card__meta">
+              <span class="story-tag story-tag--teal num" data-i18n="st_2_tag">الخور ↔ الخليج الغربي · يومياً</span>
+              <span class="story-role" data-i18n="st_2_role">موظف يتنقّل يومياً على طريق الخور</span>
+            </div>
+            <h3 data-i18n="st_2_title">خفض تكلفة التنقل الشهري بنسبة 70%</h3>
+            <p data-i18n="st_2_desc">بدلاً من إنفاق أكثر من 2,200 ر.ق شهرياً على تنقّلات فردية بين الخور والخليج الغربي، يشارك المقعد مع موثّقين يعملون في نفس المنطقة بتكلفة 30 ر.ق للرحلة وبمواعيد ثابتة ومريحة.</p>
+            <div class="story-outcome num" data-i18n="st_2_stat">توفير 1,600 ر.ق شهرياً</div>
+          </article>
+
+          <article class="story-card">
+            <div class="story-card__meta">
+              <span class="story-tag story-tag--navy num" data-i18n="st_3_tag">الوكرة ↔ الخليج الغربي · 38 دقيقة</span>
+              <span class="story-role" data-i18n="st_3_role">مكتب هندسي واستشاري في الوكرة</span>
+            </div>
+            <h3 data-i18n="st_3_title">تسليم عقد مناقصة قبل إغلاق الموعد النهائي</h3>
+            <p data-i18n="st_3_desc">احتاج المكتب لتوصيل أصل عقد موقّع من الوكرة إلى الخليج الغربي خلال ساعة واحدة. سُلّم المظروف لمسافر موثّق بكود استلام، وتمت متابعته حياً على الخريطة حتى تسليمه للمستلم بكود التسليم خلال 38 دقيقة.</p>
+            <div class="story-outcome num" data-i18n="st_3_stat">25 ر.ق · تسليم مضمون في نفس الساعة</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Consumer App Walkthrough (5 Consumer Screens ONLY) -->
+    <section id="showcase" class="section section--sand">
+      <div class="container">
+        <div class="section-header reveal">
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="showcase_eyebrow">جولة داخل تطبيق مشوار</span></span>
+          <h2 class="section-title" data-i18n="showcase_title">تصميم عصري واضح يضع الخريطة والأمان في متناول يدك</h2>
+          <p class="section-subtitle" data-i18n="showcase_sub">تعرّف على أبرز 5 شاشات في تجربة المستخدم اليومية — من اختيار المسار والموقع على الخريطة وحتى إغلاق التسليم بكود سري.</p>
         </div>
 
         <div class="showcase-split reveal">
-          <div class="screen-tabs" role="tablist" aria-label="Mobile Screen Features">
+          <div class="screen-tabs" role="tablist" aria-label="Consumer App Screens">
             <button class="screen-tab is-active" type="button" data-screen-idx="0">
               <div>
-                <div class="screen-tab__title" data-i18n="mob_tab_1_t">الشاشة الرئيسية + تبديل الخدمات</div>
-                <div class="screen-tab__desc" data-i18n="mob_tab_1_d">اختر بين الرحلات والطرود والتوريد وشاهد الخريطة الحية وحركة المركبة فوراً.</div>
+                <div class="screen-tab__title" data-i18n="sc_1_t">الشاشة الرئيسية الموحّدة</div>
+                <div class="screen-tab__desc" data-i18n="sc_1_d">تنقّل بسلاسة بين الرحلات التشاركية والطرود وتوريد المواقع من شاشة واحدة واضحة.</div>
               </div>
-              <span class="screen-tab__badge" data-i18n="mob_tab_1_b">الرئيسية</span>
+              <span class="screen-tab__badge" data-i18n="sc_1_b">الرئيسية</span>
             </button>
+
             <button class="screen-tab" type="button" data-screen-idx="1">
               <div>
-                <div class="screen-tab__title" data-i18n="mob_tab_2_t">تفاصيل الرحلة ومحطات التوقف</div>
-                <div class="screen-tab__desc" data-i18n="mob_tab_2_d">المسار كامل على الخريطة، تقييم المسافر، المقاعد المتاحة، وخيار إرسال طرد معه.</div>
+                <div class="screen-tab__title" data-i18n="sc_2_t">خريطة مشوار وتحديد المواقع</div>
+                <div class="screen-tab__desc" data-i18n="sc_2_d">حدّد موقعك الحالي أو اختر نقطتي الانطلاق والوصول بدقة مباشرة على الخريطة.</div>
               </div>
-              <span class="screen-tab__badge" data-i18n="mob_tab_2_b">الرحلات</span>
+              <span class="screen-tab__badge" data-i18n="sc_2_b">الخريطة</span>
             </button>
+
             <button class="screen-tab" type="button" data-screen-idx="2">
               <div>
-                <div class="screen-tab__title" data-i18n="mob_tab_3_t">تتبع الطرود بكود الاستلام والتسليم</div>
-                <div class="screen-tab__desc" data-i18n="mob_tab_3_d">متابعة حية على الخريطة مع كودين 4 أرقام لضمان استلام وتسليم الأمانة بأمان.</div>
+                <div class="screen-tab__title" data-i18n="sc_3_t">تفاصيل الرحلة والمقاعد</div>
+                <div class="screen-tab__desc" data-i18n="sc_3_d">اطّلع على المسار الكامل، عدد المقاعد المتاحة، وتقييم السائق الموثّق قبل الحجز.</div>
               </div>
-              <span class="screen-tab__badge" data-i18n="mob_tab_3_b">الطرود</span>
+              <span class="screen-tab__badge" data-i18n="sc_3_b">الرحلات</span>
             </button>
+
             <button class="screen-tab" type="button" data-screen-idx="3">
               <div>
-                <div class="screen-tab__title" data-i18n="mob_tab_4_t">ساحة الطلبات والعروض المفتوحة</div>
-                <div class="screen-tab__desc" data-i18n="mob_tab_4_d">قارن بين طلبات الركاب والطرود وقدّم عرضك المباشر أو تواصل عبر الشات.</div>
+                <div class="screen-tab__title" data-i18n="sc_4_t">تتبع الطرود بكود سري ثنائي</div>
+                <div class="screen-tab__desc" data-i18n="sc_4_d">متابعة حية على الخريطة مع كود استلام وكود تسليم لضمان وصول الأمانة بأمان.</div>
               </div>
-              <span class="screen-tab__badge" data-i18n="mob_tab_4_b">العروض</span>
+              <span class="screen-tab__badge" data-i18n="sc_4_b">الطرود</span>
             </button>
+
             <button class="screen-tab" type="button" data-screen-idx="4">
               <div>
-                <div class="screen-tab__title" data-i18n="mob_tab_5_t">نشر رحلة أو طلب في 3 خطوات</div>
-                <div class="screen-tab__desc" data-i18n="mob_tab_5_d">خطوات بسيطة وواضحة لحساب التكلفة واختيار النقاط على الخريطة بدون تعقيد.</div>
+                <div class="screen-tab__title" data-i18n="sc_5_t">توريد المواقع ومراجعة الفاتورة</div>
+                <div class="screen-tab__desc" data-i18n="sc_5_d">قارن عروض المنفّذين، راجع صورة فاتورة المحل، وأكّد التسليم بثقة تامة.</div>
               </div>
-              <span class="screen-tab__badge" data-i18n="mob_tab_5_b">نشر سريع</span>
-            </button>
-            <button class="screen-tab" type="button" data-screen-idx="5">
-              <div>
-                <div class="screen-tab__title" data-i18n="mob_tab_6_t">توثيق المركبة والبطاقة القطرية QID</div>
-                <div class="screen-tab__desc" data-i18n="mob_tab_6_d">رفع بيانات الرخصة والاستمارة وبطاقة QID لمراجعتها من لوحة الإدارة.</div>
-              </div>
-              <span class="screen-tab__badge" data-i18n="mob_tab_6_b">التوثيق</span>
+              <span class="screen-tab__badge" data-i18n="sc_5_b">التوريد</span>
             </button>
           </div>
 
           <div class="showcase-phone-stage">
             <div class="phone-device-stage">
+              <div class="phone-device-stage__island" aria-hidden="true"></div>
               <div class="phone-device-stage__inner">
-                <img id="mobile-screen-img" src="./assets/mobile/10_tab_home_screen.png" alt="Interactive Mobile App Screen Preview" />
+                <img id="mobile-screen-img" src="./assets/mobile/app_home_hero.png" alt="MASHWAR Consumer App Walkthrough Screen" />
               </div>
             </div>
-            <div class="quick-kyc-pills">
-              <button class="quick-kyc-pill" type="button" data-screen-idx="6" data-i18n="pill_otp_parcel">نافذة كود التسليم OTP</button>
-              <button class="quick-kyc-pill" type="button" data-screen-idx="7" data-i18n="pill_vehicle_kyc">مركز الطوارئ قطر 999</button>
-              <button class="quick-kyc-pill" type="button" data-screen-idx="8" data-i18n="pill_sos_999">مراجعة الفاتورة والتسوية</button>
-            </div>
-          </div>
-        </div>
 
-        <!-- Standalone 14-Module Enterprise RBAC Admin, DevOps & Web Console -->
-        <div class="admin-showcase-card reveal">
-          <div class="admin-showcase__head">
-            <div>
-              <h3 data-i18n="admin_head_t">شاشات النسخة الحية: تطبيق الويب للعملاء ولوحة إدارة العمليات (14 وحدة)</h3>
-              <p data-i18n="admin_head_d">تصفّح لقطات حقيقية من خريطة أوبر الحية داخل تطبيق المستخدم ومن لوحة الإدارة المحدّثة (خريطة المحاور والزحمة، مراجعة هويات QID، طلبات التوريد، ورسائل الموقع).</p>
-            </div>
-            <div class="pill-switch">
-              <button class="is-active" type="button" data-web-tab="app_home" data-i18n="web_tab_app_home">الرئيسية + خريطة أوبر</button>
-              <button type="button" data-web-tab="app_traffic" data-i18n="web_tab_app_traffic">خريطة الزحمة الكاملة</button>
-              <button type="button" data-web-tab="app_ride" data-i18n="web_tab_app_ride">تفاصيل الرحلة</button>
-              <button type="button" data-web-tab="app_supply" data-i18n="web_tab_app_supply">طلب توريد موقع</button>
-              <button type="button" data-web-tab="admin_dash" data-i18n="web_tab_admin_dash">لوحة الإدارة الرئيسية</button>
-              <button type="button" data-web-tab="admin_ops" data-i18n="web_tab_admin_ops">بوابة الإدارة (الوضع الليلي)</button>
-            </div>
-          </div>
-          <div class="browser-frame">
-            <div class="browser-frame__bar">
-              <div class="browser-dots"><span></span><span></span><span></span></div>
-              <div id="web-stage-url" class="browser-url">https://app.mashwar.qa/home</div>
-              <div></div>
-            </div>
-            <img id="web-stage-img" src="./assets/web/app_home_live_map.png" alt="MASHWAR Live Consumer App and Admin Portal Preview" />
-          </div>
-          <div class="admin-live-actions">
-            <div class="admin-cap-pills">
-              <span class="admin-cap-pill" data-i18n="admin_cap_1">14 وحدة إدارة · 5 أدوار RBAC</span>
-              <span class="admin-cap-pill" data-i18n="admin_cap_2">خريطة زحمة حية جوه الإدارة</span>
-              <span class="admin-cap-pill" data-i18n="admin_cap_3">مراجعة QID وإيصالات التحويل</span>
-              <span class="admin-cap-pill" data-i18n="admin_cap_4">بحث سريع Ctrl+K + وضع ليلي</span>
-            </div>
-            <div class="admin-live-btns">
-              <a href="/admin/" target="_blank" rel="noopener" class="btn btn--gold btn--sm" data-live-admin-btn data-i18n="admin_btn_launch_ops">افتح لوحة الإدارة الحية (/admin)</a>
-              <a href="/" target="_blank" rel="noopener" class="btn btn--glass btn--sm" data-live-web-btn data-i18n="admin_btn_launch_web">افتح تطبيق المستخدم الحي</a>
+            <div class="carousel-controls">
+              <button id="showcase-prev" class="carousel-arrow" type="button" aria-label="Previous Screen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <div class="carousel-dots" role="tablist" aria-label="Slide Dots">
+                <button class="carousel-dot is-active" type="button" data-screen-dot="0" aria-label="Slide 1"></button>
+                <button class="carousel-dot" type="button" data-screen-dot="1" aria-label="Slide 2"></button>
+                <button class="carousel-dot" type="button" data-screen-dot="2" aria-label="Slide 3"></button>
+                <button class="carousel-dot" type="button" data-screen-dot="3" aria-label="Slide 4"></button>
+                <button class="carousel-dot" type="button" data-screen-dot="4" aria-label="Slide 5"></button>
+              </div>
+              <button id="showcase-next" class="carousel-arrow" type="button" aria-label="Next Screen">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 6. Competitive Advantage Matrix & Technical Due-Diligence -->
-    <section id="advantage" class="section section--dark">
+    <!-- 8. Trust, Safety & Neutral Market Comparison -->
+    <section id="safety" class="section section--surface">
       <div class="container">
         <div class="section-header reveal">
-          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="adv_eyebrow">الفرق على أرض الواقع</span></span>
-          <h2 class="section-title" data-i18n="adv_title">ليه الناس بتختار مشوار بدل الحلول المتفرقة؟</h2>
-          <p class="section-subtitle" data-i18n="adv_sub">مقارنة صريحة وبسيطة توضح مكان مشوار الفعلي مقارنة بالتاكسي الفردي وشركات الشحن التقليدية وجروبات الواتساب.</p>
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="safety_eyebrow">الأمان والموثوقية والشفافية</span></span>
+          <h2 class="section-title" data-i18n="safety_title">لماذا مشوار؟ حماية حقيقية في كل خطوة على الطريق</h2>
+          <p class="section-subtitle" data-i18n="safety_sub">صُمّمت طبقة الثقة في مشوار لتناسب خصوصية المجتمع القطري وتمنح الراكب والمرسل والمقاول راحة بال كاملة.</p>
         </div>
 
-        <div class="matrix-wrap reveal">
-          <table class="matrix-table">
-            <thead>
-              <tr>
-                <th data-i18n="mtx_h_feat">الحاجة اليومية</th>
-                <th class="col-mashwar" data-i18n="mtx_h_m">مشوار (MASHWAR)</th>
-                <th data-i18n="mtx_h_u">تطبيقات التاكسي الفردي</th>
-                <th data-i18n="mtx_h_c">شركات الشحن التقليدية</th>
-                <th data-i18n="mtx_h_w">جروبات الواتساب</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td data-i18n="mtx_r1">مشاركة تكلفة المشوار بين المدن</td>
-                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r1_m">أساسي (توفير حتى 70%)</span></span></td>
-                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r1_u">مشوار فردي كامل</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r1_c">غير متاح</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r1_w">عشوائي بلا تنظيم</span></td>
-              </tr>
-              <tr>
-                <td data-i18n="mtx_r2">توصيل أوراق أو قطع غيار في نفس اليوم</td>
-                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r2_m">مباشر خلال 35–180 دقيقة</span></span></td>
-                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r2_u">مكلف للمسافات الطويلة</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r2_c">24–72 ساعة عبر مخازن فرز</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r2_w">بدون تتبع أو ضمان</span></td>
-              </tr>
-              <tr>
-                <td data-i18n="mtx_r3">مراجعة هوية QID (11 رقم) والمركبة</td>
-                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r3_m">مراجعة إدارية قبل التفعيل</span></span></td>
-                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r3_u">خاص بسيارات الأجرة فقط</span></td>
-                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r3_c">مندوبو شركات فقط</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r3_w">مفيش أي توثيق</span></td>
-              </tr>
-              <tr>
-                <td data-i18n="mtx_r4">كود تسليم سري (OTP / SHA-256) + صور</td>
-                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r4_m">مدمج في كل طرد وطلب توريد</span></span></td>
-                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r4_u">غير متاح للطرود والمشتريات</span></td>
-                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r4_c">توقيع ورقي تقليدي</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r4_w">غير متاح</span></td>
-              </tr>
-              <tr>
-                <td data-i18n="mtx_r5">خريطة حية كاملة بالزحمة وحركة المركبة</td>
-                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r5_m">مدمجة جوه التطبيق بدون فتح خارجي</span></span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r5_u">للرحلة فقط</span></td>
-                <td><span class="status-pill status-pill--warn" data-i18n="mtx_r5_c">تحديث نصي متأخر</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r5_w">إرسال لوكيشن يدوي</span></td>
-              </tr>
-              <tr>
-                <td data-i18n="mtx_r6">خصوصية الأرقام + زر طوارئ قطر 999</td>
-                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r6_m">شات داخلي + 999 SOS</span></span></td>
-                <td><span class="status-pill status-pill--yes" data-i18n="mtx_r6_u">متاح</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r6_c">غير متاح</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r6_w">الأرقام مكشوفة للجميع</span></td>
-              </tr>
-              <tr>
-                <td data-i18n="mtx_r7">شراء وتوريد لمواقع العمل بصورة فاتورة</td>
-                <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r7_m">مقارنة عروض + صورة فاتورة المحل</span></span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r7_u">غير متاح</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r7_c">نقل فقط بدون شراء</span></td>
-                <td><span class="status-pill status-pill--no" data-i18n="mtx_r7_w">مخاطرة عالية في الفلوس</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="trust-pillars-grid reveal">
-          <article class="spotlight-card">
-            <div class="trust-pillar__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2"/><path d="M15 12h2"/><path d="M7 16h10"/></svg>
-            </div>
-            <h3 data-i18n="tp_1_t">توثيق حقيقي للـ QID وتجربة تسجيل نظيفة</h3>
-            <p data-i18n="tp_1_d">الحساب الجديد يبدأ نظيفاً بلا إشعارات مزيفة، مع مراجعة هوية QID (11 رقم) وتخصيص رحلات السيدات فقط وطوارئ 999.</p>
-          </article>
-          <article class="spotlight-card">
-            <div class="trust-pillar__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </div>
-            <h3 data-i18n="tp_2_t">خريطة حية بأسلوب أوبر داخل التطبيق</h3>
-            <p data-i18n="tp_2_d">عرض المسار كاملًا تلقائيًا مع زحمة جوجل، 4 أنماط خريطة، وأيقونات متحركة للسيارة وفان الطرود وشاحنة التوريد.</p>
-          </article>
-          <article class="spotlight-card">
-            <div class="trust-pillar__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            </div>
-            <h3 data-i18n="tp_3_t">أمان فعلي على مستوى قاعدة البيانات</h3>
-            <p data-i18n="tp_3_d">29 مجموعة Firestore محمية بقواعد أمان صارمة، 10 دوال سحابية v2، وكود تسليم Salted SHA-256 مختبر على Emulators.</p>
-          </article>
-          <article class="spotlight-card">
-            <div class="trust-pillar__icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-            </div>
-            <h3 data-i18n="tp_4_t">جاهزية إنتاجية مثبتة بالاختبارات</h3>
-            <p data-i18n="tp_4_d">200 اختبار Flutter ناجح، 11 اختبار أمان للدوال السحابية، 10 اختبارات لقواعد البيانات، ولوحة إدارة من 14 وحدة.</p>
-          </article>
-        </div>
-
-        <div class="driver-promo-card reveal">
-          <div class="driver-promo-card__media">
-            <img src="./assets/posters/driver_promo.jpg" alt="Qatar Driver Partner Network" loading="lazy" />
+        <!-- Bespoke Inline SVG MASHWAR Trust Shield Card (Zero Maroon!) -->
+        <div class="trust-shield-banner reveal">
+          <div class="trust-shield-banner__art" aria-hidden="true">
+            <svg class="mw-trust-shield-svg" viewBox="0 0 260 260" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="MASHWAR Trust Shield">
+              <defs>
+                <linearGradient id="mwShieldBg" x1="20" y1="20" x2="240" y2="240" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#0B1F33"/>
+                  <stop offset="100%" stop-color="#11324D"/>
+                </linearGradient>
+                <linearGradient id="mwShieldEdge" x1="55" y1="30" x2="205" y2="230" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#2DD4BF"/>
+                  <stop offset="52%" stop-color="#14B8A6"/>
+                  <stop offset="100%" stop-color="#F59E0B"/>
+                </linearGradient>
+                <linearGradient id="mwShieldInner" x1="130" y1="54" x2="130" y2="208" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#14B8A6" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#0F766E" stop-opacity="0.06"/>
+                </linearGradient>
+                <linearGradient id="mwCheckGold" x1="94" y1="108" x2="168" y2="152" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#FDE68A"/>
+                  <stop offset="55%" stop-color="#F59E0B"/>
+                  <stop offset="100%" stop-color="#D97706"/>
+                </linearGradient>
+              </defs>
+              <circle cx="130" cy="130" r="118" fill="url(#mwShieldBg)" stroke="rgba(45,212,191,0.22)" stroke-width="1.5"/>
+              <circle cx="130" cy="130" r="96" stroke="rgba(45,212,191,0.16)" stroke-width="1.2" stroke-dasharray="5 7"/>
+              <circle cx="130" cy="130" r="76" stroke="rgba(245,158,11,0.20)" stroke-width="1.2"/>
+              <path d="M130 34L198 62V124C198 169 169 204 130 222C91 204 62 169 62 124V62L130 34Z" fill="#081827" stroke="url(#mwShieldEdge)" stroke-width="4.5" stroke-linejoin="round"/>
+              <path d="M130 49L184 71V122C184 159 160 188 130 204C100 188 76 159 76 122V71L130 49Z" fill="url(#mwShieldInner)" stroke="rgba(255,255,255,0.14)" stroke-width="1.2"/>
+              <path d="M98 128L120 150L164 104" stroke="url(#mwCheckGold)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="130" cy="34" r="5" fill="#2DD4BF"/>
+              <circle cx="62" cy="124" r="4" fill="#F59E0B"/>
+              <circle cx="198" cy="124" r="4" fill="#F59E0B"/>
+            </svg>
           </div>
-          <div class="driver-promo-card__body">
-            <h3 data-i18n="driver_promo_t">هل بتتحرك يومياً على طرق قطر أو بتشتغل في التوريد؟</h3>
-            <p data-i18n="driver_promo_d">استفيد من طريقك اليومي بين الدوحة ولوسيل والمنطقة الصناعية والخور والوكرة — شارك المقاعد الفاضية أو وصّل طلبات ومعدات في نفس خطك بدخل واضح وتسوية مباشرة.</p>
-            <div class="rail-badges">
-              <span class="rail-badge">Cash on Delivery · كاش عند الاستلام</span>
-              <span class="rail-badge">Verified Bank Transfer · تحويل بإيصال</span>
-              <span class="rail-badge">Store Receipt Photo · فاتورة حية</span>
-              <span class="rail-badge">SHA-256 &amp; Dual OTP</span>
-              <span class="rail-badge">QAR · ر.ق</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+          <div class="trust-shield-banner__content">
+            <span class="shield-kicker" data-i18n="shield_badge">درع ثقة مشوار قطر</span>
+            <h3 data-i18n="shield_title">كل معاملة محمية بأربع ركائز عملية واضحة</h3>
+            <p data-i18n="shield_desc">لا رسوم مخفية ولا مخاطرة في التسليم: هوية قطرية مراجعة، تتبع حي على الخريطة، كود سري ثنائي لإغلاق التسليم، وتسوية مباشرة وشفافة.</p>
 
-    <!-- 7. Investor Data Room & Interactive 3-Year Financial Projections -->
-    <section id="investors" class="section section--sand">
-      <div class="container">
-        <div class="section-header reveal">
-          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="fin_eyebrow">نموذج العمل والأرقام (للمستثمرين والشركاء)</span></span>
-          <h2 class="section-title" data-i18n="fin_title">تقديرات السوق والنموذج المالي لـ 36 شهراً</h2>
-          <p class="section-subtitle" data-i18n="fin_sub">نموذج عملي مبني على اقتصاديات المحاور الفعلية في قطر مع خيار اختبار السيناريو المتحفظ (-30% حجم) وتبديل العملة بين الدولار والريال القطري.</p>
-        </div>
-
-        <div class="market-cards reveal">
-          <article class="market-card">
-            <div class="market-card__tier" data-i18n="tam_tier">السوق الكلي القابل للاستحواذ (TAM)</div>
-            <div id="kpi-tam-val" class="market-card__val num">$272.50M</div>
-            <p class="market-card__sub" data-i18n="tam_sub">18 مليون رحلة تنقل ($7.50) + 12.5 مليون عملية مشتريات وتوريد مواقع وطرود ($11.00) في قطر والخليج.</p>
-          </article>
-          <article class="market-card market-card--teal">
-            <div class="market-card__tier" data-i18n="sam_tier">السوق المستهدف في الممرات الأولى (SAM)</div>
-            <div id="kpi-sam-val" class="market-card__val num">$59.95M</div>
-            <p class="market-card__sub" data-i18n="sam_sub">22% اختراق رقمي في المحاور القطرية والمنطقة الصناعية ولوسيل والتوسع الخليجي التدريجي.</p>
-          </article>
-          <article class="market-card market-card--gold">
-            <div class="market-card__tier" data-i18n="som_tier">الحصة المستهدفة في السنة الثالثة (SOM)</div>
-            <div id="kpi-som-val" class="market-card__val num">$3.02M GMV</div>
-            <p id="kpi-som-sub" class="market-card__sub">14 ممراً تنفذ 330,162 معاملة + 348 اشتراك B2B (صافي إيراد $695.8K).</p>
-          </article>
-        </div>
-
-        <div class="finance-controls-bar reveal">
-          <div class="finance-controls-group">
-            <span class="control-label" data-i18n="ctrl_scenario">السيناريو:</span>
-            <div class="pill-switch">
-              <button class="is-active" type="button" data-scenario="base" data-i18n="scen_base">الأساسي (Base)</button>
-              <button type="button" data-scenario="stress" data-i18n="scen_stress">متحفظ (-30% حجم)</button>
-            </div>
-          </div>
-          <div class="finance-controls-group">
-            <span class="control-label" data-i18n="ctrl_currency">العملة:</span>
-            <div class="pill-switch">
-              <button class="is-active" type="button" data-currency="USD" data-i18n="curr_usd">دولار ($)</button>
-              <button type="button" data-currency="QAR" data-i18n="curr_qar">ريال قطري (ر.ق @ 3.64)</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="charts-grid reveal">
-          <div class="chart-card">
-            <div class="chart-card__head">
-              <div>
-                <h3 data-i18n="ch1_title">تطور حجم التعاملات (GMV) وصافي الإيرادات (Q1–Q12)</h3>
-                <p data-i18n="ch1_sub">مرّر المؤشر فوق أي ربع سنة لمشاهدة التفاصيل وعدد الممرات والعمليات.</p>
-              </div>
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-swatch" style="background:#0F2A43"></span><span data-i18n="ch1_leg_gmv">إجمالي التعاملات (GMV)</span></span>
-                <span class="legend-item"><span class="legend-swatch" style="background:#F5A524"></span><span data-i18n="ch1_leg_rev">صافي إيرادات المنصة</span></span>
-              </div>
-            </div>
-            <div class="svg-chart-scroll">
-              <div id="chart-gmv-revenue" class="svg-chart-wrap"></div>
-            </div>
-          </div>
-
-          <div class="chart-card">
-            <div class="chart-card__head">
-              <div>
-                <h3 data-i18n="ch2_title">توزيع إيرادات السنة الثالثة</h3>
-                <p data-i18n="ch2_sub">التوازن بين الرحلات والطرود وتوريد المواقع وباقات الأعمال.</p>
-              </div>
-            </div>
-            <div class="donut-layout">
-              <div id="chart-rev-donut" class="svg-chart-wrap" style="display:flex;justify-content:center"></div>
-              <div id="chart-rev-bars" class="donut-bars"></div>
-            </div>
-          </div>
-
-          <div class="chart-card chart-card--full">
-            <div class="chart-card__head">
-              <div>
-                <h3 data-i18n="ch3_title">الرصيد النقدي، نقطة التعادل ودفعات التمويل</h3>
-                <p data-i18n="ch3_sub">متابعة السيولة الشهرية مع الحفاظ على رصيد أمان أدنى $72K حتى الوصول لنقطة التعادل.</p>
-              </div>
-              <div class="chart-legend">
-                <span class="legend-item"><span class="legend-swatch" style="background:#1B7F79"></span><span data-i18n="ch3_leg_cash">الرصيد النقدي الختامي</span></span>
-                <span class="legend-item"><span class="legend-swatch" style="background:#0F2A43"></span><span data-i18n="ch3_leg_ebitda">الربح التشغيلي الشهري (EBITDA)</span></span>
-                <span class="legend-item"><span class="legend-swatch" style="background:#F5A524"></span><span data-i18n="ch3_leg_tranches">دفعات التمويل ($450K)</span></span>
-              </div>
-            </div>
-            <div class="svg-chart-scroll">
-              <div id="chart-cash-runway" class="svg-chart-wrap"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="simulator-card reveal">
-          <div>
-            <h3 style="margin:0 0 6px;color:var(--gold);font-size:1.25rem;font-weight:800" data-i18n="sim_title">جرّب محاكي اقتصاديات المحاور بنفسك</h3>
-            <p style="margin:0 0 20px;color:#CBD5E1;font-size:0.9rem" data-i18n="sim_sub">غيّر عدد المحاور والطلبات اليومية وشوف الأثر الفوري على الإيرادات وعائد المنفّذين.</p>
-            <div class="simulator-sliders">
-              <div class="slider-group">
-                <div class="slider-group__head">
-                  <label for="sim-corridors" data-i18n="sim_s1">عدد المحاور النشطة</label>
-                  <span id="sim-corridors-val" class="slider-group__val num">14</span>
+            <div class="safety-pillars-grid">
+              <article class="safety-pillar">
+                <div class="safety-pillar__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M15 8h2"/><path d="M15 12h2"/><path d="M7 16h10"/></svg>
                 </div>
-                <input id="sim-corridors" type="range" min="1" max="24" value="14" />
-              </div>
-              <div class="slider-group">
-                <div class="slider-group__head">
-                  <label for="sim-orders" data-i18n="sim_s2">متوسط الطلبات اليومية لكل محور</label>
-                  <span id="sim-orders-val" class="slider-group__val num">65</span>
+                <div>
+                  <h4 data-i18n="sp_1_t">توثيق بالبطاقة القطرية (QID)</h4>
+                  <p data-i18n="sp_1_d">مراجعة بيانات الهوية القطرية (11 رقماً) والمركبة قبل تفعيل أي سائق أو منفّذ على المنصة.</p>
                 </div>
-                <input id="sim-orders" type="range" min="15" max="150" value="65" />
-              </div>
-              <div class="slider-group">
-                <div class="slider-group__head">
-                  <label for="sim-b2b" data-i18n="sim_s3">حسابات الشركات والورش المشتركة (B2B)</label>
-                  <span id="sim-b2b-val" class="slider-group__val num">348</span>
+              </article>
+
+              <article class="safety-pillar">
+                <div class="safety-pillar__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </div>
-                <input id="sim-b2b" type="range" min="0" max="600" step="12" value="348" />
-              </div>
-            </div>
-          </div>
+                <div>
+                  <h4 data-i18n="sp_2_t">كود استلام وتسليم ثنائي (Dual-OTP)</h4>
+                  <p data-i18n="sp_2_d">لا يُغلق أي طرد أو طلب توريد إلا بعد مطابقة كود التسليم السري لدى المستلم الفعلي.</p>
+                </div>
+              </article>
 
-          <div class="simulator-outputs">
-            <div class="sim-kpi">
-              <div class="sim-kpi__label" data-i18n="sim_o1">إجمالي التعاملات السنوي (GMV)</div>
-              <div id="sim-gmv-out" class="sim-kpi__val num">$3.04M</div>
-            </div>
-            <div class="sim-kpi">
-              <div class="sim-kpi__label" data-i18n="sim_o2">إجمالي إيرادات المنصة السنوية</div>
-              <div id="sim-rev-out" class="sim-kpi__val num">$761.8K</div>
-            </div>
-            <div class="sim-kpi">
-              <div class="sim-kpi__label" data-i18n="sim_o3">متوسط العائد الموزع على المنفّذين سنوياً</div>
-              <div id="sim-driver-out" class="sim-kpi__val num" style="color:#5EEAD4">$2.61M</div>
-            </div>
-            <div class="sim-kpi">
-              <div class="sim-kpi__label" data-i18n="sim_o4">حصة إيرادات الأعمال المتكررة</div>
-              <div id="sim-b2b-pct-out" class="sim-kpi__val num" style="color:#FFFFFF">43.3%</div>
-            </div>
-          </div>
-        </div>
+              <article class="safety-pillar">
+                <div class="safety-pillar__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+                </div>
+                <div>
+                  <h4 data-i18n="sp_3_t">تتبع GPS حي وزر طوارئ 999</h4>
+                  <p data-i18n="sp_3_d">مشاركة فورية للمسار الحي مع العائلة أو فريق العمل، مع زر اتصال مباشر بطوارئ قطر 999.</p>
+                </div>
+              </article>
 
-        <div class="table-wrap reveal">
-          <table class="fin-table">
-            <thead id="fin-table-head"></thead>
-            <tbody id="fin-table-body"></tbody>
-          </table>
-        </div>
-
-        <div class="tranches-grid reveal">
-          <article class="tranche-card">
-            <span class="tranche-card__tag" data-i18n="tr1_t">المرحلة 1 · الشهر 1 (30%)</span>
-            <div id="tranche-amt-1" class="tranche-card__amt num">$135,000 (30%)</div>
-            <p class="tranche-card__desc" data-i18n="tr1_d">تأسيس الشركة في الدوحة، تسجيل العلامة التجارية، تفعيل Firebase Blaze ورسائل +974، وتعيين مهندس Backend أول.</p>
-          </article>
-          <article class="tranche-card">
-            <span class="tranche-card__tag" data-i18n="tr2_t">المرحلة 2 · الشهر 7 (35%)</span>
-            <div id="tranche-amt-2" class="tranche-card__amt num">$157,500 (35%)</div>
-            <p class="tranche-card__desc" data-i18n="tr2_d">تعيين مسؤول العمليات ومراجعة QID، استكمال التراخيص وبوابات الدفع، وتوسيع شبكة المنفّذين في قطر.</p>
-          </article>
-          <article class="tranche-card">
-            <span class="tranche-card__tag" data-i18n="tr3_t">المرحلة 3 · الشهر 13 (35%)</span>
-            <div id="tranche-amt-3" class="tranche-card__amt num">$157,500 (35%)</div>
-            <p class="tranche-card__desc" data-i18n="tr3_d">إطلاق باقات الشركات والمقاولين (B2B)، التوسع إلى 14 محوراً، والوصول لنقطة التعادل في الشهر 21.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- 8. Founder Spotlight, App Download & Investor Inquiry -->
-    <section id="download" class="section section--dark">
-      <div class="container">
-        <div class="founder-spotlight reveal">
-          <div>
-            <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="fnd_eyebrow">عن المؤسس وفريق التشغيل بالدوحة</span></span>
-            <h2 class="section-title" style="font-size:1.7rem;margin-bottom:6px" data-i18n="fnd_name">عبدالرحمن مهنا — المؤسس ومهندس النظام</h2>
-            <p style="margin:0 0 12px;color:var(--gold);font-weight:700;font-size:0.96rem" data-i18n="fnd_role">مهندس برمجيات وذكاء اصطناعي (Flutter · Firebase · FastAPI · Cloud Security)</p>
-            <p style="margin:0 0 16px;color:#CBD5E1;font-size:0.94rem" data-i18n="fnd_bio">صمّمت وبنيت واختبرت منظومة مشوار بالكامل من الصفر قبل أي جولة تمويل — من تطبيق الموبايل والويب ومحرك الخريطة الحية وحتى قواعد أمان Firestore ولوحة الإدارة من 14 وحدة — وبالتزام كامل بالتفرغ والانتقال الدائم إلى الدوحة لتشغيل المنصة على الأرض.</p>
-            <div class="founder-badges">
-              <span class="founder-badge" data-i18n="fnd_b1">تفرغ كامل لبناء وتكبير مشوار</span>
-              <span class="founder-badge" data-i18n="fnd_b2">الانتقال والتشغيل الميداني من الدوحة</span>
-              <span class="founder-badge" data-i18n="fnd_b3">خبرة عملية: Flutter, Firebase, AI, FastAPI</span>
-            </div>
-          </div>
-
-          <div class="doha-hires-grid">
-            <div class="hire-role-card">
-              <span class="hire-role-card__title" data-i18n="hire_1_t">مهندس Backend وأمن سحابي أول</span>
-              <span class="hire-role-card__phase" data-i18n="hire_1_p">المرحلة 1 · الشهر 2</span>
-            </div>
-            <div class="hire-role-card">
-              <span class="hire-role-card__title" data-i18n="hire_2_t">مسؤول العمليات ومراجعة هويات QID</span>
-              <span class="hire-role-card__phase" data-i18n="hire_2_p">المرحلة 2 · الشهر 7</span>
-            </div>
-            <div class="hire-role-card">
-              <span class="hire-role-card__title" data-i18n="hire_3_t">مسؤول نمو قطاع المقاولين والورش (B2B)</span>
-              <span class="hire-role-card__phase" data-i18n="hire_3_p">المرحلة 3 · الشهر 13</span>
+              <article class="safety-pillar">
+                <div class="safety-pillar__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                </div>
+                <div>
+                  <h4 data-i18n="sp_4_t">تسوية مباشرة وشفافة بالكامل</h4>
+                  <p data-i18n="sp_4_d">مراجعة صورة الفاتورة الفعلية من المحل مع دفع نقدي عند الاستلام أو تحويل بنكي موثّق بالإيصال.</p>
+                </div>
+              </article>
             </div>
           </div>
         </div>
 
-        <div class="download-grid reveal">
-          <div class="download-panel">
+        <!-- Neutral Market Comparison Matrix (ZERO Competitor Names) -->
+        <div class="comparison-block reveal">
+          <div class="comparison-block__head">
+            <h3 data-i18n="cmp_title">مقارنة موضوعية مع البدائل اليومية في قطر</h3>
+            <p data-i18n="cmp_sub">أين يقع مشوار مقارنة بخيارات التنقل والشحن التقليدية ومجموعات التواصل غير المنظمة.</p>
+          </div>
+          <div class="matrix-wrap">
+            <table class="matrix-table">
+              <thead>
+                <tr>
+                  <th data-i18n="mtx_h_feat">الميزة اليومية</th>
+                  <th class="col-mashwar" data-i18n="mtx_h_m">مشوار (MASHWAR)</th>
+                  <th data-i18n="mtx_h_u">تطبيقات التاكسي الفردي</th>
+                  <th data-i18n="mtx_h_c">شركات الشحن التقليدية</th>
+                  <th data-i18n="mtx_h_w">مجموعات الواتساب غير المنظمة</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td data-i18n="mtx_r1">مشاركة تكلفة التنقل بين المدن</td>
+                  <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r1_m">أساسي · توفير حتى 70%</span></span></td>
+                  <td><span class="status-pill status-pill--warn" data-i18n="mtx_r1_u">أجرة فردية كاملة</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r1_c">غير متاح</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r1_w">عشوائي بلا تنظيم</span></td>
+                </tr>
+                <tr>
+                  <td data-i18n="mtx_r2">توصيل مستندات وقطع غيار في نفس الساعة</td>
+                  <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r2_m">مباشر خلال 35–90 دقيقة</span></span></td>
+                  <td><span class="status-pill status-pill--warn" data-i18n="mtx_r2_u">مكلف للمسافات الطويلة</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r2_c">24–72 ساعة عبر مخازن الفرز</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r2_w">دون تتبع أو التزام</span></td>
+                </tr>
+                <tr>
+                  <td data-i18n="mtx_r3">مراجعة البطاقة القطرية (QID) والمركبة</td>
+                  <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r3_m">مراجعة قبل التفعيل</span></span></td>
+                  <td><span class="status-pill status-pill--warn" data-i18n="mtx_r3_u">لسيارات الأجرة فقط</span></td>
+                  <td><span class="status-pill status-pill--warn" data-i18n="mtx_r3_c">لمندوبي الشركات فقط</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r3_w">لا يوجد توثيق</span></td>
+                </tr>
+                <tr>
+                  <td data-i18n="mtx_r4">كود تسليم سري + صورة فاتورة المحل</td>
+                  <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r4_m">مدمج في الطرود والتوريد</span></span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r4_u">غير متاح</span></td>
+                  <td><span class="status-pill status-pill--warn" data-i18n="mtx_r4_c">توقيع تقليدي فقط</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r4_w">غير متاح</span></td>
+                </tr>
+                <tr>
+                  <td data-i18n="mtx_r5">خريطة مباشرة للمسار والزحمة داخل التطبيق</td>
+                  <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r5_m">مدمجة حياً في كل رحلة وطلب</span></span></td>
+                  <td><span class="status-pill status-pill--warn" data-i18n="mtx_r5_u">للرحلات فقط</span></td>
+                  <td><span class="status-pill status-pill--warn" data-i18n="mtx_r5_c">تحديثات نصية متأخرة</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r5_w">مشاركة موقع يدوية</span></td>
+                </tr>
+                <tr>
+                  <td data-i18n="mtx_r6">خصوصية رقم الهاتف + زر طوارئ 999</td>
+                  <td class="col-mashwar"><span class="status-pill status-pill--yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg><span data-i18n="mtx_r6_m">محادثة داخلية + طوارئ 999</span></span></td>
+                  <td><span class="status-pill status-pill--yes" data-i18n="mtx_r6_u">متاح</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r6_c">غير متاح</span></td>
+                  <td><span class="status-pill status-pill--no" data-i18n="mtx_r6_w">الأرقام مكشوفة للجميع</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Driver & Runner Partner CTA Band -->
+        <div class="driver-cta-band reveal">
+          <div class="driver-cta-band__media">
+            <img src="./assets/posters/driver_promo.jpg" alt="MASHWAR Verified Drivers and Supply Runners in Qatar" loading="lazy" />
+          </div>
+          <div class="driver-cta-band__body">
+            <span class="eyebrow eyebrow--hero"><span class="eyebrow__dot"></span><span data-i18n="driver_cta_eyebrow">للأفراد والسائقين ومنفّذي التوريد في قطر</span></span>
+            <h3 data-i18n="driver_cta_t">تتنقّل يومياً بين مدن قطر أو تعمل في التوريد؟ حوّل مسارك إلى دخل إضافي</h3>
+            <p data-i18n="driver_cta_d">استثمر المقاعد الشاغرة في سيارتك أو قدّم عروض توريد على نفس طريقك اليومي بين الدوحة ولوسيل والخور والوكرة والمنطقة الصناعية بتسوية مباشرة وشفافة.</p>
+            <div class="driver-cta-badges">
+              <span class="driver-pill" data-i18n="driver_cta_b1">تسوية مباشرة بالريال القطري</span>
+              <span class="driver-pill" data-i18n="driver_cta_b2">مرونة كاملة في اختيار الطلبات</span>
+              <span class="driver-pill" data-i18n="driver_cta_b3">توثيق سريع عبر البطاقة القطرية</span>
+            </div>
             <div>
-              <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="dl_eyebrow">جرّب مشوار الآن</span></span>
-              <h2 class="section-title" data-i18n="dl_title">افتح النسخة الحية أو اطلب رابط تجربة الموبايل</h2>
-              <p class="section-subtitle" data-i18n="dl_sub">تقدر تجرب تطبيق الويب ولوحة الإدارة مباشرة دلوقتي، أو تبعتلنا بياناتك لنسخة TestFlight (iOS) أو Android APK وجلسة معاينة سريعة.</p>
+              <button type="button" class="btn btn--gold" data-contact-track="1" data-i18n="driver_cta_btn">سجّل كسائق أو منفّذ معتمد</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. Dedicated Executive Room — For Partners, Contractors & Investors -->
+    <section id="investors" class="section section--executive">
+      <div class="container">
+        <div class="exec-header reveal">
+          <div>
+            <span class="eyebrow eyebrow--gold"><span class="eyebrow__dot"></span><span data-i18n="exec_eyebrow">غرفة الشركاء والمستثمرين</span></span>
+            <h2 class="section-title" data-i18n="exec_title">للشركاء والمقاولين والمستثمرين</h2>
+            <p class="section-subtitle" data-i18n="exec_sub">نظرة تنفيذية متكاملة على نموذج الأعمال القطري لـ 36 شهراً، بوابة قيادة العمليات، وخارطة الإطلاق والتشغيل الميداني في الدوحة.</p>
+          </div>
+        </div>
+
+        <div class="exec-tabs reveal" role="tablist" aria-label="Executive Room Sections">
+          <button class="exec-tab is-active" type="button" data-exec-tab="financials" data-i18n="exec_tab_1">النموذج المالي واقتصاديات المحاور</button>
+          <button class="exec-tab" type="button" data-exec-tab="operations" data-i18n="exec_tab_2">بوابة قيادة العمليات</button>
+          <button class="exec-tab" type="button" data-exec-tab="roadmap" data-i18n="exec_tab_3">خارطة إطلاق الدوحة والمؤسس</button>
+        </div>
+
+        <!-- Executive Tab 1: Financial Model & Corridor Unit Economics -->
+        <div id="exec-panel-financials" class="exec-panel is-active">
+          <div class="market-cards">
+            <article class="market-card">
+              <div class="market-card__tier" data-i18n="tam_tier">السوق الكلي القابل للاستحواذ (TAM)</div>
+              <div id="kpi-tam-val" class="market-card__val num">$272.50M</div>
+              <p class="market-card__sub" data-i18n="tam_sub">18 مليون رحلة تنقّل ($7.50) + 12.5 مليون عملية توريد مواقع وطرود ($11.00) في قطر والخليج.</p>
+            </article>
+            <article class="market-card market-card--teal">
+              <div class="market-card__tier" data-i18n="sam_tier">السوق المستهدف في المحاور الأولى (SAM)</div>
+              <div id="kpi-sam-val" class="market-card__val num">$59.95M</div>
+              <p class="market-card__sub" data-i18n="sam_sub">22% تبنٍّ رقمي عبر المحاور القطرية الرئيسية ولوسيل والمنطقة الصناعية والتوسع الخليجي.</p>
+            </article>
+            <article class="market-card market-card--gold">
+              <div class="market-card__tier" data-i18n="som_tier">الحصة المستهدفة في السنة الثالثة (SOM)</div>
+              <div id="kpi-som-val" class="market-card__val num">$3.02M GMV</div>
+              <p id="kpi-som-sub" class="market-card__sub">14 محوراً تنفّذ 330,162 معاملة سنوياً + 348 حساب شركات (صافي إيراد $695.8K).</p>
+            </article>
+          </div>
+
+          <div class="finance-controls-bar">
+            <div class="finance-controls-group">
+              <span class="control-label" data-i18n="ctrl_scenario">السيناريو:</span>
+              <div class="pill-switch">
+                <button class="is-active" type="button" data-scenario="base" data-i18n="scen_base">الأساسي (Base)</button>
+                <button type="button" data-scenario="stress" data-i18n="scen_stress">متحفّظ (-30% حجم)</button>
+              </div>
+            </div>
+            <div class="finance-controls-group">
+              <span class="control-label" data-i18n="ctrl_currency">العملة:</span>
+              <div class="pill-switch">
+                <button class="is-active" type="button" data-currency="USD" data-i18n="curr_usd">دولار ($)</button>
+                <button type="button" data-currency="QAR" data-i18n="curr_qar">ريال قطري (ر.ق @ 3.64)</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="chart-card__head">
+                <div>
+                  <h3 data-i18n="ch1_title">تطور حجم التعاملات (GMV) وصافي الإيرادات (Q1–Q12)</h3>
+                  <p data-i18n="ch1_sub">مرّر المؤشر فوق أي ربع سنة لاستعراض التفاصيل وعدد المحاور والمعاملات.</p>
+                </div>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-swatch" style="background:#0B1F33"></span><span data-i18n="ch1_leg_gmv">إجمالي التعاملات (GMV)</span></span>
+                  <span class="legend-item"><span class="legend-swatch" style="background:#F59E0B"></span><span data-i18n="ch1_leg_rev">صافي إيرادات المنصة</span></span>
+                </div>
+              </div>
+              <div class="svg-chart-scroll">
+                <div id="chart-gmv-revenue" class="svg-chart-wrap"></div>
+              </div>
             </div>
 
-            <div class="store-buttons">
-              <button class="store-btn" type="button" data-open-download>
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.96 6.32c.68-.82 1.14-1.97 1.01-3.12-.98.04-2.16.65-2.86 1.47-.63.73-1.18 1.9-1.03 3.02 1.09.08 2.2-.55 2.88-1.37z"/></svg>
-                <span>
-                  <span class="store-btn__sub" data-i18n="dl_ios_sub">دعوة معاينة عبر TestFlight</span>
-                  <span class="store-btn__title" data-i18n="dl_ios_t">نسخة iOS (App Store)</span>
-                </span>
-              </button>
+            <div class="chart-card">
+              <div class="chart-card__head">
+                <div>
+                  <h3 data-i18n="ch2_title">توزيع إيرادات السنة الثالثة</h3>
+                  <p data-i18n="ch2_sub">توازن الإيرادات بين الرحلات التشاركية، طرود المسار، توريد المواقع، وباقات الشركات.</p>
+                </div>
+              </div>
+              <div class="donut-layout">
+                <div id="chart-rev-donut" class="svg-chart-wrap" style="display:flex;justify-content:center"></div>
+                <div id="chart-rev-bars" class="donut-bars"></div>
+              </div>
+            </div>
 
-              <button class="store-btn" type="button" data-open-download>
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5v-17c0-.59.34-1.11.84-1.35L13.69 12l-9.85 9.85c-.5-.24-.84-.76-.84-1.35m13.81-5.38L6.05 21.34l8.49-8.49 2.27 2.27m3.35-4.31c.34.27.54.68.54 1.19 0 .5-.2.91-.54 1.19l-2.06 1.22-2.5-2.5 2.5-2.5 2.06 1.4M6.05 2.66l10.76 6.22-2.27 2.27-8.49-8.49z"/></svg>
-                <span>
-                  <span class="store-btn__sub" data-i18n="dl_and_sub">نسخة تجربة Android APK</span>
-                  <span class="store-btn__title" data-i18n="dl_and_t">نسخة Android (Google Play)</span>
-                </span>
-              </button>
+            <div class="chart-card chart-card--full">
+              <div class="chart-card__head">
+                <div>
+                  <h3 data-i18n="ch3_title">الرصيد النقدي، نقطة التعادل ودفعات التمويل</h3>
+                  <p data-i18n="ch3_sub">إدارة نقدية منضبطة تحافظ على هامش أمان أعلى من $72K حتى بلوغ التعادل التشغيلي في الشهر 21.</p>
+                </div>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-swatch" style="background:#0F766E"></span><span data-i18n="ch3_leg_cash">الرصيد النقدي الختامي</span></span>
+                  <span class="legend-item"><span class="legend-swatch" style="background:#0B1F33"></span><span data-i18n="ch3_leg_ebitda">الربح التشغيلي الشهري (EBITDA)</span></span>
+                  <span class="legend-item"><span class="legend-swatch" style="background:#F59E0B"></span><span data-i18n="ch3_leg_tranches">دفعات التمويل ($450K)</span></span>
+                </div>
+              </div>
+              <div class="svg-chart-scroll">
+                <div id="chart-cash-runway" class="svg-chart-wrap"></div>
+              </div>
+            </div>
+          </div>
 
-              <a class="store-btn store-btn--web" href="/" target="_blank" rel="noopener" data-live-web-btn>
+          <div class="simulator-card">
+            <div>
+              <h3 class="simulator-card__title" data-i18n="sim_title">محاكي اقتصاديات المحاور التفاعلي</h3>
+              <p class="simulator-card__sub" data-i18n="sim_sub">اضبط عدد المحاور والطلبات اليومية وحسابات الشركات لمعاينة الأثر السنوي الفوري.</p>
+              <div class="simulator-sliders">
+                <div class="slider-group">
+                  <div class="slider-group__head">
+                    <label for="sim-corridors" data-i18n="sim_s1">عدد المحاور النشطة</label>
+                    <span id="sim-corridors-val" class="slider-group__val num">14</span>
+                  </div>
+                  <input id="sim-corridors" type="range" min="1" max="24" value="14" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-group__head">
+                    <label for="sim-orders" data-i18n="sim_s2">متوسط الطلبات اليومية لكل محور</label>
+                    <span id="sim-orders-val" class="slider-group__val num">65</span>
+                  </div>
+                  <input id="sim-orders" type="range" min="15" max="150" value="65" />
+                </div>
+                <div class="slider-group">
+                  <div class="slider-group__head">
+                    <label for="sim-b2b" data-i18n="sim_s3">حسابات الشركات والمقاولين (B2B)</label>
+                    <span id="sim-b2b-val" class="slider-group__val num">348</span>
+                  </div>
+                  <input id="sim-b2b" type="range" min="0" max="600" step="12" value="348" />
+                </div>
+              </div>
+            </div>
+
+            <div class="simulator-outputs">
+              <div class="sim-kpi">
+                <div class="sim-kpi__label" data-i18n="sim_o1">إجمالي التعاملات السنوي (GMV)</div>
+                <div id="sim-gmv-out" class="sim-kpi__val num">$3.04M</div>
+              </div>
+              <div class="sim-kpi">
+                <div class="sim-kpi__label" data-i18n="sim_o2">إجمالي إيرادات المنصة السنوية</div>
+                <div id="sim-rev-out" class="sim-kpi__val num">$761.8K</div>
+              </div>
+              <div class="sim-kpi">
+                <div class="sim-kpi__label" data-i18n="sim_o3">العائد الموزّع على السائقين والمنفّذين</div>
+                <div id="sim-driver-out" class="sim-kpi__val num" style="color:#2DD4BF">$2.61M</div>
+              </div>
+              <div class="sim-kpi">
+                <div class="sim-kpi__label" data-i18n="sim_o4">حصة إيرادات الشركات المتكررة</div>
+                <div id="sim-b2b-pct-out" class="sim-kpi__val num" style="color:#FFFFFF">43.3%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="fin-table">
+              <thead id="fin-table-head"></thead>
+              <tbody id="fin-table-body"></tbody>
+            </table>
+          </div>
+
+          <div class="tranches-grid">
+            <article class="tranche-card">
+              <span class="tranche-card__tag" data-i18n="tr1_t">الدفعة 1 · الشهر 1 (30%)</span>
+              <div id="tranche-amt-1" class="tranche-card__amt num">$135,000 (30%)</div>
+              <p class="tranche-card__desc" data-i18n="tr1_d">تأسيس الكيان في الدوحة، تسجيل العلامة التجارية، تفعيل البنية التشغيلية السحابية ورسائل +974، وتعيين مهندس Backend أول.</p>
+            </article>
+            <article class="tranche-card">
+              <span class="tranche-card__tag" data-i18n="tr2_t">الدفعة 2 · الشهر 7 (35%)</span>
+              <div id="tranche-amt-2" class="tranche-card__amt num">$157,500 (35%)</div>
+              <p class="tranche-card__desc" data-i18n="tr2_d">تعيين قائد العمليات ومراجعة QID، استكمال التراخيص وتكامل الدفع، وتوسيع شبكة السائقين والمنفّذين في قطر.</p>
+            </article>
+            <article class="tranche-card">
+              <span class="tranche-card__tag" data-i18n="tr3_t">الدفعة 3 · الشهر 13 (35%)</span>
+              <div id="tranche-amt-3" class="tranche-card__amt num">$157,500 (35%)</div>
+              <p class="tranche-card__desc" data-i18n="tr3_d">إطلاق باقات المقاولين والشركات (B2B)، التوسع إلى 14 محوراً، وبلوغ نقطة التعادل التشغيلي في الشهر 21.</p>
+            </article>
+          </div>
+        </div>
+
+        <!-- Executive Tab 2: Operations Command Portal -->
+        <div id="exec-panel-operations" class="exec-panel">
+          <div class="ops-showcase">
+            <div class="ops-showcase__head">
+              <div>
+                <h3 data-i18n="ops_title">بوابة قيادة العمليات وحوكمة الصلاحيات</h3>
+                <p data-i18n="ops_desc">منظومة إدارية مستقلة مخصّصة لفرق التشغيل في الدوحة تمنح رؤية لحظية لحركة المحاور، مراجعة طلبات التوثيق بالبطاقة القطرية، ومتابعة التسويات والنزاعات بصلاحيات مؤسسية دقيقة.</p>
+              </div>
+              <div class="ops-actions">
+                <a href="/admin/" target="_blank" rel="noopener" class="btn btn--gold btn--sm" data-live-admin-btn data-i18n="ops_btn_launch">معاينة بوابة العمليات (/admin)</a>
+                <button type="button" class="btn btn--glass btn--sm" data-contact-track="3" data-i18n="ops_btn_brief">اطلب جلسة عرض تنفيذية</button>
+              </div>
+            </div>
+
+            <div class="browser-frame">
+              <div class="browser-frame__bar">
+                <div class="browser-dots"><span></span><span></span><span></span></div>
+                <div class="browser-url">https://admin.mashwar.qa/dashboard</div>
+                <div></div>
+              </div>
+              <img src="./assets/web/admin_command_live.png" alt="MASHWAR Operations Command Portal Preview" loading="lazy" />
+            </div>
+
+            <div class="ops-caps-grid">
+              <article class="ops-cap-card">
+                <h4 data-i18n="ops_c1_t">حوكمة صلاحيات متعددة الأدوار (RBAC)</h4>
+                <p data-i18n="ops_c1_d">فصل واضح بين صلاحيات الإدارة العليا، مراجعة الهويات، الدعم الميداني، والمالية مع سجل تدقيق كامل.</p>
+              </article>
+              <article class="ops-cap-card">
+                <h4 data-i18n="ops_c2_t">مراقبة المحاور والازدحام حياً</h4>
+                <p data-i18n="ops_c2_d">خريطة عمليات مركزية لمتابعة الطلبات النشطة وتوازن العرض والطلب عبر محاور الدوحة ولوسيل والخور.</p>
+              </article>
+              <article class="ops-cap-card">
+                <h4 data-i18n="ops_c3_t">طابور مراجعة QID وإيصالات التوريد</h4>
+                <p data-i18n="ops_c3_d">تدقيق سريع لوثائق البطاقة القطرية والمركبات ومراجعة إيصالات التحويل البنكي وفواتير المواقع.</p>
+              </article>
+            </div>
+          </div>
+        </div>
+
+        <!-- Executive Tab 3: Doha Launch Roadmap & Founder -->
+        <div id="exec-panel-roadmap" class="exec-panel">
+          <div class="roadmap-panel">
+            <h3 class="roadmap-panel__title" data-i18n="road_title">خارطة التنفيذ في الدوحة (12 شهراً)</h3>
+            <div class="roadmap-grid">
+              <article class="roadmap-card">
+                <span class="roadmap-card__tag num" data-i18n="road_q1_tag">الربع الأول (M1–M3)</span>
+                <h4 data-i18n="road_q1_t">التأسيس والانطلاق المؤسسي</h4>
+                <p data-i18n="road_q1_d">تسجيل الكيان في الدوحة، العلامة التجارية، وتفعيل منظومة التحقق القطرية وتشغيل أول محورين تجريبيين.</p>
+              </article>
+              <article class="roadmap-card">
+                <span class="roadmap-card__tag num" data-i18n="road_q2_tag">الربع الثاني (M4–M6)</span>
+                <h4 data-i18n="road_q2_t">كثافة المحاور وشبكة المنفّذين</h4>
+                <p data-i18n="road_q2_d">توسيع شبكة السائقين والمنفّذين الموثّقين على محاور الدوحة–الخور والوكرة–لوسيل والمنطقة الصناعية.</p>
+              </article>
+              <article class="roadmap-card">
+                <span class="roadmap-card__tag num" data-i18n="road_q3_tag">الربع الثالث (M7–M9)</span>
+                <h4 data-i18n="road_q3_t">شراكات المقاولين والورش (B2B)</h4>
+                <p data-i18n="road_q3_d">إطلاق حسابات التوريد السريع لشركات المقاولات والورش في لوسيل والمنطقة الصناعية بعقود شهرية.</p>
+              </article>
+              <article class="roadmap-card">
+                <span class="roadmap-card__tag num" data-i18n="road_q4_tag">الربع الرابع (M10–M12)</span>
+                <h4 data-i18n="road_q4_t">التوسع الوطني والجاهزية الإقليمية</h4>
+                <p data-i18n="road_q4_d">تغطية شاملة لمحاور قطر الرئيسية وتهيئة البنية التشغيلية للتوسع التدريجي في أسواق الخليج.</p>
+              </article>
+            </div>
+          </div>
+
+          <div class="founder-spotlight">
+            <div>
+              <span class="eyebrow eyebrow--gold"><span class="eyebrow__dot"></span><span data-i18n="fnd_eyebrow">المؤسس والفريق المستهدف في الدوحة</span></span>
+              <h3 class="founder-spotlight__name" data-i18n="fnd_name">عبدالرحمن مهنا — المؤسس ومهندس المنظومة</h3>
+              <p class="founder-spotlight__role" data-i18n="fnd_role">بناء متكامل للمنتج والتقنية · التفرغ الكامل والانتقال الدائم للدوحة</p>
+              <p class="founder-spotlight__bio" data-i18n="fnd_bio">صمّم وبنى منظومة مشوار بالكامل داخلياً قبل أي جولة تمويل — من تطبيق المستخدم ومحرك الخريطة المباشرة وحتى بوابة قيادة العمليات والحوكمة الأمنية — بالتزام كامل بالتفرغ والانتقال الدائم إلى الدوحة لقيادة الإطلاق والتشغيل الميداني.</p>
+              <div class="founder-badges">
+                <span class="founder-badge" data-i18n="fnd_b1">تفرغ كامل لبناء وتوسيع مشوار</span>
+                <span class="founder-badge" data-i18n="fnd_b2">الانتقال والتشغيل الميداني من الدوحة</span>
+                <span class="founder-badge" data-i18n="fnd_b3">ملكية تقنية كاملة 100% داخلياً</span>
+              </div>
+            </div>
+
+            <div class="doha-hires-grid">
+              <div class="hire-role-card">
+                <span class="hire-role-card__title" data-i18n="hire_1_t">مهندس أنظمة سحابية وأمن معلومات أول</span>
+                <span class="hire-role-card__phase" data-i18n="hire_1_p">المرحلة 1 · الشهر 2</span>
+              </div>
+              <div class="hire-role-card">
+                <span class="hire-role-card__title" data-i18n="hire_2_t">قائد العمليات ومراجعة هويات QID بالدوحة</span>
+                <span class="hire-role-card__phase" data-i18n="hire_2_p">المرحلة 2 · الشهر 7</span>
+              </div>
+              <div class="hire-role-card">
+                <span class="hire-role-card__title" data-i18n="hire_3_t">قائد نمو قطاع المقاولين والشركات (B2B)</span>
+                <span class="hire-role-card__phase" data-i18n="hire_3_p">المرحلة 3 · الشهر 13</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. Universal Live Firebase Contact Form -->
+    <section id="contact" class="section section--canvas">
+      <div class="container">
+        <div class="section-header section-header--center reveal">
+          <span class="eyebrow"><span class="eyebrow__dot"></span><span data-i18n="contact_eyebrow">ابدأ مع مشوار اليوم</span></span>
+          <h2 class="section-title" data-i18n="contact_title">تواصل معنا أو انضم إلى الإطلاق في قطر</h2>
+          <p class="section-subtitle" data-i18n="contact_sub">سواء رغبت في تجربة التطبيق المبكرة، أو الانضمام كسائق أو منفّذ توريد، أو إطلاق شراكة لمواقع شركتك، أو طلب عرض المستثمرين — اترك بياناتك وسيتواصل معك فريق مشوار قطر مباشرة.</p>
+        </div>
+
+        <div class="contact-layout reveal">
+          <div class="access-panel">
+            <h3 data-i18n="access_card_t">افتح تطبيق مشوار الآن أو اطلب نسخة الموبايل</h3>
+            <p data-i18n="access_card_d">يمكنك استكشاف تطبيق الويب الحي مباشرة من المتصفح، أو التسجيل لاستلام دعوة TestFlight لـ iOS ونسخة Android فور جاهزية دفعتك.</p>
+
+            <div class="access-buttons">
+              <a href="/" target="_blank" rel="noopener" class="access-btn access-btn--primary" data-live-web-btn>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                 <span>
-                  <span class="store-btn__sub" data-i18n="dl_web_sub">معاينة فورية من المتصفح</span>
-                  <span class="store-btn__title" data-i18n="dl_web_t">افتح تطبيق الويب الحي</span>
+                  <span class="access-btn__sub" data-i18n="access_web_sub">تجربة فورية من المتصفح</span>
+                  <span class="access-btn__title" data-i18n="access_web_t">افتح تطبيق مشوار</span>
                 </span>
               </a>
 
-              <a class="store-btn store-btn--admin" href="/admin/" target="_blank" rel="noopener" data-live-admin-btn>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+              <button type="button" class="access-btn" data-contact-track="0">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.96 6.32c.68-.82 1.14-1.97 1.01-3.12-.98.04-2.16.65-2.86 1.47-.63.73-1.18 1.9-1.03 3.02 1.09.08 2.2-.55 2.88-1.37z"/></svg>
                 <span>
-                  <span class="store-btn__sub" data-i18n="dl_admin_sub">14 وحدة إدارة وخريطة محاور حية</span>
-                  <span class="store-btn__title" data-i18n="dl_admin_t">افتح لوحة الإدارة (/admin)</span>
+                  <span class="access-btn__sub" data-i18n="access_ios_sub">دعوة تجربة مبكرة</span>
+                  <span class="access-btn__title" data-i18n="access_ios_t">تطبيق iOS (TestFlight)</span>
                 </span>
-              </a>
+              </button>
+
+              <button type="button" class="access-btn" data-contact-track="0">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 20.5v-17c0-.59.34-1.11.84-1.35L13.69 12l-9.85 9.85c-.5-.24-.84-.76-.84-1.35m13.81-5.38L6.05 21.34l8.49-8.49 2.27 2.27m3.35-4.31c.34.27.54.68.54 1.19 0 .5-.2.91-.54 1.19l-2.06 1.22-2.5-2.5 2.5-2.5 2.06 1.4M6.05 2.66l10.76 6.22-2.27 2.27-8.49-8.49z"/></svg>
+                <span>
+                  <span class="access-btn__sub" data-i18n="access_and_sub">نسخة تجربة مباشرة</span>
+                  <span class="access-btn__title" data-i18n="access_and_t">تطبيق Android</span>
+                </span>
+              </button>
             </div>
 
-            <div class="build-matrix">
-              <div class="build-pill">
-                <div class="build-pill__plat" data-i18n="b_ios_p">iOS (TestFlight)</div>
-                <div class="build-pill__state" data-i18n="b_ios_s">جاهزة لدعوة المراجعين والمستثمرين</div>
-              </div>
-              <div class="build-pill">
-                <div class="build-pill__plat" data-i18n="b_and_p">Android APK</div>
-                <div class="build-pill__state" data-i18n="b_and_s">نسخة موحّدة للرحلات والطرود والتوريد</div>
-              </div>
-              <div class="build-pill">
-                <div class="build-pill__plat" data-i18n="b_web_p">Web + لوحة الإدارة (14 وحدة)</div>
-                <div class="build-pill__state" data-i18n="b_web_s">تطبيق مستخدم + لوحة عمليات حية</div>
-              </div>
+            <div class="direct-contact-strip">
+              <strong>MASHWAR Qatar</strong>
+              <a href="mailto:ops@mashwar.qa">ops@mashwar.qa</a>
+              <a href="https://www.linkedin.com/in/abdelrahman-mahana/" target="_blank" rel="noopener">LinkedIn</a>
             </div>
           </div>
 
-          <div id="contact" class="investor-form-card">
-            <h3 data-i18n="form_title">تواصل معايا مباشرة أو اطلب جلسة معاينة</h3>
-            <p data-i18n="form_sub">سواء مهتم بتجربة التطبيق، شراكة توريد لشركتك في قطر، أو مراجعة الأرقام — سيب رسالتك هنا وهتوصّلني فوراً على لوحة الإدارة والإيميل.</p>
-
-            <div class="founder-mini-strip">
-              <strong>MASHWAR Qatar Operations</strong>
-              <a href="mailto:ops@mashwar.qa">ops@mashwar.qa</a>
-              <a href="https://www.linkedin.com/in/abdelrahman-mahana/" target="_blank" rel="noopener">LinkedIn</a>
-              <a href="https://github.com/Abdelrahman-Mahana" target="_blank" rel="noopener">GitHub</a>
-            </div>
+          <div class="contact-form-card">
+            <h3 data-i18n="form_title">نموذج التواصل المباشر</h3>
+            <p class="contact-form-card__sub" data-i18n="form_sub">تصلك رسالة تأكيد مرجعية فوراً، ويتابع فريق العمليات في الدوحة طلبك خلال 24 ساعة.</p>
 
             <form id="investor-form">
               <div class="form-grid">
                 <div class="form-field">
-                  <label for="inv-name" data-i18n="f_name">الاسم</label>
-                  <input id="inv-name" type="text" required placeholder="Tariq Al-Mansoor" />
+                  <label for="inv-name" data-i18n="f_name">الاسم الكامل</label>
+                  <input id="inv-name" type="text" required placeholder="مثال: طارق المنصور" data-i18n-placeholder="f_ph_name" />
                 </div>
                 <div class="form-field">
-                  <label for="inv-org" data-i18n="f_org">الشركة / الجهة</label>
-                  <input id="inv-org" type="text" required placeholder="QDB / VC / Enterprise" />
+                  <label for="inv-org" data-i18n="f_org">الشركة / الجهة (أو فرد)</label>
+                  <input id="inv-org" type="text" required placeholder="مثال: فرد / شركة مقاولات / جهة استثمارية" data-i18n-placeholder="f_ph_org" />
                 </div>
                 <div class="form-field">
                   <label for="inv-email" data-i18n="f_email">البريد الإلكتروني</label>
-                  <input id="inv-email" type="email" required placeholder="name@fund.qa" />
+                  <input id="inv-email" type="email" required placeholder="name@company.qa" data-i18n-placeholder="f_ph_email" />
                 </div>
                 <div class="form-field">
                   <label for="inv-phone" data-i18n="f_phone">رقم الجوال أو واتساب (اختياري)</label>
-                  <input id="inv-phone" type="tel" dir="ltr" maxlength="30" placeholder="+974 5000 0000" />
+                  <input id="inv-phone" type="tel" dir="ltr" maxlength="30" placeholder="+974 5000 0000" data-i18n-placeholder="f_ph_phone" />
                 </div>
                 <div class="form-field form-field--full">
-                  <label for="inv-interest" data-i18n="f_interest">حابب تتواصل بخصوص إيه؟</label>
+                  <label for="inv-interest" data-i18n="f_interest">مسار التواصل</label>
                   <select id="inv-interest">
-                    <option data-i18n="f_opt_1">جلسة معاينة سريعة ومراجعة النموذج المالي</option>
-                    <option data-i18n="f_opt_2">طلب رابط TestFlight / Android APK للتجربة</option>
-                    <option data-i18n="f_opt_3">شراكة توريد مواقع أو توصيل للشركات في قطر</option>
+                    <option value="early_access" data-i18n="f_opt_1">تجربة التطبيق المبكرة (Early Access)</option>
+                    <option value="driver_runner" data-i18n="f_opt_2">الانضمام كسائق أو منفّذ توريد (Driver &amp; Runner)</option>
+                    <option value="b2b_worksite" data-i18n="f_opt_3">شراكة توريد للمواقع والشركات (B2B Worksite Pilot)</option>
+                    <option value="investor_briefing" data-i18n="f_opt_4">طلب عرض المستثمرين (Investor Briefing)</option>
                   </select>
                 </div>
                 <div class="form-field form-field--full">
-                  <label for="inv-notes" data-i18n="f_notes">رسالتك أو ملاحظاتك</label>
-                  <textarea id="inv-notes" placeholder="..."></textarea>
+                  <label for="inv-notes" data-i18n="f_notes">تفاصيل إضافية أو ملاحظات</label>
+                  <textarea id="inv-notes" placeholder="اذكر مسارك المعتاد أو نوع الشراكة المطلوبة..." data-i18n-placeholder="f_ph_notes"></textarea>
                 </div>
               </div>
               <input id="inv-website" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
               <div style="margin-top:16px">
-                <button id="investor-submit-btn" class="btn btn--teal" type="submit" style="width:100%" data-i18n="f_submit">إرسال الرسالة</button>
+                <button id="investor-submit-btn" class="btn btn--teal btn--lg" type="submit" style="width:100%" data-i18n="f_submit">إرسال طلب التواصل</button>
               </div>
               <div id="investor-form-status" class="form-status" role="status">
-                <span data-i18n="f_success">وصلت رسالتك وتم حفظها بنجاح! سيتواصل معك فريق مشوار قطر في أقرب وقت، وتقدر كمان تراسلنا مباشرة على ops@mashwar.qa.</span>
+                <span data-i18n="f_success">تم استلام طلبك وحفظه بنجاح! سيتواصل معك فريق مشوار قطر قريباً، ويمكنك أيضاً مراسلتنا مباشرة على ops@mashwar.qa.</span>
                 <strong id="investor-form-ref" style="margin-inline-start:6px"></strong>
               </div>
               <div id="investor-form-error" class="form-status form-status--error" role="alert"></div>
@@ -941,43 +1139,25 @@
   <!-- Footer -->
   <footer class="site-footer">
     <div class="container footer-wrap">
-      <div style="display:flex;align-items:center;gap:14px">
-        <img src="./assets/logos/mashwar_logo_light_transparent.png" alt="MASHWAR" style="height:34px" />
-        <span style="font-size:0.86rem" data-i18n="footer_note">مشوار (MASHWAR) — رحلات تشاركية، طرود على الطريق وتوريد مواقع في قطر · مبني بالكامل داخلياً.</span>
+      <div class="footer-brand">
+        <img src="./assets/logos/mashwar_logo_light_transparent.png" alt="MASHWAR Qatar" style="height:34px" />
+        <div>
+          <div class="footer-note" data-i18n="footer_note">مشوار قطر (MASHWAR) — رحلات تشاركية، طرود المسار وتوريد مواقع العمل في قطر.</div>
+          <div class="footer-rights" data-i18n="footer_rights">© 2026 مشوار قطر · جميع الحقوق محفوظة</div>
+        </div>
       </div>
       <div class="footer-links">
-        <a href="#corridors" data-i18n="nav_corridors">الخريطة والخدمات</a>
-        <a href="#showcase" data-i18n="nav_app">جولة داخل التطبيق</a>
-        <a href="#advantage" data-i18n="nav_advantage">ليه مشوار؟</a>
-        <a href="#investors" data-i18n="nav_investors">الأرقام والنموذج المالي</a>
-        <a href="#download" data-i18n="nav_download">جرّب التطبيق</a>
+        <a href="#services" data-i18n="nav_services">الخدمات</a>
+        <a href="#corridors" data-i18n="nav_corridors">خريطة التوفير</a>
+        <a href="#how-it-works" data-i18n="nav_how">كيف يعمل</a>
+        <a href="#safety" data-i18n="nav_safety">الأمان</a>
+        <a href="#investors" data-i18n="nav_investors">للشركاء والمستثمرين</a>
       </div>
     </div>
   </footer>
 
   <!-- Chart Tooltip -->
   <div id="chart-tooltip" class="chart-tooltip" role="tooltip"></div>
-
-  <!-- App Store / Play Store / Evaluation Build Modal -->
-  <div id="download-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-label="Download MASHWAR">
-    <div class="modal-dialog">
-      <button id="download-modal-close" class="modal-close" type="button" aria-label="Close Download Dialog">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
-        <img src="./assets/logos/mashwar_app_icon_1024.png" alt="MASHWAR Icon" style="width:56px;height:56px;border-radius:14px" />
-        <div>
-          <h3 style="margin:0;color:var(--navy);font-size:1.2rem;font-weight:900" data-i18n="modal_dl_t">معاينة تطبيق مشوار ولوحة الإدارة</h3>
-        </div>
-      </div>
-      <p style="margin:0 0 20px;color:var(--text-muted);font-size:0.94rem" data-i18n="modal_dl_d">تقدر تفتح نسخة الويب ولوحة الإدارة مباشرة لو بتجرب محلياً، أو تطلب رابط TestFlight لـ iOS وملف APK لـ Android وهبعتهم لك فوراً.</p>
-      <div style="display:flex;flex-wrap:wrap;gap:10px">
-        <a id="modal-local-launch" href="/" target="_blank" rel="noopener" class="btn btn--gold" data-i18n="modal_dl_launch">افتح تطبيق الويب الحي</a>
-        <a id="modal-local-admin-launch" href="/admin/" target="_blank" rel="noopener" class="btn btn--teal" data-i18n="modal_dl_admin_launch">افتح لوحة الإدارة الحية</a>
-        <button id="modal-request-build" class="btn btn--outline-dark" type="button" data-i18n="modal_dl_req">اطلب رابط TestFlight / APK</button>
-      </div>
-    </div>
-  </div>
 
   <script src="./js/financial-data.js"></script>
   <script src="./js/i18n.js"></script>
