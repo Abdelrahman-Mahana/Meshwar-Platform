@@ -302,8 +302,8 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                     children: [
                       Text(
                         isAr
-                            ? 'صندوق تواصل المستثمرين والشركاء — Firebase Cloud Firestore'
-                            : 'Investor & Partner Inquiries — Firebase Cloud Firestore',
+                            ? 'صندوق تواصل المستثمرين والشركاء — السجل السحابي المباشر'
+                            : 'Investor & Partner Inquiries — Live Cloud Inbox',
                         style: TextStyle(
                           color: t.textPrimary,
                           fontWeight: FontWeight.w800,
@@ -313,8 +313,8 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                       const SizedBox(height: 4),
                       Text(
                         isAr
-                            ? 'المشروع: ${FirebaseConfig.projectId} · المجموعة: ${FirestoreCollections.investorInquiries} · تنبيه فوري إلى: ops@mashwar.qa · +974 4400 9999'
-                            : 'Project: ${FirebaseConfig.projectId} · Collection: ${FirestoreCollections.investorInquiries} · Ops Alert: ops@mashwar.qa · +974 4400 9999',
+                            ? 'سجل الطلبات المباشر · تنبيه فوري إلى: ops@mashwar.qa · +974 4400 9999'
+                            : 'Live Operational Records · Ops Alert: ops@mashwar.qa · +974 4400 9999',
                         style: TextStyle(color: t.textSecondary, fontSize: 12),
                       ),
                       if (admin.inquiriesSyncStatus != null) ...[
@@ -354,7 +354,7 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                             )
                           : const Icon(Icons.cloud_sync_rounded, size: 17),
                       label: Text(
-                        isAr ? 'مزامنة Firestore' : 'Sync Firestore',
+                        isAr ? 'مزامنة السجلات الحية' : 'Sync Live Records',
                         style: const TextStyle(fontSize: 12),
                       ),
                     ),
@@ -365,12 +365,12 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                         Uri.parse(_firestoreConsoleUrl),
                         mode: LaunchMode.externalApplication,
                         fallbackMessage: isAr
-                            ? 'تعذّر فتح Firestore Console تلقائياً.'
-                            : 'Unable to open Firestore Console externally.',
+                            ? 'تعذّر فتح لوحة السجلات السحابية تلقائياً.'
+                            : 'Unable to open Cloud Records Console externally.',
                       ),
                       icon: const Icon(Icons.open_in_new_rounded, size: 16),
                       label: Text(
-                        isAr ? 'فتح Firestore Console' : 'Open Firestore Console',
+                        isAr ? 'فتح لوحة السجلات السحابية' : 'Open Cloud Records Console',
                         style: const TextStyle(fontSize: 12),
                       ),
                     ),
@@ -379,12 +379,12 @@ class _AdminInquiriesScreenState extends State<AdminInquiriesScreen> {
                         context,
                         _firestoreConsoleUrl,
                         isAr
-                            ? 'تم نسخ رابط Firestore Console المباشر'
-                            : 'Copied direct Firestore Console URL',
+                            ? 'تم نسخ رابط السجلات السحابية المباشر'
+                            : 'Copied direct Cloud Records URL',
                       ),
                       icon: const Icon(Icons.copy_rounded, size: 16),
                       label: Text(
-                        isAr ? 'نسخ رابط Firestore' : 'Copy Firestore URL',
+                        isAr ? 'نسخ رابط السجلات' : 'Copy Records URL',
                         style: const TextStyle(fontSize: 12),
                       ),
                     ),

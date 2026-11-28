@@ -574,8 +574,8 @@ class _AdminCommandPaletteDialogState extends State<AdminCommandPaletteDialog> {
                   onChanged: (v) => setState(() => _query = v),
                   decoration: InputDecoration(
                     hintText: isAr
-                        ? 'ابحث عن شاشة، ضمان #QA، خدمة، محور، أو Flag...'
-                        : 'Jump to module, #QA escrow, user, corridor, or flag...',
+                        ? 'ابحث عن شاشة، تسوية #QA، خدمة، محور، أو Flag...'
+                        : 'Jump to module, #QA settlement, user, corridor, or flag...',
                     hintStyle: TextStyle(color: t.textSecondary, fontSize: 13),
                     prefixIcon: Icon(Icons.search_rounded, color: t.accentPrimary),
                     suffixIcon: IconButton(

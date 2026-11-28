@@ -43,7 +43,7 @@ class NotificationPermissionScreen extends StatelessWidget {
         child: MashwarOnboardingShell(
           isAr: isAr,
           showcaseBadge:
-              isAr ? 'متابعة الضمان والخدمة' : 'Escrow & Live Alerts',
+              isAr ? 'تنبيهات الرحلات والطلبات' : 'Live Trip & Order Alerts',
           showcaseTitle: isAr
               ? 'تابع قبول الحجوزات، الفواتير وأكواد التسليم لحظياً'
               : 'Track booking confirmations, receipts & OTP codes live',

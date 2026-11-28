@@ -34,17 +34,17 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
   String _escrowLabel(String st, bool isAr) {
     switch (st) {
       case 'released':
-        return isAr ? 'تم التحرير للمنفذ' : 'Released';
+        return isAr ? 'تمت التسوية' : 'Settled';
       case 'frozen':
-        return isAr ? 'مجمد للنزاع' : 'Frozen';
+        return isAr ? 'معلّق للمراجعة' : 'On Hold';
       case 'refunded':
-        return isAr ? 'مسترد للطالب' : 'Refunded';
+        return isAr ? 'مسترد للعميل' : 'Refunded';
       case 'receipt_pending':
         return isAr ? 'مراجعة الفاتورة' : 'Receipt Review';
       case 'in_transit':
         return isAr ? 'بالطريق (OTP)' : 'In Transit';
       default:
-        return isAr ? 'محجوز بالضمان' : 'Held';
+        return isAr ? 'قيد التحقق' : 'Pending Check';
     }
   }
 
@@ -67,8 +67,8 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
                 _kv(isAr ? 'طالب الخدمة' : 'Requester', item.requesterName),
                 _kv(isAr ? 'المنفذ' : 'Provider', item.providerName),
                 _kv(isAr ? 'المسار' : 'Corridor', isAr ? item.corridorAr : item.corridorEn),
-                _kv(isAr ? 'بوابة الدفع' : 'Payment Rail', item.paymentRail),
-                _kv(isAr ? 'الأتعاب + المشتريات' : 'Protected Total', '${item.totalProtectedQar.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}'),
+                _kv(isAr ? 'قناة التسوية' : 'Settlement Channel', item.paymentRail),
+                _kv(isAr ? 'الأتعاب + المشتريات' : 'Settlement Total', '${item.totalProtectedQar.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}'),
                 _kv(isAr ? 'كود الاستلام OTP' : 'Handover OTP', item.otpCode),
                 const SizedBox(height: 12),
                 TextField(
@@ -96,12 +96,12 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
             style: TextButton.styleFrom(foregroundColor: AppColors.coral),
             onPressed: () {
               final reason = noteCtrl.text.trim().isEmpty
-                  ? (isAr ? 'تجميد احترازي لحين التحقق' : 'Precautionary hold pending review')
+                  ? (isAr ? 'تعليق احترازي لحين التحقق' : 'Precautionary hold pending review')
                   : noteCtrl.text.trim();
               admin.freezeEscrow(item.id, reason);
               Navigator.of(ctx).pop();
             },
-            child: Text(isAr ? 'تجميد' : 'Freeze'),
+            child: Text(isAr ? 'تعليق للمراجعة' : 'Hold for Review'),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: AppColors.warning),
@@ -112,18 +112,18 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
               admin.refundEscrow(item.id, reason);
               Navigator.of(ctx).pop();
             },
-            child: Text(isAr ? 'استرداد للطالب' : 'Refund Requester'),
+            child: Text(isAr ? 'استرداد للعميل' : 'Refund Requester'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.teal, foregroundColor: Colors.white),
             onPressed: () {
               final note = noteCtrl.text.trim().isEmpty
-                  ? (isAr ? 'تسليم موثق ومطابق' : 'Verified handover & settlement confirmed')
+                  ? (isAr ? 'تسليم موثق وتسوية مباشرة مكتملة' : 'Verified handover & direct settlement confirmed')
                   : noteCtrl.text.trim();
               admin.releaseEscrow(item.id, note);
               Navigator.of(ctx).pop();
             },
-            child: Text(isAr ? 'تحرير للمنفذ' : 'Release Payout'),
+            child: Text(isAr ? 'تأكيد التسوية' : 'Confirm Settlement'),
           ),
         ],
       ),
@@ -162,7 +162,31 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Financial Escrow KPI Strip
+          AdminSectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isAr ? 'التسوية المباشرة والمالية' : 'Direct Settlement & Finance',
+                  style: TextStyle(
+                    color: t.textPrimary,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isAr
+                      ? 'متابعة التسويات المباشرة (نقداً عند التسليم والتحويل البنكي الموثّق) وإيصالات الشراء ورموز التسليم OTP دون احتجاز أرصدة.'
+                      : 'Track direct settlements (Cash on Delivery & Verified Bank Transfer), store receipts, and handover OTPs with zero frozen custody.',
+                  style: TextStyle(color: t.textSecondary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Financial Direct Settlement KPI Strip
           LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;
@@ -195,11 +219,11 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
                   SizedBox(
                     width: cardW,
                     child: AdminKpiCard(
-                      title: isAr ? 'الطلبات المعلّقة للنزاع' : 'Frozen in Arbitration',
+                      title: isAr ? 'الطلبات المعلّقة للمراجعة' : 'Held for Review',
                       value: '${admin.kpiFrozenEscrowQar.toStringAsFixed(0)} ${isAr ? "ر.ق" : "QAR"}',
                       deltaText: isAr ? 'بانتظار حسم المشرف' : 'Requires Dispute Verdict',
                       accentColor: AppColors.coral,
-                      icon: Icons.ac_unit_rounded,
+                      icon: Icons.gavel_rounded,
                     ),
                   ),
                   SizedBox(
@@ -218,7 +242,7 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Escrow Transactions Ledger
+          // Direct Settlement Transactions Ledger
           AdminSectionCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -241,8 +265,8 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
                           {'k': 'all', 'ar': 'الكل', 'en': 'All'},
                           {'k': 'receipt_pending', 'ar': 'فاتورة معلقة', 'en': 'Receipt'},
                           {'k': 'in_transit', 'ar': 'بالطريق', 'en': 'In Transit'},
-                          {'k': 'frozen', 'ar': 'مجمد', 'en': 'Frozen'},
-                          {'k': 'released', 'ar': 'محرر', 'en': 'Released'},
+                          {'k': 'frozen', 'ar': 'معلّق', 'en': 'On Hold'},
+                          {'k': 'released', 'ar': 'مسوّى', 'en': 'Settled'},
                         ])
                           ChoiceChip(
                             label: Text(isAr ? st['ar']! : st['en']!),
@@ -258,10 +282,10 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
                   items: filtered,
                   minTableWidth: 900,
                   columns: [
-                    DataColumn(label: Text(isAr ? 'المعرف' : 'Escrow ID')),
+                    DataColumn(label: Text(isAr ? 'المعرف' : 'Settlement ID')),
                     DataColumn(label: Text(isAr ? 'الخدمة والأطراف' : 'Service & Parties')),
-                    DataColumn(label: Text(isAr ? 'البوابة' : 'Rail')),
-                    DataColumn(label: Text(isAr ? 'القيمة المحمية' : 'Protected')),
+                    DataColumn(label: Text(isAr ? 'القناة' : 'Channel')),
+                    DataColumn(label: Text(isAr ? 'القيمة الإجمالية' : 'Total Value')),
                     DataColumn(label: Text(isAr ? 'OTP' : 'OTP')),
                     DataColumn(label: Text(isAr ? 'الحالة' : 'Status')),
                     DataColumn(label: Text(isAr ? 'تحكم' : 'Control')),
@@ -333,7 +357,7 @@ class _AdminEscrowFinanceScreenState extends State<AdminEscrowFinanceScreen> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, foregroundColor: Colors.white),
                               onPressed: () => _openEscrowActionModal(context, item, isAr),
-                              child: Text(isAr ? 'حسم وإدارة' : 'Manage Escrow', style: const TextStyle(fontSize: 12)),
+                              child: Text(isAr ? 'حسم وإدارة' : 'Manage Settlement', style: const TextStyle(fontSize: 12)),
                             ),
                           ),
                         ],

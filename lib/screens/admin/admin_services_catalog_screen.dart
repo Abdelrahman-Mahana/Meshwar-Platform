@@ -140,7 +140,7 @@ class _AdminServicesCatalogScreenState
                       controller: receiptCapCtrl,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
-                        labelText: isAr ? 'سقف الفاتورة في الضمان (ر.ق)' : 'Max Receipt Cap (QAR)',
+                        labelText: isAr ? 'سقف الفاتورة المعتمد (ر.ق)' : 'Max Receipt Cap (QAR)',
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
@@ -335,7 +335,7 @@ class _AdminServicesCatalogScreenState
                   SwitchListTile(
                     dense: true,
                     contentPadding: EdgeInsets.zero,
-                    title: Text(isAr ? 'حماية الضمان المالي' : 'Escrow Protected'),
+                    title: Text(isAr ? 'توثيق التسوية المباشرة' : 'Verified Direct Settlement'),
                     value: escrow,
                     onChanged: (v) => setModalState(() => escrow = v),
                   ),
@@ -485,8 +485,8 @@ class _AdminServicesCatalogScreenState
                     const SizedBox(height: 4),
                     Text(
                       isAr
-                          ? 'تشغيل وإيقاف أي خدمة لحظياً، تعديل نسب العمولات، سقوف الفواتير، وقواعد الضمان المالي.'
-                          : 'Enable/pause lines live, tune platform commissions, receipt caps, OTP & Escrow rules.',
+                          ? 'تشغيل وإيقاف أي خدمة لحظياً، تعديل نسب العمولات، سقوف الفواتير، وقواعد التسوية المباشرة.'
+                          : 'Enable/pause lines live, tune platform commissions, receipt caps, OTP & direct settlement rules.',
                       style: TextStyle(color: t.textSecondary, fontSize: 12),
                     ),
                   ],
@@ -543,7 +543,7 @@ class _AdminServicesCatalogScreenState
                       title: isAr ? 'الطلبات الجارية بالخدمات' : 'Open Orders Across Lines',
                       value:
                           '${admin.servicesCatalog.fold<int>(0, (s, e) => s + e.activeOrdersCount)}',
-                      deltaText: isAr ? 'حماية مزدوجة Escrow + OTP' : 'Escrow + OTP Protected',
+                      deltaText: isAr ? 'توثيق مباشر بـ OTP والفاتورة' : 'Direct Settlement + OTP',
                       accentColor: AppColors.qatarMaroon,
                       icon: Icons.verified_user_rounded,
                     ),
@@ -669,7 +669,7 @@ class _AdminServicesCatalogScreenState
                               if (svc.maxReceiptCapQar > 0)
                                 _pill('${isAr ? "فاتورة حتى" : "Receipt"} ${svc.maxReceiptCapQar}', AppColors.gold, t),
                               if (svc.requiresEscrow)
-                                _pill('Escrow', t.accentTeal, t),
+                                _pill(isAr ? 'تسوية موثّقة' : 'Direct Settlement', t.accentTeal, t),
                               if (svc.requiresFourDigitOtp)
                                 _pill('OTP', AppColors.qatarMaroon, t),
                               if (svc.isMaintenance)

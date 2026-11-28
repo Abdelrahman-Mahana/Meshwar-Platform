@@ -191,8 +191,8 @@ class _PostAdScreenState extends State<PostAdScreen> {
             ? 'شراء مستلزمات من المتجر وتوصيلها للريان'
             : 'Buy store items and deliver to Al Rayyan';
         _notesController.text = isAr
-            ? 'الفاتورة محمية في ضمان مشوار حتى التسليم'
-            : 'Purchases & fee held in MASHWAR Escrow until OTP confirmation';
+            ? 'يُعتمد إيصال الشراء وكود التسليم OTP قبل التسوية المباشرة'
+            : 'Store receipt & handover OTP verified upon direct settlement';
         _requiresReceiptProof = true;
         _hasEscrowProtection = true;
         _ladiesOnly = false;

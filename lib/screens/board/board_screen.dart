@@ -1232,7 +1232,7 @@ class _BoardScreenState extends State<BoardScreen> {
                     children: [
                       IconButton(
                         visualDensity: VisualDensity.compact,
-                        tooltip: isAr ? 'تفاصيل الضمان و OTP' : 'OTP Protection',
+                        tooltip: isAr ? 'التسوية المباشرة و OTP' : 'Direct Settlement & OTP',
                         icon: Container(
                           padding: const EdgeInsets.all(7),
                           decoration: BoxDecoration(

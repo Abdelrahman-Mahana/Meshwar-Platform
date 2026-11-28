@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/config/app_environment.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_dimens.dart';
 import '../../core/constants/app_typography.dart';
@@ -9,7 +10,6 @@ import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_button.dart';
 import '../../state/auth_provider.dart';
 import '../../state/settings_provider.dart';
-import '../escrow/service_escrow_screen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -769,7 +769,8 @@ class _WalletScreenState extends State<WalletScreen> {
               ),
             );
 
-            final escrowProtectedCard = Container(
+            final directSettlementCard = Container(
+              key: const ValueKey('wallet_direct_settlement_card'),
               width: double.infinity,
               padding: const EdgeInsets.all(AppDimens.space16),
               decoration: BoxDecoration(
@@ -805,14 +806,18 @@ class _WalletScreenState extends State<WalletScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              isAr ? 'رصيد الضمان المحجوز' : 'Protected Escrow Hold',
+                              isAr
+                                  ? 'التسوية المباشرة والشفافة'
+                                  : 'Direct & Transparent Settlement',
                               style: AppTypography.body(color: AppColors.navy).copyWith(
                                 fontSize: 14.5,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                             Text(
-                              'MASHWAR ESCROW',
+                              isAr
+                                  ? 'بدون أرصدة محجوزة'
+                                  : 'ZERO FROZEN BALANCES',
                               style: AppTypography.label(color: AppColors.teal).copyWith(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
@@ -821,21 +826,13 @@ class _WalletScreenState extends State<WalletScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        isAr ? '225 ر.ق' : '225 QAR',
-                        style: AppTypography.title(color: AppColors.teal).copyWith(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   Text(
                     isAr
-                        ? 'محفوظ لحماية صفقات الشراء وتوريد المواقع حتى اعتماد الفاتورة وإدخال OTP'
-                        : 'Held safely until receipt approval & 4-digit OTP completion',
+                        ? 'تتم التسويات مباشرة بين الأعضاء نقداً عند التسليم أو عبر التحويل البنكي المباشر، مع توثيق الفاتورة ورمز الأمان OTP — دون احتجاز أي أرصدة مجمّدة.'
+                        : 'Payments settle directly between members via cash on handover or direct bank transfer, backed by purchase receipts and handover OTP — with zero frozen balances.',
                     style: AppTypography.bodySecondary().copyWith(fontSize: 12),
                   ),
                   const SizedBox(height: 10),
@@ -854,7 +851,7 @@ class _WalletScreenState extends State<WalletScreen> {
                           border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Text(
-                          isAr ? 'أتعاب جارية: 45 ر.ق' : 'Fee Hold: 45 QAR',
+                          isAr ? 'نقداً عند التسليم' : 'Cash on Handover',
                           style: AppTypography.label(color: AppColors.navy).copyWith(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -872,50 +869,34 @@ class _WalletScreenState extends State<WalletScreen> {
                           border: Border.all(color: AppColors.slateBorder),
                         ),
                         child: Text(
-                          isAr ? 'سقف فواتير: 180 ر.ق' : 'Receipt Cap: 180 QAR',
+                          isAr ? 'تحويل بنكي مباشر' : 'Direct Bank Transfer',
                           style: AppTypography.label(color: AppColors.navy).copyWith(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.navy,
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: AppColors.slateBorder),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 4,
                         ),
-                      ),
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const ServiceEscrowScreen(),
+                        decoration: BoxDecoration(
+                          color: AppColors.tealSurface,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppColors.teal.withValues(alpha: 0.25),
                           ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.shield_outlined,
-                        size: 17,
-                        color: AppColors.teal,
-                      ),
-                      label: Text(
-                        isAr
-                            ? 'إدارة صفقات الضمان وحماية الطرفين'
-                            : 'Manage Escrow Deals & Disputes',
-                        style: AppTypography.label(color: AppColors.navy).copyWith(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
+                        ),
+                        child: Text(
+                          isAr ? 'توثيق بـ OTP والفاتورة' : 'OTP & Receipt Verified',
+                          style: AppTypography.label(color: AppColors.teal).copyWith(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -1165,8 +1146,10 @@ class _WalletScreenState extends State<WalletScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   balanceCard,
-                                  const SizedBox(height: AppDimens.space16),
-                                  escrowProtectedCard,
+                                  if (!AppEnvironment.enableEscrowClaims) ...[
+                                    const SizedBox(height: AppDimens.space16),
+                                    directSettlementCard,
+                                  ],
                                   const SizedBox(height: AppDimens.space24),
                                   paymentMethodsSection,
                                 ],
@@ -1183,8 +1166,10 @@ class _WalletScreenState extends State<WalletScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             balanceCard,
-                            const SizedBox(height: AppDimens.space16),
-                            escrowProtectedCard,
+                            if (!AppEnvironment.enableEscrowClaims) ...[
+                              const SizedBox(height: AppDimens.space16),
+                              directSettlementCard,
+                            ],
                             const SizedBox(height: AppDimens.space24),
                             paymentMethodsSection,
                             const SizedBox(height: AppDimens.space24),

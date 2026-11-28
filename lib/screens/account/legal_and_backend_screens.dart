@@ -126,21 +126,21 @@ class LegalComplianceScreen extends StatelessWidget {
         _buildInfoCard(
           icon: Icons.payments_outlined,
           title: isAr
-              ? 'التسعير وطرق التسوية في المرحلة التجريبية'
-              : 'Pilot Pricing & Settlement Methods',
+              ? 'التسعير وطرق التسوية المباشرة'
+              : 'Transparent Pricing & Direct Settlement',
           subtitle: isAr
-              ? 'الدفع عند الاستلام (cash_on_delivery) أو التحويل البنكي اليدوي (bank_transfer_manual)'
-              : 'Direct settlement only: cash_on_delivery or bank_transfer_manual',
+              ? 'الدفع النقدي عند الاستلام أو التحويل البنكي المباشر الموثّق'
+              : 'Direct settlement only: Cash on Delivery or Verified Bank Transfer',
           points: isAr
               ? const [
                   'تُعرض جميع الميزانيات وعروض التوريد بالريال القطري (QAR) بشفافية كاملة قبل قبول العرض.',
-                  'تقتصر طرق التسوية المعتمدة في المرحلة التجريبية على الدفع النقدي عند الاستلام (cash_on_delivery) أو التحويل البنكي اليدوي المباشر (bank_transfer_manual) مع إرفاق صورة إيصال التحويل للتوثيق.',
-                  'لا تحتفظ منصة مشوار بأي أرصدة محافظ رقمية مسبقة الدفع ولا تقدم خدمة الضمان المالي (Escrow) أو تحصيل البطاقات البنكية داخل التطبيق في هذه المرحلة.',
+                  'تتم التسوية المباشرة بين الأطراف عبر الدفع النقدي عند الاستلام أو التحويل البنكي اليدوي المباشر مع إرفاق صورة إيصال التحويل للتوثيق.',
+                  'لا تحتفظ منصة مشوار بأرصدة محافظ رقمية مسبقة الدفع ولا تحجز أموال المستخدمين أو تعالج مدفوعات بطاقات داخل التطبيق في هذه المرحلة.',
                 ]
               : const [
                   'All request budgets and supplier offers are quoted transparently in Qatari Riyals (QAR) prior to offer acceptance.',
-                  'Pilot settlement is strictly limited to Cash on Delivery (cash_on_delivery) or direct Manual Bank Transfer (bank_transfer_manual) with uploaded transfer proof.',
-                  'MASHWAR does not hold stored-value wallet balances, process in-app card/PSP payments, or act as an escrow custodian during Phase 1.',
+                  'Settlement happens directly between members via Cash on Delivery or direct Manual Bank Transfer with uploaded transfer proof.',
+                  'MASHWAR does not hold stored-value wallet balances, process in-app card payments, or lock customer funds in custody during Phase 1.',
                 ],
         ),
       ],
@@ -161,16 +161,16 @@ class LegalComplianceScreen extends StatelessWidget {
               : 'Data protection safeguards & data subject rights in Qatar',
           points: isAr
               ? const [
-                  'تُجمع البيانات الأساسية (الاسم، البريد الإلكتروني، رقم الجوال +974) وصور البطاقة الشخصية القطرية (QID) بموافقة صريحة ولأغراض التحقق من الهوية وتنفيذ طلبات التوريد فقط.',
-                  'تُعزل وثائق التحقق (provider_verifications) بصلاحيات وصول مقيدة للمستخدم نفسه وفريق الامتثال المخول فقط، وتُحفظ رموز التسليم بصيغة تجزئة مشفرة (Salted SHA-256).',
-                  'تُشارك تفاصيل الموقع والتواصل بين صاحب الطلب والمزود المعتمد المكلف بالطلب النشط فقط، وتُستضاف البيانات عبر بنية سحابية مشفرة أثناء النقل والتخزين (europe-west1).',
+                  'تُجمع البيانات الأساسية (الاسم، البريد الإلكتروني، رقم الجوال +974) وصور البطاقة الشخصية القطرية (QID) بموافقة صريحة ولأغراض التحقق من الهوية وتنفيذ الطلبات فقط.',
+                  'تُحفظ وثائق التحقق من الهوية بصلاحيات وصول مقيدة للمستخدم نفسه وفريق الامتثال المخوّل فقط، وتُحمى رموز التسليم بتشفير أحادي الاتجاه غير قابل للاسترجاع.',
+                  'تُشارك تفاصيل الموقع والتواصل بين صاحب الطلب والمزود المعتمد المكلف بالطلب النشط فقط، وتُستضاف البيانات عبر بنية سحابية مؤمّنة ومشفّرة أثناء النقل والتخزين.',
                   'حق حذف الحساب والبيانات: يحق للمستخدم طلب تصحيح بياناته أو حذف حسابه وملفات التوثيق نهائياً من داخل التطبيق فور عدم وجود طلبات نشطة أو نزاعات قائمة.',
                 ]
               : const [
-                  'Account details (name, email, +974 phone) and 11-digit Qatar ID (QID) KYC images are collected with explicit consent strictly for identity verification and worksite order fulfillment.',
-                  'KYC records (provider_verifications) are isolated under strict owner/admin-only access rules, and handover codes are stored solely as salted SHA-256 hashes.',
-                  'Contact and site location details are shared strictly between the requester and the assigned approved provider on encrypted cloud infrastructure (europe-west1).',
-                  'Account Deletion Rights: Users may update their profile or permanently delete their account and KYC records in-app once any active or disputed worksite orders are closed.',
+                  'Account details (name, email, +974 phone) and 11-digit Qatar ID (QID) identity documents are collected with explicit consent strictly for identity verification and order fulfillment.',
+                  'Identity verification documents are isolated under strict owner and authorized compliance access only, and handover codes are protected with secure one-way encryption.',
+                  'Contact and site location details are shared strictly between the requester and the assigned approved provider on encrypted, high-security cloud infrastructure.',
+                  'Account Deletion Rights: Users may update their profile or permanently delete their account and identity records in-app once any active or disputed orders are closed.',
                 ],
         ),
         const SizedBox(height: AppDimens.space16),
