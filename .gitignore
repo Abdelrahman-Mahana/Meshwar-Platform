@@ -1,6 +1,9 @@
 # Miscellaneous
 *.class
 *.log
+debug.log
+*.zip
+MASHWAR_MEDIA_KIT.zip
 *.pyc
 *.swp
 .DS_Store
