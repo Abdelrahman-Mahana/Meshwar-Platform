@@ -187,11 +187,11 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               child: LayoutBuilder(
                                 builder: (context, mapBox) {
                                   return MashwarEmbeddedGoogleMap(
-                                    key: const ValueKey('admin_login_uber_map'),
+                                    key: const ValueKey('admin_login_live_map'),
                                     origin: 'المنطقة الصناعية',
                                     destination: 'لوسيل',
                                     vehicleMode: MashwarMapVehicleMode.supply,
-                                    stylePreset: MashwarMapStylePreset.dark,
+                                    stylePreset: MashwarMapStylePreset.night,
                                     showTraffic: true,
                                     height: mapBox.maxHeight.clamp(220.0, 520.0),
                                     borderRadius: 18,

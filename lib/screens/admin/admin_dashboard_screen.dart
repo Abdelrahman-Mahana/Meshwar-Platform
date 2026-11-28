@@ -20,7 +20,7 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  bool _useLiveUberMap = true;
+  bool _useLiveMap = true;
   bool _showTraffic = true;
   MashwarMapVehicleMode _previewMode = MashwarMapVehicleMode.supply;
 
@@ -220,7 +220,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          // GMV Telemetry Chart + Live Uber Corridor Map
+          // GMV Telemetry Chart + MASHWAR Live Corridor Map
           LayoutBuilder(
             builder: (context, constraints) {
               final isStacked = constraints.maxWidth < 960;
@@ -276,13 +276,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           runSpacing: 4,
                           children: [
                             TextButton.icon(
-                              onPressed: () => setState(() => _useLiveUberMap = !_useLiveUberMap),
+                              onPressed: () => setState(() => _useLiveMap = !_useLiveMap),
                               icon: Icon(
-                                _useLiveUberMap ? Icons.hub_rounded : Icons.map_rounded,
+                                _useLiveMap ? Icons.hub_rounded : Icons.map_rounded,
                                 size: 15,
                               ),
                               label: Text(
-                                _useLiveUberMap
+                                _useLiveMap
                                     ? (isAr ? 'مخطط' : 'Schematic')
                                     : (isAr ? 'خريطة حية' : 'Live Map'),
                                 style: const TextStyle(fontSize: 12),
@@ -299,7 +299,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       ],
                     ),
-                    if (_useLiveUberMap) ...[
+                    if (_useLiveMap) ...[
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 6,
@@ -362,7 +362,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               destination: 'لوسيل',
                               vehicleMode: _previewMode,
                               showTraffic: _showTraffic,
-                              stylePreset: t.isDark ? MashwarMapStylePreset.dark : MashwarMapStylePreset.google,
+                              stylePreset: t.isDark
+                                  ? MashwarMapStylePreset.night
+                                  : MashwarMapStylePreset.standard,
                             ),
                           ),
                         ],
@@ -374,7 +376,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       width: double.infinity,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: _useLiveUberMap
+                        child: _useLiveMap
                             ? MashwarEmbeddedGoogleMap(
                                 key: ValueKey('admin_dash_map_${_previewMode.name}_$_showTraffic'),
                                 origin: 'المنطقة الصناعية',
@@ -382,8 +384,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 vehicleMode: _previewMode,
                                 showTraffic: _showTraffic,
                                 stylePreset: t.isDark
-                                    ? MashwarMapStylePreset.dark
-                                    : MashwarMapStylePreset.google,
+                                    ? MashwarMapStylePreset.night
+                                    : MashwarMapStylePreset.standard,
                                 height: 220,
                                 borderRadius: 12,
                               )

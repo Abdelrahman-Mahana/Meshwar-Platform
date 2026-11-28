@@ -9,11 +9,9 @@ import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/mashwar_animations.dart';
 import '../../core/widgets/mashwar_badge.dart';
 import '../../core/widgets/mashwar_button.dart';
-import '../../core/widgets/mashwar_embedded_google_map.dart';
 import '../../core/widgets/mashwar_google_map_panel.dart';
 import '../../core/widgets/mashwar_user_avatar.dart';
 import '../../core/widgets/mashwar_worksite_icons.dart';
-import '../../core/widgets/qatar_live_map_canvas.dart';
 import '../../data/models/ride_model.dart';
 import '../../data/models/user_model.dart';
 import '../../data/models/worksite_models.dart';
@@ -58,14 +56,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedHeroMode = 0; // 0 = Trips, 1 = Parcels, 2 = Supply & Tasks
   double _swapTurns = 0.0;
-  bool _isMapExpanded = false;
-  bool _useLiveGoogleMap = true;
-  MashwarMapStylePreset _mapStylePreset = MashwarMapStylePreset.google;
-  bool _showMapTraffic = true;
   bool _dismissedOnboardingChecklist = false;
-
-  bool get _isMapSatellite =>
-      _mapStylePreset == MashwarMapStylePreset.satellite;
 
   MashwarMapVehicleMode get _activeHomeVehicleMode {
     switch (_selectedHeroMode) {
@@ -97,7 +88,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   String? _selectedSavedWorksiteId;
-  String? _previewHubCity;
   RouteDetails? _corridorRouteDetails;
   String? _lastCorridorFrom;
   String? _lastCorridorTo;
@@ -224,6 +214,37 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _pickHeroOnMap({
+    required BuildContext context,
+    required RidesProvider rides,
+    required BoardProvider board,
+    required bool isFrom,
+    required bool isAr,
+  }) async {
+    final picked = await openMashwarMapPicker(
+      context,
+      initialLocation: isFrom ? rides.fromCity : rides.toCity,
+      origin: rides.fromCity.trim().isNotEmpty ? rides.fromCity : null,
+      destination: rides.toCity.trim().isNotEmpty ? rides.toCity : null,
+      enableGps: true,
+      pickMode:
+          isFrom ? MashwarMapPickMode.origin : MashwarMapPickMode.destination,
+      titleAr:
+          isFrom ? 'اختر نقطة الانطلاق على الخريطة' : 'اختر الوجهة على الخريطة',
+      titleEn: isFrom ? 'Pick Origin on Map' : 'Pick Destination on Map',
+    );
+    if (picked != null && mounted) {
+      final label = picked.localizedLabel(isArabic: isAr);
+      if (isFrom) {
+        rides.setRoute(from: label);
+        board.setRouteFilter(from: label);
+      } else {
+        rides.setRoute(to: label);
+        board.setRouteFilter(to: label);
+      }
+    }
+  }
+
   void _triggerHeroAction({
     required BuildContext context,
     required RidesProvider rides,
@@ -332,8 +353,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final corridorFrom = rides.fromCity.trim().isNotEmpty
         ? rides.fromCity.trim()
         : (activeSite?.municipality ?? 'الدوحة');
-    final rawPreviewHub = _previewHubCity ??
-        (rides.toCity.trim().isNotEmpty ? rides.toCity.trim() : 'لوسيل');
+    final rawPreviewHub =
+        rides.toCity.trim().isNotEmpty ? rides.toCity.trim() : 'لوسيل';
     final previewHub = _resolveDistinctCorridorDestination(
       corridorFrom,
       rawPreviewHub,
@@ -490,15 +511,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 18),
 
-                        // 8. Real Notifications Summary Strip
-                        _buildNotificationsSummaryStrip(
-                          context: context,
-                          unreadNotifications: unreadNotifications,
-                          unreadCount: unreadCount,
-                          openOffersCount: openOffersCount,
-                          isAr: isAr,
-                        ),
-                        const SizedBox(height: 22),
+                        // 8. Real Notifications Summary Strip (hidden when empty)
+                        if (unreadCount > 0 || openOffersCount > 0) ...[
+                          _buildNotificationsSummaryStrip(
+                            context: context,
+                            unreadNotifications: unreadNotifications,
+                            unreadCount: unreadCount,
+                            openOffersCount: openOffersCount,
+                            isAr: isAr,
+                          ),
+                          const SizedBox(height: 22),
+                        ],
 
                         // 9. Active Supply & Route Requests
                         _buildRecentSupplyRequestsSection(
@@ -510,10 +533,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 20),
 
-                        // 10. Clean Collapsible Interactive Corridor Map
-                        _buildCollapsibleCorridorMapCard(
+                        // 10. Sleek MASHWAR Live Map Launcher Strip
+                        _buildLiveMapLauncherStrip(
                           context: context,
-                          rides: rides,
                           corridorFrom: corridorFrom,
                           previewHub: previewHub,
                           isAr: isAr,
@@ -1272,6 +1294,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           value: fromDisplay,
                           hasValue: rides.fromCity.trim().isNotEmpty,
                           dotColor: AppColors.teal,
+                          mapPinKey: const ValueKey('home_hero_from_map_btn'),
+                          mapPinTooltip:
+                              isAr ? 'اختر على الخريطة' : 'Pick on Map',
+                          onPickOnMap: () => _pickHeroOnMap(
+                            context: context,
+                            rides: rides,
+                            board: board,
+                            isFrom: true,
+                            isAr: isAr,
+                          ),
                           onTap: () => _pickHeroCity(
                             context: context,
                             rides: rides,
@@ -1291,6 +1323,16 @@ class _HomeScreenState extends State<HomeScreen> {
                           value: toDisplay,
                           hasValue: rides.toCity.trim().isNotEmpty,
                           dotColor: AppColors.gold,
+                          mapPinKey: const ValueKey('home_hero_to_map_btn'),
+                          mapPinTooltip:
+                              isAr ? 'اختر على الخريطة' : 'Pick on Map',
+                          onPickOnMap: () => _pickHeroOnMap(
+                            context: context,
+                            rides: rides,
+                            board: board,
+                            isFrom: false,
+                            isAr: isAr,
+                          ),
                           onTap: () => _pickHeroCity(
                             context: context,
                             rides: rides,
@@ -1349,6 +1391,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             value: fromDisplay,
                             hasValue: rides.fromCity.trim().isNotEmpty,
                             dotColor: AppColors.teal,
+                            reserveSwapSpace: true,
+                            mapPinKey: const ValueKey('home_hero_from_map_btn'),
+                            mapPinTooltip:
+                                isAr ? 'اختر على الخريطة' : 'Pick on Map',
+                            onPickOnMap: () => _pickHeroOnMap(
+                              context: context,
+                              rides: rides,
+                              board: board,
+                              isFrom: true,
+                              isAr: isAr,
+                            ),
                             onTap: () => _pickHeroCity(
                               context: context,
                               rides: rides,
@@ -1364,6 +1417,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             value: toDisplay,
                             hasValue: rides.toCity.trim().isNotEmpty,
                             dotColor: AppColors.gold,
+                            reserveSwapSpace: true,
+                            mapPinKey: const ValueKey('home_hero_to_map_btn'),
+                            mapPinTooltip:
+                                isAr ? 'اختر على الخريطة' : 'Pick on Map',
+                            onPickOnMap: () => _pickHeroOnMap(
+                              context: context,
+                              rides: rides,
+                              board: board,
+                              isFrom: false,
+                              isAr: isAr,
+                            ),
                             onTap: () => _pickHeroCity(
                               context: context,
                               rides: rides,
@@ -1570,6 +1634,10 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool hasValue,
     required Color dotColor,
     required VoidCallback onTap,
+    VoidCallback? onPickOnMap,
+    Key? mapPinKey,
+    String? mapPinTooltip,
+    bool reserveSwapSpace = false,
   }) {
     return Material(
       color: Colors.white,
@@ -1579,7 +1647,12 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: EdgeInsetsDirectional.fromSTEB(
+            12,
+            10,
+            reserveSwapSpace ? 46 : 10,
+            10,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
@@ -1631,6 +1704,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+              if (onPickOnMap != null) ...[
+                const SizedBox(width: 6),
+                Tooltip(
+                  message: mapPinTooltip ?? 'Pick on Map',
+                  child: Material(
+                    color: AppColors.tealSurface,
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
+                      key: mapPinKey,
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: onPickOnMap,
+                      child: const Padding(
+                        padding: EdgeInsets.all(7),
+                        child: Icon(
+                          Icons.pin_drop_rounded,
+                          size: 16,
+                          color: AppColors.teal,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -3287,9 +3383,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }).catchError((_) {});
   }
 
-  Widget _buildCollapsibleCorridorMapCard({
+  Widget _buildLiveMapLauncherStrip({
     required BuildContext context,
-    required RidesProvider rides,
     required String corridorFrom,
     required String previewHub,
     required bool isAr,
@@ -3304,453 +3399,115 @@ class _HomeScreenState extends State<HomeScreen> {
     final etaText = isAr
         ? '${route.durationMinutes} دقيقة'
         : '${route.durationMinutes} min';
-    final highwayText = route.corridorHighway(isArabic: isAr);
     final vehicleMode = _activeHomeVehicleMode;
-    final double mapHeight = _isMapExpanded
-        ? (isWide ? 430.0 : 340.0)
-        : (isWide ? 310.0 : 250.0);
+    final routeSummary =
+        '${AppStrings.translateCity(corridorFrom, isArabic: isAr)} ${isAr ? "←" : "→"} ${AppStrings.translateCity(previewHub, isArabic: isAr)} · $distText · $etaText';
 
-    const hubChips = [
-      'الدوحة',
-      'لوسيل',
-      'الخور',
-      'الوكرة',
-      'الريان',
-      'المنطقة الصناعية',
-    ];
+    void launchLiveMap() {
+      openMashwarInAppMap(
+        context,
+        origin: corridorFrom,
+        destination: previewHub,
+        vehicleMode: vehicleMode,
+        stylePreset: MashwarMapStylePreset.standard,
+        showTraffic: true,
+        enableGps: true,
+        pickMode: MashwarMapPickMode.both,
+        titleAr: 'خريطة مشوار المباشرة',
+        titleEn: 'MASHWAR Live Map',
+      );
+    }
 
     return MashwarSectionCard(
       key: const ValueKey('home_corridor_map_card'),
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(
+        horizontal: isWide ? 20 : 16,
+        vertical: 14,
+      ),
       backgroundColor: Colors.white,
       borderColor: AppColors.slateBorder,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 12,
         children: [
-          Row(
-            children: [
-              const MashwarTrustEmblem(
-                type: MashwarTrustType.liveCorridor,
-                size: 36,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isAr
-                          ? 'خريطة المسارات التفاعلية للرحلات والطرود والتوريد'
-                          : 'Interactive Route & Supply Corridor Map',
-                      style: AppTypography.title(color: AppColors.navy)
-                          .copyWith(
-                        fontSize: 15.5,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    Text(
-                      '${AppStrings.translateCity(corridorFrom, isArabic: isAr)} → ${AppStrings.translateCity(previewHub, isArabic: isAr)} · $distText · $etaText',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTypography.label(color: AppColors.tealDark)
-                          .copyWith(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: isWide ? 620 : 480),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const MashwarTrustEmblem(
+                  type: MashwarTrustType.liveCorridor,
+                  size: 40,
                 ),
-              ),
-              OutlinedButton.icon(
-                key: const ValueKey('home_toggle_map_btn'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.navy,
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: AppColors.slateBorder),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                onPressed: () =>
-                    setState(() => _isMapExpanded = !_isMapExpanded),
-                icon: Icon(
-                  _isMapExpanded
-                      ? Icons.unfold_less_rounded
-                      : Icons.unfold_more_rounded,
-                  size: 16,
-                  color: AppColors.navy,
-                ),
-                label: Text(
-                  _isMapExpanded
-                      ? (isAr ? 'تصغير' : 'Compact')
-                      : (isAr ? 'توسيع' : 'Expand'),
-                  style: AppTypography.label(color: AppColors.navy).copyWith(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          // Sleek compact Uber-style map toolbar: Google + Traffic / Uber / Satellite / Dark / Corridor
-          Container(
-            key: const ValueKey('home_map_layer_toggle'),
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              color: AppColors.slateBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.slateBorder),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildMapLayerPill(
-                    selected: _useLiveGoogleMap &&
-                        _mapStylePreset == MashwarMapStylePreset.google,
-                    icon: Icons.map_rounded,
-                    label: isAr
-                        ? (_showMapTraffic ? 'خريطة جوجل + زحمة' : 'خريطة جوجل')
-                        : (_showMapTraffic ? 'Google + Traffic' : 'Google Map'),
-                    onTap: () => setState(() {
-                      _useLiveGoogleMap = true;
-                      _mapStylePreset = MashwarMapStylePreset.google;
-                    }),
-                  ),
-                  const SizedBox(width: 4),
-                  _buildMapLayerPill(
-                    key: const ValueKey('home_map_traffic_toggle'),
-                    selected: _useLiveGoogleMap && _showMapTraffic,
-                    icon: Icons.traffic_rounded,
-                    label: isAr ? 'الزحمة' : 'Traffic',
-                    onTap: () => setState(() {
-                      if (!_useLiveGoogleMap) {
-                        _useLiveGoogleMap = true;
-                        _showMapTraffic = true;
-                      } else {
-                        _showMapTraffic = !_showMapTraffic;
-                      }
-                    }),
-                  ),
-                  const SizedBox(width: 4),
-                  _buildMapLayerPill(
-                    selected: _useLiveGoogleMap &&
-                        _mapStylePreset == MashwarMapStylePreset.uber,
-                    icon: Icons.navigation_rounded,
-                    label: isAr ? 'أسلوب أوبر' : 'Uber Style',
-                    onTap: () => setState(() {
-                      _useLiveGoogleMap = true;
-                      _mapStylePreset = MashwarMapStylePreset.uber;
-                    }),
-                  ),
-                  const SizedBox(width: 4),
-                  _buildMapLayerPill(
-                    selected: _useLiveGoogleMap &&
-                        _mapStylePreset == MashwarMapStylePreset.satellite,
-                    icon: Icons.satellite_alt_rounded,
-                    label: isAr ? 'قمر صناعي' : 'Satellite',
-                    onTap: () => setState(() {
-                      _useLiveGoogleMap = true;
-                      _mapStylePreset = MashwarMapStylePreset.satellite;
-                    }),
-                  ),
-                  const SizedBox(width: 4),
-                  _buildMapLayerPill(
-                    selected: _useLiveGoogleMap &&
-                        _mapStylePreset == MashwarMapStylePreset.dark,
-                    icon: Icons.dark_mode_rounded,
-                    label: isAr ? 'ليلي' : 'Dark',
-                    onTap: () => setState(() {
-                      _useLiveGoogleMap = true;
-                      _mapStylePreset = MashwarMapStylePreset.dark;
-                    }),
-                  ),
-                  const SizedBox(width: 4),
-                  _buildMapLayerPill(
-                    selected: !_useLiveGoogleMap,
-                    icon: Icons.hub_rounded,
-                    label: isAr ? 'خريطة المحاور' : 'Corridor Map',
-                    onTap: () => setState(() {
-                      _useLiveGoogleMap = false;
-                    }),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            height: mapHeight,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.slateBorder),
-            ),
-            child: _useLiveGoogleMap
-                ? MashwarEmbeddedGoogleMap(
-                    origin: corridorFrom,
-                    destination: previewHub,
-                    satellite: _isMapSatellite,
-                    stylePreset: _mapStylePreset,
-                    vehicleMode: vehicleMode,
-                    showTraffic: _showMapTraffic,
-                    distanceKm: route.distanceKm,
-                    durationMinutes: route.durationMinutes,
-                    highwayName: highwayText,
-                    height: mapHeight,
-                    borderRadius: 15.0,
-                    interactive: true,
-                    fallbackStyle: QatarMapStyle.light,
-                    onHubTap: (city) {
-                      setState(() => _previewHubCity = city);
-                    },
-                  )
-                : QatarLiveMapCanvas(
-                    style: QatarMapStyle.light,
-                    showCarTrails: false,
-                    activeFromCity: corridorFrom,
-                    activeToCity: previewHub,
-                    borderRadius: 15.0,
-                    onHubTap: (city) {
-                      setState(() => _previewHubCity = city);
-                    },
-                  ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 10,
-            runSpacing: 8,
-            children: [
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.sand,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: AppColors.gold.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.route_rounded,
-                          size: 13.5,
-                          color: AppColors.teal,
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isAr ? 'خريطة مشوار المباشرة' : 'MASHWAR Live Map',
+                        style: AppTypography.title(color: AppColors.navy)
+                            .copyWith(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w800,
                         ),
-                        const SizedBox(width: 5),
-                        Text(
-                          '$distText · $etaText',
-                          style: AppTypography.label(color: AppColors.navy)
-                              .copyWith(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (highwayText.isNotEmpty)
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 230),
-                      child: Text(
-                        highwayText,
-                        maxLines: 1,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isAr
+                            ? 'حدّد موقعك المباشر أو مسارك على خريطة قطر التفاعلية'
+                            : 'Locate yourself live or plan your route on Qatar’s interactive map',
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: AppTypography.label(
                           color: AppColors.textSecondary,
                         ).copyWith(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
-                ],
-              ),
-              OutlinedButton.icon(
-                key: const ValueKey('home_open_gmaps_btn'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.navy,
-                  backgroundColor: AppColors.slateBg,
-                  side: const BorderSide(color: AppColors.slateBorder),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 11,
-                    vertical: 7,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                      const SizedBox(height: 4),
+                      Text(
+                        routeSummary,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTypography.label(color: AppColors.tealDark)
+                            .copyWith(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                onPressed: () => openMashwarInAppMap(
-                  context,
-                  origin: corridorFrom,
-                  destination: previewHub,
-                  initialSatellite: _isMapSatellite,
-                  stylePreset: _mapStylePreset,
-                  vehicleMode: vehicleMode,
-                  showTraffic: _showMapTraffic,
-                  titleAr: 'خريطة المسارات التفاعلية',
-                  titleEn: 'Interactive Route Corridor Map',
-                ),
-                icon: const Icon(
-                  Icons.open_in_full_rounded,
-                  size: 14.5,
-                  color: AppColors.teal,
-                ),
-                label: Text(
-                  isAr ? 'تكبير الخريطة داخل التطبيق' : 'Full-Screen Map',
-                  style: AppTypography.label(color: AppColors.navy).copyWith(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 14,
-            runSpacing: 6,
-            children: [
-              _buildLegendDot(
-                AppColors.teal,
-                isAr ? 'نقطة الانطلاق والمسار' : 'Origin & Active Route',
+          ElevatedButton.icon(
+            key: const ValueKey('home_open_gmaps_btn'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.navy,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              _buildLegendDot(
-                AppColors.gold,
-                isAr ? 'نقطة الوصول والتسليم' : 'Destination & Handover Hub',
+            ),
+            onPressed: launchLiveMap,
+            icon: const Icon(Icons.my_location_rounded, size: 16),
+            label: Text(
+              isAr ? 'افتح الخريطة المباشرة' : 'Open Live Map',
+              style: AppTypography.label(color: Colors.white).copyWith(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: hubChips.map((area) {
-              final isSelected = previewHub == area;
-              return InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () => setState(() => _previewHubCity = area),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 160),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.navy : Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color:
-                          isSelected ? AppColors.navy : AppColors.slateBorder,
-                    ),
-                  ),
-                  child: Text(
-                    AppStrings.translateCity(area, isArabic: isAr),
-                    style: AppTypography.label(
-                      color: isSelected ? Colors.white : AppColors.navy,
-                    ).copyWith(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMapLayerPill({
-    Key? key,
-    required bool selected,
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      key: key,
-      borderRadius: BorderRadius.circular(9),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: selected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: AppColors.navy.withValues(alpha: 0.06),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 14,
-              color: selected ? AppColors.teal : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: AppTypography.label(
-                color: selected ? AppColors.navy : AppColors.textSecondary,
-              ).copyWith(
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLegendDot(Color color, String label) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTypography.label(color: AppColors.textSecondary)
-                .copyWith(fontWeight: FontWeight.w500, fontSize: 12),
-          ),
-        ),
-      ],
     );
   }
 
