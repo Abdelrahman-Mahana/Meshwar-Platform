@@ -137,7 +137,11 @@ powershell -ExecutionPolicy Bypass -File scripts/seed_multi_account_demo.ps1
 ## فهرس التوثيق
 
 - [نظرة عامة شاملة بالعربية على فكرة المشروع](MASHWAR_PROJECT_OVERVIEW_AR.md)
-- [تقرير التنفيذ والتحقق الهندسي](docs/MVP_IMPLEMENTATION_REPORT.md)
+- [التدقيق الهندسي الشامل (Principal Engineering Audit)](PROJECT_AUDIT.md)
+- [خارطة طريق التنفيذ (Implementation Roadmap)](IMPLEMENTATION_ROADMAP.md)
+- [سجل التغييرات التقنية (Technical Changelog)](TECHNICAL_CHANGELOG.md)
+- [تقرير الاختبارات والتحقق (Testing & Verification Report)](TESTING_REPORT.md)
+- [تقييم الجاهزية للإنتاج (Production Readiness)](PRODUCTION_READINESS.md)
 - [دليل الامتثال القطري وخطة الإطلاق](docs/QATAR_COMPLIANCE_AND_RELEASE_PLAYBOOK.md)
 - [معمارية الباك إند](docs/backend/ARCHITECTURE.md)
 - [مخطط قاعدة البيانات (29 مجموعة Firestore)](docs/backend/DATABASE_SCHEMA.md)
@@ -145,8 +149,6 @@ powershell -ExecutionPolicy Bypass -File scripts/seed_multi_account_demo.ps1
 - [الأمان وقواعد Firestore وStorage](docs/backend/SECURITY.md)
 - [إعداد Firebase وEmulators](docs/backend/FIREBASE_SETUP.md)
 - [إعداد خرائط جوجل ومحرك الخريطة الحية](docs/backend/GOOGLE_MAPS_SETUP.md)
-- [مصفوفة حالة التنفيذ](docs/backend/IMPLEMENTATION_STATUS.md)
-- [تقرير الاختبارات والتحقق](docs/backend/TESTING_REPORT.md)
 - [دليل صفحة الهبوط والمستثمرين](landing_page/README.md)
 
 ---
