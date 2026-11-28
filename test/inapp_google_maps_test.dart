@@ -249,65 +249,131 @@ void main() {
       expect(keyedPlace.queryParameters['q'], contains(','));
     });
 
-    test('MashwarMapVehicleMode & MashwarMapStylePreset expose all Uber map modes and presets', () {
+    test('MashwarMapVehicleMode, MashwarMapStylePreset & MashwarMapPickMode expose MASHWAR live map contracts', () {
       expect(
         MashwarMapVehicleMode.values.map((m) => m.name).toList(),
         equals(<String>['trip', 'parcel', 'supply', 'place']),
       );
       expect(
         MashwarMapStylePreset.values.map((s) => s.name).toList(),
-        equals(<String>['google', 'uber', 'satellite', 'dark']),
+        equals(<String>['standard', 'mashwarLight', 'satellite', 'night']),
+      );
+      expect(
+        MashwarMapStylePreset.values.map((s) => s.queryValue).toList(),
+        equals(<String>['standard', 'light', 'satellite', 'night']),
+      );
+      expect(
+        MashwarMapPickMode.values.map((p) => p.name).toList(),
+        equals(<String>['none', 'origin', 'destination', 'both']),
       );
     });
 
-    test('buildUberInAppMapUrl populates fromLat/fromLng/toLat/toLng/mode/style/traffic/lang and fallbacks', () {
-      // 1. Arabic trip route with Google style + traffic ON + stopover
+    test('MashwarPickedLocation, MashwarGpsPosition & MashwarLiveRouteUpdate parse postMessage payloads safely', () {
+      final picked = MashwarPickedLocation.fromMap(<Object?, Object?>{
+        'target': 'origin',
+        'lat': 25.4357,
+        'lng': 51.4910,
+        'labelAr': 'لوسيل',
+        'labelEn': 'Lusail',
+        'municipality': 'بلدية الضعاين',
+      });
+      expect(picked, isNotNull);
+      expect(picked!.target, 'origin');
+      expect(picked.lat, closeTo(25.4357, 0.0001));
+      expect(picked.lng, closeTo(51.4910, 0.0001));
+      expect(picked.localizedLabel(isArabic: true), 'لوسيل');
+      expect(picked.localizedLabel(isArabic: false), 'Lusail');
+      expect(picked.municipality, 'بلدية الضعاين');
+      expect(MashwarPickedLocation.fromMap(<Object?, Object?>{'lat': 'bad'}), isNull);
+
+      final gps = MashwarGpsPosition.fromMap(<Object?, Object?>{
+        'lat': 25.2854,
+        'lng': 51.5310,
+        'accuracyM': 8.5,
+        'headingDeg': 142.0,
+        'speedMps': 11.2,
+        'status': 'tracking',
+      });
+      expect(gps, isNotNull);
+      expect(gps!.isTracking, isTrue);
+      expect(gps.headingDeg, 142.0);
+      expect(gps.accuracyM, 8.5);
+
+      final routeUpdate = MashwarLiveRouteUpdate.fromMap(<Object?, Object?>{
+        'distKm': 52.4,
+        'etaMin': 44,
+        'nextStepAr': 'اتجه شمالاً عبر طريق الخور الساحلي',
+        'nextStepEn': 'Head north on Al Khor Coastal Rd',
+        'trafficLevel': 'moderate',
+      });
+      expect(routeUpdate, isNotNull);
+      expect(routeUpdate!.distKm, closeTo(52.4, 0.01));
+      expect(routeUpdate.etaMin, 44);
+      expect(routeUpdate.localizedNextStep(isArabic: true), contains('طريق الخور'));
+      expect(routeUpdate.localizedNextStep(isArabic: false), contains('Al Khor'));
+    });
+
+    test('buildLiveMapUrl populates route coords, style, gps, pick, nav, ch and fallbacks', () {
+      // 1. Arabic trip route with standard style + traffic ON + GPS auto + pick both + nav + ch + stopover
       final arTrip = Uri.parse(
-        GoogleMapsService.buildUberInAppMapUrl(
+        GoogleMapsService.buildLiveMapUrl(
           origin: 'الدوحة',
           destination: 'الخور',
           stopover: 'لوسيل',
           mode: MashwarMapVehicleMode.trip,
-          style: MashwarMapStylePreset.google,
+          style: MashwarMapStylePreset.standard,
           showTraffic: true,
           isArabic: true,
+          enableGps: true,
+          pickMode: MashwarMapPickMode.both,
+          navigationMode: true,
+          channelId: 'mw_ch_42',
         ),
       );
-      expect(arTrip.path, 'maps/mashwar_uber_map.html');
+      expect(arTrip.path, 'maps/mashwar_live_map.html');
       expect(double.tryParse(arTrip.queryParameters['fromLat'] ?? ''), isNotNull);
       expect(double.tryParse(arTrip.queryParameters['fromLng'] ?? ''), isNotNull);
       expect(double.tryParse(arTrip.queryParameters['toLat'] ?? ''), isNotNull);
       expect(double.tryParse(arTrip.queryParameters['toLng'] ?? ''), isNotNull);
       expect(arTrip.queryParameters['fromLat'], isNot(arTrip.queryParameters['toLat']));
       expect(arTrip.queryParameters['mode'], 'trip');
-      expect(arTrip.queryParameters['style'], 'google');
+      expect(arTrip.queryParameters['style'], 'standard');
       expect(arTrip.queryParameters['traffic'], '1');
       expect(arTrip.queryParameters['lang'], 'ar');
+      expect(arTrip.queryParameters['gps'], 'auto');
+      expect(arTrip.queryParameters['pick'], 'both');
+      expect(arTrip.queryParameters['nav'], '1');
+      expect(arTrip.queryParameters['ch'], 'mw_ch_42');
       expect(arTrip.queryParameters['stopLat'], isNotEmpty);
       expect(arTrip.queryParameters['stopLng'], isNotEmpty);
 
-      // 2. English parcel route with Uber style + traffic OFF
+      // 2. English parcel route with mashwarLight style + traffic OFF + gps on_demand
       final enParcel = Uri.parse(
-        GoogleMapsService.buildUberInAppMapUrl(
+        GoogleMapsService.buildLiveMapUrl(
           origin: 'Doha',
           destination: 'Al Wakrah',
           mode: MashwarMapVehicleMode.parcel,
-          style: MashwarMapStylePreset.uber,
+          style: MashwarMapStylePreset.mashwarLight,
           showTraffic: false,
           isArabic: false,
+          enableGps: false,
+          pickMode: MashwarMapPickMode.destination,
         ),
       );
-      expect(enParcel.path, 'maps/mashwar_uber_map.html');
+      expect(enParcel.path, 'maps/mashwar_live_map.html');
       expect(enParcel.queryParameters['mode'], 'parcel');
-      expect(enParcel.queryParameters['style'], 'uber');
+      expect(enParcel.queryParameters['style'], 'light');
       expect(enParcel.queryParameters['traffic'], '0');
       expect(enParcel.queryParameters['lang'], 'en');
+      expect(enParcel.queryParameters['gps'], 'on_demand');
+      expect(enParcel.queryParameters['pick'], 'destination');
+      expect(enParcel.queryParameters['nav'], '0');
       expect(enParcel.queryParameters['fromLat'], isNotEmpty);
       expect(enParcel.queryParameters['toLat'], isNotEmpty);
 
-      // 3. Supply mode with Satellite & Dark presets
+      // 3. Supply mode with Satellite & Night presets
       final satSupply = Uri.parse(
-        GoogleMapsService.buildUberInAppMapUrl(
+        GoogleMapsService.buildLiveMapUrl(
           origin: 'المنطقة الصناعية',
           destination: 'لوسيل',
           mode: MashwarMapVehicleMode.supply,
@@ -321,42 +387,44 @@ void main() {
       expect(satSupply.queryParameters['traffic'], '1');
       expect(satSupply.queryParameters['lang'], 'ar');
 
-      final darkSupply = Uri.parse(
-        GoogleMapsService.buildUberInAppMapUrl(
+      final nightSupply = Uri.parse(
+        GoogleMapsService.buildLiveMapUrl(
           origin: 'Industrial Area',
           destination: 'Lusail',
           mode: MashwarMapVehicleMode.supply,
-          style: MashwarMapStylePreset.dark,
+          style: MashwarMapStylePreset.night,
           showTraffic: true,
           isArabic: false,
         ),
       );
-      expect(darkSupply.queryParameters['mode'], 'supply');
-      expect(darkSupply.queryParameters['style'], 'dark');
-      expect(darkSupply.queryParameters['lang'], 'en');
+      expect(nightSupply.queryParameters['mode'], 'supply');
+      expect(nightSupply.queryParameters['style'], 'night');
+      expect(nightSupply.queryParameters['lang'], 'en');
 
       // 4. Place mode & identical-endpoint fallback produce mode=place without toLat/toLng
       final placeOnly = Uri.parse(
-        GoogleMapsService.buildUberInAppMapUrl(
+        GoogleMapsService.buildLiveMapUrl(
           placeQuery: 'لوسيل',
           mode: MashwarMapVehicleMode.place,
-          style: MashwarMapStylePreset.google,
+          style: MashwarMapStylePreset.standard,
           showTraffic: true,
           isArabic: true,
+          pickMode: MashwarMapPickMode.origin,
         ),
       );
       expect(placeOnly.queryParameters['mode'], 'place');
+      expect(placeOnly.queryParameters['pick'], 'origin');
       expect(placeOnly.queryParameters['fromLat'], isNotEmpty);
       expect(placeOnly.queryParameters['fromLng'], isNotEmpty);
       expect(placeOnly.queryParameters['toLat'], isNull);
       expect(placeOnly.queryParameters['toLng'], isNull);
 
       final sameHubFallback = Uri.parse(
-        GoogleMapsService.buildUberInAppMapUrl(
+        GoogleMapsService.buildLiveMapUrl(
           origin: 'لوسيل',
           destination: 'Lusail',
           mode: MashwarMapVehicleMode.trip,
-          style: MashwarMapStylePreset.uber,
+          style: MashwarMapStylePreset.mashwarLight,
           showTraffic: true,
           isArabic: true,
         ),
@@ -391,11 +459,30 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('renders inside HomeScreen and home_open_gmaps_btn navigates in-app to MashwarInAppMapScreen', (tester) async {
+    testWidgets('HomeScreen exposes inline pin-picker buttons and sleek home_corridor_map_card launching MashwarInAppMapScreen with zero Uber strings', (tester) async {
       _configureViewport(tester, size: const Size(430, 1000));
       await tester.pumpWidget(_buildTestApp(const HomeScreen()));
       await tester.pumpAndSettle();
 
+      // Inline From & To pin-picker buttons inside Home hero
+      final fromMapBtn = find.byKey(const ValueKey('home_hero_from_map_btn'));
+      final toMapBtn = find.byKey(const ValueKey('home_hero_to_map_btn'));
+      expect(fromMapBtn, findsOneWidget);
+      expect(toMapBtn, findsOneWidget);
+      expect(find.textContaining('Uber'), findsNothing);
+      expect(find.textContaining('أوبر'), findsNothing);
+
+      // Tap inline From map pin picker -> opens MashwarInAppMapScreen in pick mode
+      await tester.tap(fromMapBtn);
+      await tester.pumpAndSettle();
+      expect(find.byType(MashwarInAppMapScreen), findsOneWidget);
+      expect(find.byKey(const ValueKey('inapp_map_locate_btn')), findsOneWidget);
+      expect(find.byKey(const ValueKey('inapp_map_confirm_location_btn')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('inapp_map_confirm_location_btn')));
+      await tester.pumpAndSettle();
+      expect(find.byType(HomeScreen), findsOneWidget);
+
+      // Scroll to sleek home_corridor_map_card -> opens full-screen MASHWAR Live Map
       final btn = find.byKey(const ValueKey('home_open_gmaps_btn'));
       await tester.scrollUntilVisible(
         btn,
@@ -403,9 +490,7 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       await tester.pumpAndSettle();
-
-      expect(find.byType(MashwarEmbeddedGoogleMap), findsWidgets);
-      expect(find.byKey(const ValueKey('mashwar_embedded_gmap_view')), findsWidgets);
+      expect(find.byKey(const ValueKey('home_corridor_map_card')), findsOneWidget);
 
       await tester.ensureVisible(btn);
       await tester.pumpAndSettle();
@@ -415,9 +500,12 @@ void main() {
       expect(find.byType(MashwarInAppMapScreen), findsOneWidget);
       expect(find.byKey(const ValueKey('inapp_google_map_screen')), findsOneWidget);
       expect(find.byKey(const ValueKey('inapp_map_satellite_toggle')), findsOneWidget);
-
-      // Toggle satellite/style & traffic controls in-app
       expect(find.byKey(const ValueKey('inapp_map_traffic_toggle')), findsOneWidget);
+      expect(find.byKey(const ValueKey('inapp_map_locate_btn')), findsOneWidget);
+      expect(find.textContaining('Uber'), findsNothing);
+      expect(find.textContaining('أوبر'), findsNothing);
+
+      // Toggle style preset (standard -> satellite)
       await tester.tap(find.byKey(const ValueKey('inapp_map_satellite_toggle')));
       await tester.pumpAndSettle();
       final embeddedInFullScreen = tester.widget<MashwarEmbeddedGoogleMap>(
@@ -428,32 +516,39 @@ void main() {
       );
       expect(embeddedInFullScreen.satellite, isTrue);
       expect(embeddedInFullScreen.effectiveStylePreset, MashwarMapStylePreset.satellite);
+      expect(embeddedInFullScreen.enableGps, isTrue);
+      expect(embeddedInFullScreen.pickMode, MashwarMapPickMode.both);
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('HomeScreen switches Uber map vehicleMode dynamically (trip -> parcel -> supply) and enforces distinct default corridor', (tester) async {
+    testWidgets('HomeScreen launches MashwarInAppMapScreen with dynamic vehicleMode (trip -> parcel -> supply) and distinct default corridor', (tester) async {
       _configureViewport(tester, size: const Size(1280, 1000));
       final rides = RidesProvider()..setRoute(from: 'لوسيل', to: 'لوسيل');
       await tester.pumpWidget(_buildTestApp(const HomeScreen(), rides: rides));
       await tester.pumpAndSettle();
 
-      final mapCard = find.byKey(const ValueKey('home_corridor_map_card'));
-      await tester.scrollUntilVisible(
-        mapCard,
-        350,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
+      Future<MashwarEmbeddedGoogleMap> openHomeLiveMapAndInspect() async {
+        final btn = find.byKey(const ValueKey('home_open_gmaps_btn'));
+        await tester.scrollUntilVisible(
+          btn,
+          350,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(btn);
+        await tester.pumpAndSettle();
+        await tester.tap(btn);
+        await tester.pumpAndSettle();
+        return tester.widget<MashwarEmbeddedGoogleMap>(
+          find.descendant(
+            of: find.byType(MashwarInAppMapScreen),
+            matching: find.byType(MashwarEmbeddedGoogleMap),
+          ),
+        );
+      }
 
-      MashwarEmbeddedGoogleMap readHomeMap() => tester.widget<MashwarEmbeddedGoogleMap>(
-            find.descendant(
-              of: mapCard,
-              matching: find.byType(MashwarEmbeddedGoogleMap),
-            ),
-          );
-
-      // Distinct corridor guard prevents same-city single-pin fallback (لوسيل -> الدوحة)
-      final initialMap = readHomeMap();
+      // 1. Distinct corridor guard prevents same-city single-pin fallback (لوسيل -> الدوحة)
+      final initialMap = await openHomeLiveMapAndInspect();
       expect(initialMap.origin, isNotNull);
       expect(initialMap.destination, isNotNull);
       expect(
@@ -462,47 +557,43 @@ void main() {
       );
       expect(initialMap.vehicleMode, MashwarMapVehicleMode.trip);
       expect(initialMap.showTraffic, isTrue);
-      final initialUri = Uri.parse(initialMap.resolveUberMapUrl(isArabic: true));
+      expect(initialMap.enableGps, isTrue);
+      final initialUri = Uri.parse(initialMap.resolveLiveMapUrl(isArabic: true));
+      expect(initialUri.path, 'maps/mashwar_live_map.html');
       expect(initialUri.queryParameters['mode'], 'trip');
+      expect(initialUri.queryParameters['gps'], 'auto');
+      expect(initialUri.queryParameters['pick'], 'both');
       expect(initialUri.queryParameters['fromLat'], isNotEmpty);
       expect(initialUri.queryParameters['toLat'], isNotEmpty);
 
-      // Scroll back to top hero service launcher and switch trip -> parcel -> supply
+      // Pop back to HomeScreen, switch hero mode -> parcel
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
       final scrollable = tester.state<ScrollableState>(find.byType(Scrollable).first);
       scrollable.position.jumpTo(0);
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const ValueKey('home_hero_mode_parcels')));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        mapCard,
-        350,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-
-      final parcelMap = readHomeMap();
+      final parcelMap = await openHomeLiveMapAndInspect();
       expect(parcelMap.vehicleMode, MashwarMapVehicleMode.parcel);
       expect(
-        Uri.parse(parcelMap.resolveUberMapUrl(isArabic: true)).queryParameters['mode'],
+        Uri.parse(parcelMap.resolveLiveMapUrl(isArabic: true)).queryParameters['mode'],
         'parcel',
       );
 
+      // Pop back to HomeScreen, switch hero mode -> supply
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
       scrollable.position.jumpTo(0);
       await tester.pumpAndSettle();
+
       await tester.tap(find.byKey(const ValueKey('home_hero_mode_supply')));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(
-        mapCard,
-        350,
-        scrollable: find.byType(Scrollable).first,
-      );
-      await tester.pumpAndSettle();
-
-      final supplyMap = readHomeMap();
+      final supplyMap = await openHomeLiveMapAndInspect();
       expect(supplyMap.vehicleMode, MashwarMapVehicleMode.supply);
       expect(
-        Uri.parse(supplyMap.resolveUberMapUrl(isArabic: true)).queryParameters['mode'],
+        Uri.parse(supplyMap.resolveLiveMapUrl(isArabic: true)).queryParameters['mode'],
         'supply',
       );
       expect(tester.takeException(), isNull);

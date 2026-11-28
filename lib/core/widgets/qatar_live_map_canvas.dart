@@ -6,7 +6,7 @@ import 'mashwar_animations.dart';
 
 /// Visual themes supported by [QatarLiveMapCanvas].
 enum QatarMapStyle {
-  /// Clean daylight Uber-style vector cartography for Home & Permissions.
+  /// Clean daylight MASHWAR vector cartography for Home & Permissions.
   light,
 
   /// Executive midnight navy cartography for Splash, Welcome & Desktop Split panels.
@@ -396,7 +396,7 @@ class _QatarLiveMapPainter extends CustomPainter {
       dunePaint,
     );
 
-    // 3. Arterial Qatar Highway Corridors (Dual-casing Uber cartography)
+    // 3. Arterial Qatar Highway Corridors (Dual-casing MASHWAR cartography)
     Offset hubOffset(_QatarHub hub) => Offset(hub.nx * w, hub.ny * h);
 
     final shamal = hubOffset(_qatarHubs[0]);

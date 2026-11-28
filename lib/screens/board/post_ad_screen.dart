@@ -154,13 +154,13 @@ class _PostAdScreenState extends State<PostAdScreen> {
         _priceController.text = '40';
         _seatsController.text = '2';
         _notesController.text = isAr
-            ? 'توصيل أطفال صباحي للحضانة بسيارة عائلية موثقة'
-            : 'Morning nursery drop-off with verified family car';
+            ? 'مشوار صباحي يومي منتظم بسيارة عائلية موثقة'
+            : 'Regular morning commute with verified family car';
         _requiresReceiptProof = false;
         _hasEscrowProtection = true;
         _ladiesOnly = true;
-        _subTagAr = 'توصيل حضانة ويومي';
-        _subTagEn = 'Nursery & Daily';
+        _subTagAr = 'مشوار يومي منتظم';
+        _subTagEn = 'Daily Commute';
       } else if (index == 2) {
         _intentIndex = 0;
         _selectedCategory = BoardAdType.errandService;
@@ -340,8 +340,8 @@ class _PostAdScreenState extends State<PostAdScreen> {
               : 'Direct ride · $price QAR per seat');
     } else if (type == BoardAdType.localTrip) {
       computedTimeText = isAr
-          ? '$timeText · مشوار يومي وحضانات'
-          : '$timeText · Daily / Nursery ride';
+          ? '$timeText · مشوار يومي منتظم'
+          : '$timeText · Daily commute ride';
       computedDesc = _notesController.text.trim().isNotEmpty
           ? _notesController.text.trim()
           : (isAr
@@ -431,14 +431,14 @@ class _PostAdScreenState extends State<PostAdScreen> {
     final quickPresets = isAr
         ? [
             'توريد لموقع هندسي',
-            'توصيل أطفال للحضانة',
+            'توصيل ومشوار يومي',
             'جلب مستند مع مسافر',
             'شراء من محل بفاتورة',
             '3 مقاعد شاغرة',
           ]
         : [
             'Engineer Site Supply',
-            'Nursery Daily Ride',
+            'Daily Commute Ride',
             'On-Route Doc Fetch',
             'Shop with Receipt',
             '3 Empty Car Seats',
@@ -1006,10 +1006,10 @@ class _PostAdScreenState extends State<PostAdScreen> {
         },
         {
           'type': BoardAdType.localTrip,
-          'title': isAr ? 'مشاوير وحضانات يومية' : 'Nursery & Daily',
+          'title': isAr ? 'مشاوير وتوصيل يومي' : 'Daily Commute',
           'subtitle': isAr
-              ? 'توصيل مدارس أو تنقل يومي منتظم'
-              : 'Daily school & district commute',
+              ? 'توصيل عمل أو تنقل يومي منتظم داخل قطر'
+              : 'Daily work & district commute across Qatar',
           'pillar': MashwarServicePillar.sharedTrips,
         },
         {

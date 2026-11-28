@@ -143,7 +143,7 @@ void main() {
 
       expect(find.text('نقطة الانطلاق (من وين؟)'), findsOneWidget);
       expect(find.text('توريد لموقع هندسي'), findsOneWidget);
-      expect(find.text('توصيل أطفال للحضانة'), findsOneWidget);
+      expect(find.text('توصيل ومشوار يومي'), findsOneWidget);
 
       await tester.tap(find.text('توريد لموقع هندسي'));
       await tester.pumpAndSettle();

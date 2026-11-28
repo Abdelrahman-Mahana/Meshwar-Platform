@@ -12,7 +12,7 @@ bool mashwarShouldAnimateContinuous([bool forceAnimate = false]) {
   return !bindingName.contains('Test');
 }
 
-/// Smooth Uber-grade page transition (subtle vertical slide + fade).
+/// Smooth MASHWAR page transition (subtle vertical slide + fade).
 class MashwarPageRoute<T> extends PageRouteBuilder<T> {
   MashwarPageRoute({
     required WidgetBuilder builder,
@@ -228,7 +228,7 @@ class MashwarFadeSlideIn extends StatelessWidget {
   }
 }
 
-/// Tactile pressable wrapper inspired by Uber & Careem cards and bento tiles.
+/// Tactile pressable wrapper for MASHWAR cards and bento tiles.
 class MashwarPressable extends StatefulWidget {
   const MashwarPressable({
     super.key,
@@ -278,7 +278,7 @@ class _MashwarPressableState extends State<MashwarPressable> {
   }
 }
 
-/// Uber/Careem route timeline showing pickup dot -> connecting hairline -> dropoff square.
+/// Clean MASHWAR route timeline showing pickup dot -> connecting hairline -> dropoff square.
 class MashwarRouteTimeline extends StatelessWidget {
   const MashwarRouteTimeline({
     super.key,
@@ -545,7 +545,7 @@ class MashwarSectionCard extends StatelessWidget {
   }
 }
 
-/// Consistent Uber/Careem bottom-sheet header with drag handle and optional close button.
+/// Consistent MASHWAR bottom-sheet header with drag handle and optional close button.
 class MashwarSheetHeader extends StatelessWidget {
   const MashwarSheetHeader({
     super.key,
