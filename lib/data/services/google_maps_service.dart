@@ -8,11 +8,156 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../repositories/contracts/i_maps_repository.dart';
 
-/// Service/vehicle presentation mode for the in-app Uber-style interactive map.
+/// Service/vehicle presentation mode for the in-app MASHWAR interactive live map.
 enum MashwarMapVehicleMode { trip, parcel, supply, place }
 
-/// Switchable map tile style preset for the in-app Uber-style interactive map.
-enum MashwarMapStylePreset { google, uber, satellite, dark }
+/// Switchable map tile style preset for the in-app MASHWAR live map.
+enum MashwarMapStylePreset {
+  standard,
+  mashwarLight,
+  satellite,
+  night;
+
+  /// Canonical query parameter value consumed by `web/maps/mashwar_live_map.html`.
+  String get queryValue {
+    switch (this) {
+      case MashwarMapStylePreset.standard:
+        return 'standard';
+      case MashwarMapStylePreset.mashwarLight:
+        return 'light';
+      case MashwarMapStylePreset.satellite:
+        return 'satellite';
+      case MashwarMapStylePreset.night:
+        return 'night';
+    }
+  }
+}
+
+/// Interactive pin-picking mode for `web/maps/mashwar_live_map.html`.
+enum MashwarMapPickMode { none, origin, destination, both }
+
+/// Immutable location picked by tapping or dragging a pin on the live map.
+class MashwarPickedLocation {
+  final String target; // 'origin' | 'destination' | 'point'
+  final double lat;
+  final double lng;
+  final String labelAr;
+  final String labelEn;
+  final String municipality;
+
+  const MashwarPickedLocation({
+    required this.target,
+    required this.lat,
+    required this.lng,
+    required this.labelAr,
+    required this.labelEn,
+    this.municipality = '',
+  });
+
+  String localizedLabel({required bool isArabic}) {
+    final primary = isArabic ? labelAr.trim() : labelEn.trim();
+    if (primary.isNotEmpty) return primary;
+    final fallback = isArabic ? labelEn.trim() : labelAr.trim();
+    if (fallback.isNotEmpty) return fallback;
+    return isArabic ? 'الدوحة' : 'Doha';
+  }
+
+  static MashwarPickedLocation? fromMap(Map<Object?, Object?> raw) {
+    final latNum = raw['lat'];
+    final lngNum = raw['lng'];
+    if (latNum is! num || lngNum is! num) return null;
+    final lat = latNum.toDouble();
+    final lng = lngNum.toDouble();
+    if (!lat.isFinite || !lng.isFinite) return null;
+    final target = (raw['target'] ?? 'point').toString().trim();
+    final labelAr = (raw['labelAr'] ?? '').toString().trim();
+    final labelEn = (raw['labelEn'] ?? '').toString().trim();
+    final municipality = (raw['municipality'] ?? '').toString().trim();
+    return MashwarPickedLocation(
+      target: target.isEmpty ? 'point' : target,
+      lat: lat,
+      lng: lng,
+      labelAr: labelAr.isNotEmpty ? labelAr : labelEn,
+      labelEn: labelEn.isNotEmpty ? labelEn : labelAr,
+      municipality: municipality,
+    );
+  }
+}
+
+/// Immutable real-time GPS position & heading fix emitted by the live map.
+class MashwarGpsPosition {
+  final double lat;
+  final double lng;
+  final double accuracyM;
+  final double? headingDeg;
+  final double? speedMps;
+  final String status; // 'tracking' | 'denied' | 'unavailable'
+
+  const MashwarGpsPosition({
+    required this.lat,
+    required this.lng,
+    required this.accuracyM,
+    this.headingDeg,
+    this.speedMps,
+    required this.status,
+  });
+
+  bool get isTracking => status == 'tracking';
+
+  static MashwarGpsPosition? fromMap(Map<Object?, Object?> raw) {
+    final latNum = raw['lat'];
+    final lngNum = raw['lng'];
+    if (latNum is! num || lngNum is! num) return null;
+    final accNum = raw['accuracyM'];
+    final headNum = raw['headingDeg'];
+    final speedNum = raw['speedMps'];
+    final status = (raw['status'] ?? 'unavailable').toString().trim();
+    return MashwarGpsPosition(
+      lat: latNum.toDouble(),
+      lng: lngNum.toDouble(),
+      accuracyM: accNum is num ? accNum.toDouble() : 0.0,
+      headingDeg: headNum is num ? headNum.toDouble() : null,
+      speedMps: speedNum is num ? speedNum.toDouble() : null,
+      status: status.isEmpty ? 'unavailable' : status,
+    );
+  }
+}
+
+/// Immutable live route telemetry & turn-by-turn maneuver update emitted by OSRM.
+class MashwarLiveRouteUpdate {
+  final double distKm;
+  final int etaMin;
+  final String nextStepAr;
+  final String nextStepEn;
+  final String trafficLevel; // 'clear' | 'moderate' | 'heavy'
+
+  const MashwarLiveRouteUpdate({
+    required this.distKm,
+    required this.etaMin,
+    required this.nextStepAr,
+    required this.nextStepEn,
+    this.trafficLevel = 'clear',
+  });
+
+  String localizedNextStep({required bool isArabic}) =>
+      isArabic ? nextStepAr : nextStepEn;
+
+  static MashwarLiveRouteUpdate? fromMap(Map<Object?, Object?> raw) {
+    final distNum = raw['distKm'];
+    final etaNum = raw['etaMin'];
+    if (distNum is! num || etaNum is! num) return null;
+    final nextStepAr = (raw['nextStepAr'] ?? '').toString().trim();
+    final nextStepEn = (raw['nextStepEn'] ?? '').toString().trim();
+    final trafficLevel = (raw['trafficLevel'] ?? 'clear').toString().trim();
+    return MashwarLiveRouteUpdate(
+      distKm: distNum.toDouble(),
+      etaMin: etaNum.round(),
+      nextStepAr: nextStepAr,
+      nextStepEn: nextStepEn,
+      trafficLevel: trafficLevel.isEmpty ? 'clear' : trafficLevel,
+    );
+  }
+}
 
 /// Structured bilingual geo-hub entry for instant Qatar & GCC resolution.
 class MashwarGeoHubEntry {
@@ -204,10 +349,11 @@ class GoogleMapsService {
     return isArabic ? 'الدوحة' : 'Doha';
   }
 
-  /// Builds the relative URL to the self-contained Uber-grade in-app map engine
-  /// (`web/maps/mashwar_uber_map.html`) with resolved coordinates, route
-  /// telemetry, vehicle mode, tile style preset, and live traffic state.
-  static String buildUberInAppMapUrl({
+  /// Builds the relative URL to the self-contained MASHWAR live GPS & routing
+  /// map engine (`web/maps/mashwar_live_map.html`) with resolved coordinates,
+  /// route telemetry, vehicle mode, tile style preset, GPS mode, interactive
+  /// pin picker mode, turn-by-turn navigation HUD, and postMessage channel ID.
+  static String buildLiveMapUrl({
     String? origin,
     String? destination,
     String? stopover,
@@ -215,24 +361,36 @@ class GoogleMapsService {
     double? lat,
     double? lng,
     MashwarMapVehicleMode mode = MashwarMapVehicleMode.trip,
-    MashwarMapStylePreset style = MashwarMapStylePreset.google,
+    MashwarMapStylePreset style = MashwarMapStylePreset.standard,
     bool showTraffic = true,
     bool isArabic = true,
     double? distanceKm,
     int? durationMinutes,
     String? highwayName,
     bool showNearbyCars = true,
+    bool enableGps = false,
+    String? gpsMode,
+    MashwarMapPickMode pickMode = MashwarMapPickMode.none,
+    bool navigationMode = false,
+    String? channelId,
   }) {
     final cleanOrigin = origin?.trim() ?? '';
     final cleanDest = destination?.trim() ?? '';
     final cleanStop = stopover?.trim() ?? '';
     final cleanPlace = placeQuery?.trim() ?? '';
+    final cleanChannel = channelId?.trim() ?? '';
 
     final params = <String, String>{
-      'style': style.name,
+      'style': style.queryValue,
       'traffic': showTraffic ? '1' : '0',
       'lang': isArabic ? 'ar' : 'en',
       'nearby': showNearbyCars ? '1' : '0',
+      'gps': (gpsMode != null && gpsMode.trim().isNotEmpty)
+          ? gpsMode.trim()
+          : (enableGps ? 'auto' : 'on_demand'),
+      'pick': pickMode.name,
+      'nav': navigationMode ? '1' : '0',
+      if (cleanChannel.isNotEmpty) 'ch': cleanChannel,
     };
 
     final bool wantsRoute =
@@ -300,7 +458,7 @@ class GoogleMapsService {
         }
 
         final query = Uri(queryParameters: params).query;
-        return 'maps/mashwar_uber_map.html?$query';
+        return 'maps/mashwar_live_map.html?$query';
       }
     }
 
@@ -327,7 +485,7 @@ class GoogleMapsService {
     params['fromName'] = pLabel;
 
     final query = Uri(queryParameters: params).query;
-    return 'maps/mashwar_uber_map.html?$query';
+    return 'maps/mashwar_live_map.html?$query';
   }
 
   static String _resolveEmbeddedLocationParam(String raw) {

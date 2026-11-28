@@ -7,15 +7,43 @@ import 'mashwar_embedded_google_map_stub.dart'
     as impl;
 import 'qatar_live_map_canvas.dart';
 
-/// Real interactive Uber-grade map view embedded directly inside the MASHWAR app.
+/// Lightweight controller to issue zero-reload live commands (`locate_me`,
+/// `fit_route`) to an active [MashwarEmbeddedGoogleMap].
+class MashwarLiveMapController {
+  void Function(String cmd, Map<String, Object?> payload)? _commandSender;
+
+  /// Internal hook bound by the active platform map widget.
+  void attach(void Function(String cmd, Map<String, Object?> payload) sender) {
+    _commandSender = sender;
+  }
+
+  /// Internal hook unbound when the platform map widget disposes.
+  void detach(void Function(String cmd, Map<String, Object?> payload) sender) {
+    if (_commandSender == sender) {
+      _commandSender = null;
+    }
+  }
+
+  /// Centers the map on the user's live GPS fix and engages follow mode.
+  void locateMe() {
+    _commandSender?.call('locate_me', const <String, Object?>{});
+  }
+
+  /// Re-centers the camera to frame the active route or place marker.
+  void fitRoute() {
+    _commandSender?.call('fit_route', const <String, Object?>{});
+  }
+}
+
+/// Real interactive MASHWAR live GPS, pin-picker, and routing map embedded
+/// directly inside the app.
 ///
-/// - On Flutter Web (`dart.library.js_interop`), renders the self-contained
-///   Uber-style Leaflet + Google Live Traffic + OSRM map engine
-///   (`web/maps/mashwar_uber_map.html`) via `ui_web.platformViewRegistry` &
-///   `package:web`.
+/// - On Flutter Web (`dart.library.js_interop`), renders a stable, zero-reload
+///   `HtmlElementView` hosting `web/maps/mashwar_live_map.html` with same-origin
+///   `postMessage` bidirectional events (`mw_command`, `mw_location_picked`,
+///   `mw_gps_update`, `mw_route_updated`).
 /// - On Dart VM / widget tests / non-web runtimes, renders a `pumpAndSettle`-safe
-///   [QatarLiveMapCanvas] fallback while preserving the exact same key contract
-///   (`ValueKey('mashwar_embedded_gmap_view')`).
+///   [QatarLiveMapCanvas] fallback while preserving `ValueKey('mashwar_embedded_gmap_view')`.
 class MashwarEmbeddedGoogleMap extends StatelessWidget {
   const MashwarEmbeddedGoogleMap({
     super.key,
@@ -39,6 +67,14 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
     this.distanceKm,
     this.durationMinutes,
     this.highwayName,
+    this.enableGps = false,
+    this.pickMode = MashwarMapPickMode.none,
+    this.navigationMode = false,
+    this.channelId,
+    this.controller,
+    this.onLocationPicked,
+    this.onGpsUpdate,
+    this.onRouteUpdated,
   });
 
   final String? origin;
@@ -61,6 +97,14 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
   final double? distanceKm;
   final int? durationMinutes;
   final String? highwayName;
+  final bool enableGps;
+  final MashwarMapPickMode pickMode;
+  final bool navigationMode;
+  final String? channelId;
+  final MashwarLiveMapController? controller;
+  final ValueChanged<MashwarPickedLocation>? onLocationPicked;
+  final ValueChanged<MashwarGpsPosition>? onGpsUpdate;
+  final ValueChanged<MashwarLiveRouteUpdate>? onRouteUpdated;
 
   /// Resolves the active tile style preset, defaulting to [satellite] when
   /// [stylePreset] is omitted.
@@ -68,11 +112,14 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
       stylePreset ??
       (satellite
           ? MashwarMapStylePreset.satellite
-          : MashwarMapStylePreset.google);
+          : MashwarMapStylePreset.standard);
 
-  /// Resolves the relative URL for the self-contained Uber-grade in-app map
-  /// engine (`maps/mashwar_uber_map.html?...`).
-  String resolveUberMapUrl({required bool isArabic}) {
+  /// Resolves the relative URL for the self-contained MASHWAR live map engine
+  /// (`maps/mashwar_live_map.html?...`).
+  String resolveLiveMapUrl({
+    required bool isArabic,
+    String? overrideChannelId,
+  }) {
     final cleanOrigin = origin?.trim() ?? '';
     final cleanDest = destination?.trim() ?? '';
     final hasRouteEndpoints = cleanOrigin.isNotEmpty && cleanDest.isNotEmpty;
@@ -80,7 +127,7 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
         ? vehicleMode
         : MashwarMapVehicleMode.place;
 
-    return GoogleMapsService.buildUberInAppMapUrl(
+    return GoogleMapsService.buildLiveMapUrl(
       origin: cleanOrigin.isNotEmpty ? cleanOrigin : null,
       destination: cleanDest.isNotEmpty ? cleanDest : null,
       stopover: stopover,
@@ -95,6 +142,10 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
       durationMinutes: durationMinutes,
       highwayName: highwayName,
       showNearbyCars: showNearbyCars,
+      enableGps: enableGps,
+      pickMode: pickMode,
+      navigationMode: navigationMode,
+      channelId: overrideChannelId ?? channelId,
     );
   }
 
@@ -108,7 +159,8 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
         destination: cleanDest,
         stopover: stopover,
         isArabic: isArabic,
-        satellite: satellite || effectiveStylePreset == MashwarMapStylePreset.satellite,
+        satellite: satellite ||
+            effectiveStylePreset == MashwarMapStylePreset.satellite,
         zoom: zoom,
       );
     }
@@ -125,7 +177,8 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
       lat: lat,
       lng: lng,
       isArabic: isArabic,
-      satellite: satellite || effectiveStylePreset == MashwarMapStylePreset.satellite,
+      satellite:
+          satellite || effectiveStylePreset == MashwarMapStylePreset.satellite,
       zoom: zoom,
     );
   }
@@ -133,18 +186,36 @@ class MashwarEmbeddedGoogleMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = context.isArabic;
-    final uberMapUrl = resolveUberMapUrl(isArabic: isArabic);
+    final liveMapUrl = resolveLiveMapUrl(isArabic: isArabic);
 
     return impl.buildPlatformEmbeddedGoogleMap(
-      embedUrl: uberMapUrl,
+      embedUrl: liveMapUrl,
+      isArabic: isArabic,
       interactive: interactive,
       height: height,
       borderRadius: borderRadius,
       fallbackStyle: fallbackStyle,
       origin: origin,
       destination: destination,
+      stopover: stopover,
       placeQuery: placeQuery,
+      lat: lat,
+      lng: lng,
+      vehicleMode: vehicleMode,
+      stylePreset: effectiveStylePreset,
+      showTraffic: showTraffic,
+      enableGps: enableGps,
+      pickMode: pickMode,
+      navigationMode: navigationMode,
+      distanceKm: distanceKm,
+      durationMinutes: durationMinutes,
+      highwayName: highwayName,
+      channelId: channelId,
+      controller: controller,
       onHubTap: onHubTap,
+      onLocationPicked: onLocationPicked,
+      onGpsUpdate: onGpsUpdate,
+      onRouteUpdated: onRouteUpdated,
     );
   }
 }

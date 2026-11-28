@@ -179,6 +179,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
       stopover: ride.stopoverCity,
       vehicleMode: MashwarMapVehicleMode.trip,
       showTraffic: true,
+      enableGps: true,
+      navigationMode: true,
       titleAr: 'مسار الرحلة · ${ride.fromCity} ← ${ride.toCity}',
       titleEn: 'Trip Route · ${ride.fromCity} → ${ride.toCity}',
     );
@@ -488,7 +490,7 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Live Embedded Google Map Preview (Pre-Trip)
+                    // Live MASHWAR GPS & Turn-by-Turn Map Preview (Pre-Trip)
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
@@ -507,6 +509,8 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
                         stopover: ride.stopoverCity,
                         vehicleMode: MashwarMapVehicleMode.trip,
                         showTraffic: true,
+                        enableGps: true,
+                        navigationMode: true,
                         height: 260,
                         borderRadius: 12,
                       ),
@@ -630,7 +634,11 @@ class _ActiveTripScreenState extends State<ActiveTripScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  RideRouteMapView(ride: ride),
+                  RideRouteMapView(
+                    ride: ride,
+                    enableGps: true,
+                    navigationMode: true,
+                  ),
                   const SizedBox(height: 12),
 
                   // 1-Tap Google Maps Navigation Button

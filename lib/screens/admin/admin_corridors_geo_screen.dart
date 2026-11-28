@@ -20,7 +20,7 @@ class AdminCorridorsGeoScreen extends StatefulWidget {
 
 class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
   String _statusFilter = 'all';
-  bool _useLiveUberMap = true;
+  bool _useLiveMap = true;
   bool _showTraffic = true;
   MashwarMapVehicleMode _vehicleMode = MashwarMapVehicleMode.trip;
 
@@ -301,13 +301,13 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: _useLiveUberMap ? Colors.white : t.textPrimary,
+                              color: _useLiveMap ? Colors.white : t.textPrimary,
                             ),
                           ),
                           selectedColor: AppColors.navy,
                           checkmarkColor: Colors.white,
-                          selected: _useLiveUberMap,
-                          onSelected: (_) => setState(() => _useLiveUberMap = true),
+                          selected: _useLiveMap,
+                          onSelected: (_) => setState(() => _useLiveMap = true),
                         ),
                         ChoiceChip(
                           label: Text(
@@ -315,15 +315,15 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
-                              color: !_useLiveUberMap ? Colors.white : t.textPrimary,
+                              color: !_useLiveMap ? Colors.white : t.textPrimary,
                             ),
                           ),
                           selectedColor: AppColors.navy,
                           checkmarkColor: Colors.white,
-                          selected: !_useLiveUberMap,
-                          onSelected: (_) => setState(() => _useLiveUberMap = false),
+                          selected: !_useLiveMap,
+                          onSelected: (_) => setState(() => _useLiveMap = false),
                         ),
-                        if (_useLiveUberMap) ...[
+                        if (_useLiveMap) ...[
                           FilterChip(
                             label: Text(
                               isAr ? 'الزحمة' : 'Traffic',
@@ -368,7 +368,9 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                               destination: selectedCorridor.toCityAr,
                               vehicleMode: _vehicleMode,
                               showTraffic: _showTraffic,
-                              stylePreset: t.isDark ? MashwarMapStylePreset.dark : MashwarMapStylePreset.google,
+                              stylePreset: t.isDark
+                                  ? MashwarMapStylePreset.night
+                                  : MashwarMapStylePreset.standard,
                             ),
                           ),
                         ],
@@ -380,7 +382,7 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                       width: double.infinity,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: _useLiveUberMap
+                        child: _useLiveMap
                             ? MashwarEmbeddedGoogleMap(
                                 key: ValueKey(
                                   'admin_cor_${selectedCorridor.id}_${_vehicleMode.name}_$_showTraffic',
@@ -390,8 +392,8 @@ class _AdminCorridorsGeoScreenState extends State<AdminCorridorsGeoScreen> {
                                 vehicleMode: _vehicleMode,
                                 showTraffic: _showTraffic,
                                 stylePreset: t.isDark
-                                    ? MashwarMapStylePreset.dark
-                                    : MashwarMapStylePreset.google,
+                                    ? MashwarMapStylePreset.night
+                                    : MashwarMapStylePreset.standard,
                                 height: 310,
                                 borderRadius: 14,
                               )

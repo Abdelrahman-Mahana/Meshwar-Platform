@@ -35,43 +35,43 @@ String _formatMapDuration(int minutes, bool isAr) {
   return (lat: lat, lng: lng);
 }
 
-/// Cycles map tile presets starting with Google -> Satellite -> Uber -> Dark -> Google
-/// so a single tap from default Google Roads activates Satellite mode cleanly.
+/// Cycles MASHWAR map tile presets:
+/// Standard -> Satellite -> MASHWAR Light -> Night -> Standard.
 MashwarMapStylePreset _nextMapStylePreset(MashwarMapStylePreset current) {
   switch (current) {
-    case MashwarMapStylePreset.google:
+    case MashwarMapStylePreset.standard:
       return MashwarMapStylePreset.satellite;
     case MashwarMapStylePreset.satellite:
-      return MashwarMapStylePreset.uber;
-    case MashwarMapStylePreset.uber:
-      return MashwarMapStylePreset.dark;
-    case MashwarMapStylePreset.dark:
-      return MashwarMapStylePreset.google;
+      return MashwarMapStylePreset.mashwarLight;
+    case MashwarMapStylePreset.mashwarLight:
+      return MashwarMapStylePreset.night;
+    case MashwarMapStylePreset.night:
+      return MashwarMapStylePreset.standard;
   }
 }
 
 String _mapStyleLabel(MashwarMapStylePreset preset, bool isAr) {
   switch (preset) {
-    case MashwarMapStylePreset.google:
-      return isAr ? 'خريطة' : 'Map';
-    case MashwarMapStylePreset.uber:
-      return isAr ? 'أوبر' : 'Uber';
+    case MashwarMapStylePreset.standard:
+      return isAr ? 'قياسي' : 'Standard';
+    case MashwarMapStylePreset.mashwarLight:
+      return isAr ? 'مشوار الفاتح' : 'MASHWAR Light';
     case MashwarMapStylePreset.satellite:
       return isAr ? 'قمر صناعي' : 'Satellite';
-    case MashwarMapStylePreset.dark:
-      return isAr ? 'ليلي' : 'Dark';
+    case MashwarMapStylePreset.night:
+      return isAr ? 'ليلي' : 'Night';
   }
 }
 
 IconData _mapStyleIcon(MashwarMapStylePreset preset) {
   switch (preset) {
-    case MashwarMapStylePreset.google:
+    case MashwarMapStylePreset.standard:
       return Icons.map_rounded;
-    case MashwarMapStylePreset.uber:
-      return Icons.navigation_rounded;
+    case MashwarMapStylePreset.mashwarLight:
+      return Icons.layers_rounded;
     case MashwarMapStylePreset.satellite:
       return Icons.satellite_alt_rounded;
-    case MashwarMapStylePreset.dark:
+    case MashwarMapStylePreset.night:
       return Icons.dark_mode_rounded;
   }
 }
@@ -93,6 +93,9 @@ Future<bool?> openMashwarInAppMap(
   MashwarMapVehicleMode vehicleMode = MashwarMapVehicleMode.trip,
   MashwarMapStylePreset? stylePreset,
   bool showTraffic = true,
+  bool enableGps = true,
+  MashwarMapPickMode pickMode = MashwarMapPickMode.none,
+  bool navigationMode = false,
 }) {
   return Navigator.of(context).push<bool>(
     MaterialPageRoute<bool>(
@@ -110,12 +113,60 @@ Future<bool?> openMashwarInAppMap(
         vehicleMode: vehicleMode,
         stylePreset: stylePreset,
         showTraffic: showTraffic,
+        enableGps: enableGps,
+        pickMode: pickMode,
+        navigationMode: navigationMode,
       ),
     ),
   );
 }
 
-/// Opens Google Maps directly INSIDE the MASHWAR app via [MashwarInAppMapScreen].
+/// Opens the full-screen MASHWAR Live GPS & Interactive Pin Picker and returns
+/// the confirmed [MashwarPickedLocation] (or `null` if dismissed).
+Future<MashwarPickedLocation?> openMashwarMapPicker(
+  BuildContext context, {
+  String? initialLocation,
+  String? origin,
+  String? destination,
+  double? lat,
+  double? lng,
+  String? titleAr,
+  String? titleEn,
+  bool enableGps = true,
+  MashwarMapPickMode pickMode = MashwarMapPickMode.origin,
+  MashwarMapStylePreset? stylePreset,
+}) {
+  return Navigator.of(context).push<MashwarPickedLocation>(
+    MaterialPageRoute<MashwarPickedLocation>(
+      builder: (_) => MashwarInAppMapScreen(
+        origin: origin,
+        destination: destination,
+        placeQuery: initialLocation,
+        lat: lat,
+        lng: lng,
+        titleAr: titleAr ?? 'اختر الموقع على خريطة مشوار',
+        titleEn: titleEn ?? 'Pick Location on MASHWAR Map',
+        showConfirmLocationButton: true,
+        returnPickedLocation: true,
+        vehicleMode: (origin != null &&
+                origin.trim().isNotEmpty &&
+                destination != null &&
+                destination.trim().isNotEmpty)
+            ? MashwarMapVehicleMode.trip
+            : MashwarMapVehicleMode.place,
+        stylePreset: stylePreset,
+        showTraffic: true,
+        enableGps: enableGps,
+        pickMode: pickMode == MashwarMapPickMode.none
+            ? MashwarMapPickMode.origin
+            : pickMode,
+      ),
+    ),
+  );
+}
+
+/// Opens the interactive MASHWAR live map directly INSIDE the app via
+/// [MashwarInAppMapScreen].
 ///
 /// - When [launcherOverride] is injected (automated tests), invokes
 ///   `launcherOverride(uri, mode: LaunchMode.externalApplication)` so existing
@@ -139,6 +190,8 @@ Future<bool> launchMashwarGoogleMapsUrl(
   MashwarMapVehicleMode vehicleMode = MashwarMapVehicleMode.trip,
   MashwarMapStylePreset? stylePreset,
   bool showTraffic = true,
+  bool enableGps = true,
+  bool navigationMode = false,
   Future<bool> Function(Uri uri, {LaunchMode mode})? launcherOverride,
 }) async {
   final messenger = ScaffoldMessenger.maybeOf(context);
@@ -164,8 +217,8 @@ Future<bool> launchMashwarGoogleMapsUrl(
         SnackBar(
           content: Text(
             isAr
-                ? 'تم تجهيز ونسخ رابط الملاحة في Google Maps: $url'
-                : 'Google Maps link copied to clipboard: $url',
+                ? 'تم تجهيز ونسخ رابط المسار: $url'
+                : 'Route link copied to clipboard: $url',
           ),
           backgroundColor: AppColors.navy,
           behavior: SnackBarBehavior.floating,
@@ -218,6 +271,8 @@ Future<bool> launchMashwarGoogleMapsUrl(
           vehicleMode: vehicleMode,
           stylePreset: stylePreset,
           showTraffic: showTraffic,
+          enableGps: enableGps,
+          navigationMode: navigationMode,
         ),
       ),
     );
@@ -242,7 +297,7 @@ Future<bool> launchMashwarGoogleMapsUrl(
   return false;
 }
 
-/// Full-screen interactive Uber-grade live map hosted directly inside the app.
+/// Full-screen interactive MASHWAR Live GPS, Pin-Picker & Navigation Map screen.
 class MashwarInAppMapScreen extends StatefulWidget {
   const MashwarInAppMapScreen({
     super.key,
@@ -256,9 +311,13 @@ class MashwarInAppMapScreen extends StatefulWidget {
     this.titleEn,
     this.initialSatellite = false,
     this.showConfirmLocationButton = false,
+    this.returnPickedLocation = false,
     this.vehicleMode = MashwarMapVehicleMode.trip,
     this.stylePreset,
     this.showTraffic = true,
+    this.enableGps = true,
+    this.pickMode = MashwarMapPickMode.none,
+    this.navigationMode = false,
   });
 
   final String? origin;
@@ -271,18 +330,27 @@ class MashwarInAppMapScreen extends StatefulWidget {
   final String? titleEn;
   final bool initialSatellite;
   final bool showConfirmLocationButton;
+  final bool returnPickedLocation;
   final MashwarMapVehicleMode vehicleMode;
   final MashwarMapStylePreset? stylePreset;
   final bool showTraffic;
+  final bool enableGps;
+  final MashwarMapPickMode pickMode;
+  final bool navigationMode;
 
   @override
   State<MashwarInAppMapScreen> createState() => _MashwarInAppMapScreenState();
 }
 
 class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
+  final MashwarLiveMapController _mapController = MashwarLiveMapController();
   late MashwarMapStylePreset _stylePreset;
   late bool _showTraffic;
+  late bool _navigationMode;
   RouteDetails? _routeDetails;
+  MashwarPickedLocation? _pickedLocation;
+  MashwarGpsPosition? _gpsPosition;
+  MashwarLiveRouteUpdate? _liveRouteUpdate;
   int _loadSeq = 0;
 
   bool get _isSatellite => _stylePreset == MashwarMapStylePreset.satellite;
@@ -299,8 +367,10 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
     _stylePreset = widget.stylePreset ??
         (widget.initialSatellite
             ? MashwarMapStylePreset.satellite
-            : MashwarMapStylePreset.google);
+            : MashwarMapStylePreset.standard);
     _showTraffic = widget.showTraffic;
+    _navigationMode = widget.navigationMode;
+    _seedInitialPickedLocation();
     if (_isRouteMode) {
       _routeDetails = GoogleMapsService.estimateRouteSync(
         widget.origin!.trim(),
@@ -308,6 +378,31 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
       );
       _fetchRouteDetails();
     }
+  }
+
+  void _seedInitialPickedLocation() {
+    if (!widget.showConfirmLocationButton &&
+        widget.pickMode == MashwarMapPickMode.none) {
+      return;
+    }
+    final raw = (widget.placeQuery?.trim().isNotEmpty == true)
+        ? widget.placeQuery!.trim()
+        : (widget.origin?.trim().isNotEmpty == true
+            ? widget.origin!.trim()
+            : (widget.destination?.trim().isNotEmpty == true
+                ? widget.destination!.trim()
+                : 'الدوحة'));
+    final hub = GoogleMapsService.resolveHubEntry(raw);
+    _pickedLocation = MashwarPickedLocation(
+      target: widget.pickMode == MashwarMapPickMode.destination
+          ? 'destination'
+          : (widget.pickMode == MashwarMapPickMode.origin ? 'origin' : 'point'),
+      lat: widget.lat ?? hub?.lat ?? 25.2854,
+      lng: widget.lng ?? hub?.lng ?? 51.5310,
+      labelAr: hub?.nameAr ?? raw,
+      labelEn: hub?.nameEn ?? raw,
+      municipality: hub?.govAr ?? '',
+    );
   }
 
   void _fetchRouteDetails() {
@@ -324,6 +419,10 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
   }
 
   String _resolveSubtitle(bool isAr) {
+    if (_pickedLocation != null &&
+        (widget.returnPickedLocation || widget.pickMode != MashwarMapPickMode.none)) {
+      return _pickedLocation!.localizedLabel(isArabic: isAr);
+    }
     if (_isRouteMode) {
       final arrow = isAr ? '←' : '→';
       return '${widget.origin!.trim()} $arrow ${widget.destination!.trim()}';
@@ -334,22 +433,40 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
     if (o.isNotEmpty) return o;
     final d = widget.destination?.trim() ?? '';
     if (d.isNotEmpty) return d;
-    if (widget.lat != null && widget.lng != null) {
-      return '${widget.lat!.toStringAsFixed(4)}, ${widget.lng!.toStringAsFixed(4)}';
-    }
     return isAr ? 'دولة قطر' : 'State of Qatar';
+  }
+
+  void _handleConfirmLocation() {
+    if (widget.returnPickedLocation) {
+      final resolved = _pickedLocation ??
+          const MashwarPickedLocation(
+            target: 'point',
+            lat: 25.2854,
+            lng: 51.5310,
+            labelAr: 'الدوحة',
+            labelEn: 'Doha',
+            municipality: 'بلدية الدوحة',
+          );
+      Navigator.of(context).pop<MashwarPickedLocation>(resolved);
+    } else {
+      Navigator.of(context).pop<bool>(true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isAr = context.isArabic;
     final titleText = isAr
-        ? (widget.titleAr ?? 'خريطة Google Maps المباشرة')
-        : (widget.titleEn ?? 'Live Google Maps');
+        ? (widget.titleAr ?? 'خريطة مشوار المباشرة')
+        : (widget.titleEn ?? 'MASHWAR Live Map');
     final subtitleText = _resolveSubtitle(isAr);
     final route = _routeDetails;
     final highway = route?.corridorHighway(isArabic: isAr) ?? '';
-    final styleActive = _stylePreset != MashwarMapStylePreset.google;
+    final styleActive = _stylePreset != MashwarMapStylePreset.standard;
+    final effectiveDistKm = _liveRouteUpdate?.distKm ?? route?.distanceKm;
+    final effectiveEtaMin = _liveRouteUpdate?.etaMin ?? route?.durationMinutes;
+    final nextStepText =
+        _liveRouteUpdate?.localizedNextStep(isArabic: isAr) ?? '';
 
     return Scaffold(
       key: const ValueKey('inapp_google_map_screen'),
@@ -391,6 +508,54 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
           ],
         ),
         actions: [
+          if (_isRouteMode)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: InkWell(
+                key: const ValueKey('inapp_map_nav_toggle'),
+                borderRadius: BorderRadius.circular(18),
+                onTap: () =>
+                    setState(() => _navigationMode = !_navigationMode),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: _navigationMode
+                        ? AppColors.navy
+                        : AppColors.slateBg,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: _navigationMode
+                          ? AppColors.navy
+                          : AppColors.slateBorder,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.turn_right_rounded,
+                        size: 14,
+                        color:
+                            _navigationMode ? Colors.white : AppColors.navy,
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        isAr ? 'ملاحة' : 'Nav',
+                        style: AppTypography.label(
+                          color:
+                              _navigationMode ? Colors.white : AppColors.navy,
+                        ).copyWith(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (_isRouteMode) const SizedBox(width: 5),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 9),
             child: InkWell(
@@ -433,9 +598,10 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 5),
           Padding(
-            padding: const EdgeInsetsDirectional.only(end: 10, top: 9, bottom: 9),
+            padding:
+                const EdgeInsetsDirectional.only(end: 10, top: 9, bottom: 9),
             child: InkWell(
               key: const ValueKey('inapp_map_satellite_toggle'),
               borderRadius: BorderRadius.circular(18),
@@ -482,7 +648,7 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
       ),
       body: Column(
         children: [
-          if (_isRouteMode && route != null)
+          if (_isRouteMode && effectiveDistKm != null && effectiveEtaMin != null)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -500,42 +666,127 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
                   _MapMetricPill(
                     icon: Icons.straighten_rounded,
                     label: isAr
-                        ? '${route.distanceKm.round()} كم'
-                        : '${route.distanceKm.round()} km',
+                        ? '${effectiveDistKm.round()} كم'
+                        : '${effectiveDistKm.round()} km',
                   ),
                   _MapMetricPill(
                     icon: Icons.schedule_rounded,
-                    label: _formatMapDuration(route.durationMinutes, isAr),
+                    label: _formatMapDuration(effectiveEtaMin, isAr),
                   ),
                   if (highway.isNotEmpty)
                     _MapMetricPill(
                       icon: Icons.alt_route_rounded,
                       label: highway,
                     ),
+                  if (_navigationMode && nextStepText.isNotEmpty)
+                    _MapMetricPill(
+                      icon: Icons.turn_right_rounded,
+                      label: nextStepText,
+                    ),
                 ],
               ),
             ),
           Expanded(
-            child: MashwarEmbeddedGoogleMap(
-              origin: widget.origin,
-              destination: widget.destination,
-              stopover: widget.stopover,
-              placeQuery: widget.placeQuery,
-              lat: widget.lat,
-              lng: widget.lng,
-              satellite: _isSatellite,
-              stylePreset: _stylePreset,
-              vehicleMode: _isRouteMode
-                  ? widget.vehicleMode
-                  : MashwarMapVehicleMode.place,
-              showTraffic: _showTraffic,
-              distanceKm: route?.distanceKm,
-              durationMinutes: route?.durationMinutes,
-              highwayName: highway.isNotEmpty ? highway : null,
-              zoom: _isRouteMode ? 11 : 14,
-              height: double.infinity,
-              borderRadius: 0,
-              interactive: true,
+            child: Stack(
+              children: [
+                MashwarEmbeddedGoogleMap(
+                  origin: widget.origin,
+                  destination: widget.destination,
+                  stopover: widget.stopover,
+                  placeQuery: widget.placeQuery,
+                  lat: widget.lat,
+                  lng: widget.lng,
+                  satellite: _isSatellite,
+                  stylePreset: _stylePreset,
+                  vehicleMode: _isRouteMode
+                      ? widget.vehicleMode
+                      : MashwarMapVehicleMode.place,
+                  showTraffic: _showTraffic,
+                  enableGps: widget.enableGps,
+                  pickMode: widget.pickMode,
+                  navigationMode: _navigationMode,
+                  controller: _mapController,
+                  distanceKm: route?.distanceKm,
+                  durationMinutes: route?.durationMinutes,
+                  highwayName: highway.isNotEmpty ? highway : null,
+                  zoom: _isRouteMode ? 11 : 14,
+                  height: double.infinity,
+                  borderRadius: 0,
+                  interactive: true,
+                  onLocationPicked: (picked) {
+                    if (!mounted) return;
+                    setState(() => _pickedLocation = picked);
+                  },
+                  onGpsUpdate: (gps) {
+                    if (!mounted) return;
+                    setState(() {
+                      _gpsPosition = gps;
+                      if (gps.isTracking &&
+                          widget.returnPickedLocation &&
+                          _pickedLocation == null) {
+                        _pickedLocation = MashwarPickedLocation(
+                          target: 'origin',
+                          lat: gps.lat,
+                          lng: gps.lng,
+                          labelAr: 'موقعي الحالي',
+                          labelEn: 'My Current Location',
+                        );
+                      }
+                    });
+                  },
+                  onRouteUpdated: (update) {
+                    if (!mounted) return;
+                    setState(() => _liveRouteUpdate = update);
+                  },
+                ),
+                PositionedDirectional(
+                  bottom: 14,
+                  start: 14,
+                  child: Material(
+                    color: _gpsPosition?.isTracking == true
+                        ? const Color(0xFF2563EB)
+                        : Colors.white,
+                    elevation: 3,
+                    shadowColor: AppColors.navy.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(24),
+                    child: InkWell(
+                      key: const ValueKey('inapp_map_locate_btn'),
+                      borderRadius: BorderRadius.circular(24),
+                      onTap: () => _mapController.locateMe(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.my_location_rounded,
+                              size: 16,
+                              color: _gpsPosition?.isTracking == true
+                                  ? Colors.white
+                                  : const Color(0xFF2563EB),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isAr ? 'موقعي الآن' : 'Locate Me',
+                              style: AppTypography.label(
+                                color: _gpsPosition?.isTracking == true
+                                    ? Colors.white
+                                    : AppColors.navy,
+                              ).copyWith(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           if (widget.showConfirmLocationButton)
@@ -550,29 +801,90 @@ class _MashwarInAppMapScreenState extends State<MashwarInAppMapScreen> {
                     top: BorderSide(color: AppColors.slateBorder),
                   ),
                 ),
-                child: SizedBox(
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    key: const ValueKey('inapp_map_confirm_location_btn'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.navy,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_pickedLocation != null) ...[
+                      Row(
+                        children: [
+                          Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: AppColors.tealSurface,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(
+                              Icons.pin_drop_rounded,
+                              size: 18,
+                              color: AppColors.teal,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _pickedLocation!
+                                      .localizedLabel(isArabic: isAr),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.body(
+                                    color: AppColors.navy,
+                                  ).copyWith(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  _pickedLocation!.municipality.isNotEmpty
+                                      ? _pickedLocation!.municipality
+                                      : (isAr
+                                          ? 'اضغط على الخريطة أو اسحب الدبوس لتعديل النقطة'
+                                          : 'Tap map or drag pin to adjust point'),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.label(
+                                    color: AppColors.textSecondary,
+                                  ).copyWith(fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        key: const ValueKey('inapp_map_confirm_location_btn'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.navy,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        onPressed: _handleConfirmLocation,
+                        icon: const Icon(
+                          Icons.check_circle_outline_rounded,
+                          size: 19,
+                        ),
+                        label: Text(
+                          isAr ? 'تأكيد هذا الموقع' : 'Confirm This Location',
+                          style:
+                              AppTypography.label(color: Colors.white).copyWith(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
                       ),
                     ),
-                    onPressed: () => Navigator.of(context).pop(true),
-                    icon:
-                        const Icon(Icons.check_circle_outline_rounded, size: 19),
-                    label: Text(
-                      isAr ? 'تأكيد هذا الموقع' : 'Confirm This Location',
-                      style: AppTypography.label(color: Colors.white).copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -622,15 +934,16 @@ class _MapMetricPill extends StatelessWidget {
   }
 }
 
-/// Executive, `pumpAndSettle`-safe reusable in-app Uber-grade map route &
+/// Executive, `pumpAndSettle`-safe reusable in-app MASHWAR Live Map route &
 /// navigation card.
 ///
 /// Features:
 /// - Live interactive [MashwarEmbeddedGoogleMap] embedded right inside the panel
 ///   by default, with 1-tap toggle to [QatarLiveMapCanvas] schematic view,
-///   Live Traffic toggle, and Layer/Style switcher (`google / satellite / uber / dark`)
-/// - Live distance (`كم` / `km`), ETA (`دقيقة` / `min`), and dynamic corridor highway
-///   fetched via `AppRepositories.instance.maps.getRouteDetails(origin, destination)`
+///   Live Traffic toggle, and Layer/Style switcher
+///   (`standard / satellite / mashwarLight / night`)
+/// - Live distance (`كم` / `km`), ETA (`دقيقة` / `min`), and dynamic corridor
+///   highway fetched via `AppRepositories.instance.maps.getRouteDetails(origin, destination)`
 /// - 1-tap full-screen in-app map action button
 ///   (`ValueKey('${keyPrefix}_open_gmaps_btn')`) that keeps users inside the app
 ///   while preserving `urlLauncherOverride` compatibility for automated tests.
@@ -651,6 +964,8 @@ class MashwarGoogleMapPanel extends StatefulWidget {
     this.vehicleMode = MashwarMapVehicleMode.trip,
     this.stylePreset,
     this.showTraffic = true,
+    this.enableGps = false,
+    this.navigationMode = false,
   });
 
   final String origin;
@@ -667,6 +982,8 @@ class MashwarGoogleMapPanel extends StatefulWidget {
   final MashwarMapVehicleMode vehicleMode;
   final MashwarMapStylePreset? stylePreset;
   final bool showTraffic;
+  final bool enableGps;
+  final bool navigationMode;
 
   @override
   State<MashwarGoogleMapPanel> createState() => _MashwarGoogleMapPanelState();
@@ -675,7 +992,7 @@ class MashwarGoogleMapPanel extends StatefulWidget {
 class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
   late RouteDetails _routeDetails;
   int _loadSeq = 0;
-  bool _useLiveGoogleMap = true;
+  bool _useLiveMap = true;
   late MashwarMapStylePreset _stylePreset;
   late bool _showTraffic;
 
@@ -684,7 +1001,7 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
   @override
   void initState() {
     super.initState();
-    _stylePreset = widget.stylePreset ?? MashwarMapStylePreset.google;
+    _stylePreset = widget.stylePreset ?? MashwarMapStylePreset.standard;
     _showTraffic = widget.showTraffic;
     _routeDetails = GoogleMapsService.estimateRouteSync(
       widget.origin,
@@ -735,15 +1052,14 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
   @override
   Widget build(BuildContext context) {
     final isAr = context.isArabic;
-    final hasApiKey = GoogleMapsService.hasActiveApiKey;
     final distanceLabel = isAr
         ? '${_routeDetails.distanceKm.round()} كم'
         : '${_routeDetails.distanceKm.round()} km';
     final etaLabel = _formatMapDuration(_routeDetails.durationMinutes, isAr);
     final highway = _routeDetails.corridorHighway(isArabic: isAr);
     final buttonText = isAr
-        ? (widget.openButtonLabelAr ?? 'تكبير خريطة Google Maps داخل التطبيق')
-        : (widget.openButtonLabelEn ?? 'Full-Screen Google Maps');
+        ? (widget.openButtonLabelAr ?? 'فتح خريطة مشوار ملء الشاشة')
+        : (widget.openButtonLabelEn ?? 'Full-Screen MASHWAR Live Map');
     final directionsUrl = GoogleMapsService.buildDirectionsUrl(
       widget.origin,
       widget.destination,
@@ -751,8 +1067,8 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
     );
     final resolvedMapHeight = _effectiveMapHeight;
     final styleHighlighted =
-        _useLiveGoogleMap && _stylePreset != MashwarMapStylePreset.google;
-    final trafficHighlighted = _useLiveGoogleMap && _showTraffic;
+        _useLiveMap && _stylePreset != MashwarMapStylePreset.standard;
+    final trafficHighlighted = _useLiveMap && _showTraffic;
 
     return Container(
       key: ValueKey('${widget.keyPrefix}_gmaps_panel'),
@@ -775,31 +1091,25 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: hasApiKey ? AppColors.tealSurface : AppColors.slateBg,
+                  color: AppColors.tealSurface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: hasApiKey
-                        ? AppColors.teal.withValues(alpha: 0.35)
-                        : AppColors.slateBorder,
+                    color: AppColors.teal.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      hasApiKey
-                          ? Icons.cloud_done_rounded
-                          : Icons.public_rounded,
+                    const Icon(
+                      Icons.navigation_rounded,
                       size: 13.5,
-                      color: hasApiKey ? AppColors.teal : AppColors.navy,
+                      color: AppColors.teal,
                     ),
                     const SizedBox(width: 5),
                     Text(
-                      hasApiKey
-                          ? (isAr ? 'Google Maps متصل' : 'Google Maps Connected')
-                          : (isAr ? 'خرائط Google المباشرة' : 'Live Google Maps'),
+                      isAr ? 'خريطة مشوار المباشرة' : 'MASHWAR Live Map',
                       style: AppTypography.label(
-                        color: hasApiKey ? AppColors.tealDark : AppColors.navy,
+                        color: AppColors.tealDark,
                       ).copyWith(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
@@ -851,7 +1161,7 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
                       key: ValueKey('${widget.keyPrefix}_mode_toggle'),
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => setState(
-                        () => _useLiveGoogleMap = !_useLiveGoogleMap,
+                        () => _useLiveMap = !_useLiveMap,
                       ),
                       child: Container(
                         padding: const EdgeInsets.all(2.5),
@@ -865,18 +1175,17 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
                           children: [
                             Flexible(
                               child: _PanelModePill(
-                                selected: _useLiveGoogleMap,
+                                selected: _useLiveMap,
                                 icon: Icons.map_rounded,
-                                label:
-                                    isAr ? 'خريطة حية' : 'Live Map',
+                                label: isAr ? 'خريطة حية' : 'Live Map',
                               ),
                             ),
                             const SizedBox(width: 3),
                             Flexible(
                               child: _PanelModePill(
-                                selected: !_useLiveGoogleMap,
+                                selected: !_useLiveMap,
                                 icon: Icons.hub_rounded,
-                                label: isAr ? 'خريطة المحاور' : 'Schematic',
+                                label: isAr ? 'مخطط المسار' : 'Schematic',
                               ),
                             ),
                           ],
@@ -894,7 +1203,7 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
                     key: ValueKey('${widget.keyPrefix}_traffic_btn'),
                     borderRadius: BorderRadius.circular(10),
                     onTap: () => setState(() {
-                      _useLiveGoogleMap = true;
+                      _useLiveMap = true;
                       _showTraffic = !_showTraffic;
                     }),
                     child: Container(
@@ -949,7 +1258,7 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
                     key: ValueKey('${widget.keyPrefix}_satellite_btn'),
                     borderRadius: BorderRadius.circular(10),
                     onTap: () => setState(() {
-                      _useLiveGoogleMap = true;
+                      _useLiveMap = true;
                       _stylePreset = _nextMapStylePreset(_stylePreset);
                     }),
                     child: Container(
@@ -984,7 +1293,7 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.slateBorder),
               ),
-              child: _useLiveGoogleMap
+              child: _useLiveMap
                   ? MashwarEmbeddedGoogleMap(
                       origin: widget.origin,
                       destination: widget.destination,
@@ -993,6 +1302,8 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
                       stylePreset: _stylePreset,
                       vehicleMode: widget.vehicleMode,
                       showTraffic: _showTraffic,
+                      enableGps: widget.enableGps,
+                      navigationMode: widget.navigationMode,
                       distanceKm: _routeDetails.distanceKm,
                       durationMinutes: _routeDetails.durationMinutes,
                       highwayName: highway.isNotEmpty ? highway : null,
@@ -1062,6 +1373,8 @@ class _MashwarGoogleMapPanelState extends State<MashwarGoogleMapPanel> {
               stylePreset: _stylePreset,
               vehicleMode: widget.vehicleMode,
               showTraffic: _showTraffic,
+              enableGps: true,
+              navigationMode: widget.navigationMode,
               launcherOverride: widget.urlLauncherOverride,
             ),
             icon: const Icon(

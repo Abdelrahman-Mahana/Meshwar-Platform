@@ -385,16 +385,18 @@ class _CitySearchModalState extends State<CitySearchModal> {
                                   size: 19,
                                 ),
                                 onPressed: () async {
-                                  final confirmed = await openMashwarInAppMap(
+                                  final picked = await openMashwarMapPicker(
                                     context,
-                                    placeQuery: typedQuery,
-                                    vehicleMode: MashwarMapVehicleMode.place,
+                                    initialLocation: typedQuery,
+                                    enableGps: true,
+                                    pickMode: MashwarMapPickMode.origin,
                                     titleAr: typedQuery,
                                     titleEn: typedQuery,
-                                    showConfirmLocationButton: true,
                                   );
-                                  if (confirmed == true && mounted) {
-                                    Navigator.of(context).pop(typedQuery);
+                                  if (picked != null && mounted) {
+                                    Navigator.of(context).pop(
+                                      picked.localizedLabel(isArabic: isAr),
+                                    );
                                   }
                                 },
                               ),
@@ -474,12 +476,13 @@ class _CitySearchModalState extends State<CitySearchModal> {
             ),
             const Divider(height: 1, color: AppColors.slateBorder),
 
-            // Quick Current Location & Custom Meeting Point
+            // Quick Live GPS, Pick on Map & Custom Meeting Point
             Material(
               color: Colors.white,
               child: Column(
                 children: [
                   ListTile(
+                    key: const ValueKey('city_use_current_location_tile'),
                     leading: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: const BoxDecoration(
@@ -499,11 +502,79 @@ class _CitySearchModalState extends State<CitySearchModal> {
                     ),
                     subtitle: Text(
                       isAr
-                          ? 'تحديد أقرب نقطة انطلاق تلقائياً'
-                          : 'Select nearest pickup hub',
+                          ? 'تحديد موقعك المباشر عبر GPS على خريطة مشوار'
+                          : 'Locate your live GPS position on MASHWAR Map',
                       style: AppTypography.label(color: AppColors.emerald),
                     ),
-                    onTap: () => Navigator.of(context).pop('الدوحة'),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.navy,
+                    ),
+                    onTap: () async {
+                      final picked = await openMashwarMapPicker(
+                        context,
+                        initialLocation: _searchController.text.trim().isNotEmpty
+                            ? _searchController.text.trim()
+                            : null,
+                        enableGps: true,
+                        pickMode: MashwarMapPickMode.origin,
+                        titleAr: 'تحديد موقعي الحالي',
+                        titleEn: 'Use My Current Location',
+                      );
+                      if (picked != null && mounted) {
+                        Navigator.of(context).pop(
+                          picked.localizedLabel(isArabic: isAr),
+                        );
+                      }
+                    },
+                  ),
+                  const Divider(height: 1, color: AppColors.slateBorder),
+                  ListTile(
+                    key: const ValueKey('city_pick_on_map_tile'),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: const BoxDecoration(
+                        color: AppColors.tealSurface,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.pin_drop_rounded,
+                        color: AppColors.teal,
+                        size: 18,
+                      ),
+                    ),
+                    title: Text(
+                      isAr ? 'اختر على الخريطة' : 'Pick on Map',
+                      style: AppTypography.body()
+                          .copyWith(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      isAr
+                          ? 'اضغط أو اسحب الدبوس لتحديد أي نقطة بدقة'
+                          : 'Tap or drag the pin to select any spot',
+                      style: AppTypography.label(color: AppColors.tealDark),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.navy,
+                    ),
+                    onTap: () async {
+                      final picked = await openMashwarMapPicker(
+                        context,
+                        initialLocation: _searchController.text.trim().isNotEmpty
+                            ? _searchController.text.trim()
+                            : null,
+                        enableGps: true,
+                        pickMode: MashwarMapPickMode.destination,
+                        titleAr: 'اختر الموقع على الخريطة',
+                        titleEn: 'Pick Location on Map',
+                      );
+                      if (picked != null && mounted) {
+                        Navigator.of(context).pop(
+                          picked.localizedLabel(isArabic: isAr),
+                        );
+                      }
+                    },
                   ),
                   const Divider(height: 1, color: AppColors.slateBorder),
                   ListTile(
@@ -541,7 +612,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
             ),
             const Divider(height: 1, color: AppColors.slateBorder),
 
-            // Section Header with Google Maps / Geo Engine indicator
+            // Section Header
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
@@ -564,18 +635,14 @@ class _CitySearchModalState extends State<CitySearchModal> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        GoogleMapsService.hasActiveApiKey
-                            ? Icons.cloud_done_rounded
-                            : Icons.pin_drop_outlined,
+                      const Icon(
+                        Icons.pin_drop_outlined,
                         size: 13,
                         color: AppColors.teal,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        GoogleMapsService.hasActiveApiKey
-                            ? 'Google Places'
-                            : (isAr ? 'دليل قطر والخليج' : 'Qatar & GCC Geo'),
+                        isAr ? 'دليل قطر والخليج' : 'Qatar & GCC Directory',
                         style: AppTypography.label(color: AppColors.teal)
                             .copyWith(
                           fontSize: 10.5,
@@ -640,9 +707,6 @@ class _CitySearchModalState extends State<CitySearchModal> {
                           final localizedName = context.trCity(item.name);
                           final localizedRegion = context.trCity(item.region);
                           final localizedType = context.tr(item.typeLabel);
-                          final coordsText = coords != null
-                              ? ' · ${coords.lat.toStringAsFixed(2)}°N, ${coords.lng.toStringAsFixed(2)}°E'
-                              : '';
 
                           return ListTile(
                             leading: Container(
@@ -672,7 +736,7 @@ class _CitySearchModalState extends State<CitySearchModal> {
                                   .copyWith(fontWeight: FontWeight.w700),
                             ),
                             subtitle: Text(
-                              '$localizedRegion · $localizedType$coordsText',
+                              '$localizedRegion · $localizedType',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTypography.label(
@@ -682,8 +746,8 @@ class _CitySearchModalState extends State<CitySearchModal> {
                             trailing: IconButton(
                               key: ValueKey('city_preview_gmaps_$index'),
                               tooltip: isAr
-                                  ? 'معاينة على الخريطة داخل التطبيق'
-                                  : 'Preview on In-App Map',
+                                  ? 'معاينة وتعديل على الخريطة'
+                                  : 'Preview & Pick on Map',
                               visualDensity: VisualDensity.compact,
                               icon: const Icon(
                                 Icons.map_rounded,
@@ -691,18 +755,20 @@ class _CitySearchModalState extends State<CitySearchModal> {
                                 color: AppColors.teal,
                               ),
                               onPressed: () async {
-                                final confirmed = await openMashwarInAppMap(
+                                final picked = await openMashwarMapPicker(
                                   context,
-                                  placeQuery: item.name,
+                                  initialLocation: item.name,
                                   lat: coords?.lat,
                                   lng: coords?.lng,
-                                  vehicleMode: MashwarMapVehicleMode.place,
+                                  enableGps: true,
+                                  pickMode: MashwarMapPickMode.origin,
                                   titleAr: localizedName,
                                   titleEn: localizedName,
-                                  showConfirmLocationButton: true,
                                 );
-                                if (confirmed == true && mounted) {
-                                  Navigator.of(context).pop(item.name);
+                                if (picked != null && mounted) {
+                                  Navigator.of(context).pop(
+                                    picked.localizedLabel(isArabic: isAr),
+                                  );
                                 }
                               },
                             ),
