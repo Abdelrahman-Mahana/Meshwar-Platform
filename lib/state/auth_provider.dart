@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/config/app_environment.dart';
@@ -1087,6 +1088,12 @@ class AuthProvider extends ChangeNotifier {
     return _user.walletBalance;
   }
 
+  /// Enforces `!AppEnvironment.enableDigitalWallet` across all live/production
+  /// and non-dev-mock sessions, regardless of authentication state.
+  bool get _isDigitalWalletBlocked =>
+      !AppEnvironment.enableDigitalWallet &&
+      (_isLiveBackendMode || !isDevMockAuthEnabled);
+
   /// Persists a wallet top-up via `AppRepositories.instance.wallet` and updates state.
   Future<bool> topUpWallet({
     required double amount,
@@ -1094,6 +1101,11 @@ class AuthProvider extends ChangeNotifier {
     required String methodAr,
     required String methodEn,
   }) async {
+    if (_isDigitalWalletBlocked) {
+      _lastError = 'Digital wallet deposits are disabled in MVP Phase 1';
+      _safeNotify();
+      return false;
+    }
     if (amount <= 0) return false;
     final uid = effectiveWalletUserId;
     final methodType = parsePaymentMethodType(methodKey);
@@ -1106,7 +1118,11 @@ class AuthProvider extends ChangeNotifier {
         method: methodType,
         referenceNumber: ref,
       );
-      if (!ok) return false;
+      if (!ok) {
+        _lastError = 'Wallet deposit could not be persisted.';
+        _safeNotify();
+        return false;
+      }
 
       if (_hasSeededTestingTransactions) {
         _user = _user.copyWith(walletBalance: _user.walletBalance + amount);
@@ -1126,20 +1142,10 @@ class AuthProvider extends ChangeNotifier {
 
       await syncWalletFromRepository();
       return true;
-    } catch (_) {
-      _user = _user.copyWith(walletBalance: _user.walletBalance + amount);
-      _walletTransactions.insert(0, {
-        'titleAr': 'شحن رصيد - $methodAr',
-        'titleEn': 'Top-up - $methodEn',
-        'date': 'الآن',
-        'dateEn': 'Just now',
-        'amount': '+${amount.toStringAsFixed(0)} ر.ق',
-        'amountValue': amount,
-        'isPositive': true,
-        'referenceNumber': ref,
-      });
+    } catch (e) {
+      _lastError = e.toString();
       _safeNotify();
-      return true;
+      return false;
     }
   }
 
@@ -1151,6 +1157,11 @@ class AuthProvider extends ChangeNotifier {
     required String destinationAr,
     required String destinationEn,
   }) async {
+    if (_isDigitalWalletBlocked) {
+      _lastError = 'Digital wallet withdrawals are disabled in MVP Phase 1';
+      _safeNotify();
+      return false;
+    }
     if (amount <= 0 || amount > _user.walletBalance) return false;
     final uid = effectiveWalletUserId;
     final methodType = parsePaymentMethodType(methodKey);
@@ -1163,11 +1174,12 @@ class AuthProvider extends ChangeNotifier {
         destinationAccount: destinationAccount,
       );
       if (!ok) {
-        if (amount > _user.walletBalance) return false;
+        _lastError = 'Wallet withdrawal could not be persisted.';
+        _safeNotify();
+        return false;
       }
 
-      if (_hasSeededTestingTransactions || !ok) {
-        if (amount > _user.walletBalance) return false;
+      if (_hasSeededTestingTransactions) {
         _user = _user.copyWith(walletBalance: _user.walletBalance - amount);
         _walletTransactions.insert(0, {
           'titleAr': 'سحب رصيد إلى $destinationAr',
@@ -1184,24 +1196,15 @@ class AuthProvider extends ChangeNotifier {
 
       await syncWalletFromRepository();
       return true;
-    } catch (_) {
-      _user = _user.copyWith(walletBalance: _user.walletBalance - amount);
-      _walletTransactions.insert(0, {
-        'titleAr': 'سحب رصيد إلى $destinationAr',
-        'titleEn': 'Withdrawal to $destinationEn',
-        'date': 'الآن',
-        'dateEn': 'Just now',
-        'amount': '-${amount.toStringAsFixed(0)} ر.ق',
-        'amountValue': -amount,
-        'isPositive': false,
-      });
+    } catch (e) {
+      _lastError = e.toString();
       _safeNotify();
-      return true;
+      return false;
     }
   }
 
   void updateWalletBalance(double newBalance) {
-    if (!AppEnvironment.enableDigitalWallet && !isAuthenticated) {
+    if (_isDigitalWalletBlocked) {
       _lastError = 'Digital wallet is disabled in MVP Phase 1';
       _safeNotify();
       return;
@@ -1238,7 +1241,7 @@ class AuthProvider extends ChangeNotifier {
     required String methodAr,
     required String methodEn,
   }) {
-    if (!AppEnvironment.enableDigitalWallet && !isAuthenticated) {
+    if (_isDigitalWalletBlocked) {
       _lastError = 'Digital wallet deposits are disabled in MVP Phase 1';
       _safeNotify();
       return false;
@@ -1276,7 +1279,7 @@ class AuthProvider extends ChangeNotifier {
     required String destinationAr,
     required String destinationEn,
   }) {
-    if (!AppEnvironment.enableDigitalWallet && !isAuthenticated) {
+    if (_isDigitalWalletBlocked) {
       _lastError = 'Digital wallet withdrawals are disabled in MVP Phase 1';
       _safeNotify();
       return false;
@@ -1368,6 +1371,64 @@ class AuthProvider extends ChangeNotifier {
     if (hasAC != null) _driverHasAC = hasAC;
     if (largeTrunk != null) _driverLargeTrunk = largeTrunk;
     _safeNotify();
+    unawaited(_persistDriverVehicleProfile());
+  }
+
+  Future<void> _persistDriverVehicleProfile() async {
+    final uid = _user.id.trim();
+    if (!isAuthenticated || uid.isEmpty) return;
+
+    final vehiclePayload = <String, dynamic>{
+      'model': _driverCarModel.trim(),
+      'color': _driverCarColor.trim(),
+      'plateLetters': _driverPlateLetters.trim(),
+      'plateNumbers': _driverPlateNumbers.trim(),
+      'seatsCount': _driverSeatsCount,
+      'hasAC': _driverHasAC,
+      'largeTrunk': _driverLargeTrunk,
+    };
+
+    try {
+      final isWidgetTest =
+          WidgetsBinding.instance.runtimeType.toString().contains('Test');
+      final prefs = isWidgetTest
+          ? await SharedPreferences.getInstance()
+          : await SharedPreferences.getInstance()
+              .timeout(const Duration(milliseconds: 120));
+      await prefs.setString(
+        'mashwar_driver_vehicle_uid_$uid',
+        jsonEncode(vehiclePayload),
+      );
+    } catch (_) {
+      // Safe fallback when SharedPreferences is unavailable in isolated tests.
+    }
+
+    // Sync vehicleType & vehiclePlate to provider_profiles/{uid} when a provider profile exists.
+    try {
+      final providerRepo = AppRepositories.instance.providers;
+      final existing = await providerRepo.getProviderProfile(uid);
+      if (existing != null) {
+        final resolvedType = [
+          _driverCarModel.trim(),
+          _driverCarColor.trim(),
+        ].where((s) => s.isNotEmpty).join(' - ');
+        final resolvedPlate = [
+          _driverPlateLetters.trim(),
+          _driverPlateNumbers.trim(),
+        ].where((s) => s.isNotEmpty).join(' ');
+        await providerRepo.upsertProviderProfile(
+          existing.copyWith(
+            vehicleType:
+                resolvedType.isNotEmpty ? resolvedType : existing.vehicleType,
+            vehiclePlate:
+                resolvedPlate.isNotEmpty ? resolvedPlate : existing.vehiclePlate,
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+      }
+    } catch (_) {
+      // Ignore backend sync errors when provider repo is disabled or offline.
+    }
   }
 
   /// Permanently deletes the signed-in user's account via server `deleteUserAccount`

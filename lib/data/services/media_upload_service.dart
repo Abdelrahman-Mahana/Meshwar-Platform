@@ -169,13 +169,22 @@ typedef MediaImagePickerFn = Future<XFile?> Function({
 class MediaUploadService {
   static const int maxUploadBytes = 10 * 1024 * 1024; // 10 MB
 
+  /// Strict raster MIME allowlist aligned with `storage.rules` (blocks `image/svg+xml` XSS).
+  static const Set<String> allowedRasterMimeTypes = {
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/heic',
+    'image/heif',
+  };
+
   static const Map<String, String> _extensionToMime = {
     'jpg': 'image/jpeg',
     'jpeg': 'image/jpeg',
     'png': 'image/png',
     'webp': 'image/webp',
     'gif': 'image/gif',
-    'bmp': 'image/bmp',
     'heic': 'image/heic',
     'heif': 'image/heif',
   };
@@ -331,13 +340,13 @@ class MediaUploadService {
 
     final trimmedMime = explicitMimeType?.trim().toLowerCase();
     if (trimmedMime != null && trimmedMime.isNotEmpty) {
-      if (!trimmedMime.startsWith('image/')) {
+      if (!allowedRasterMimeTypes.contains(trimmedMime)) {
         throw MediaUploadException(
           code: 'invalid-mime-type',
           messageEn:
-              'Unsupported file type "$trimmedMime". Only image/* files are allowed.',
+              'Unsupported file type "$trimmedMime". Only JPG, PNG, WEBP, GIF, HEIC, or HEIF raster images are allowed.',
           messageAr:
-              'نوع الملف غير مدعوم ($trimmedMime). يُسمح برفع الصور فقط.',
+              'نوع الملف غير مدعوم ($trimmedMime). يُسمح فقط بصور JPG أو PNG أو WEBP أو GIF أو HEIC.',
         );
       }
       return trimmedMime;

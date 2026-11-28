@@ -15,10 +15,24 @@ class FirebaseChatRepository implements IChatRepository {
   final Map<String, List<ChatMessageModel>> _sessionSentByConversation = {};
   final Map<String, StreamController<List<ChatMessageModel>>>
       _liveStreamControllers = {};
+  final Set<String> _existingConversationIds = {};
   int _liveMsgSeq = 0;
 
   FirebaseChatRepository({FirebaseFirestore? firestore})
       : _injectedFirestore = firestore;
+
+  /// Closes and evicts all active broadcast controllers to prevent memory leaks.
+  Future<void> dispose() async {
+    final controllers = List<StreamController<List<ChatMessageModel>>>.from(
+      _liveStreamControllers.values,
+    );
+    _liveStreamControllers.clear();
+    for (final controller in controllers) {
+      if (!controller.isClosed) {
+        await controller.close();
+      }
+    }
+  }
 
   bool get _isLiveBackendMode =>
       AppEnvironment.isFirebaseRuntimeActive ||
@@ -75,17 +89,32 @@ class FirebaseChatRepository implements IChatRepository {
     return List<ChatMessageModel>.unmodifiable(merged);
   }
 
-  Stream<List<ChatMessageModel>> _streamSessionMessages(String cleanId) {
-    _liveStreamControllers.putIfAbsent(
-      cleanId,
-      () => StreamController<List<ChatMessageModel>>.broadcast(),
+  StreamController<List<ChatMessageModel>> _ensureLiveController(String cleanId) {
+    final existing = _liveStreamControllers[cleanId];
+    if (existing != null && !existing.isClosed) {
+      return existing;
+    }
+    late final StreamController<List<ChatMessageModel>> controller;
+    controller = StreamController<List<ChatMessageModel>>.broadcast(
+      onCancel: () {
+        if (!controller.hasListener) {
+          _liveStreamControllers.remove(cleanId);
+          unawaited(controller.close());
+        }
+      },
     );
+    _liveStreamControllers[cleanId] = controller;
+    return controller;
+  }
+
+  Stream<List<ChatMessageModel>> _streamSessionMessages(String cleanId) {
+    final controller = _ensureLiveController(cleanId);
     return Stream<List<ChatMessageModel>>.multi((subscriber) {
       final initial = List<ChatMessageModel>.unmodifiable(
         _sessionSentByConversation[cleanId] ?? const <ChatMessageModel>[],
       );
       subscriber.add(initial);
-      final sub = _liveStreamControllers[cleanId]!.stream.listen(
+      final sub = controller.stream.listen(
         subscriber.add,
         onError: subscriber.addError,
         onDone: subscriber.close,
@@ -148,6 +177,7 @@ class FirebaseChatRepository implements IChatRepository {
     required String senderName,
     required String text,
     String? attachmentUrl,
+    String? recipientId,
   }) async {
     final cleanId =
         conversationId.trim().isEmpty ? 'chat_default' : conversationId.trim();
@@ -165,6 +195,7 @@ class FirebaseChatRepository implements IChatRepository {
         senderName: effectiveSenderName,
         text: text,
         attachmentUrl: attachmentUrl,
+        recipientId: recipientId,
       );
     }
 
@@ -206,19 +237,50 @@ class FirebaseChatRepository implements IChatRepository {
       final truncatedPreview =
           text.trim().length > 500 ? text.trim().substring(0, 500) : text.trim();
 
-      await convRef
-          .set(
-            {
-              'id': cleanId,
-              'participantIds': <String>[effectiveSenderId, 'peer_$cleanId'],
+      bool conversationExists = _existingConversationIds.contains(cleanId);
+      if (!conversationExists) {
+        try {
+          final snap = await convRef.get().timeout(const Duration(seconds: 4));
+          conversationExists = snap.exists;
+          if (conversationExists) {
+            _existingConversationIds.add(cleanId);
+          }
+        } catch (_) {
+          // If read fails (e.g., conversation not created yet), attempt initial create below.
+        }
+      }
+
+      if (conversationExists) {
+        // Never touch immutable `id`, `participantIds`, or `createdAt` on message #2+.
+        await convRef
+            .update({
               'lastMessage': truncatedPreview,
               'lastMessageTimestamp': FieldValue.serverTimestamp(),
               'lastSenderId': effectiveSenderId,
               'updatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          )
-          .timeout(const Duration(seconds: 4));
+            })
+            .timeout(const Duration(seconds: 4));
+      } else {
+        final cleanRecipient = recipientId?.trim();
+        final resolvedPeerId =
+            (cleanRecipient != null &&
+                    cleanRecipient.isNotEmpty &&
+                    cleanRecipient != effectiveSenderId)
+                ? cleanRecipient
+                : 'peer_$cleanId';
+        await convRef
+            .set({
+              'id': cleanId,
+              'participantIds': <String>[effectiveSenderId, resolvedPeerId],
+              'lastMessage': truncatedPreview,
+              'lastMessageTimestamp': FieldValue.serverTimestamp(),
+              'lastSenderId': effectiveSenderId,
+              'createdAt': FieldValue.serverTimestamp(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            })
+            .timeout(const Duration(seconds: 4));
+        _existingConversationIds.add(cleanId);
+      }
 
       final payload = <String, dynamic>{
         'id': localMessage.id,

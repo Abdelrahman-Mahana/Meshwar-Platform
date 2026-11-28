@@ -410,9 +410,13 @@ class WorksiteProvider extends ChangeNotifier {
   /// Returns the source request ID if [requestId] was created via Quick Reorder in this session.
   String? sourceRequestIdFor(String requestId) => _reorderedFromMap[requestId];
 
-  /// Loads the full bilingual 14-case Qatar demo showcase into active provider state,
-  /// enabling end-to-end UI inspection even when connected to live Firebase.
+  /// Loads the full bilingual 14-case Qatar demo showcase into active provider state.
+  /// Strictly blocked in `AppFlavor.production` builds so production users cannot
+  /// enter synthetic demo state.
   Future<void> activateDemoShowcase() async {
+    if (AppEnvironment.flavor == AppFlavor.production) {
+      return;
+    }
     final uid = currentUserId ?? MashwarDemoCasesCatalog.defaultOwnerUid;
     final name = currentUserName.isNotEmpty
         ? currentUserName

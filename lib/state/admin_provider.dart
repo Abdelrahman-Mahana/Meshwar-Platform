@@ -463,10 +463,16 @@ class _FirebaseAdminBackendGateway implements AdminBackendGateway {
   static const String _providerVerificationsCol = 'provider_verifications';
   static const String _workRequestsCol = 'work_requests';
 
-  final http.Client _httpClient;
+  final FirebaseFunctionsCallableClient _callableClient;
 
-  _FirebaseAdminBackendGateway({http.Client? httpClient})
-      : _httpClient = httpClient ?? http.Client();
+  _FirebaseAdminBackendGateway({
+    http.Client? httpClient,
+    FirebaseFunctionsCallableClient? callableClient,
+  }) : _callableClient = callableClient ??
+            FirebaseFunctionsCallableClient(
+              httpClient: httpClient,
+              timeout: const Duration(seconds: 20),
+            );
 
   dynamic _normalizeValue(dynamic value) {
     if (value is Timestamp) {
@@ -508,44 +514,14 @@ class _FirebaseAdminBackendGateway implements AdminBackendGateway {
     if (user == null) {
       throw StateError('Authenticated Firebase staff session required.');
     }
-    final idToken = await user.getIdToken();
-    final uri = Uri.parse(
-      'https://${AppEnvironment.firebaseRegion}-${AppEnvironment.firebaseProjectId}.cloudfunctions.net/$functionName',
-    );
-    final response = await _httpClient.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        if (idToken != null && idToken.isNotEmpty)
-          'Authorization': 'Bearer $idToken',
-      },
-      body: jsonEncode({'data': payload}),
-    );
-
-    if (response.statusCode == 404) {
-      return null;
-    }
-
-    final decoded = response.body.trim().isNotEmpty
-        ? jsonDecode(response.body)
-        : const <String, dynamic>{};
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (decoded is Map<String, dynamic>) {
-        final result = decoded['result'];
-        if (result is Map<String, dynamic>) return result;
-        return decoded;
+    try {
+      return await _callableClient.call(functionName, payload);
+    } on WorksiteRepositoryException catch (e) {
+      if (e.code == 'not-found' || e.code == 'unavailable') {
+        return null;
       }
-      return const <String, dynamic>{};
+      throw StateError(e.messageEn);
     }
-
-    String message = 'Cloud Function $functionName failed (${response.statusCode})';
-    if (decoded is Map && decoded['error'] is Map) {
-      final err = decoded['error'] as Map;
-      if (err['message'] != null) {
-        message = err['message'].toString();
-      }
-    }
-    throw StateError(message);
   }
 
   @override
@@ -615,8 +591,13 @@ class _FirebaseAdminBackendGateway implements AdminBackendGateway {
     if (Firebase.apps.isEmpty) return;
     final db = FirebaseFirestore.instance;
     final docId = (payload['id'] ?? '').toString().trim();
+    final createdAt =
+        (payload['createdAt']?.toString().trim().isNotEmpty == true)
+            ? payload['createdAt']
+            : DateTime.now().toUtc().toIso8601String();
     final data = {
       ...payload,
+      'createdAt': createdAt,
       'serverTimestamp': FieldValue.serverTimestamp(),
     };
     if (docId.isNotEmpty) {
@@ -695,7 +676,12 @@ class _FirebaseAdminBackendGateway implements AdminBackendGateway {
         'decision': decision,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
       });
-      if (callableRes != null) return callableRes;
+      if (callableRes != null) {
+        return <String, dynamic>{
+          ...callableRes,
+          '_auditLoggedByServer': true,
+        };
+      }
     } on http.ClientException {
       // Fallback to direct Firestore admin writes if callable endpoint is unreachable/not yet deployed.
     }
@@ -759,7 +745,12 @@ class _FirebaseAdminBackendGateway implements AdminBackendGateway {
         if (targetStatus != null) 'targetStatus': targetStatus,
         if (reason != null && reason.isNotEmpty) 'reason': reason,
       });
-      if (callableRes != null) return callableRes;
+      if (callableRes != null) {
+        return <String, dynamic>{
+          ...callableRes,
+          '_auditLoggedByServer': true,
+        };
+      }
     } on http.ClientException {
       // Fallback to direct Firestore admin write if callable endpoint is unreachable/not yet deployed.
     }
@@ -838,6 +829,9 @@ class AdminProvider extends ChangeNotifier {
         allowDevQueue ? _buildDevWorksiteProviders() : <AdminWorksiteProviderRecord>[];
     _worksiteRequests =
         allowDevQueue ? _buildDevWorksiteRequests() : <WorkRequest>[];
+    if (AppEnvironment.isFirebaseRuntimeActive && !allowDevQueue) {
+      _inquiries = <AdminInvestorInquiry>[];
+    }
   }
 
   @visibleForTesting
@@ -1323,12 +1317,15 @@ class AdminProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool canAccessMenu(int index) {
+  /// Canonical 14-module RBAC matrix (indices 0..13) shared across sidebar,
+  /// route guards, and the Admin Staff permissions matrix.
+  static bool roleHasMenuAccess(AdminRole role, int index) {
+    if (index < 0 || index > 13) return false;
     // Preserve exact compatibility for indices 0..7 in admin_web_test.dart:
     // 0: Dashboard, 1: Drivers, 2: Users, 3: Rides/Parcels, 4: Disputes,
     // 5: Settings, 6: Staff, 7: Audit Log, 8: Services, 9: Corridors,
     // 10: Escrow, 11: DevOps, 12: Investor Inquiries, 13: Worksite Supply Ops
-    switch (_activeRole) {
+    switch (role) {
       case AdminRole.superAdmin:
         return true;
       case AdminRole.reviewAdmin:
@@ -1357,54 +1354,150 @@ class AdminProvider extends ChangeNotifier {
     }
   }
 
-  // Dynamic KPI Stats by Period (Preserve exact numbers verified in tests)
+  bool canAccessMenu(int index) => roleHasMenuAccess(_activeRole, index);
+
+  bool get _isLiveProductionMetrics =>
+      AppEnvironment.isFirebaseRuntimeActive &&
+      !isDevMockMode &&
+      !_isTestingFixture;
+
+  /// Localized period label so English Admin mode never leaks Arabic period text.
+  String periodLabelFor(bool isAr) {
+    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') {
+      return isAr ? 'اليوم' : 'Today';
+    }
+    if (_currentPeriod.contains('30')) {
+      return isAr ? '30 يوم' : '30 Days';
+    }
+    return isAr ? '7 أيام' : '7 Days';
+  }
+
+  // Dynamic KPI Stats by Period (Preserve exact numbers verified in tests;
+  // derive live counts from synced Firestore data in live Firebase mode).
   int get kpiNewUsers {
+    if (_isLiveProductionMetrics) {
+      return _worksiteProviders.length;
+    }
     if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') return 18;
     if (_currentPeriod.contains('30')) return 540;
     return 128;
   }
 
-  String get kpiNewUsersSubtext {
-    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') return '+4 عن الأمس';
-    if (_currentPeriod.contains('30')) return '+28% عن الشهر السابق';
-    return '+12% عن الفترة السابقة';
+  String kpiNewUsersSubtextFor(bool isAr) {
+    if (_isLiveProductionMetrics) {
+      final approved = _worksiteProviders
+          .where((p) => p.profile.approvalStatus == ProviderApprovalStatus.approved)
+          .length;
+      return isAr ? '$approved مزوّد معتمد' : '$approved approved providers';
+    }
+    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') {
+      return isAr ? '+4 عن الأمس' : '+4 vs yesterday';
+    }
+    if (_currentPeriod.contains('30')) {
+      return isAr ? '+28% عن الشهر السابق' : '+28% vs last month';
+    }
+    return isAr ? '+12% عن الفترة السابقة' : '+12% vs prior period';
   }
 
+  String get kpiNewUsersSubtext => kpiNewUsersSubtextFor(true);
+
   int get kpiPublishedRides {
+    if (_isLiveProductionMetrics) {
+      return _worksiteRequests.length;
+    }
     if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') return 45;
     if (_currentPeriod.contains('30')) return 1420;
     return 342;
   }
 
-  String get kpiPublishedRidesSubtext {
-    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') return '+15% اليوم';
-    if (_currentPeriod.contains('30')) return '+18% شهرياً';
+  String kpiPublishedRidesSubtextFor(bool isAr) {
+    if (_isLiveProductionMetrics) {
+      final openCount = _worksiteRequests
+          .where((r) =>
+              r.status == WorkRequestStatus.open ||
+              r.status == WorkRequestStatus.offerReceived)
+          .length;
+      return isAr ? '$openCount طلب مفتوح' : '$openCount open requests';
+    }
+    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') {
+      return isAr ? '+15% اليوم' : '+15% today';
+    }
+    if (_currentPeriod.contains('30')) {
+      return isAr ? '+18% شهرياً' : '+18% monthly';
+    }
     return '+8%';
   }
 
+  String get kpiPublishedRidesSubtext => kpiPublishedRidesSubtextFor(true);
+
   int get kpiConfirmedBookings {
+    if (_isLiveProductionMetrics) {
+      return _worksiteRequests
+          .where((r) =>
+              r.status != WorkRequestStatus.open &&
+              r.status != WorkRequestStatus.cancelled)
+          .length;
+    }
     if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') return 32;
     if (_currentPeriod.contains('30')) return 890;
     return 215;
   }
 
-  String get kpiConversionRate {
-    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') return 'نسبة التحويل 44%';
-    if (_currentPeriod.contains('30')) return 'نسبة التحويل 39%';
-    return 'نسبة التحويل 41%';
+  String kpiConversionRateFor(bool isAr) {
+    if (_isLiveProductionMetrics) {
+      if (_worksiteRequests.isEmpty) {
+        return isAr ? 'نسبة التحويل 0%' : 'Conversion 0%';
+      }
+      final pct =
+          ((kpiConfirmedBookings / _worksiteRequests.length) * 100).round();
+      return isAr ? 'نسبة التحويل $pct%' : 'Conversion $pct%';
+    }
+    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') {
+      return isAr ? 'نسبة التحويل 44%' : 'Conversion 44%';
+    }
+    if (_currentPeriod.contains('30')) {
+      return isAr ? 'نسبة التحويل 39%' : 'Conversion 39%';
+    }
+    return isAr ? 'نسبة التحويل 41%' : 'Conversion 41%';
   }
 
+  String get kpiConversionRate => kpiConversionRateFor(true);
+
   int get kpiDeliveredParcels {
+    if (_isLiveProductionMetrics) {
+      return _worksiteRequests
+          .where((r) => r.status == WorkRequestStatus.completed)
+          .length;
+    }
     if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') return 14;
     if (_currentPeriod.contains('30')) return 340;
     return 87;
   }
 
-  String get kpiParcelSuccessRate {
-    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') return 'نجاح 98%';
-    if (_currentPeriod.contains('30')) return 'نجاح 94%';
-    return 'نجاح 95%';
+  String kpiParcelSuccessRateFor(bool isAr) {
+    if (_isLiveProductionMetrics) {
+      final finished = _worksiteRequests
+          .where((r) =>
+              r.status == WorkRequestStatus.completed ||
+              r.status == WorkRequestStatus.cancelled ||
+              r.status == WorkRequestStatus.disputed)
+          .length;
+      if (finished == 0) {
+        return isAr ? 'نجاح 0%' : 'Success 0%';
+      }
+      final pct = ((kpiDeliveredParcels / finished) * 100).round();
+      return isAr ? 'نجاح $pct%' : 'Success $pct%';
+    }
+    if (_currentPeriod == 'اليوم' || _currentPeriod == 'Today') {
+      return isAr ? 'نجاح 98%' : 'Success 98%';
+    }
+    if (_currentPeriod.contains('30')) {
+      return isAr ? 'نجاح 94%' : 'Success 94%';
+    }
+    return isAr ? 'نجاح 95%' : 'Success 95%';
   }
+
+  String get kpiParcelSuccessRate => kpiParcelSuccessRateFor(true);
 
   // Financial & Escrow Live KPIs
   double get kpiActiveEscrowHoldQar {
@@ -3000,6 +3093,7 @@ class AdminProvider extends ChangeNotifier {
     required Map<String, dynamic> newState,
     required String beforeAfter,
     String? reason,
+    bool skipBackendWrite = false,
   }) async {
     final nowIso = DateTime.now().toUtc().toIso8601String();
     final actorLabel = _currentActorLabel();
@@ -3011,6 +3105,10 @@ class AdminProvider extends ChangeNotifier {
       beforeAfter: beforeAfter,
     );
     _auditLogs.insert(0, entry);
+
+    if (skipBackendWrite) {
+      return;
+    }
 
     final payload = <String, dynamic>{
       'id': 'aud_${DateTime.now().toUtc().microsecondsSinceEpoch}',
@@ -3458,7 +3556,7 @@ class AdminProvider extends ChangeNotifier {
     final nowUtc = DateTime.now().toUtc();
 
     try {
-      await _backendGateway.callAdminReviewProvider(
+      final result = await _backendGateway.callAdminReviewProvider(
         providerId: userId,
         decision: decision.value,
         reviewerId: reviewerId,
@@ -3493,6 +3591,7 @@ class AdminProvider extends ChangeNotifier {
         beforeAfter:
             '${prevStatus.value} ← ${decision.value}${cleanReason != null && cleanReason.isNotEmpty ? ' ($cleanReason)' : ''}',
         reason: cleanReason,
+        skipBackendWrite: result['_auditLoggedByServer'] == true,
       );
 
       notifyListeners();
@@ -3543,7 +3642,7 @@ class AdminProvider extends ChangeNotifier {
     final prevPaymentStatus = req.paymentSettlementStatus;
 
     try {
-      await _backendGateway.callAdminModerateWorkRequest(
+      final result = await _backendGateway.callAdminModerateWorkRequest(
         requestId: requestId,
         action: 'verify_payment_settled',
         adminUid: adminUid,
@@ -3569,6 +3668,7 @@ class AdminProvider extends ChangeNotifier {
         beforeAfter:
             '${prevPaymentStatus.value} ← verified_settled (Ref: $ref)',
         reason: 'Ref: $ref',
+        skipBackendWrite: result['_auditLoggedByServer'] == true,
       );
 
       notifyListeners();
@@ -3655,7 +3755,7 @@ class AdminProvider extends ChangeNotifier {
     final adminUid = _staffUid ?? 'admin_staff';
 
     try {
-      await _backendGateway.callAdminModerateWorkRequest(
+      final result = await _backendGateway.callAdminModerateWorkRequest(
         requestId: requestId,
         action: action,
         adminUid: adminUid,
@@ -3684,6 +3784,7 @@ class AdminProvider extends ChangeNotifier {
         beforeAfter:
             '${req.status.value} ← ${resolvedNextStatus.value} ($cleanReason)',
         reason: cleanReason,
+        skipBackendWrite: result['_auditLoggedByServer'] == true,
       );
 
       notifyListeners();
@@ -4003,6 +4104,9 @@ class AdminProvider extends ChangeNotifier {
         _inquiriesSyncStatus =
             'تمت المزامنة مع ${FirebaseConfig.projectId}: ${cloudItems.length} سجل مباشر';
       } else {
+        if (AppEnvironment.isFirebaseRuntimeActive && !isDevMockMode) {
+          _inquiries = <AdminInvestorInquiry>[];
+        }
         _inquiriesSyncStatus =
             'متصل بـ ${FirebaseConfig.projectId} — لا توجد طلبات سحابية محفوظة بعد';
       }

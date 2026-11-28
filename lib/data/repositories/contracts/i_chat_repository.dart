@@ -13,6 +13,7 @@ abstract class IChatRepository {
     required String senderName,
     required String text,
     String? attachmentUrl,
+    String? recipientId,
   });
 
   Stream<List<ChatMessageModel>> streamMessages(String conversationId);

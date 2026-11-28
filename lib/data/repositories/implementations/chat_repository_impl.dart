@@ -73,6 +73,7 @@ class ChatRepositoryImpl implements IChatRepository {
     required String senderName,
     required String text,
     String? attachmentUrl,
+    String? recipientId,
   }) async {
     final cleanId = conversationId.trim().isEmpty ? 'chat_default' : conversationId.trim();
     _ensureConversationSeeded(cleanId);

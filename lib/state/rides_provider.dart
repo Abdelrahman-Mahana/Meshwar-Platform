@@ -5,7 +5,8 @@ import '../core/config/app_environment.dart';
 import '../data/mock_data.dart';
 import '../data/models/ride_model.dart';
 import '../data/repositories/app_repositories.dart';
-import '../data/repositories/implementations/rides_repository_impl.dart';
+import '../data/repositories/implementations/firebase/firebase_rides_repository.dart';
+import '../data/services/qatar_city_matcher.dart';
 
 enum RideMode {
   seats, // مقاعد
@@ -63,6 +64,8 @@ class RidesProvider extends ChangeNotifier {
   final List<RideModel> _myPublishedRides = [];
   final List<RideModel> _bookedRides = [];
   RideModel? _activeBooking;
+  String? _activeBookingId;
+  final Map<String, String> _bookingIdsByRideId = {};
   final Map<String, RideRatingRecord> _rideRatings = {};
 
   RidesProvider({String? initialUserId})
@@ -107,6 +110,8 @@ class RidesProvider extends ChangeNotifier {
       _myPublishedRides.clear();
       _bookedRides.clear();
       _activeBooking = null;
+      _activeBookingId = null;
+      _bookingIdsByRideId.clear();
       _rideRatings.clear();
       notifyListeners();
     }
@@ -126,6 +131,7 @@ class RidesProvider extends ChangeNotifier {
   bool get hasCorridorQuery =>
       _fromCity.trim().isNotEmpty || _toCity.trim().isNotEmpty;
   RideModel? get activeBooking => _activeBooking;
+  String? get activeBookingId => _activeBookingId;
   List<RideModel> get allRides => List.unmodifiable(_allRides);
   List<RideModel> get myPublishedRides => List.unmodifiable(_myPublishedRides);
   List<RideModel> get bookedRides => List.unmodifiable(_bookedRides);
@@ -134,65 +140,8 @@ class RidesProvider extends ChangeNotifier {
 
   RideRatingRecord? ratingForRide(String rideId) => _rideRatings[rideId];
 
-  static const Map<String, List<String>> _cityAliases = {
-    'الدوحة': [
-      'doha',
-      'الدوحة',
-      'مشيرب',
-      'الخليج الغربي',
-      'west bay',
-      'msheireb',
-    ],
-    'لوسيل': ['lusail', 'لوسيل', 'marina'],
-    'الخور': ['al khor', 'alkhor', 'khor', 'الخور'],
-    'الوكرة': ['al wakrah', 'wakrah', 'الوكرة'],
-    'الريان': ['al rayyan', 'rayyan', 'الريان'],
-    'المنطقة الصناعية': [
-      'industrial area',
-      'industrial',
-      'المنطقة الصناعية',
-      'الصناعية',
-    ],
-    'دخان': ['dukhan', 'دخان'],
-    'مسيعيد': ['mesaieed', 'مسيعيد'],
-    'أم صلال': ['umm salal', 'أم صلال', 'ام صلال'],
-    'الضعاين': ['al daayen', 'daayen', 'الضعاين'],
-    'الشمال': ['al shamal', 'shamal', 'الشمال'],
-    'رأس لفان': ['ras laffan', 'رأس لفان', 'راس لفان'],
-    'المدينة التعليمية': ['education city', 'المدينة التعليمية'],
-    'مطار حمد الدولي': [
-      'hamad international airport',
-      'hia',
-      'airport',
-      'مطار حمد الدولي',
-      'المطار',
-    ],
-  };
-
-  static bool _matchesCityField(String query, List<String?> candidates) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return true;
-
-    final expandedQueries = <String>{q};
-    for (final entry in _cityAliases.entries) {
-      if (entry.key.toLowerCase().contains(q) ||
-          entry.value.any((alias) => alias.contains(q) || q.contains(alias))) {
-        expandedQueries.add(entry.key.toLowerCase());
-        expandedQueries.addAll(entry.value.map((e) => e.toLowerCase()));
-      }
-    }
-
-    for (final raw in candidates) {
-      if (raw == null || raw.trim().isEmpty) continue;
-      final candidate = raw.trim().toLowerCase();
-      for (final token in expandedQueries) {
-        if (candidate.contains(token) || token.contains(candidate)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
+  static bool _matchesCityField(String query, List<String?> candidates) =>
+      QatarCityMatcher.matchesCityField(query, candidates);
 
   /// Fetches live rides from [AppRepositories.instance.rides].
   /// In live Firebase/production mode, never merges [MockData.initialRides].
@@ -442,22 +391,39 @@ class RidesProvider extends ChangeNotifier {
           pickupLocation: ride.pickupPoint,
           dropoffLocation: ride.dropoffPoint,
         )
-        .ignore();
+        .then((booking) {
+      if (booking.id.isNotEmpty) {
+        _bookingIdsByRideId[ride.id] = booking.id;
+        if (_activeBooking?.id == ride.id) {
+          _activeBookingId = booking.id;
+        }
+      }
+    }).catchError((_) {
+      // Keep local booking state non-crashing when offline or in stubbed tests.
+    });
   }
 
   void confirmBooking(RideModel ride) {
     bookRide(ride);
   }
 
-  void cancelBooking() {
+  void cancelBooking({String? reason}) {
     if (_activeBooking != null) {
-      final cancelledId = _activeBooking!.id;
-      _bookedRides.removeWhere((r) => r.id == cancelledId);
+      final cancelledRideId = _activeBooking!.id;
+      final realBookingId = _activeBookingId ??
+          _bookingIdsByRideId.remove(cancelledRideId) ??
+          cancelledRideId;
+      _bookingIdsByRideId.remove(cancelledRideId);
+      _bookedRides.removeWhere((r) => r.id == cancelledRideId);
       _activeBooking = null;
+      _activeBookingId = null;
       notifyListeners();
-      AppRepositories.instance.rides.cancelBooking(cancelledId).ignore();
+      AppRepositories.instance.rides
+          .cancelBooking(realBookingId, reason: reason)
+          .ignore();
     } else {
       _activeBooking = null;
+      _activeBookingId = null;
       notifyListeners();
     }
   }
@@ -496,8 +462,8 @@ class RidesProvider extends ChangeNotifier {
 
     if (updated != null) {
       final repo = AppRepositories.instance.rides;
-      if (repo is! RidesRepositoryImpl) {
-        repo.publishRide(updated).ignore();
+      if (repo is FirebaseRidesRepository) {
+        repo.updateRideStatus(updated.id, 'completed').ignore();
       }
     }
     return updated;
@@ -617,8 +583,12 @@ class RidesProvider extends ChangeNotifier {
 
     try {
       final repo = AppRepositories.instance.rides;
-      if (repo is! RidesRepositoryImpl) {
-        await repo.publishRide(updatedRide);
+      if (repo is FirebaseRidesRepository) {
+        await repo.updateRideRating(
+          rideId: updatedRide.id,
+          driverRating: newDriverRating,
+          status: 'completed',
+        );
       } else {
         await repo.getRideDetails(updatedRide.id);
       }
@@ -660,6 +630,8 @@ class RidesProvider extends ChangeNotifier {
     String? notes,
     bool isLadiesOnly = false,
     bool isInstantBooking = true,
+    bool isVerified = false,
+    double driverRating = 0.0,
   }) {
     final resolvedStopover =
         (stopoverCity != null && stopoverCity.trim().isNotEmpty)
@@ -698,10 +670,10 @@ class RidesProvider extends ChangeNotifier {
       parcelPrice: acceptsParcels ? parcelPrice.clamp(0, 5000) : 0,
       maxParcelSize: maxParcelSize,
       notes: (notes != null && notes.trim().isNotEmpty) ? notes.trim() : null,
-      isVerified: true,
+      isVerified: isVerified,
       isLadiesOnly: isLadiesOnly,
       isInstantBooking: isInstantBooking,
-      driverRating: 4.9,
+      driverRating: driverRating.clamp(0.0, 5.0),
       status: 'active',
     );
     _allRides.insert(0, newRide);
@@ -744,5 +716,15 @@ class RidesProvider extends ChangeNotifier {
       );
     }
     notifyListeners();
+    final repo = AppRepositories.instance.rides;
+    if (repo is FirebaseRidesRepository) {
+      repo
+          .rescheduleRide(
+            rideId: rideId,
+            newDate: newDate,
+            newTime: newTime,
+          )
+          .ignore();
+    }
   }
 }
