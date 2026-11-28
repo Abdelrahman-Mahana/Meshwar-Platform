@@ -1,52 +1,54 @@
-# MASHWAR: الإجابات المطابقة 1-لـ-1 لاستمارة Startup Qatar على F6S
+# MASHWAR: Exact 1-to-1 Answers for Startup Qatar Investment Program (F6S)
 
-> هذا الملف محدّث بالكامل على آخر نسخة من التطبيق (**Qatar Community Services & On-the-Way Fulfillment Super-App**) بنظام الخدمات المجتمعية الست، ونظام الضمان المالي المزدوج (**Bilateral Escrow**)، وواجهة الهوية القطرية العنابية، ومتطابق حرفياً مع العرض التقديمي وملف المؤسس والخطة المالية لـ 3 سنوات (`STARTUP_QATAR_SUBMISSION_DOCS`).
-> جميع النصوص الإنجليزية خضعت لفحص **Humanizer** صارم: بدون شرطة طويلة (`em-dash`) وبدون ألفاظ تسويقية آلية مكررة.
+> **Synced Source of Truth:** Every financial figure, engineering metric, and product description below matches our 3 official upload documents in `STARTUP_QATAR_SUBMISSION_DOCS/` (`.pdf` + `.docx`), the live operating model in `landing_page/js/financial-data.js`, and HEAD commit `6520fb6`.
+> **Writing Standard:** Direct engineering and product language written for QDB investment directors. Honest pre-revenue MVP disclosure (`$0` commercial revenue to date), **Direct Transparent Settlement** (zero frozen third-party custody balances during MVP launch), and strictly MASHWAR's **3 Core Pillars**.
 
 ---
 
-## ⚠️ 4 تصحيحات مهمة في نموذج F6S قبل الإرسال النهائي
+## 4 Quick Pre-Submission Checks on F6S
 
-| # | الحقل الحالي | ما يجب التأكد منه | التعديل المطلوب |
+| # | F6S Form Field | What to Verify | Exact Action |
 | :-: | :--- | :--- | :--- |
-| **1** | أعلى الصفحة:<br>`Want to connect as a company, startup or team?` | ربط التقديم بملف شركة ناشئة | اضغط `Create new` وأنشئ ملف Startup باسم **`MASHWAR`** قبل الإرسال. |
-| **2** | **`Where are you based? *`** | مطابقة مكان إقامتك الحالي بصدق | اختر مدينتك الحالية الفعلية (مثل `Cairo, Egypt`)، لأن الالتزام بالانتقال للدوحة يظهر في Q20 وQ21. |
-| **3** | **`Skills *`** | إضافة مهارات البنية الكاملة | أضف المهارات التقنية المحددة أدناه (Flutter/Firebase/Python/AI/Operations). |
-| **4** | **Question 3 (`Sector`)** | مطابقة قطاع المشروع الحقيقي | اختر **`Marketplaces`** أو **`Supply Chain / Logistics`** أو **`Transportation / Mobility`** (وليس AI فقط). |
+| **1** | Top of form:<br>`Want to connect as a company, startup or team?` | Attach application to a startup profile | Click `Create new` and create the startup profile **`MASHWAR`** before submitting. |
+| **2** | **`Where are you based? *`** | Honest current base | Enter **`Cairo, Egypt`** (your full-time Doha relocation commitment is explicitly answered in Q18, Q20, and Q21). |
+| **3** | **`Skills *`** | Full-stack + AI + ops coverage | Add the exact tags listed in Section 1.3 below. |
+| **4** | **Question 3 (`Sector`)** | Match real business category | Select **`Marketplaces`**, **`Supply Chain / Logistics`**, or **`Transportation / Mobility`** (not AI-only). |
 
 ---
 
-## القسم الأول: بيانات الملف الشخصي (`A bit about you`)
+## Section 1: Founding Team / Profile (`A bit about you`)
 
-### 1. `Describe yourself *` *(156 حرفاً)*
+### 1. `Describe yourself *` *(154 characters)*
 ```text
-Founder of MASHWAR (Qatar community services & on-the-way fulfillment app) and Software/AI Engineer building Flutter, Firebase, Python, FastAPI, and NLP systems.
+Founder of MASHWAR (Qatar intercity rides, same-hour parcels & worksite supply platform) and Software/AI Engineer building Flutter, Firebase & Python systems.
 ```
 
 ### 2. `Where are you based? *`
-`Cairo, Egypt` *(أو مدينتك الحالية الفعلية قبل الانتقال إلى الدوحة)*
+```text
+Cairo, Egypt
+```
 
 ### 3. `Skills *`
-`Flutter`, `Dart`, `Firebase`, `Cloud Firestore`, `System Architecture`, `Google Maps Platform`, `Escrow Workflows`, `Python`, `FastAPI`, `Machine Learning`, `NLP`, `PostgreSQL`
+`Flutter`, `Dart`, `Firebase`, `Cloud Firestore`, `Cloud Functions`, `TypeScript`, `System Architecture`, `RBAC Security`, `Python`, `FastAPI`, `Django`, `PyTorch`, `NLP`, `PostgreSQL`, `Redis`
 
-### 4. `Tell us something amazing you built` *(835 حرفاً)*
+### 4. `Tell us something amazing you built` *(867 characters)*
 ```text
-I designed and built MASHWAR, a bilingual (Arabic RTL and English LTR) community services and on-the-way fulfillment platform for Qatar across Android, iOS, and Web, plus a separate Role-Based Admin Web Console. Beyond ride-sharing, the app handles six daily needs on one corridor network: buy-and-deliver errands with live store receipt approval, engineer worksite supplies, on-route document runs, nursery and daily commutes, shared empty seats, and commercial cargo. To prevent fraud on both sides, I built ServiceEscrowScreen with Bilateral Escrow holds via Fawran, QPay, and Wallet, 4-digit OTP release, a 1,098-line Firestore ruleset, and 78 passing tests (0 analyzer issues).
+I designed, engineered, and verified MASHWAR, a bilingual (Arabic RTL and English LTR) Qatar mobility and corridor logistics platform built from a single Flutter codebase (150 Dart files) serving Mobile, Consumer Web, and a standalone 14-module RBAC Operations Command Center (/admin/). MASHWAR unites three daily corridor workflows across Qatar's 8 municipalities and 38 geo-hubs: intercity shared rides, 35-90 minute route-based parcels with Dual-OTP pickup/delivery handshakes, and on-demand worksite supply for Lusail and Industrial Area contractors with live receipt checks and salted SHA-256 6-character handover codes. To stay compliant with QCB rules at launch, the MVP runs on Direct Transparent Settlement (zero frozen custody balances) backed by 2,732 lines of Firestore rules, Cloud Functions v2, 212 Flutter tests, 13 Functions tests, and 10 live Emulator rules tests passing with 0 analyzer warnings.
 
-Earlier, I built an Arabic/English audio/video AI platform using Python, Django, FastAPI, PyTorch, and Hugging Face, plus n8n/PostgreSQL pipelines, and taught Python, SQL, and ML.
+Earlier, I built an Arabic/English audio/video AI platform using Python, Django, FastAPI, PyTorch, and Hugging Face, plus n8n/PostgreSQL/Redis pipelines, and taught Python, SQL, and ML.
 ```
 
 ### 5. `Links *`
-* **LinkedIn:** `https://www.linkedin.com/in/abdelrahman-mahana/`
-* **GitHub:** `https://github.com/Abdelrahman-Mahana`
-* **Website:** `[OPTIONAL: ضع رابط نسخة الويب المباشرة على Vercel أو Firebase Hosting]`
+- **LinkedIn:** `https://www.linkedin.com/in/abdelrahman-mahana/`
+- **GitHub:** `https://github.com/Abdelrahman-Mahana`
+- **Website:** `[OPTIONAL: Add live deployed URL of the MASHWAR Landing Page / Web Staging if active at submission time]`
 
 ### 6. `Upload your CV *`
-صدّر ملف `[02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx)` إلى **PDF** بعد استكمال سطر الشهادة الجامعية `[VERIFY]`.
+Open [02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx](file:///STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx), replace the `[VERIFY]` university degree line in Section 05 with your exact factual academic record, export to PDF, and upload the updated PDF. (A clean ready-to-review PDF is already generated at `STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.pdf`.)
 
 ---
 
-## القسم الثاني: الأسئلة المرقمة 1 إلى 26 (`Questions`) للنسخ واللصق
+## Section 2: Application Form Questions (`Q1 - Q26`) — Copy & Paste Verbatim
 
 ### **Question 1: Primary contact email address \***
 ```text
@@ -54,153 +56,157 @@ abdelrahmanmahana01@gmail.com
 ```
 
 ### **Question 2: How did you hear about us? \***
-`Social Media` *(أو المصدر الفعلي الذي عرفت منه البرنامج)*
+```text
+Social Media
+```
+*(Or select the exact channel through which you discovered the program.)*
 
 ### **Question 3: What sector(s) and sub-sector(s) does your company operate in? \***
-اختر: **`Marketplaces`** أو **`Supply Chain / Logistics`** أو **`Transportation / Mobility`**
+Select: **`Marketplaces`**, **`Supply Chain / Logistics`**, and/or **`Transportation / Mobility`**.
 
 ### **Question 4: Stage of Startup \***
-`Pre-revenue`
+```text
+Pre-revenue
+```
 
 ### **Question 5: Do you have a working prototype or an MVP at the moment? When was it launched? \***
 ```text
-Yes. We have a working, tested MVP built across Android, iOS, and Flutter Web alongside a standalone Admin Web Control Panel, 7 domain repository contracts, a 1,098-line Firestore security ruleset, an 8-municipality / 22-hub Qatar Geo-Catalog, and Bilateral MASHWAR Escrow workflows. The staging build was completed and verified (78/78 passing tests, 0 analyzer issues) in November 2026. It is not yet commercially launched pending QFC/QSTP setup, live SMS OTP gateways, and Fawran/QPay merchant credentials.
+Yes. We have a working, verified pre-revenue MVP engineered across Mobile, Consumer Web (/), and a standalone 14-module RBAC Operations Command Center (/admin/), plus Cloud Functions v2 (TypeScript / Node 20), a 2,732-line Cloud Firestore security ruleset, strict raster-only Cloud Storage rules, an 8-municipality / 38-hub Qatar geo-catalog with our in-app live route map (mashwar_live_map.html), and a bilingual public landing page wired directly to Firestore. The staging build passed all automated verification gates in November 2026 (0 flutter analyze issues, 212/212 Flutter tests, 13/13 Cloud Functions tests, 10/10 live Emulator rules tests, and 0 browser console errors across Edge CDP QA). It is not yet commercially launched pending Doha incorporation (QFC/QSTP), MoCI/MoT/QCB clearances, Firebase Blaze production cutover, live +974 SMS OTP, and licensed map/routing APIs.
 ```
 
 ### **Question 6: How long have you been working on your solution? \***
 ```text
-[CONFIRM DURATION, e.g., ~X months total]: problem discovery around corridor inefficiencies and community errand trust gaps began in [Month Year], followed by intensive full-stack engineering execution (Flutter UI, Bilateral Escrow workflow, Qatar localization, Firebase rules, Admin Web console, and 78 automated tests) completed in November 2026.
+[CONFIRM EXACT START MONTH/YEAR]: Problem research on Qatar intercity commuting and Industrial Area-to-Lusail worksite supply friction began in [Month Year], followed by intensive full-stack engineering execution in 2026 delivering the complete Flutter Mobile/Web client, 14-module RBAC Admin portal, Cloud Functions v2 backend, cryptographic handover verification, 2,732-line Firestore ruleset, and 235 passing automated tests completed in November 2026.
 ```
 
 ### **Question 7: How many technical employees do you have in your team? \***
 ```text
-1 full-time technical founder / software engineer (handling architecture, Flutter mobile/web client, Firebase security rules, and test automation). We plan to hire 2 additional full-time engineers in Doha (Senior Backend/Cloud Security Engineer and Matching/Data Engineer) using Tranche 1-2 capital.
+1 full-time technical founder and chief architect (handling system architecture, Flutter Mobile/Web consumer and Admin portals, Cloud Functions v2, Firestore/Storage security rules, and automated QA). Under our $450,000 3-tranche budget, we plan to hire full-time Doha staff starting with a Senior Backend & Cloud Security Engineer in Month 1 (Tranche 1), followed by an Operations & QID/KYC Compliance Lead in Month 7 (Tranche 2) and a B2B Merchant Growth Lead in Month 13 (Tranche 3).
 ```
 
 ### **Question 8: Is your company's technology built in-house? \***
 ```text
-Yes, 100% built in-house. Every component was written directly without agencies or white-label templates, including the cross-platform Flutter app (56 modular screen files with Arabic RTL and English LTR layouts), the Bilateral Escrow workflow (ServiceEscrowScreen), the standalone Admin Web Control Panel (lib/admin_main.dart), 7 domain repository contracts, a 1,098-line Firestore security ruleset, integer minor-unit wallet ledger logic, a 22-hub Qatar Geo-Catalog fallback, and 78 passing automated tests.
+Yes, 100% built in-house with zero outsourced agencies or white-label templates. Every component was written directly by the founder, including the single Flutter/Dart codebase (150 Dart files serving Mobile, Consumer Web, and the standalone 14-module RBAC Admin Command Center in lib/admin_main.dart), Cloud Functions v2 security handlers (salted SHA-256 6-character worksite handover codes verified with timingSafeEqual), 2,732 lines of Cloud Firestore security rules, strict raster-only Cloud Storage rules, our native in-app MASHWAR Live Map (mashwar_live_map.html across 8 Qatar municipalities and 38 geo-hubs), and 235 passing automated tests.
 ```
 
-### **Question 9: In a few words, tell us about your company's business model. \***
+### **Question 9: In a few words, tell us about your company's business model.**
 ```text
-B2B2C and P2P Asset-Light Marketplace. Posting any service request is free (0 QAR). When an offer is accepted, MASHWAR takes a category commission (11% on shared rides and daily commutes; 18% on store receipt errands, site supplies, document runs, and cargo) and locks funds in Bilateral Escrow until 4-digit OTP handover, adding Mashwar Business monthly SaaS plans ($79/mo) in Year 2 with zero owned vehicles or warehouses.
+Asset-light P2P and B2B2C marketplace uniting three corridor services in Qatar: Intercity Shared Rides (11% fee on $7.50 avg ticket), Route-Based Same-Hour Parcels (18% fee on $9.50 avg ticket), and On-Demand Worksite Supply & Errands (18% fee on $14.00 avg ticket, 0 QAR free request posting), plus Mashwar Business B2B SaaS ($79/month from Month 13). Members settle directly during MVP launch (zero frozen custody balances) with zero owned vehicles or warehouses.
 ```
 
 ### **Question 10: What's the size of your customer base? How do you intend to acquire customers in the new market? \***
 ```text
-Existing Customer Base: 0 paying commercial customers (pre-revenue tested MVP preparing Doha launch).
+Existing Customer Base: 0 paying commercial customers today (pre-revenue tested MVP preparing Doha incorporation and pilot launch).
 
-Bottom-Up Market Sizing (Synced 1:1 with Financial Plan Q24):
-- TAM ($272.5M / QAR 991.9M annual GMV): 18.0M annual inter-municipality & commuter trips ($7.50 avg) + 12.5M urgent SME errands, site parts, and parcels ($11.00 avg) across Qatar and GCC corridors.
+Bottom-Up Market Sizing (Synced 1:1 with Financial Plan Q24 & landing_page/js/financial-data.js):
+- TAM ($272.50M / QAR 991.9M annual GMV): 18.0M annual inter-municipality & commuter trips ($7.50 avg) + 12.5M urgent SME parcels and worksite errands ($11.00 avg) across Qatar and GCC corridors.
 - SAM ($59.95M / QAR 218.2M annual GMV): 22% digitally banked smartphone penetration across Doha industrial/suburban routes and Tier-1 GCC highway corridors.
-- Target SOM (Year 3): $3.02M annual GMV ($695.8K Net Revenue across 14 active corridors, 330,162 annual orders, and 348 B2B Mashwar Business accounts; monthly EBITDA breakeven in Month 21 on a $450,000 3-tranche budget).
+- Target SOM (Year 3 Base): $3.02M ($3,015,799) annual GMV and $695,843 Net Platform Revenue across 14 active corridors, 330,162 annual completed orders, and 348 Mashwar Business B2B accounts (~5.0% of Tier-1 SAM), reaching monthly EBITDA breakeven in Month 21 on a $450,000 3-tranche budget.
 
-Qatar Customer & Provider Acquisition Plan (Corridor-by-Corridor):
-1. B2B & Worksite Load Anchoring: Directly sign 25 repeat shippers in Doha and the Industrial Area (electrical/spare-parts stores, contracting offices, clinics, pharmacies) sending daily items to Lusail, Al Wakrah, Al Khor, and Mesaieed so providers see paid tasks waiting on day one.
-2. Commuter & Pickup Activation: Recruit daily commuters and pickup drivers along Doha <-> Lusail / Industrial Area / Al Khor using 10-12% intro commissions, Fawran payouts, and free task posting for residents.
-3. Unmet Route Alerts: Convert resident searches for underserved daily/nursery commutes or store errands into direct onboarding leads for nearby drivers.
+Qatar Customer & Provider Acquisition Plan (Corridor-First Seeding):
+1. Anchor 25 Repeat B2B Shippers (Months 7-9): Directly contract electrical and plumbing suppliers on Industrial Area Street 10, MEP contractors in Lusail, workshops, and clinics sending daily materials and documents so QID-vetted drivers see immediate paid orders from day one.
+2. Activate Commuters & Pickups (Months 9-12): Enroll daily highway commuters and pickup owners along Doha <-> Lusail / Industrial Area and Doha <-> Al Khor using 11-digit QID verification, introductory commission rebates, and stacked multi-service earnings per trip.
+3. Scale Mashwar Business & Unmet Route Alerts (Months 13-36): Convert repeat contractors and suppliers onto $79/mo Mashwar Business accounts (scaling to 348 accounts by Month 36) while routing unmet neighborhood searches directly into targeted driver onboarding across 14 corridors.
 ```
 
 ### **Question 11: List your direct competitors, both currently and in the future (with links). \***
 ```text
-Current and Future Competitors:
+Current and Future Competitors by Category:
 
 1. Urban Ride-Hailing (Full-Charter Pricing Overlap):
-- Karwa / Mowasalat (Qatar public taxi and transit): https://www.mowasalat.com
+- Karwa / Mowasalat (Qatar public taxi & transit): https://www.mowasalat.com
 - Uber: https://www.uber.com
 - Careem: https://www.careem.com
 
-2. On-Demand Delivery & Couriers (Store Catalog / Depot Latency Overlap):
-- Snoonu (Qatar catalog marketplace and courier): https://www.snoonu.com
-- Talabat (Qatar food and grocery delivery fleet): https://www.talabat.com
-- Aramex (24-72h hub-and-spoke parcel courier): https://www.aramex.com
+2. Catalog Delivery & Hub-and-Spoke Couriers (Latency / Catalog Restriction Overlap):
+- Snoonu (Qatar catalog marketplace & delivery): https://www.snoonu.com
+- Talabat (Qatar food & grocery fleet): https://www.talabat.com
+- Aramex (24-72h depot parcel courier): https://www.aramex.com
 
-3. Corridor Mobility Benchmarks:
-- BlaBlaCar (global passenger carpooling; no store-receipt escrow or construction supply board): https://www.blablacar.com
+3. Global Intercity Carpooling Benchmark:
+- BlaBlaCar (passenger carpooling; no worksite supply board or receipt verification): https://www.blablacar.com
 
-4. Informal Competition:
-- Unverified WhatsApp and Facebook community groups where people arrange rides, nursery runs, and store favors with no QID vetting, phone privacy, receipt verification, or Escrow protection.
+4. Informal Market Alternative:
+- Unverified WhatsApp and Facebook community groups where residents and site staff arrange intercity rides, parcel drops, and errands with zero QID vetting, no receipt verification, no GPS trail, and frequent no-shows.
 ```
 
 ### **Question 12: What is your Unique Selling Proposition and SWOT Analysis? \***
 ```text
 Unique Selling Proposition (USP):
-Taxis charge dedicated charter fares inside Doha, food apps only deliver listed catalog menus, and couriers take 24 to 48 hours via sorting depots. MASHWAR combines six everyday community services on one verified Qatar network (store buy-and-deliver with receipt, engineer site supply, document runs, nursery/daily commutes, shared highway seats, and commercial cargo) backed by Bilateral Escrow. Requesters post for free (0 QAR). When accepted, both the service fee and store receipt cap sit in Escrow until the provider uploads live photo proof and the requester gives the 4-digit OTP at handover.
+Urban taxi apps charge full-car charter fares inside central Doha, catalog apps only deliver listed menus, and couriers take 24 to 48 hours via sorting depots. MASHWAR combines three high-frequency Qatar corridor services on one verified bilingual network: Intercity Shared Rides (saving commuters up to 70%), Route-Based Same-Hour Parcels (35-90 min delivery via Dual-OTP pickup/delivery handshake), and On-Demand Worksite Supply & Errands (Lusail/Industrial Area supply runs with live receipt photo proof and salted SHA-256 6-character handover verification). Launching with Direct Transparent Settlement avoids unlicensed custody risk while our 14-module RBAC Admin Command Center enforces QID vetting and auditability.
 
-Brief SWOT Analysis:
-- Strengths: Complete multi-platform MVP (Flutter Mobile/Web + Admin RBAC Console) built 100% in-house; Bilateral Escrow + live receipt approval + 4-digit OTP built in code; multi-task drivers earn more per trip; 78/78 automated tests passing with 0 analyzer issues.
-- Weaknesses: Pre-revenue solo founder; corridor liquidity needs careful route-by-route seeding; live SMS OTP and Fawran/QPay keys require Tranche 1 funding.
-- Opportunities: Frequent daily delays moving small tools/parts from Industrial Area to Lusail and outer sites; underserved nursery and family commutes; zero trusted community errand Escrow app in Qatar.
-- Threats: Regulatory classification between personal favors/cost-sharing and commercial logistics (handled via QFC/QSTP legal counsel and price caps); off-platform cash leakage (blocked by prepaid provider wallet thresholds and Escrow protection).
+SWOT Analysis:
+- Strengths: 100% in-house Flutter Mobile/Web + 14-module Admin portal; 2,732-line Firestore ruleset; Cloud Functions v2 cryptographic handover security; 212 Flutter + 13 Functions + 10 live Emulator tests passing with 0 analyzer warnings; QCB-safe direct settlement live today.
+- Weaknesses: Pre-revenue solo founder; initial corridor density requires focused route-by-route B2B seeding; Firebase Blaze production cutover, live +974 SMS OTP, licensed map/routing APIs, and Qatar legal setup await Tranche 1 funding.
+- Opportunities: Daily Industrial Area-to-Lusail contractor supply downtime; high-cost intercity commutes to Al Khor, Al Wakrah, Mesaieed, and Dukhan; no unified verified corridor-plus-worksite platform in Qatar.
+- Threats: Regulatory classification between cost-sharing rides and commercial logistics (mitigated via QFC/QSTP incorporation and MoCI/MoT/QCB clearances prior to public launch); off-platform cash leakage (mitigated via Mashwar Business B2B accounts, QID ratings, and verifiable handover records).
 ```
 
 ### **Question 13: What are some of your milestones over the past six months? \***
 ```text
-Over the past six months, all milestones focused on architecture, full-stack engineering, and trust verification:
-- Six-Service Architecture & Qatar Localization: Expanded the platform into six equal-weight community services mapped across Qatar's 8 municipalities and 22 local hubs with an animated Qatar route map and bilingual Arabic RTL / English LTR UI (56 modular screen files).
-- Bilateral MASHWAR Escrow Engine: Engineered ServiceEscrowScreen supporting 0 QAR free posting, fee + purchase-cap locks (Fawran, QPay/Himyan, SkipCash, Mashwar Wallet), in-store receipt and item photo approval, 4-digit OTP payout release, and 1-tap neutral dispute freezing.
-- Governance Console & Zero-Trust Rules: Built a standalone Admin Web Control Panel (lib/admin_main.dart) for 11-digit QID verification, dispute arbitration, and audit trails alongside a 1,098-line Firestore security ruleset and integer minor-unit wallet ledgering.
-- Automated Verification & Investor Package: Passed 78/78 automated unit, layout, escrow, and RBAC tests with 0 static analysis issues (flutter analyze), prepared technical documentation (docs/backend/), and compiled a 116-file Visual Media Kit.
+Over the past six months, all milestones centered on end-to-end product engineering, security hardening, and Qatar localization (verified on main at commit 6520fb6):
+- Three-Pillar Mobile & Web MVP: Built the bilingual Arabic (RTL) / English (LTR) Flutter application (150 Dart files) covering Intercity Shared Rides, Route-Based Same-Hour Parcels, and On-Demand Worksite Supply & Errands across Qatar's 8 municipalities and 38 geo-hubs, including our native in-app MASHWAR Live Map (mashwar_live_map.html).
+- Cryptographic Handover & Direct Settlement Architecture: Engineered QCB-safe Direct Transparent Settlement (cash on delivery and verified manual bank transfer in exact integer dirhams, zero frozen custody balances), Dual-OTP parcel rules, and Cloud Functions v2 salted SHA-256 6-character worksite handover codes (timingSafeEqual, 24h TTL, 5-attempt cap, server-only secrets).
+- 14-Module RBAC Admin Command Center: Built lib/admin_main.dart with 5 permission tiers for 11-digit QID vetting, worksite transfer review, live investor inquiry management from the public landing page, corridor monitoring, and schema-validated admin_audit_logs.
+- Automated Verification & Security Hardening: Passed 0 flutter analyze warnings, 212/212 Flutter tests, 13/13 Cloud Functions v2 tests, 10/10 live Firestore/Storage Emulator rules tests (2,732-line firestore.rules + raster-only storage.rules blocking SVG), and 0 console/page errors in headless Edge CDP QA across Consumer, Admin, and Landing Page.
 ```
 
 ### **Question 14: What is your current or future revenue/monetization model? \***
 ```text
-Primary Model: Zero-Upfront Posting + Transactional Commission on Accepted Escrow Orders + Year-2 B2B SaaS.
-- Posting Requests is Free (0 QAR): Any resident or engineer posts a request with zero upfront platform charge.
-- Day-1 Transactional Commissions: Configurable take rates per service line (11% target on shared corridor seats and daily commutes; 18% target on store buy-and-deliver errands, engineer site supplies, document runs, and commercial cargo). Prepaid provider ledger thresholds block off-platform cash skipping.
-- Year 2+ Recurring Expansion (Months 13+): Mashwar Business monthly subscriptions ($79/mo) for contracting firms, spare-parts dealers, clinics, and nurseries needing multi-staff dispatch, GST/VAT-ready invoicing, and priority Escrow coverage.
+Asset-Light Transaction Commissions + Year-2 B2B SaaS:
+- Free Request Posting (0 QAR): Residents and site engineers post ride, parcel, or worksite supply requests with zero upfront listing fee.
+- Transactional Platform Fees (Configurable via Admin Console): 11.0% on Intercity Shared Rides ($7.50 avg ticket / QAR 27), 18.0% on Route-Based Same-Hour Parcels ($9.50 avg ticket / QAR 35), and 18.0% on On-Demand Worksite Supply & Errands ($14.00 avg ticket / QAR 51).
+- Recurring B2B SaaS (Months 13-36): Mashwar Business monthly subscriptions ($79/mo, ~QAR 288/mo) for contracting firms, Industrial Area parts suppliers, workshops, and clinics needing multi-staff dispatch, consolidated monthly billing, and priority verified providers (scaling to 348 active accounts and $253.8K annual SaaS revenue by Year 3, 36.1% of Y3 gross revenue).
 ```
 
 ### **Question 15: If you are an established startup, what has been your month-over-month revenue growth in the past six months? \***
 ```text
-N/A (Pre-revenue MVP). Completing legal incorporation in Doha, production cloud provisioning, and payment gateway onboarding prior to commercial pilot launch.
+N/A (Pre-revenue tested MVP). Commercial pilot launch is scheduled for Month 7 following Doha incorporation (QFC/QSTP), MoCI/MoT/QCB clearances, Firebase Blaze production provisioning, and anchor B2B shipper onboarding funded by Tranche 1.
 ```
 
 ### **Question 16: Have you raised any funding in the past? How much and from what sources? \***
 ```text
-None ($0 raised to date). MASHWAR has been 100% funded and built by the founder. We are applying for our first institutional investment ($450,000 across 3 milestone tranches) under the Startup Qatar START Track.
+None ($0 raised to date). MASHWAR has been 100% funded and engineered directly by the founder with $0 outstanding debt or external equity. We are applying for our first institutional investment of $450,000 (QAR 1,638,000) across 3 milestone tranches ($135,000 Month 1 / $157,500 Month 7 / $157,500 Month 13) under the Startup Qatar Investment Program (START Track).
 ```
 
 ### **Question 17: What are your priorities for setting up in Qatar, specifically, and what do you intend to gain out of it? \***
 ```text
-Establishing MASHWAR in Doha solves three operational needs directly:
-1. Legal & Financial Rails for Escrow: Incorporating under QFC or QSTP provides clear IP governance and direct integration with QCB Fawran, QPay/Himyan, and SkipCash, making cashless Bilateral Escrow reliable from day one.
-2. High-Need Corridor Geography: Qatar's active corridors linking Doha, Lusail, Industrial Area, Al Wakrah, Al Khor, Mesaieed, and Dukhan experience daily bottlenecks in urgent worksite supplies, paperwork runs, and underserved family commutes where MASHWAR delivers clear 2-hour to 4-hour value.
-3. Ecosystem Soft-Landing & Talent: Startup Qatar provides regulatory clarity, incorporation waivers, Qatari B2B introductions, and access to local engineering and compliance talent as we anchor GCC expansion from Doha.
+Setting up MASHWAR in Doha addresses three operational priorities directly:
+1. Regulatory Clarity & IP Headquarters: Incorporating in QFC or QSTP via Startup Qatar anchors our software IP and GCC contracts in Qatar, enabling clean MoCI commercial registration, MoT transport/logistics clearance, Qatar Law No. 13 of 2016 (PDPPL) compliance, and phased QCB alignment prior to enabling licensed non-custodial PSP rails (QPay/Fawran/SkipCash).
+2. High-Density Corridor Product-Market Fit: Qatar's compact geography linking Doha, Lusail, Industrial Area, Al Wakrah, Al Khor, Al Rayyan, Mesaieed, and Dukhan concentrates commuter traffic and urgent construction supply demand onto clear arteries where 35-90 minute fulfillment creates immediate daily value.
+3. Ecosystem Access & Local Talent: Startup Qatar provides soft-landing incorporation support, Qatari B2B introductions to contracting and industrial clusters, and access to Doha engineering and operations talent for our 3 planned local core hires.
 ```
 
 ### **Question 18: Are you willing to set up operations in Qatar, and do your plans include hiring full time employees locally? \***
-*(منقسم لجزئين بوضوح حسب طلب النموذج)*
 ```text
 Part 1 - Setting up operations in Qatar:
-Yes. Upon acceptance, we will incorporate MASHWAR's parent company and engineering headquarters in Doha (QFC or QSTP), complete Qatari corporate banking and Fawran/QPay Escrow integration, and operate our pilot corridors across Doha, Lusail, Industrial Area, and Al Khor during Months 1 to 12.
+Yes. Upon approval, we will incorporate MASHWAR's parent company and engineering headquarters in Doha (QFC or QSTP), complete MoCI/MoT/QCB clearances, provision production cloud and licensed Qatar mapping/SMS infrastructure, and launch pilot corridors across Doha, Lusail, Industrial Area, and Al Khor in Months 7-12.
 
 Part 2 - Hiring full-time employees locally in Qatar:
-Yes. Our 18-month budget allocates Tranche 1 and Tranche 2 capital to hiring full-time Doha staff: (1) a Senior Backend & Cloud Security Engineer to co-locate core Escrow/API infrastructure in Qatar, (2) an Operations & QID/KYC Compliance Lead to manage 24-hour provider vetting and dispute arbitration, and (3) a B2B Growth Lead serving Industrial Area suppliers, contractors, clinics, and schools.
+Yes. Our 36-month operating budget allocates $602,400 to Doha team payroll across three planned full-time local hires during Tranches 1-3: (1) a Senior Backend & Cloud Security Engineer (Month 1) to lead production cloud cutover, App Check, and security auditing; (2) an Operations & QID/KYC Compliance Lead (Month 7) to manage 24-hour QID provider vetting and corridor pilot operations; and (3) a B2B Merchant Growth Lead (Month 13) to onboard Industrial Area suppliers, Lusail contractors, and clinics onto Mashwar Business.
 ```
 
 ### **Question 19: How many founders do you have in your company? How long have you been working together? \***
 ```text
-1 sole technical founder (Abdelrahman Mahana, AI & Software Engineer), having designed and built the MASHWAR codebase, Bilateral Escrow engine, Admin Control Panel, and 78 automated tests independently. During Tranche 1 setup in Doha, we will recruit a Qatar-based Operations & QID Compliance Lead and Senior Backend Engineer.
+1 sole technical founder (Abdelrahman Mahana, AI & Full-Stack Software Engineer), who designed, coded, and verified the MASHWAR codebase, 14-module Admin Command Center, Cloud Functions v2 backend, 2,732-line Firestore security ruleset, and 235 automated tests independently. Upon Tranche 1 approval in Doha, we will recruit our local core team (Senior Backend/Security Engineer, QID Compliance Ops Lead, and B2B Growth Lead).
 ```
 
 ### **Question 20: Are any of the founder(s) or management team members planning to reside in Qatar? \***
-اختر: **`Yes`**
+Select: **`Yes`**
 
 ### **Question 21: If you manage to successfully secure funding, are you committed full-time or part-time during the initial 2 years? \***
 ```text
-Yes. I am committed 100% full-time to MASHWAR for the next two years and beyond. Upon Tranche 1 approval, I will relocate to Doha full-time to lead engineering delivery, Qatar pilot operations, local hiring, and institutional follow-on fundraising.
+Yes, 100% full-time. Upon Startup Qatar START Track approval, I will relocate full-time to Doha for the initial two years and beyond to lead engineering delivery, Qatar regulatory compliance, corridor pilot operations, local hiring, and institutional follow-on fundraising.
 ```
 
 ---
 
-## القسم الثالث: المرفقات الرسمية (`Q22 - Q26`)
+## Section 3: Mandatory Document Uploads (`Q22 - Q26`, Each Strictly `< 30 MB`)
 
-| السؤال | الملف المطلوب (`< 30 MB`) | الملف المحدّث والجاهز للتحويل إلى PDF |
+| Form Item | Required Upload | Ready Files (Both `.pdf` & `.docx` Provided) |
 | :-: | :--- | :--- |
-| **Q22** | Pitch Deck | [01_MASHWAR_Pitch_Deck_Startup_Qatar.docx](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/01_MASHWAR_Pitch_Deck_Startup_Qatar.docx) (12 شريحة 16:9 بالصور الجديدة والـ Escrow) |
-| **Q23** | Founder(s) Profile | [02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx) (أكمل سطر `[VERIFY]` للشهادة الجامعية ثم صدّره PDF) |
-| **Q24** | Historical & Projected Financials | [03_MASHWAR_Historical_and_Projected_Financials_3Y.docx](file:///d:/My_Projects/Meshwar-v1/Meshwar/STARTUP_QATAR_SUBMISSION_DOCS/03_MASHWAR_Historical_and_Projected_Financials_3Y.docx) (متطابق 100% مع Q10 وQ16 والدفعات الـ 3) |
-| **Q25** | إقرار صحة البيانات | مفعّل بعد مراجعة حقل المدينة والـ `[VERIFY]` |
-| **Q26** | الالتزام بالإرسال خلال 30 يوماً | مفعّل عند الإرسال النهائي |
+| **Q22** | Pitch Deck | [01_MASHWAR_Pitch_Deck_Startup_Qatar.pdf](file:///STARTUP_QATAR_SUBMISSION_DOCS/01_MASHWAR_Pitch_Deck_Startup_Qatar.pdf) (14 widescreen 16:9 slides, fresh 2x Retina app/admin captures & 300 DPI charts) + `.docx` |
+| **Q23** | Founder(s) Profile | [02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx](file:///STARTUP_QATAR_SUBMISSION_DOCS/02_MASHWAR_Founder_Profile_Abdelrahman_Mahana.docx) (fill `[VERIFY]` academic degree line, then re-export PDF) + ready preview `.pdf` |
+| **Q24** | Historical & Projected Financials (3Y) | [03_MASHWAR_Historical_and_Projected_Financials_3Y.pdf](file:///STARTUP_QATAR_SUBMISSION_DOCS/03_MASHWAR_Historical_and_Projected_Financials_3Y.pdf) (5-page financial memorandum, Base + -30% Stress, 100% synced with `financial-data.js`) + `.docx` |
+| **Q25** | Accuracy Declaration | Check after confirming city (`Cairo, Egypt`), Q6 exact start date, and Q23 academic degree line |
+| **Q26** | 30-Day Submission Commitment | Check upon final F6S submission |
