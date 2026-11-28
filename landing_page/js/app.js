@@ -1,7 +1,7 @@
-/* MASHWAR (مشوار — Qatar) Landing Page Interactions & Live Corridor Uber Map */
+/* MASHWAR (مشوار — Qatar) Public-First Interactions, Live Map & Savings Calculator */
 (function () {
   const CORRIDORS = {
-    al_khor: {
+    doha_alkhor: {
       origin_ar: "الدوحة (مشيرب / الخليج الغربي)",
       origin_en: "Doha (Msheireb / West Bay)",
       dest_ar: "الخور (الكورنيش / رأس لفان)",
@@ -11,169 +11,119 @@
       toLat: 25.6804,
       toLng: 51.4969,
       distKm: 52,
-      etaMin: 39,
+      etaMin: 38,
       hwy_ar: "طريق الخور الساحلي",
       hwy_en: "Al Khor Coastal Rd",
       defaultMode: "trip",
-      dist_ar: "52 كم · ~39 دقيقة",
-      dist_en: "52 km · ~39 mins",
-      seat_ar: "25 – 35 ر.ق / مقعد",
-      seat_en: "25 – 35 QAR / seat",
-      seat_vs_ar: "أوفر بحوالي 70% من المشوار الخاص (105+ ر.ق)",
-      seat_vs_en: "About 70% less than a private ride (105+ QAR)",
-      parcel_ar: "20 – 35 ر.ق · نفس اليوم",
-      parcel_en: "20 – 35 QAR · Same-Day",
-      parcel_vs_ar: "مباشرة مع مسافر بكودين OTP بدون مخازن فرز",
-      parcel_vs_en: "Direct with a traveler + dual 4-digit OTP",
-      driver_ar: "110 – 160 ر.ق / رحلة ذهاب",
-      driver_en: "110 – 160 QAR / trip",
-      driver_vs_ar: "مقاعد فاضية + طرد أو مستند على نفس الطريق",
-      driver_vs_en: "Spare seats + a parcel along the route you drive"
+      soloQar: 110,
+      mashwarQar: 30,
+      driverEarnQar: 125,
+      co2KgPerTrip: 5.8
     },
-    lusail_supply: {
-      origin_ar: "المنطقة الصناعية (شارع 10)",
-      origin_en: "Doha Industrial Area (St 10)",
-      dest_ar: "مارينا لوسيل ومواقع الأبراج",
-      dest_en: "Lusail Marina & Project Sites",
-      fromLat: 25.1903,
-      fromLng: 51.4426,
-      toLat: 25.4300,
-      toLng: 51.4900,
-      distKm: 36,
-      etaMin: 29,
-      hwy_ar: "طريق الدوحة السريع / محور سلوى",
-      hwy_en: "Doha Expressway / Salwa Axis",
-      defaultMode: "supply",
-      dist_ar: "36 كم · ~29 دقيقة",
-      dist_en: "36 km · ~29 mins",
-      seat_ar: "18 ر.ق / مقعد",
-      seat_en: "18 QAR / seat",
-      seat_vs_ar: "مثالي لتنقل المهندسين والفنيين اليومي",
-      seat_vs_en: "Practical daily ride for site engineers & technicians",
-      parcel_ar: "45 – 60 ر.ق · توريد موقع بفاتورة",
-      parcel_en: "45 – 60 QAR · Receipt-Verified Supply",
-      parcel_vs_ar: "صورة الفاتورة من المحل + كود تسليم من 6 خانات",
-      parcel_vs_en: "Store invoice photo + 6-char SHA-256 handover code",
-      driver_ar: "120 – 185 ر.ق / مشوار",
-      driver_en: "120 – 185 QAR / run",
-      driver_vs_ar: "توريد مواد كهرباء وسباكة ومعدات مباشرة للموقع",
-      driver_vs_en: "Direct electrical, plumbing & tool supply runs"
-    },
-    mesaieed: {
-      origin_ar: "الدوحة / الوكرة",
-      origin_en: "Doha / Al Wakrah",
-      dest_ar: "مدينة مسيعيد الصناعية",
-      dest_en: "Mesaieed Industrial City",
-      fromLat: 25.2854,
-      fromLng: 51.5310,
-      toLat: 24.9923,
-      toLng: 51.5507,
-      distKm: 48,
-      etaMin: 38,
-      hwy_ar: "طريق الوكرة – مسيعيد",
-      hwy_en: "Al Wakrah – Mesaieed Rd",
-      defaultMode: "trip",
-      dist_ar: "48 كم · ~38 دقيقة",
-      dist_en: "48 km · ~38 mins",
-      seat_ar: "22 ر.ق / مقعد",
-      seat_en: "22 QAR / seat",
-      seat_vs_ar: "مقارنة بـ ~90 ر.ق للمشوار الفردي",
-      seat_vs_en: "Compared to ~90 QAR for a solo trip",
-      parcel_ar: "30 ر.ق · خلال ساعتين",
-      parcel_en: "30 QAR · ~2h Handoff",
-      parcel_vs_ar: "تسليم مباشر لمواقع المصانع بكود OTP",
-      parcel_vs_en: "Direct industrial plant handoff with OTP",
-      driver_ar: "95 – 140 ر.ق / رحلة",
-      driver_en: "95 – 140 QAR / trip",
-      driver_vs_ar: "مبني على دوام الموظفين والمهندسين اليومي",
-      driver_vs_en: "Built around daily shift commuters"
-    },
-    industrial: {
-      origin_ar: "المنطقة الصناعية الدوحة",
-      origin_en: "Doha Industrial Area",
+    doha_alwakrah: {
+      origin_ar: "الدوحة (وسط المدينة / السد)",
+      origin_en: "Doha (Central / Al Sadd)",
       dest_ar: "الوكرة ومدينة بروة",
       dest_en: "Al Wakrah & Barwa City",
-      fromLat: 25.1903,
-      fromLng: 51.4426,
-      toLat: 25.1715,
-      toLng: 51.6034,
-      distKm: 28,
-      etaMin: 24,
-      hwy_ar: "طريق المنطقة الصناعية – الوكرة",
-      hwy_en: "Industrial – Al Wakrah Link",
-      defaultMode: "parcel",
-      dist_ar: "28 كم · ~24 دقيقة",
-      dist_en: "28 km · ~24 mins",
-      seat_ar: "15 ر.ق / مقعد",
-      seat_en: "15 QAR / seat",
-      seat_vs_ar: "توفير واضح عن المشوار الخاص (~52 ر.ق)",
-      seat_vs_en: "Clear savings vs ~52 QAR solo ride",
-      parcel_ar: "25 ر.ق · خلال 90 دقيقة",
-      parcel_en: "25 QAR · ~90m Express",
-      parcel_vs_ar: "ممتاز لقطع غيار الورش والمحلات بفاتورة واضحة",
-      parcel_vs_en: "Handy for workshop spare parts & store receipts",
-      driver_ar: "75 – 115 ر.ق / مسار",
-      driver_en: "75 – 115 QAR / route",
-      driver_vs_ar: "طلبات سريعة متكررة بين الورش والفروع",
-      driver_vs_en: "Frequent short runs between workshops & shops"
-    },
-    dukhan: {
-      origin_ar: "الدوحة (وسط المدينة / الريان)",
-      origin_en: "Doha (Central / Al Rayyan)",
-      dest_ar: "دخان وأم باب",
-      dest_en: "Dukhan & Umm Bab",
       fromLat: 25.2854,
       fromLng: 51.5310,
-      toLat: 25.4281,
-      toLng: 50.7822,
-      distKm: 84,
-      etaMin: 60,
-      hwy_ar: "طريق دخان السريع",
-      hwy_en: "Dukhan Highway",
+      toLat: 25.1715,
+      toLng: 51.6034,
+      distKm: 22,
+      etaMin: 22,
+      hwy_ar: "طريق الوكرة السريع",
+      hwy_en: "Al Wakrah Expressway",
+      defaultMode: "parcel",
+      soloQar: 55,
+      mashwarQar: 18,
+      driverEarnQar: 78,
+      co2KgPerTrip: 2.6
+    },
+    lusail_industrial: {
+      origin_ar: "مارينا لوسيل ومواقع الأبراج",
+      origin_en: "Lusail Marina & Project Sites",
+      dest_ar: "المنطقة الصناعية (شارع 10)",
+      dest_en: "Industrial Area (Street 10)",
+      fromLat: 25.4300,
+      fromLng: 51.4900,
+      toLat: 25.1903,
+      toLng: 51.4426,
+      distKm: 36,
+      etaMin: 29,
+      hwy_ar: "طريق الدوحة السريع",
+      hwy_en: "Doha Expressway",
+      defaultMode: "supply",
+      soloQar: 140,
+      mashwarQar: 48,
+      driverEarnQar: 145,
+      co2KgPerTrip: 4.4
+    },
+    alrayyan_westbay: {
+      origin_ar: "الريان (المدينة التعليمية)",
+      origin_en: "Al Rayyan (Education City)",
+      dest_ar: "الخليج الغربي وأبراج الدوحة",
+      dest_en: "West Bay & Doha Towers",
+      fromLat: 25.3136,
+      fromLng: 51.4342,
+      toLat: 25.3260,
+      toLng: 51.5310,
+      distKm: 19,
+      etaMin: 21,
+      hwy_ar: "محور الريان – الكورنيش",
+      hwy_en: "Al Rayyan – Corniche Axis",
       defaultMode: "trip",
-      dist_ar: "84 كم · ~60 دقيقة",
-      dist_en: "84 km · ~60 mins",
-      seat_ar: "35 ر.ق / مقعد",
-      seat_en: "35 QAR / seat",
-      seat_vs_ar: "أوفر بحوالي 75% من المشوار الخاص (160 ر.ق)",
-      seat_vs_en: "Around 75% cheaper than a 160 QAR private ride",
-      parcel_ar: "45 ر.ق · خلال 3 ساعات",
-      parcel_en: "45 QAR · Within 3h",
-      parcel_vs_ar: "تغطية الغرب القطري بدون انتظار شحن اليوم التالي",
-      parcel_vs_en: "Covers western Qatar without next-day courier wait",
-      driver_ar: "150 – 210 ر.ق / رحلة",
-      driver_en: "150 – 210 QAR / trip",
-      driver_vs_ar: "يغطي تكلفة المشوار الطويل على خط الشحانية–دخان",
-      driver_vs_en: "Offsets long-haul fuel along Shahaniya–Dukhan"
+      soloQar: 48,
+      mashwarQar: 16,
+      driverEarnQar: 72,
+      co2KgPerTrip: 2.2
+    },
+    alkhor_lusail: {
+      origin_ar: "الخور (وسط المدينة)",
+      origin_en: "Al Khor (Town Center)",
+      dest_ar: "لوسيل (المدينة الترفيهية / مارينا)",
+      dest_en: "Lusail (Marina / Boulevard)",
+      fromLat: 25.6804,
+      fromLng: 51.4969,
+      toLat: 25.4300,
+      toLng: 51.4900,
+      distKm: 39,
+      etaMin: 28,
+      hwy_ar: "طريق الخور الساحلي",
+      hwy_en: "Al Khor Coastal Highway",
+      defaultMode: "trip",
+      soloQar: 85,
+      mashwarQar: 24,
+      driverEarnQar: 105,
+      co2KgPerTrip: 4.6
     }
   };
 
+  /* 5 Consumer App Walkthrough Screens ONLY */
   const SCREENS = [
-    "./assets/mobile/10_tab_home_screen.png",
-    "./assets/mobile/19_ride_details_screen.png",
-    "./assets/mobile/34_parcel_tracking_screen.png",
-    "./assets/mobile/11_tab_board_screen.png",
-    "./assets/mobile/28_post_ad_screen.png",
-    "./assets/mobile/47_vehicle_registration_screen.png",
-    "./assets/mobile/35_pickup_code_dialog.png",
-    "./assets/mobile/50_emergency_sos_sheet.png",
-    "./assets/mobile/35_pickup_code_dialog.png"
+    "./assets/mobile/app_home_hero.png",
+    "./assets/mobile/app_live_map_picker.png",
+    "./assets/mobile/app_ride_details.png",
+    "./assets/mobile/app_parcel_otp.png",
+    "./assets/mobile/app_worksite_supply.png"
   ];
 
-  const WEB_SCREENS = {
-    app_home: { src: "./assets/web/app_home_live_map.png", url: "https://app.mashwar.qa/home" },
-    app_traffic: { src: "./assets/web/app_fullscreen_traffic_map.png", url: "https://app.mashwar.qa/map?traffic=live" },
-    app_ride: { src: "./assets/web/app_ride_details_live.png", url: "https://app.mashwar.qa/trips/ride-details" },
-    app_supply: { src: "./assets/web/app_worksite_supply_live.png", url: "https://app.mashwar.qa/supply/request-details" },
-    admin_dash: { src: "./assets/web/admin_live_dashboard.png", url: "https://admin.mashwar.qa/dashboard" },
-    admin_ops: { src: "./assets/web/admin_live_login_dark.png", url: "https://admin.mashwar.qa/login" }
+  const state = {
+    lang: "ar",
+    corridor: "doha_alkhor",
+    mapStyle: "standard", // standard | light | satellite | night
+    mapMode: "trip",      // trip | parcel | supply
+    calcRole: "rider",    // rider | driver
+    tripsPerMonth: 16,
+    screenIdx: 0
   };
 
-  let currentLang = "ar";
-  let currentCorridor = "al_khor";
-  let currentMapMode = "trip";
+  function fmtQar(val) {
+    const rounded = Math.round(val).toLocaleString("en-US");
+    return state.lang === "ar" ? `${rounded} ر.ق` : `${rounded} QAR`;
+  }
 
-  function buildCorridorMapUrl(c, mode, lang) {
+  function buildCorridorMapUrl(c) {
+    const lang = state.lang;
     const params = new URLSearchParams({
       fromLat: String(c.fromLat),
       fromLng: String(c.fromLng),
@@ -181,53 +131,135 @@
       toLat: String(c.toLat),
       toLng: String(c.toLng),
       toName: c[`dest_${lang}`],
-      mode: mode || c.defaultMode || "trip",
-      style: "google",
+      mode: state.mapMode || c.defaultMode || "trip",
+      style: state.mapStyle || "standard",
       traffic: "1",
       lang: lang,
       nearby: "1",
+      gps: "0",
       dist: String(c.distKm),
       eta: String(c.etaMin),
       hwy: c[`hwy_${lang}`]
     });
-    return `./maps/mashwar_uber_map.html?${params.toString()}`;
+    return `./maps/mashwar_live_map.html?${params.toString()}`;
   }
 
-  function renderCorridor(key, overrideMode) {
-    currentCorridor = key;
-    const c = CORRIDORS[key];
+  function renderCalculator() {
+    const c = CORRIDORS[state.corridor];
     if (!c) return;
-    currentMapMode = overrideMode || c.defaultMode || "trip";
-    const s = currentLang;
+    const isAr = state.lang === "ar";
+    const trips = state.tripsPerMonth;
+    const dict = window.MASHWAR_I18N[state.lang] || {};
 
-    const setText = (id, val) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = val;
-    };
+    const tripsValEl = document.getElementById("calc-trips-val");
+    if (tripsValEl) tripsValEl.textContent = String(trips);
 
-    setText("cor-origin-name", c[`origin_${s}`]);
-    setText("cor-dest-name", c[`dest_${s}`]);
-    setText("cor-dist-badge", c[`dist_${s}`]);
-    setText("cor-k1-val", c[`seat_${s}`]);
-    setText("cor-k1-vs", c[`seat_vs_${s}`]);
-    setText("cor-k2-val", c[`parcel_${s}`]);
-    setText("cor-k2-vs", c[`parcel_vs_${s}`]);
-    setText("cor-k3-val", c[`driver_${s}`]);
-    setText("cor-k3-vs", c[`driver_vs_${s}`]);
-
-    document.querySelectorAll("[data-cor-mode]").forEach((btn) => {
-      btn.classList.toggle("is-active", btn.getAttribute("data-cor-mode") === currentMapMode);
+    document.querySelectorAll("[data-calc-preset]").forEach((btn) => {
+      btn.classList.toggle("is-active", Number(btn.getAttribute("data-calc-preset")) === trips);
     });
 
-    const iframe = document.getElementById("corridor-live-map");
-    if (iframe) {
-      iframe.src = buildCorridorMapUrl(c, currentMapMode, s);
+    const monthlyLbl = document.getElementById("calc-monthly-lbl");
+    const monthlyVal = document.getElementById("calc-monthly-val");
+    const monthlySub = document.getElementById("calc-monthly-sub");
+    const annualLbl = document.getElementById("calc-annual-lbl");
+    const annualVal = document.getElementById("calc-annual-val");
+    const co2Val = document.getElementById("calc-co2-val");
+    const benchVal = document.getElementById("calc-benchmark-val");
+    const benchSub = document.getElementById("calc-benchmark-sub");
+
+    const annualCo2 = Math.round(c.co2KgPerTrip * trips * 12).toLocaleString("en-US");
+    if (co2Val) co2Val.textContent = isAr ? `${annualCo2} كجم` : `${annualCo2} kg`;
+
+    if (state.calcRole === "rider") {
+      const perTripSave = Math.max(0, c.soloQar - c.mashwarQar);
+      const monthlySave = perTripSave * trips;
+      const annualSave = monthlySave * 12;
+
+      if (monthlyLbl) monthlyLbl.textContent = dict.calc_kpi_monthly_rider || "";
+      if (monthlyVal) monthlyVal.textContent = fmtQar(monthlySave);
+      if (monthlySub) {
+        monthlySub.textContent = isAr
+          ? `${fmtQar(c.mashwarQar)} عبر مشوار بدلاً من ${fmtQar(c.soloQar)} للتنقّل أو التوصيل الفردي`
+          : `${fmtQar(c.mashwarQar)} via MASHWAR vs. ${fmtQar(c.soloQar)} solo ride or rush run`;
+      }
+      if (annualLbl) annualLbl.textContent = dict.calc_kpi_annual_rider || "";
+      if (annualVal) annualVal.textContent = fmtQar(annualSave);
+      if (benchVal) {
+        benchVal.textContent = isAr
+          ? `${fmtQar(c.mashwarQar)} / طلب`
+          : `${fmtQar(c.mashwarQar)} / trip`;
+      }
+      if (benchSub) {
+        benchSub.textContent = isAr
+          ? `توفير ${fmtQar(perTripSave)} في كل رحلة`
+          : `Saves ${fmtQar(perTripSave)} per trip`;
+      }
+    } else {
+      const monthlyEarn = c.driverEarnQar * trips;
+      const annualEarn = monthlyEarn * 12;
+
+      if (monthlyLbl) monthlyLbl.textContent = dict.calc_kpi_monthly_driver || "";
+      if (monthlyVal) monthlyVal.textContent = fmtQar(monthlyEarn);
+      if (monthlySub) {
+        monthlySub.textContent = isAr
+          ? `متوسط ${fmtQar(c.driverEarnQar)} لكل مسار (مقاعد شاغرة + طرد أو توريد على الطريق)`
+          : `Avg. ${fmtQar(c.driverEarnQar)} per corridor run (spare seats + route parcel or supply)`;
+      }
+      if (annualLbl) annualLbl.textContent = dict.calc_kpi_annual_driver || "";
+      if (annualVal) annualVal.textContent = fmtQar(annualEarn);
+      if (benchVal) {
+        benchVal.textContent = isAr
+          ? `${fmtQar(c.driverEarnQar)} / مسار`
+          : `${fmtQar(c.driverEarnQar)} / run`;
+      }
+      if (benchSub) {
+        benchSub.textContent = isAr
+          ? `تسوية مباشرة على طريق ${c.hwy_ar}`
+          : `Direct settlement along ${c.hwy_en}`;
+      }
     }
   }
 
+  function renderCorridor(updateIframe) {
+    const c = CORRIDORS[state.corridor];
+    if (!c) return;
+    const isAr = state.lang === "ar";
+
+    const originEl = document.getElementById("cor-origin-name");
+    const destEl = document.getElementById("cor-dest-name");
+    const distEl = document.getElementById("cor-dist-badge");
+
+    if (originEl) originEl.textContent = c[`origin_${state.lang}`];
+    if (destEl) destEl.textContent = c[`dest_${state.lang}`];
+    if (distEl) {
+      distEl.textContent = isAr
+        ? `${c.distKm} كم · ~${c.etaMin} دقيقة`
+        : `${c.distKm} km · ~${c.etaMin} mins`;
+    }
+
+    document.querySelectorAll("[data-corridor]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.getAttribute("data-corridor") === state.corridor);
+    });
+    document.querySelectorAll("[data-map-style]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.getAttribute("data-map-style") === state.mapStyle);
+    });
+    document.querySelectorAll("[data-cor-mode]").forEach((btn) => {
+      btn.classList.toggle("is-active", btn.getAttribute("data-cor-mode") === state.mapMode);
+    });
+
+    if (updateIframe !== false) {
+      const iframe = document.getElementById("corridor-live-map");
+      if (iframe) {
+        iframe.src = buildCorridorMapUrl(c);
+      }
+    }
+
+    renderCalculator();
+  }
+
   function applyLanguage(lang) {
-    currentLang = lang;
-    const dict = window.MASHWAR_I18N[lang];
+    state.lang = lang;
+    const dict = window.MASHWAR_I18N && window.MASHWAR_I18N[lang];
     if (!dict) return;
 
     document.documentElement.lang = lang;
@@ -239,11 +271,16 @@
       if (dict[key] !== undefined) el.textContent = dict[key];
     });
 
+    document.querySelectorAll("[data-i18n-placeholder]").forEach((el) => {
+      const key = el.getAttribute("data-i18n-placeholder");
+      if (dict[key] !== undefined) el.setAttribute("placeholder", dict[key]);
+    });
+
     document.querySelectorAll("[data-cor-ar]").forEach((btn) => {
       btn.textContent = btn.getAttribute(lang === "ar" ? "data-cor-ar" : "data-cor-en");
     });
 
-    renderCorridor(currentCorridor, currentMapMode);
+    renderCorridor(true);
     if (window.MASHWAR_CHARTS) window.MASHWAR_CHARTS.setLang(lang);
   }
 
@@ -267,13 +304,18 @@
     const openBtn = document.getElementById("mobile-menu-open");
     const closeBtn = document.getElementById("mobile-menu-close");
     if (!drawer || !openBtn || !closeBtn) return;
+
     const toggle = (open) => {
       drawer.classList.toggle("is-open", open);
       drawer.setAttribute("aria-hidden", String(!open));
     };
+
     openBtn.addEventListener("click", () => toggle(true));
     closeBtn.addEventListener("click", () => toggle(false));
     drawer.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => toggle(false)));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") toggle(false);
+    });
   }
 
   function initRevealObserver() {
@@ -282,7 +324,7 @@
       els.forEach((e) => e.classList.add("is-visible"));
       return;
     }
-    const revealVisibleOrPassed = () => {
+    const revealPassed = () => {
       const vh = window.innerHeight || document.documentElement.clientHeight;
       els.forEach((el) => {
         if (el.classList.contains("is-visible")) return;
@@ -301,137 +343,156 @@
       { threshold: 0.02 }
     );
     els.forEach((el) => io.observe(el));
-    window.addEventListener("scroll", revealVisibleOrPassed, { passive: true });
-    revealVisibleOrPassed();
+    window.addEventListener("scroll", revealPassed, { passive: true });
+    revealPassed();
   }
 
-  function initSpotlightCards() {
-    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    document.querySelectorAll(".spotlight-card").forEach((card) => {
-      card.addEventListener("mousemove", (e) => {
-        const rect = card.getBoundingClientRect();
-        card.style.setProperty("--mx", `${e.clientX - rect.left}px`);
-        card.style.setProperty("--my", `${e.clientY - rect.top}px`);
-      });
-    });
-  }
-
-  function initSwitchers() {
+  function initCorridorAndCalculator() {
     document.querySelectorAll("[data-corridor]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll("[data-corridor]").forEach((b) => b.classList.toggle("is-active", b === btn));
-        renderCorridor(btn.getAttribute("data-corridor"));
+        const key = btn.getAttribute("data-corridor");
+        if (!CORRIDORS[key]) return;
+        state.corridor = key;
+        state.mapMode = CORRIDORS[key].defaultMode || "trip";
+        renderCorridor(true);
+      });
+    });
+
+    document.querySelectorAll("[data-map-style]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.mapStyle = btn.getAttribute("data-map-style") || "standard";
+        renderCorridor(true);
       });
     });
 
     document.querySelectorAll("[data-cor-mode]").forEach((btn) => {
       btn.addEventListener("click", () => {
-        renderCorridor(currentCorridor, btn.getAttribute("data-cor-mode"));
+        state.mapMode = btn.getAttribute("data-cor-mode") || "trip";
+        renderCorridor(true);
       });
     });
 
+    document.querySelectorAll("[data-calc-role]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.calcRole = btn.getAttribute("data-calc-role") || "rider";
+        document.querySelectorAll("[data-calc-role]").forEach((b) =>
+          b.classList.toggle("is-active", b === btn)
+        );
+        renderCalculator();
+      });
+    });
+
+    const slider = document.getElementById("calc-trips-slider");
+    if (slider) {
+      slider.addEventListener("input", () => {
+        state.tripsPerMonth = Math.max(1, Math.min(22, Number(slider.value) || 1));
+        renderCalculator();
+      });
+    }
+
+    document.querySelectorAll("[data-calc-preset]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const val = Number(btn.getAttribute("data-calc-preset")) || 12;
+        state.tripsPerMonth = val;
+        if (slider) slider.value = String(val);
+        renderCalculator();
+      });
+    });
+  }
+
+  function initConsumerShowcase() {
     const stageImg = document.getElementById("mobile-screen-img");
-    const setMobileScreen = (idx) => {
+    const prevBtn = document.getElementById("showcase-prev");
+    const nextBtn = document.getElementById("showcase-next");
+
+    const setScreen = (idx) => {
+      const normalized = ((idx % SCREENS.length) + SCREENS.length) % SCREENS.length;
+      state.screenIdx = normalized;
+
       document.querySelectorAll("[data-screen-idx]").forEach((b) =>
-        b.classList.toggle("is-active", Number(b.getAttribute("data-screen-idx")) === idx)
+        b.classList.toggle("is-active", Number(b.getAttribute("data-screen-idx")) === normalized)
       );
-      if (stageImg && SCREENS[idx]) {
+      document.querySelectorAll("[data-screen-dot]").forEach((d) =>
+        d.classList.toggle("is-active", Number(d.getAttribute("data-screen-dot")) === normalized)
+      );
+
+      if (stageImg && SCREENS[normalized]) {
         stageImg.style.opacity = "0.25";
         setTimeout(() => {
-          stageImg.src = SCREENS[idx];
+          stageImg.src = SCREENS[normalized];
           stageImg.style.opacity = "1";
         }, 110);
       }
     };
-    document.querySelectorAll("[data-screen-idx]").forEach((btn) => {
-      btn.addEventListener("click", () => setMobileScreen(Number(btn.getAttribute("data-screen-idx"))));
-    });
 
-    const webImg = document.getElementById("web-stage-img");
-    const webUrl = document.getElementById("web-stage-url");
-    document.querySelectorAll("[data-web-tab]").forEach((btn) => {
+    document.querySelectorAll("[data-screen-idx]").forEach((btn) => {
+      btn.addEventListener("click", () => setScreen(Number(btn.getAttribute("data-screen-idx"))));
+    });
+    document.querySelectorAll("[data-screen-dot]").forEach((dot) => {
+      dot.addEventListener("click", () => setScreen(Number(dot.getAttribute("data-screen-dot"))));
+    });
+    if (prevBtn) prevBtn.addEventListener("click", () => setScreen(state.screenIdx - 1));
+    if (nextBtn) nextBtn.addEventListener("click", () => setScreen(state.screenIdx + 1));
+  }
+
+  function initExecutiveTabs() {
+    const tabBtns = document.querySelectorAll("[data-exec-tab]");
+    tabBtns.forEach((btn) => {
       btn.addEventListener("click", () => {
-        const k = btn.getAttribute("data-web-tab");
-        document.querySelectorAll("[data-web-tab]").forEach((b) => b.classList.toggle("is-active", b === btn));
-        if (webImg && WEB_SCREENS[k]) {
-          webImg.style.opacity = "0.35";
-          setTimeout(() => {
-            webImg.src = WEB_SCREENS[k].src;
-            webImg.style.opacity = "1";
-            if (webUrl) webUrl.textContent = WEB_SCREENS[k].url;
-          }, 90);
+        const target = btn.getAttribute("data-exec-tab");
+        tabBtns.forEach((b) => b.classList.toggle("is-active", b === btn));
+        document.querySelectorAll(".exec-panel").forEach((panel) => {
+          panel.classList.toggle("is-active", panel.id === `exec-panel-${target}`);
+        });
+        if (target === "financials" && window.MASHWAR_CHARTS) {
+          window.MASHWAR_CHARTS.renderAll();
         }
       });
     });
   }
 
-  function initDownloadAndForm() {
-    const dlModal = document.getElementById("download-modal");
-    const dlClose = document.getElementById("download-modal-close");
-    const dlReqBtn = document.getElementById("modal-request-build");
-    const isLocalLandingServer =
-      ["localhost", "127.0.0.1"].includes(window.location.hostname) &&
+  function initPortalLinksAndTracks() {
+    const isLocalLanding =
+      (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost") &&
       window.location.port === "8088";
-    const consumerPortalUrl = isLocalLandingServer ? "http://127.0.0.1:8080/" : "/";
-    const adminPortalUrl = isLocalLandingServer ? "http://127.0.0.1:8080/admin/" : "/admin/";
+    const consumerUrl = isLocalLanding ? "http://127.0.0.1:8080/" : "/";
+    const adminUrl = isLocalLanding ? "http://127.0.0.1:8080/admin/" : "/admin/";
 
-    const openDl = () => {
-      if (!dlModal) return;
-      dlModal.classList.add("is-open");
-      dlModal.setAttribute("aria-hidden", "false");
-    };
-    const closeDl = () => {
-      if (!dlModal) return;
-      dlModal.classList.remove("is-open");
-      dlModal.setAttribute("aria-hidden", "true");
-    };
-
-    document.querySelectorAll("[data-live-web-btn], #modal-local-launch").forEach((link) => {
-      link.setAttribute("href", consumerPortalUrl);
+    document.querySelectorAll("[data-live-web-btn]").forEach((link) => {
+      link.setAttribute("href", consumerUrl);
     });
-    document.querySelectorAll("[data-live-admin-btn], #modal-local-admin-launch").forEach((link) => {
-      link.setAttribute("href", adminPortalUrl);
+    document.querySelectorAll("[data-live-admin-btn]").forEach((link) => {
+      link.setAttribute("href", adminUrl);
     });
 
-    const localLaunch = document.getElementById("modal-local-launch");
-    if (localLaunch) {
-      localLaunch.style.display = "inline-flex";
-    }
-    const localAdminLaunch = document.getElementById("modal-local-admin-launch");
-    if (localAdminLaunch) {
-      localAdminLaunch.style.display = "inline-flex";
-    }
-
-    document.querySelectorAll("[data-open-download]").forEach((btn) => btn.addEventListener("click", openDl));
-
-    if (dlClose) dlClose.addEventListener("click", closeDl);
-    if (dlModal) dlModal.addEventListener("click", (e) => { if (e.target === dlModal) closeDl(); });
-    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDl(); });
-
-    if (dlReqBtn) {
-      dlReqBtn.addEventListener("click", () => {
-        closeDl();
-        const form = document.getElementById("investor-form");
-        if (form) form.scrollIntoView({ behavior: "smooth" });
+    document.querySelectorAll("[data-contact-track]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const trackIdx = Number(btn.getAttribute("data-contact-track")) || 0;
+        const contactSection = document.getElementById("contact");
+        if (contactSection) contactSection.scrollIntoView({ behavior: "smooth" });
         const sel = document.getElementById("inv-interest");
-        if (sel) sel.selectedIndex = 1;
+        if (sel && sel.options[trackIdx]) {
+          sel.selectedIndex = trackIdx;
+        }
         const nameInput = document.getElementById("inv-name");
-        if (nameInput) nameInput.focus();
+        if (nameInput) setTimeout(() => nameInput.focus(), 380);
       });
-    }
+    });
   }
 
   function init() {
     const langBtn = document.getElementById("lang-toggle-btn");
     if (langBtn) {
-      langBtn.addEventListener("click", () => applyLanguage(currentLang === "ar" ? "en" : "ar"));
+      langBtn.addEventListener("click", () => applyLanguage(state.lang === "ar" ? "en" : "ar"));
     }
+
     initHeaderScroll();
     initMobileDrawer();
     initRevealObserver();
-    initSpotlightCards();
-    initSwitchers();
-    initDownloadAndForm();
+    initCorridorAndCalculator();
+    initConsumerShowcase();
+    initExecutiveTabs();
+    initPortalLinksAndTracks();
     applyLanguage("ar");
   }
 
