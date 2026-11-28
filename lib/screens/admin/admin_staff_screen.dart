@@ -168,22 +168,6 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
     );
   }
 
-  bool _roleHasAccess(AdminRole role, int idx) {
-    // Matches AdminProvider.canAccessMenu(index) across all 14 modules (0..13)
-    switch (role) {
-      case AdminRole.superAdmin:
-        return true;
-      case AdminRole.reviewAdmin:
-        return idx == 0 || idx == 1 || idx == 13;
-      case AdminRole.supportAdmin:
-        return idx == 0 || idx == 2 || idx == 3 || idx == 4 || idx == 12 || idx == 13;
-      case AdminRole.financeAdmin:
-        return idx == 0 || idx == 3 || idx == 7 || idx == 8 || idx == 10 || idx == 13;
-      case AdminRole.devopsAdmin:
-        return idx == 0 || idx == 5 || idx == 7 || idx == 8 || idx == 9 || idx == 11;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isAr = context.watch<SettingsProvider>().isArabic;
@@ -328,9 +312,13 @@ class _AdminStaffScreenState extends State<AdminStaffScreen> {
                           for (final role in AdminRole.values)
                             DataCell(
                               Icon(
-                                _roleHasAccess(role, m.index) ? Icons.check_circle_rounded : Icons.remove_circle_outline_rounded,
+                                AdminProvider.roleHasMenuAccess(role, m.index)
+                                    ? Icons.check_circle_rounded
+                                    : Icons.remove_circle_outline_rounded,
                                 size: 18,
-                                color: _roleHasAccess(role, m.index) ? t.accentTeal : t.textSecondary.withValues(alpha: 0.4),
+                                color: AdminProvider.roleHasMenuAccess(role, m.index)
+                                    ? t.accentTeal
+                                    : t.textSecondary.withValues(alpha: 0.4),
                               ),
                             ),
                         ],

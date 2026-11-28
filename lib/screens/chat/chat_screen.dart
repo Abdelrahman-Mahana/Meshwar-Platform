@@ -493,95 +493,108 @@ class _ChatScreenState extends State<ChatScreen> {
                       bottom: BorderSide(color: AppColors.slateBorder),
                     ),
                   ),
-                  child: Row(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.route_rounded,
-                        color: AppColors.teal,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          widget.tripRoute,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTypography.label(color: AppColors.navy).copyWith(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.route_rounded,
+                            color: AppColors.teal,
+                            size: 16,
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      MashwarPressable(
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MashwarPageRoute(
-                              builder: (_) => const ServiceEscrowScreen(),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: AppColors.tealSurface,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: AppColors.teal.withValues(alpha: 0.28),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              widget.tripRoute,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.label(color: AppColors.navy).copyWith(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.verified_user_outlined,
-                                size: 13,
-                                color: AppColors.teal,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                isAr ? 'التسوية و OTP' : 'Handover OTP',
-                                style: AppTypography.label(color: AppColors.teal).copyWith(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      MashwarPressable(
-                        key: const ValueKey('chat_share_location_btn'),
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: () => _shareLocation(isAr),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          MashwarPressable(
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.slateBorder),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.my_location_rounded,
-                                size: 13,
-                                color: AppColors.navy,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                isAr ? 'مشاركة الموقع' : 'Share Location',
-                                style: AppTypography.label(color: AppColors.navy).copyWith(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MashwarPageRoute(
+                                  builder: (_) => const ServiceEscrowScreen(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: AppColors.tealSurface,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.teal.withValues(alpha: 0.28),
                                 ),
                               ),
-                            ],
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.verified_user_outlined,
+                                    size: 13,
+                                    color: AppColors.teal,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isAr ? 'التسوية و OTP' : 'Handover OTP',
+                                    style: AppTypography.label(color: AppColors.teal).copyWith(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                          MashwarPressable(
+                            key: const ValueKey('chat_share_location_btn'),
+                            borderRadius: BorderRadius.circular(10),
+                            onTap: () => _shareLocation(isAr),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.slateBorder),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.my_location_rounded,
+                                    size: 13,
+                                    color: AppColors.navy,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    isAr ? 'مشاركة الموقع' : 'Share Location',
+                                    style: AppTypography.label(color: AppColors.navy).copyWith(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
